@@ -1,3 +1,3 @@
 FROM golang:1.6-onbuild
-EXPOSE 3000
+EXPOSE 80
 ENTRYPOINT ["go", "run", "*.go"]
