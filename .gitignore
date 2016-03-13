@@ -1,6 +1,7 @@
 ### CUSTOM ###
 
 gophr
+web/dist/
 
 # Created by https://www.gitignore.io/api/osx,go,node
 
@@ -93,4 +94,3 @@ jspm_packages
 
 # Optional REPL history
 .node_repl_history
-

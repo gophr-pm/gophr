@@ -1,0 +1,26 @@
+{
+  "name": "gophr",
+  "version": "1.0.0",
+  "description": "An end-to-end package management solution for Go.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skeswa/gophr.git"
+  },
+  "keywords": [
+    "go",
+    "gopher",
+    "gopm",
+    "package",
+    "manager"
+  ],
+  "author": "Sandile Keswa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/skeswa/gophr/issues"
+  },
+  "homepage": "https://github.com/skeswa/gophr#readme"
+}
