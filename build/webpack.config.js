@@ -19,7 +19,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(__dirname, '..', 'web', 'src', 'main.html'),
-      inject: 'body'
+      inject: 'body',
+      minify: {
+        minifyJS: true,
+        minifyCSS: true,
+        removeComments: true,
+        collapseWhitespace: true
+      }
     })
   ],
   module: {
@@ -30,7 +36,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: 'style-loader!css-loader'
+        loader: 'style-loader!css-loader?modules'
       },
       {
         test: /\.(jpg|png|woff)$/,
