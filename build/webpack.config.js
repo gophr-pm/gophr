@@ -7,7 +7,7 @@ module.exports = {
   entry: path.join(__dirname, '..', 'web', 'src', 'main.ts'),
   output: {
     path: path.join(__dirname, '..', 'web', 'dist'),
-    filename: 'bundle.js'
+    filename: 'gophr.js'
   },
   resolve: {
     extensions: [

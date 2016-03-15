@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "An end-to-end package management solution for Go.",
   "scripts": {
-    "frontend:clean": "rm -rf ./web/dist",
-    "frontend:assets:dev": "node ./build/scripts/assets-dev.js",
-    "frontend:webpack:dev": "NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --config ./build/webpack.config.js --watch --quiet"
+    "frontend:clean": "node ./build/scripts/clean-frontend",
+    "frontend:assets:dev": "node ./build/scripts/assets-dev",
+    "frontend:webpack:dev": "NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --config ./build/webpack.config.js --watch --quiet",
+    "frontend:dev": "npm run frontend:clean && node ./node_modules/concurrently/src/main.js --kill-others \"npm run frontend:assets:dev\" \"npm run frontend:webpack:dev\""
   },
   "repository": {
     "type": "git",
