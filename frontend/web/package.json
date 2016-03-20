@@ -1,0 +1,38 @@
+{
+  "name": "gophr",
+  "version": "1.0.0",
+  "description": "An end-to-end package management solution for Go.",
+  "scripts": {
+    "clean": "node ./build/scripts/web-clean",
+    "assets:dev": "node ./build/scripts/web-assets-dev",
+    "webpack:dev": "NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --config ./build/webpack.config.js --watch --quiet",
+    "dev": "npm run clean && node ./node_modules/concurrently/src/main.js --kill-others \"npm run assets:dev\" \"npm run webpack:dev\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skeswa/gophr.git"
+  },
+  "keywords": [
+    "go",
+    "gopher",
+    "gopm",
+    "package",
+    "manager"
+  ],
+  "author": "Sandile Keswa",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/skeswa/gophr/issues"
+  },
+  "homepage": "https://github.com/skeswa/gophr#readme",
+  "devDependencies": {
+    "css-loader": "^0.23.1",
+    "file-loader": "^0.8.5",
+    "html-webpack-plugin": "^2.10.0",
+    "style-loader": "^0.13.0",
+    "ts-loader": "^0.8.1",
+    "typescript": "^1.8.7",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.12.14"
+  }
+}

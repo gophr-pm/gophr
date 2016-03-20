@@ -6,8 +6,8 @@ const chalk     = require('chalk');
 const watch     = require('watch');
 const Imagemin  = require('imagemin');
 
-const SRC_PATH        = path.join(__dirname, '..', '..', 'web', 'src', 'img');
-const DIST_PATH       = path.join(__dirname, '..', '..', 'web', 'dist', 'img');
+const SRC_PATH        = path.join(__dirname, '..', '..', 'src', 'img');
+const DIST_PATH       = path.join(__dirname, '..', '..', 'dist', 'img');
 const SRC_IMG_PATH    = path.join('web', 'src', 'img');
 const DIST_IMG_PATH   = path.join('web', 'dist', 'img');
 

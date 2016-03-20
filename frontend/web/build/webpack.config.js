@@ -4,9 +4,9 @@ const path              = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-  entry: path.join(__dirname, '..', 'web', 'src', 'main.ts'),
+  entry: path.join(__dirname, '..', 'src', 'main.ts'),
   output: {
-    path: path.join(__dirname, '..', 'web', 'dist'),
+    path: path.join(__dirname, '..', 'dist'),
     filename: 'gophr.js'
   },
   resolve: {
@@ -18,7 +18,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, '..', 'web', 'src', 'main.html'),
+      template: path.join(__dirname, '..', 'src', 'main.html'),
       inject: 'body',
       minify: {
         minifyJS: true,

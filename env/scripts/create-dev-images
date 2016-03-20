@@ -1,0 +1,17 @@
+#! /bin/bash
+
+# Get base directories
+scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+env_dir="$( dirname $scripts_dir )"
+images_dir="$env_dir/images"
+
+# Color variables
+no_color="\033[0m"
+green_color="\033[0;32m"
+
+echo "Creating gophr dev docker images..."
+docker build --rm -t 'gophr-fe-api:dev' "$images_dir/fe-api-dev" &> /dev/null \
+docker build --rm -t 'gophr-fe-web:dev' "$images_dir/web-dev" &> /dev/null \
+docker build --rm -t 'gophr-frontend-search:dev' "$images_dir/search-dev" &> /dev/null \
+docker build --rm -t 'gophr-db:dev' "$images_dir/db-dev" &> /dev/null \
+echo "${green_color}✓ Gophr docker images created successfully${no_color}"
