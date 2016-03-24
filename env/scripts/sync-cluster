@@ -1,0 +1,15 @@
+#! /bin/bash
+
+scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+env_dir="$( cd "$( dirname "$scripts_dir" )" && pwd )"
+project_dir="$( cd "$( dirname "$env_dir" )" && pwd )"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+green_color=$esc_seq"32;01m"
+
+echo $project_dir
+echo "Creating file system link with gophr dev cluster..."
+echo -e "${green_color}✓ Created file system link with gophr dev cluster successfully!${no_color}"
+docker-rsync -verbose -src="$project_dir" -dst="/opt/gophr" gophr

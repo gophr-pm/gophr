@@ -1,0 +1,47 @@
+{
+  "kind": "Pod",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "web-server-dev",
+    "labels": {
+      "tier": "frontend",
+      "role": "web-server",
+      "env": "dev"
+    }
+  },
+  "spec": {
+    "containers": [
+      {
+        "name": "web-server",
+        "image": "gophr-web-server:dev",
+        "volumeMounts": [
+          {
+            "name": "www",
+            "mountPath": "/usr/share/nginx/html"
+          }
+        ],
+        "ports": [
+          {
+            "containerPort": 80
+          }
+        ],
+        "livenessProbe": {
+          "httpGet": {
+            "path": "/_status/healthz",
+            "port": 80
+          },
+          "initialDelaySeconds": 30,
+          "timeoutSeconds": 1
+        }
+      }
+    ],
+    "volumes": [
+      {
+        "name": "www",
+        "hostPath": {
+          "path": "/opt/gophr/frontend/web/dist"
+        }
+      }
+    ]
+  }
+}

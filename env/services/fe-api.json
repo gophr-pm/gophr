@@ -1,0 +1,21 @@
+{
+  "kind": "Service",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "fe-api-service",
+    "namespace": "gophr"
+  },
+  "spec": {
+    "ports": [
+      {
+        "port": 80,
+        "targetPort": 80,
+        "protocol": "TCP"
+      }
+    ],
+    "selector": {
+      "tier": "frontend",
+      "role": "api"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+#! /bin/bash
+
+# Environment variable init
+K8S_VERSION="1.2.0"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+green_color=$esc_seq"32;01m"
+
+echo "Running gophr dev cluster..."
+
+# Bind docker to the gophr docker machine
+eval $(docker-machine env gophr)
+
+# Make sure the cluster isn't running already
+if [[ -z $(docker ps | grep "hyperkube") ]]; then
+  docker run \
+      --volume=/:/rootfs:ro \
+      --volume=/sys:/sys:ro \
+      --volume=/var/lib/docker/:/var/lib/docker:rw \
+      --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
+      --volume=/var/run:/var/run:rw \
+      --net=host \
+      --pid=host \
+      --privileged=true \
+      -d \
+      gcr.io/google_containers/hyperkube-amd64:v${K8S_VERSION} \
+      /hyperkube kubelet \
+          --containerized \
+          --hostname-override="127.0.0.1" \
+          --address="0.0.0.0" \
+          --api-servers=http://localhost:8080 \
+          --config=/etc/kubernetes/manifests \
+          --cluster-dns=10.0.0.10 \
+          --cluster-domain=cluster.local \
+          --allow-privileged=true --v=2
+  echo -e "${green_color}✓ Gophr dev cluster started successfully!${no_color}"
+else
+  echo -e "${green_color}✓ Gophr dev cluster was already running.${no_color}"
+fi
