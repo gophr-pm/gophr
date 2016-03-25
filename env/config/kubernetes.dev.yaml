@@ -4,9 +4,11 @@ kind: Service
 metadata:
   name: fe-api-svc
 spec:
+  type: NodePort
   ports:
     - name: http
       port: 80
+      nodePort: 31080
       targetPort: 3000
       protocol: TCP
   selector:
@@ -18,13 +20,16 @@ kind: Service
 metadata:
   name: ws-svc
 spec:
+  type: NodePort
   ports:
     - name: http
       port: 80
+      nodePort: 32080
       targetPort: 80
       protocol: TCP
     - name: https
       port: 443
+      nodePort: 32443
       targetPort: 443
       protocol: TCP
   selector:
