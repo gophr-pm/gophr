@@ -1,0 +1,93 @@
+################################### SERVICES ###################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: fe-api-svc
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    tier: fe
+    role: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ws-svc
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+  selector:
+    tier: fe
+    role: ws
+---
+############################ REPLICATION CONTROLLERS ###########################
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: fe-api-dev-rc
+  labels:
+    tier: fe
+    role: api
+    env: dev
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: fe-api-dev
+          image: gophr-fe-api:dev
+          volumeMounts:
+            - name: api-src
+              mountPath: /go/src/app
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 3000
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+      volumes:
+        - name: api-src
+          hostPath:
+            path: /opt/gophr/frontend/api
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: ws-dev-rc
+  labels:
+    tier: fe
+    role: ws
+    env: dev
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: ws-dev
+          image: gophr-web-server:dev
+          volumeMounts:
+            - name: www
+              mountPath: /usr/share/nginx/html
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          livenessProbe:
+            httpGet:
+              path: /_status/healthz
+              port: 80
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+      volumes:
+        - name: www
+          hostPath:
+            path: /opt/gophr/frontend/web/dist
