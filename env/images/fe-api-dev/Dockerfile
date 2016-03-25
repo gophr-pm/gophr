@@ -4,9 +4,9 @@ RUN set -ex && apk add --update 'git'
 # Install git
 RUN go get github.com/codegangsta/gin
 # Set the environment variables for dev
-ENV PORT="80"
+ENV PORT="3000"
 # Specify the exposed port
-EXPOSE 80
+EXPOSE 3000
 # Specify the volume mount point as current dir
 VOLUME ["/go/src/app"]
 WORKDIR /go/src/app

@@ -1,0 +1,50 @@
+################################### SERVICES ###################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: fe-api-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  selector:
+    tier: frontend
+    role: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-server-service
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+  selector:
+    tier: frontend
+    role: web-server
+---
+############################ REPLICATION CONTROLLERS ###########################
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: fe-api-dev
+  labels:
+    tier: frontend
+    role: api
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: api-server
+          image: gophr-fe-api:dev
+          volumeMounts:
+            - name: api-src
+              mountPath: /go/src/app
+          ports:
+            - containerPort: 3000

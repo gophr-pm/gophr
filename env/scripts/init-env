@@ -26,10 +26,10 @@ docker-machine start gophr 1> /dev/null 2> /dev/null;
 eval $(docker-machine env gophr)
 
 # Make sure gophr.dev is a legit host
-$scripts_dir/update-cluster-host
+$scripts_dir/update-dev-cluster-host
 
 # Runs local development cluster
-$scripts_dir/run-cluster
+$scripts_dir/run-dev-cluster
 
 if [[ -z $(command -v kubectl) ]]; then
   # Declare ownership of /usr/local/bin for installation of kubernetes cli
@@ -61,6 +61,9 @@ if [[ -z $(docker ps -a | grep "gophr") ]]; then
   # Cook up 'dem images
   $scripts_dir/update-dev-images
 fi
+
+# Connect to the cluster
+
 
 # Color variables
 esc_seq="\x1b["
