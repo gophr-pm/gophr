@@ -1,0 +1,26 @@
+#! /bin/bash
+
+sudo echo "Initializing gophr dev environment..."
+
+# Constants
+DOCKER_MACHINE_NAME="gophr-dev"
+
+# Check if the docker machine already exists
+if [[ -z $(docker-machine ls | grep "^$DOCKER_MACHINE_NAME ") ]]; then
+  # Create the gophr docker machine since it doesn't exist yet
+  docker-machine create \
+      -d virtualbox \
+      --virtualbox-memory 2048 \
+      --virtualbox-cpu-count 2 \
+      $DOCKER_MACHINE_NAME
+fi
+
+# Ensure the docker machine is running
+docker-machine start $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null;
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+green_color=$esc_seq"32;01m"
+
+echo -e "${green_color}✓ Gophr dev environment initialized successfully!${no_color}"
