@@ -8,7 +8,7 @@ ENV PORT="3000"
 # Specify the exposed port
 EXPOSE 3000
 # Specify the volume mount point as current dir
-VOLUME ["/go/src/app"]
-WORKDIR /go/src/app
+VOLUME ["/go/src/github.com/skeswa/gophr"]
+WORKDIR /go/src/github.com/skeswa/gophr
 # Get all the appropriate dependencies
-CMD go get -d -v && gin
+CMD cd ./frontend/api && go get -d -v && gin
