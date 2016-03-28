@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ws-svc
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      nodePort: 32080
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
+      nodePort: 32443
+      targetPort: 443
+      protocol: TCP
+  selector:
+    tier: fe
+    role: ws
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: ws-dev-rc
+spec:
+  template:
+    metadata:
+      labels:
+        tier: fe
+        role: ws
+        env: dev
+    spec:
+      containers:
+        - name: ws-dev
+          image: gophr-web-server:dev
+          volumeMounts:
+            - name: www
+              mountPath: /usr/share/nginx/html
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+      volumes:
+        - name: www
+          hostPath:
+            path: /opt/gophr/frontend/web/dist

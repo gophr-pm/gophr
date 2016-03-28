@@ -1,0 +1,38 @@
+#! /bin/bash
+
+sudo echo "Initializing gophr dev environment..."
+
+# Constants
+DOCKER_MACHINE_NAME="gophr-dev"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+green_color=$esc_seq"32;01m"
+
+# Check if the docker machine already exists
+if [[ -z $(docker-machine ls | grep "^$DOCKER_MACHINE_NAME ") ]]; then
+  # Stop the other docker machines before creating this one
+  echo "Stopping all docker machines..."
+  docker-machine stop $(docker-machine ls --format="{{.Name}}") 1> /dev/null 2> /dev/null
+  echo -e "${green_color}✓ All docker machines stopped successfully!${no_color}"
+
+  # Create the gophr docker machine since it doesn't exist yet
+  echo "Creating gophr dev docker machine..."
+  docker-machine create \
+      -d virtualbox \
+      --virtualbox-memory 2048 \
+      --virtualbox-cpu-count 2 \
+      $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null
+  echo -e "${green_color}✓ Gophr dev docker machine created successfully!${no_color}"
+fi
+
+# Ensure the docker machine is running
+echo "Waiting for gophr dev docker machine to start..."
+docker-machine start $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null;
+echo -e "${green_color}✓ Gophr dev docker machine started successfully!${no_color}"
+
+# Make "gophr.dev" a thing
+"$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/host
+
+echo -e "${green_color}✓ Gophr dev environment initialized successfully!${no_color}"
