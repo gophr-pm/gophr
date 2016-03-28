@@ -4,7 +4,7 @@
 dev_bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 env_dir="$( dirname $( dirname $dev_bin_dir ) )"
 
-$env_dir/images/dev/db/bin/build      && $env_dir/images/dev/db/bin/run
-$env_dir/images/dev/api/bin/build     && $env_dir/images/dev/api/bin/run
-$env_dir/images/dev/router/bin/build  && $env_dir/images/dev/router/bin/run
-$env_dir/images/dev/ws/bin/build      && $env_dir/images/dev/ws/bin/run
+$env_dir/images/dev/ws/bin/kill
+$env_dir/images/dev/router/bin/kill
+$env_dir/images/dev/api/bin/kill
+$env_dir/images/dev/db/bin/kill
