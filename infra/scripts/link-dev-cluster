@@ -1,8 +1,8 @@
 #! /bin/bash
 
 scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-env_dir="$( cd "$( dirname "$scripts_dir" )" && pwd )"
-project_dir="$( cd "$( dirname "$env_dir" )" && pwd )"
+infra_dir="$( cd "$( dirname "$scripts_dir" )" && pwd )"
+project_dir="$( cd "$( dirname "$infra_dir" )" && pwd )"
 
 # Color variables
 esc_seq="\x1b["

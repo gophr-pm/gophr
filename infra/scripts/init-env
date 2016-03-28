@@ -4,7 +4,7 @@ sudo echo "Initializing gophr dev environment..."
 
 # Get base directories
 scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-env_dir="$( dirname $scripts_dir )"
+infra_dir="$( dirname $scripts_dir )"
 
 # Environment variable init
 K8S_VERSION="1.2.0"
