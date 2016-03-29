@@ -1,5 +1,6 @@
 {
   "name": "gophr",
+  "private": true,
   "version": "1.0.0",
   "description": "An end-to-end package management solution for Go.",
   "scripts": {
@@ -26,13 +27,17 @@
   },
   "homepage": "https://github.com/skeswa/gophr#readme",
   "devDependencies": {
+    "concurrently": "^2.0.0",
     "css-loader": "^0.23.1",
     "file-loader": "^0.8.5",
     "html-webpack-plugin": "^2.10.0",
+    "imagemin": "^4.0.0",
+    "rimraf": "^2.5.2",
     "style-loader": "^0.13.0",
     "ts-loader": "^0.8.1",
     "typescript": "^1.8.7",
     "url-loader": "^0.5.7",
+    "watch": "^0.17.1",
     "webpack": "^1.12.14"
   }
 }
