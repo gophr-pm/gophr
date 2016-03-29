@@ -1,0 +1,282 @@
+#! /bin/bash
+
+# Supported commands
+# gophrctl init - Inits dev env
+# gophrctl host - Sets up gophr.dev
+# gophrctl build * - Build all dev images
+# gophrctl build <IMG_NAME> - Build dev image called <IMG_NAME>
+# gophrctl kill * OR gophrctl down - Kill all dev containers
+# gophrctl kill <IMG_NAME> - Kill dev container called <IMG_NAME>
+# gophrctl run * OR gophrctl up - Starts all dev daemon containers
+# gophrctl run <IMG_NAME> - Run dev container called <IMG_NAME>
+# gophrctl log <IMG_NAME> --dev - Log dev container called <IMG_NAME>
+
+# Constants
+SOFT_TAB="    "
+HELP_COMM_DESC_BUILD="Updates a specific component's image"
+HELP_COMM_DESC_DOWN="An alias for 'gophrctl kill *'"
+HELP_COMM_DESC_HOST="Updates the host domain for the environment's docker machine"
+HELP_COMM_DESC_INIT="Initializes the environment"
+HELP_COMM_DESC_KILL="Kills a specific component's running container"
+HELP_COMM_DESC_LOG="Logs a specific component's running container"
+HELP_COMM_DESC_RUN="Turns a specific component's image into the corresponding container and runs it"
+HELP_COMM_DESC_UP="An alias for 'gophrctl run *'"
+HELP_OPT_DESC_HELP="Prints a helpful description"
+HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, ws"
+
+# Paths
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+project_dir="$( dirname $( dirname $bin_dir ) )"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+green_color=$esc_seq"32;01m"
+
+function print_error {
+  echo -e "${red_color}✗ ${1}${no_color}"
+}
+
+function print_general_help {
+  echo "Usage: gophrctl COMMAND [arg...]"
+  echo "       gophrctl [ --help ]"
+  echo ""
+  echo "The environment helper for the gophr project repository."
+  echo ""
+  echo "Commands:"
+  echo -e "${SOFT_TAB}build\t${HELP_COMM_DESC_BUILD}"
+  echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_DOWN}"
+  echo -e "${SOFT_TAB}host\t${HELP_COMM_DESC_HOST}"
+  echo -e "${SOFT_TAB}init\t${HELP_COMM_DESC_INIT}"
+  echo -e "${SOFT_TAB}kill\t${HELP_COMM_DESC_KILL}"
+  echo -e "${SOFT_TAB}log\t\t${HELP_COMM_DESC_LOG}"
+  echo -e "${SOFT_TAB}run\t\t${HELP_COMM_DESC_RUN}"
+  echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_UP}"
+  echo ""
+  echo "Run 'gophrctl COMMAND --help' for more information on a command."
+}
+
+function print_build_help {
+  echo ""
+  echo "Usage: gophrctl build [OPTIONS] COMPONENT"
+  echo ""
+  echo "$HELP_COMM_DESC_BUILD"
+  echo ""
+  echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_down_help {
+  echo ""
+  echo "Usage: gophrctl down [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_DESC_DOWN"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_host_help {
+  echo ""
+  echo "Usage: gophrctl host [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_DESC_HOST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_init_help {
+  echo ""
+  echo "Usage: gophrctl init [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_DESC_INIT"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_kill_help {
+  echo ""
+  echo "Usage: gophrctl kill [OPTIONS] COMPONENT"
+  echo ""
+  echo "$HELP_COMM_DESC_KILL"
+  echo ""
+  echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_log_help {
+  echo ""
+  echo "Usage: gophrctl log [OPTIONS] COMPONENT"
+  echo ""
+  echo "$HELP_COMM_DESC_LOG"
+  echo ""
+  echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_run_help {
+  echo ""
+  echo "Usage: gophrctl run [OPTIONS] COMPONENT"
+  echo ""
+  echo "$HELP_COMM_DESC_RUN"
+  echo ""
+  echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_up_help {
+  echo ""
+  echo "Usage: gophrctl up [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_DESC_UP"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function do_build {
+  if [[ "$1" == "--help" ]]; then
+    print_build_help
+  elif [[ -z "$1" ]]; then
+    print_error "Invalid component was specified\n"
+    print_build_help
+  elif [[ "$1" == "*" ]]; then
+    $bin_dir/dev/build
+  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
+    $project_dir/infra/images/dev/$1/bin/build
+  else
+    print_error "Invalid component was specified\n"
+    print_build_help
+  fi
+}
+
+function do_down {
+  if [[ "$1" == "--help" ]]; then
+    print_down_help
+  else
+    do_kill *
+  fi
+}
+
+
+function do_host {
+  if [[ "$1" == "--help" ]]; then
+    print_host_help
+  else
+    $bin_dir/dev/host
+  fi
+}
+
+function do_init {
+  if [[ "$1" == "--help" ]]; then
+    print_init_help
+  else
+    $bin_dir/dev/init
+  fi
+}
+
+function do_kill {
+  if [[ "$1" == "--help" ]]; then
+    print_kill_help
+  elif [[ -z "$1" ]]; then
+    print_error "Invalid component was specified\n"
+    print_kill_help
+  elif [[ "$1" == "*" ]]; then
+    $bin_dir/dev/kill
+  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
+    $project_dir/infra/images/dev/$1/bin/kill
+  else
+    print_error "Invalid component was specified\n"
+    print_kill_help
+  fi
+}
+
+function do_log {
+  if [[ "$1" == "--help" ]]; then
+    print_log_help
+  elif [[ -z "$1" ]]; then
+    print_error "Invalid component was specified\n"
+    print_log_help
+  else
+    eval $(docker-machine env gophr-dev)
+    docker logs -f gophr-$1
+  fi
+}
+
+function do_run {
+  if [[ "$1" == "--help" ]]; then
+    print_run_help
+  elif [[ -z "$1" ]]; then
+    print_error "Invalid component was specified\n"
+    print_run_help
+  elif [[ "$1" == "*" ]]; then
+    $bin_dir/dev/run
+  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
+    $project_dir/infra/images/dev/$1/bin/run
+  else
+    print_error "Invalid component was specified\n"
+    print_run_help
+  fi
+}
+
+function do_up {
+  if [[ "$1" == "--help" ]]; then
+    print_up_help
+  else
+    do_run *
+  fi
+}
+
+comm="$1"
+case $comm in
+  build)
+    shift
+    do_build $1 $2
+    ;;
+  down)
+    shift
+    do_down $1 $2
+    ;;
+  host)
+    shift
+    do_host $1 $2
+    ;;
+  init)
+    shift
+    do_init $1 $2
+    ;;
+  kill)
+    shift
+    do_kill $1 $2
+    ;;
+  log)
+    shift
+    do_log $1 $2
+    ;;
+  run)
+    shift
+    do_run $1 $2
+    ;;
+  up)
+    shift
+    do_up $1 $2
+    ;;
+  --help)
+    print_general_help
+    ;;
+  *)
+    print_error "Command was not recognized.\n"
+    print_general_help
+    ;;
+esac
