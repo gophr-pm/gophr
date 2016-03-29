@@ -1,0 +1,26 @@
+#! /bin/bash
+
+# Constants
+DOCKER_MACHINE_NAME="gophr-dev"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+blue_color=$esc_seq"34;01m"
+
+echo -en "\rConnecting to gophr dev docker machine..."
+if [[ $(docker-machine ls --format "{{.State}}" --filter "name=$DOCKER_MACHINE_NAME") == 'Running' ]]; then
+  # Connect to docker machine
+  eval $(docker-machine env "$DOCKER_MACHINE_NAME")
+  # Get the comma separated list of components
+  components="$(docker ps --format="{{.Names}}" | paste -sd "," -)"
+  components="${components/,/, }"
+  # If there are no running components, say so
+  if [[ -z $components ]]; then
+    echo -e "\rNo components are currently running."
+  else
+    echo -e "\rCurrently running components: ${blue_color}${components}${no_color}."
+  fi
+else
+  echo -e "\rNo components are currently running."
+fi
