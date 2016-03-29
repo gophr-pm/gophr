@@ -46,13 +46,13 @@ function print_error {
 
 function print_general_help {
   echo "Usage: gophrctl COMMAND [arg...]"
-  echo "       gophrctl [ --help ]"
+  echo "       gophrctl [--help]"
   echo ""
   echo "The environment helper for the gophr project repository."
   echo ""
   echo "Commands:"
   echo -e "${SOFT_TAB}build\t${HELP_COMM_DESC_BUILD}"
-  echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_DOWN}"
+  echo -e "${SOFT_TAB}down\t${HELP_COMM_DESC_DOWN}"
   echo -e "${SOFT_TAB}host\t${HELP_COMM_DESC_HOST}"
   echo -e "${SOFT_TAB}init\t${HELP_COMM_DESC_INIT}"
   echo -e "${SOFT_TAB}kill\t${HELP_COMM_DESC_KILL}"
