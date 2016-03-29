@@ -16,10 +16,10 @@ if [[ $(docker-machine ls --format "{{.State}}" --filter "name=$DOCKER_MACHINE_N
   components="$(docker ps --format="{{.Names}}" | paste -sd "," - | sed "s/,/, /g")"
   # If there are no running components, say so
   if [[ -z $components ]]; then
-    echo -e "\rNo components are currently running."
+    echo -e "\rNo components are currently running.     "
   else
     echo -e "\rCurrently running components: ${blue_color}${components}${no_color}."
   fi
 else
-  echo -e "\rNo components are currently running."
+  echo -e "\rNo components are currently running.     "
 fi
