@@ -35,6 +35,6 @@ docker run \
   -d \
   -v "$project_dir:/go/src/github.com/skeswa/gophr" \
   --name "$CONTAINER_NAME" \
-  --link "$DB_CONTAINER_NAME:db" \
+  --link "$DB_CONTAINER_NAME:$DB_CONTAINER_NAME" \
   "$IMAGE_NAME:$IMAGE_TAG" && \
 echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' container was started successfully!${no_color}"

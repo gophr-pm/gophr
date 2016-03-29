@@ -13,8 +13,7 @@ if [[ $(docker-machine ls --format "{{.State}}" --filter "name=$DOCKER_MACHINE_N
   # Connect to docker machine
   eval $(docker-machine env "$DOCKER_MACHINE_NAME")
   # Get the comma separated list of components
-  components="$(docker ps --format="{{.Names}}" | paste -sd "," -)"
-  components="${components/,/, }"
+  components="$(docker ps --format="{{.Names}}" | paste -sd "," - | sed "s/,/, /g")"
   # If there are no running components, say so
   if [[ -z $components ]]; then
     echo -e "\rNo components are currently running."

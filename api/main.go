@@ -20,7 +20,7 @@ func main() {
 		fmt.Fprint(w, "OK")
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
+		fmt.Fprintf(w, "Sup, I'm api. I love %s!", r.URL.Path[1:])
 	})
 	portStr := os.Getenv("PORT")
 	var port int
