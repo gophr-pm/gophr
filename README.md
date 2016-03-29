@@ -16,8 +16,25 @@ Then, since the `gophrctl` tool needs to be installed for the environment to fun
 ```sh
 $ cd $GOPHR_REPO/infra/bin/setup/ && ./install
 ```
-
-Afterwards, for instructions on how to use it, run:
+Next, the dev environment needs initialization. So, run the following:
+```sh
+$ gophrctl init
+```
+Afterwards, you can run the following for information on how to use `gophrctl`:
 ```sh
 $ gophrctl --help
 ```
+## Running the dev server
+Before the server can start, the dev docker images needs to be built. So, run the following (keep in mind that it will take a while):
+```sh
+$ gophrctl build
+```
+After the images are built, you can run:
+```sh
+$ gophrctl up
+```
+This starts every component of the dev server. Lastly, in order to compile the web application, run:
+```sh
+$ gophrcrl web
+```
+At this point, you should be able to open https://gophr.dev/ in your favorite browser.
