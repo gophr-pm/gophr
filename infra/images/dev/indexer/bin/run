@@ -31,6 +31,7 @@ printf "Running '$IMAGE_NAME:$IMAGE_TAG' container...\n\n"
 docker run \
   --rm \
   -v "$project_dir:/go/src/github.com/skeswa/gophr" \
+  --link "$DB_CONTAINER_NAME:$DB_CONTAINER_NAME" \
   --name "$CONTAINER_NAME" \
   "$IMAGE_NAME:$IMAGE_TAG" && \
 echo -e "\n${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' container ran successfully!${no_color}"
