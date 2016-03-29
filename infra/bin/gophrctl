@@ -18,6 +18,7 @@ HELP_COMM_DESC_DOWN="An alias for 'gophrctl kill *'"
 HELP_COMM_DESC_HOST="Updates the host domain for the environment's docker machine"
 HELP_COMM_DESC_INIT="Initializes the environment"
 HELP_COMM_DESC_KILL="Kills a specific component's running container"
+HELP_COMM_DESC_LIST="Lists the currently running components"
 HELP_COMM_DESC_LOG="Logs a specific component's running container"
 HELP_COMM_DESC_RUN="Turns a specific component's image into the corresponding container and runs it"
 HELP_COMM_DESC_UP="An alias for 'gophrctl run *'"
@@ -56,6 +57,7 @@ function print_general_help {
   echo -e "${SOFT_TAB}host\t${HELP_COMM_DESC_HOST}"
   echo -e "${SOFT_TAB}init\t${HELP_COMM_DESC_INIT}"
   echo -e "${SOFT_TAB}kill\t${HELP_COMM_DESC_KILL}"
+  echo -e "${SOFT_TAB}ls\t\t${HELP_COMM_DESC_LIST}"
   echo -e "${SOFT_TAB}log\t\t${HELP_COMM_DESC_LOG}"
   echo -e "${SOFT_TAB}run\t\t${HELP_COMM_DESC_RUN}"
   echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_UP}"
@@ -112,6 +114,16 @@ function print_kill_help {
   echo "$HELP_COMM_DESC_KILL"
   echo ""
   echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_list_help {
+  echo ""
+  echo "Usage: gophrctl ls [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_LIST_DOWN"
   echo ""
   echo "Options:"
   echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
@@ -208,6 +220,14 @@ function do_kill {
   fi
 }
 
+function do_list {
+  if [[ "$1" == "--help" ]]; then
+    print_list_help
+  else
+    $bin_dir/dev/list
+  fi
+}
+
 function do_log {
   if [[ "$1" == "--help" ]]; then
     print_log_help
@@ -265,6 +285,10 @@ case $comm in
   kill)
     shift
     do_kill $1 $2
+    ;;
+  ls)
+    shift
+    do_list $1 $2
     ;;
   log)
     shift
