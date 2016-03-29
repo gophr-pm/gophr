@@ -155,14 +155,14 @@ function do_build {
   if [[ "$1" == "--help" ]]; then
     print_build_help
   elif [[ -z "$1" ]]; then
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_build_help
   elif [[ "$1" == "*" ]]; then
     $bin_dir/dev/build
   elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
     $project_dir/infra/images/dev/$1/bin/build
   else
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_build_help
   fi
 }
@@ -171,7 +171,7 @@ function do_down {
   if [[ "$1" == "--help" ]]; then
     print_down_help
   else
-    do_kill *
+    $bin_dir/dev/down
   fi
 }
 
@@ -196,14 +196,14 @@ function do_kill {
   if [[ "$1" == "--help" ]]; then
     print_kill_help
   elif [[ -z "$1" ]]; then
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_kill_help
   elif [[ "$1" == "*" ]]; then
-    $bin_dir/dev/kill
+    $bin_dir/dev/down
   elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
     $project_dir/infra/images/dev/$1/bin/kill
   else
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_kill_help
   fi
 }
@@ -212,7 +212,7 @@ function do_log {
   if [[ "$1" == "--help" ]]; then
     print_log_help
   elif [[ -z "$1" ]]; then
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_log_help
   else
     eval $(docker-machine env gophr-dev)
@@ -224,14 +224,14 @@ function do_run {
   if [[ "$1" == "--help" ]]; then
     print_run_help
   elif [[ -z "$1" ]]; then
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_run_help
   elif [[ "$1" == "*" ]]; then
-    $bin_dir/dev/run
+    $bin_dir/dev/up
   elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
     $project_dir/infra/images/dev/$1/bin/run
   else
-    print_error "Invalid component was specified\n"
+    print_error "Invalid component was specified"
     print_run_help
   fi
 }
@@ -240,7 +240,7 @@ function do_up {
   if [[ "$1" == "--help" ]]; then
     print_up_help
   else
-    do_run *
+    $bin_dir/dev/up
   fi
 }
 
