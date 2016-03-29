@@ -2,7 +2,7 @@
 
 gophr
 gin-bin
-frontend/web/dist/
+web/dist/
 db-dev/data/
 
 # Created by https://www.gitignore.io/api/osx,go,node
