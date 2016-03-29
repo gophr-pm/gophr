@@ -4,7 +4,8 @@
 dev_bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 infra_dir="$( dirname $( dirname $dev_bin_dir ) )"
 
-$infra_dir/images/dev/db/bin/build
 $infra_dir/images/dev/api/bin/build
+$infra_dir/images/dev/db/bin/build
+$infra_dir/images/dev/indexer/bin/build
 $infra_dir/images/dev/router/bin/build
 $infra_dir/images/dev/ws/bin/build
