@@ -24,8 +24,14 @@ HELP_COMM_DESC_UP="An alias for 'gophrctl run *'"
 HELP_OPT_DESC_HELP="Prints a helpful description"
 HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, ws"
 
-# Paths
-bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Resolve bin & project dir
+script_src="${BASH_SOURCE[0]}"
+while [ -h "$script_src" ]; do # resolve $script_src until the file is no longer a symlink
+  bin_dir="$( cd -P "$( dirname "$script_src" )" && pwd )"
+  script_src="$(readlink "$script_src")"
+  [[ $script_src != /* ]] && script_src="$bin_dir/$script_src" # if $script_src was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+bin_dir="$( cd -P "$( dirname "$script_src" )" && pwd )"
 project_dir="$( dirname $( dirname $bin_dir ) )"
 
 # Color variables
