@@ -2,9 +2,9 @@
 
 # Constants
 dev_bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-env_dir="$( dirname $( dirname $dev_bin_dir ) )"
+infra_dir="$( dirname $( dirname $dev_bin_dir ) )"
 
-$env_dir/images/dev/ws/bin/kill
-$env_dir/images/dev/router/bin/kill
-$env_dir/images/dev/api/bin/kill
-$env_dir/images/dev/db/bin/kill
+$infra_dir/images/dev/ws/bin/kill
+$infra_dir/images/dev/router/bin/kill
+$infra_dir/images/dev/api/bin/kill
+$infra_dir/images/dev/db/bin/kill

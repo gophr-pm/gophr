@@ -2,8 +2,8 @@
 
 # Get base directories
 scripts_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-env_dir="$( dirname $scripts_dir )"
-images_dir="$env_dir/images"
+infra_dir="$( dirname $scripts_dir )"
+images_dir="$infra_dir/images"
 
 # Color variables
 esc_seq="\x1b["
