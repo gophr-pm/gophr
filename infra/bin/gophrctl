@@ -11,6 +11,7 @@ HELP_COMM_DESC_LIST="Lists the currently running components"
 HELP_COMM_DESC_LOG="Logs a specific component's running container"
 HELP_COMM_DESC_RUN="Turns a specific component's image into the corresponding container and runs it"
 HELP_COMM_DESC_UP="An alias for 'gophrctl run all'"
+HELP_COMM_DESC_WEB="Starts the web assets compiler"
 HELP_OPT_DESC_HELP="Prints a helpful description"
 HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, ws"
 
@@ -50,6 +51,7 @@ function print_general_help {
   echo -e "${SOFT_TAB}log\t\t${HELP_COMM_DESC_LOG}"
   echo -e "${SOFT_TAB}run\t\t${HELP_COMM_DESC_RUN}"
   echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_UP}"
+  echo -e "${SOFT_TAB}web\t\t${HELP_COMM_DESC_WEB}"
   echo ""
   echo "Run 'gophrctl COMMAND --help' for more information on a command."
 }
@@ -147,6 +149,16 @@ function print_up_help {
   echo "Usage: gophrctl up [OPTIONS]"
   echo ""
   echo "$HELP_COMM_DESC_UP"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_web_help {
+  echo ""
+  echo "Usage: gophrctl up [OPTIONS]"
+  echo ""
+  echo "$HELP_COMM_DESC_WEB"
   echo ""
   echo "Options:"
   echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
@@ -252,6 +264,14 @@ function do_up {
   fi
 }
 
+function do_web {
+  if [[ "$1" == "--help" ]]; then
+    print_web_help
+  else
+    $bin_dir/dev/web
+  fi
+}
+
 comm="$1"
 case $comm in
   build)
@@ -289,6 +309,10 @@ case $comm in
   up)
     shift
     do_up $1 $2
+    ;;
+  web)
+    shift
+    do_web $1 $2
     ;;
   --help)
     print_general_help
