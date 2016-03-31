@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -15,20 +16,28 @@ const (
 	semverPrereleaseLabelPrefixChar = '-'
 )
 
-type SemverInequality int
-
-const (
-	SemverInequalityNone        = iota
-	SemverInequalityLessThan    = iota
-	SemverInequalityGreaterThan = iota
-)
-
 type SemverPartType int
 
 const (
-	SemverPartTypeNumber      = iota
-	SemverPartTypeWildcard    = iota
-	SemverPartTypeUnspecified = iota
+	semverPartTypeNumber      = iota
+	semverPartTypeWildcard    = iota
+	semverPartTypeUnspecified = iota
+)
+
+type SemverPrefix int
+
+const (
+	semverPrefixNone  = iota
+	semverPrefixTilde = iota
+	semverPrefixCarat = iota
+)
+
+type SemverSuffix int
+
+const (
+	semverSuffixNone        = iota
+	semverSuffixLessThan    = iota
+	semverSuffixGreaterThan = iota
 )
 
 type SemverPart struct {
@@ -37,14 +46,17 @@ type SemverPart struct {
 }
 
 type Semver struct {
-	HasTilde          bool
-	HasCarat          bool
+	Prefix            SemverPrefix
 	MajorVersion      SemverPart
 	MinorVersion      SemverPart
 	PatchVersion      SemverPart
 	PrereleaseLabel   string
 	PrereleaseVersion SemverPart
-	VersionInequality SemverInequality
+	Suffix            SemverSuffix
+}
+
+func NewSemver(prefix string, majorVersion string, minorVersion string, patchVersion string, prereleaseLabel string, prereleaseVersion string, suffix string) (Semver, error) {
+	// TODO(skeswa): implement this with full validation
 }
 
 func (s Semver) String() {
@@ -53,18 +65,18 @@ func (s Semver) String() {
 		versionStringCompleted = false
 	)
 
-	if s.HasTilde {
+	if s.prefix == semverPrefixTilde {
 		buffer.WriteByte(semverTildeChar)
-	} else if s.HasCarat {
+	} else if s.prefix == semverPrefixCarat {
 		buffer.WriteByte(semverCaratChar)
 	}
 
-	if s.MajorVersion.Type == SemverPartTypeNumber {
-		buffer.WriteString(strcons.Itoa(s.MajorVersion.Number))
+	if s.majorVersion.Type == semverPartTypeNumber {
+		buffer.WriteString(strconv.Itoa(s.majorVersion.Number))
 	} else {
 		var majorValue string
 
-		if s.MajorVersion.Type == SemverPartTypeWildcard {
+		if s.majorVersion.Type == semverPartTypeWildcard {
 			majorValue = "a wildcard"
 		} else {
 			majorValue = "unspecified"
@@ -73,10 +85,10 @@ func (s Semver) String() {
 		panic(fmt.Sprintf("Cannot stringify invalid semver (major is %s)", majorValue))
 	}
 
-	if s.Minor.Type == SemverPartTypeNumber {
+	if s.minorVersion.Type == semverPartTypeNumber {
 		buffer.WriteByte(semverSeparatorChar)
-		buffer.WriteString(strcons.Itoa(s.Minor.Number))
-	} else if s.Minor.Type == SemverPartTypeWildcard {
+		buffer.WriteString(strconv.Itoa(s.minorVersion.Number))
+	} else if s.minorVersion.Type == semverPartTypeWildcard {
 		buffer.WriteByte(semverSeparatorChar)
 		buffer.WriteByte(semverWildcardChar)
 	} else {
@@ -84,10 +96,10 @@ func (s Semver) String() {
 	}
 
 	if !versionStringCompleted {
-		if s.Patch.Type == SemverPartTypeNumber {
+		if s.patchVersion.Type == semverPartTypeNumber {
 			buffer.WriteByte(semverSeparatorChar)
-			buffer.WriteString(strcons.Itoa(s.Patch.Number))
-		} else if s.Patch.Type == SemverPartTypeWildcard {
+			buffer.WriteString(strconv.Itoa(s.Patch.Number))
+		} else if s.patchVersion.Type == semverPartTypeWildcard {
 			buffer.WriteByte(semverSeparatorChar)
 			buffer.WriteByte(semverWildcardChar)
 		} else {
@@ -96,27 +108,27 @@ func (s Semver) String() {
 	}
 
 	if !versionStringCompleted {
-		if len(s.PrereleaseLabel) > 0 {
+		if len(s.prereleaseLabel) > 0 {
 			buffer.WriteByte(semverPrereleaseLabelPrefixChar)
-			buffer.WriteString(s.PrereleaseLabel)
+			buffer.WriteString(s.prereleaseLabel)
 		} else {
 			versionStringCompleted = true
 		}
 	}
 
 	if !versionStringCompleted {
-		if s.Prerelease.Type == SemverPartTypeNumber {
+		if s.prerelease.Type == semverPartTypeNumber {
 			buffer.WriteByte(semverSeparatorChar)
-			buffer.WriteString(strcons.Itoa(s.Prerelease.Number))
-		} else if s.Prerelease.Type == SemverPartTypeWildcard {
+			buffer.WriteString(strconv.Itoa(s.prerelease.Number))
+		} else if s.prerelease.Type == semverPartTypeWildcard {
 			buffer.WriteByte(semverSeparatorChar)
 			buffer.WriteByte(semverWildcardChar)
 		}
 	}
 
-	if s.VersionInequality == SemverInequalityLessThan {
+	if s.Suffix == semverSuffixLessThan {
 		buffer.WriteByte(semverLessThanChar)
-	} else if s.VersionInequality == SemverInequalityGreaterThan {
+	} else if s.Suffix == semverSuffixGreaterThan {
 		buffer.WriteByte(semverGreaterThanChar)
 	}
 
