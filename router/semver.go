@@ -165,6 +165,10 @@ func NewSemver(
 		} else {
 			return semver, fmt.Errorf(errorParseFailureInvalidSegment, semverSegmentNamePrerelease, prereleaseVersion)
 		}
+	} else {
+		if !versionCompleted {
+			versionCompleted = true
+		}
 	}
 
 	if len(prereleaseVersion) > 0 {
