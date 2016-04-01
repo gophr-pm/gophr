@@ -146,3 +146,63 @@ func TestNewSemver(t *testing.T) {
 	assert.Equal(t, 43, semver.PrereleaseVersion.Number, "prerelease should the correct number")
 	assert.Equal(t, semverSuffixGreaterThan, semver.Suffix, "suffix should be greater than")
 }
+
+func TestSemverString(t *testing.T) {
+	var (
+		semver Semver
+	)
+
+	semver, _ = NewSemver("", "1", "", "", "", "", "")
+	assert.Equal(t, "1", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("~", "1", "", "", "", "", "")
+	assert.Equal(t, "~1", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("^", "1", "", "", "", "", "")
+	assert.Equal(t, "^1", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("~", "1", "2", "", "", "", "")
+	assert.Equal(t, "~1.2", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "", "", "")
+	assert.Equal(t, "1.2.3", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "x", "", "", "", "")
+	assert.Equal(t, "1.x", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "x", "", "", "")
+	assert.Equal(t, "1.2.x", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "alpha", "", "")
+	assert.Equal(t, "1.2.3-alpha", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "alpha", "x", "")
+	assert.Equal(t, "1.2.3-alpha.x", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "alpha", "4", "")
+	assert.Equal(t, "1.2.3-alpha.4", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "alpha", "4", "+")
+	assert.Equal(t, "1.2.3-alpha.4+", semver.String(), "serialized semver should match expectations")
+
+	semver, _ = NewSemver("", "1", "2", "3", "alpha", "4", "-")
+	assert.Equal(t, "1.2.3-alpha.4-", semver.String(), "serialized semver should match expectations")
+
+	semver = Semver{
+		MajorVersion: SemverSegment{
+			Type: semverSegmentTypeWildcard,
+		},
+	}
+	assert.Panics(t, func() {
+		_ = semver.String()
+	}, "semver serialization should fail since major segment in an incorrect type")
+
+	semver = Semver{
+		MajorVersion: SemverSegment{
+			Type: semverSegmentTypeUnspecified,
+		},
+	}
+	assert.Panics(t, func() {
+		_ = semver.String()
+	}, "semver serialization should fail since major segment in an incorrect type")
+}
