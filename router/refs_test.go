@@ -160,8 +160,8 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash2 HEAD\x00symref=HEAD:refs/heads/v1 foo oldref=bar baz",
-		"00000000000000000000000000000000000hash2 refs/tags/master",
+		"00000000000000000000000000000000000hash2 HEAD\x00foo oldref=bar baz",
+		"00000000000000000000000000000000000hash2 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/tags/v1",
 	),
 	[]SemverCandidate{
@@ -375,6 +375,18 @@ func reflines(lines ...string) string {
 	return buf.String()
 }
 
+func invalidSizeStringReflines() string {
+	var buf bytes.Buffer
+	buf.WriteString("001z# service=git-upload-pack\n0000")
+	return buf.String()
+}
+
+func sizeTooBigReflines() string {
+	var buf bytes.Buffer
+	buf.WriteString("9999# service=git-upload-pack\n0000")
+	return buf.String()
+}
+
 func candidatesMatch(t *testing.T, candidates1 []SemverCandidate, candidates2 []SemverCandidate) bool {
 	if candidates1 == nil && candidates2 != nil {
 		t.Logf("Candidates 1 was nil and Candidates 2 was not")
@@ -405,11 +417,28 @@ func candidatesMatch(t *testing.T, candidates1 []SemverCandidate, candidates2 []
 	return true
 }
 
-func TestRefs(t *testing.T) {
+func TestGetRefs(t *testing.T) {
+	_, err := FetchRefs("aljkfdhaksdajfhadfsjhlkjadshfaj.alsduj/sldkf/s")
+	assert.NotNil(t, err, "fetch should fail since the github root is invalid")
+
+	_, err = FetchRefs("github.com/thisisnotarealthing/notevenalittle")
+	assert.NotNil(t, err, "fetch should fail since the github root is invalid")
+
+	_, err = FetchRefs("github.com/skeswa/gophr")
+	assert.Nil(t, err, "fetch should work for valid repos")
+}
+
+func TestUseRefs(t *testing.T) {
+	refs, err := NewRefs([]byte(invalidSizeStringReflines()))
+	assert.NotNil(t, err, "refs parsing should have failed because the size wasn't a number")
+
+	refs, err = NewRefs([]byte(sizeTooBigReflines()))
+	assert.NotNil(t, err, "refs parsing should have failed because the size too big")
+
 	for _, test := range refsTests {
 		t.Log(test.summary)
 
-		refs, err := NewRefs([]byte(test.original))
+		refs, err = NewRefs([]byte(test.original))
 		assert.Nil(t, err, "refs should have been parsed correctly")
 		assert.True(t, candidatesMatch(t, test.versionCandidates, refs.Candidates), "parsed version candidates should be correct")
 

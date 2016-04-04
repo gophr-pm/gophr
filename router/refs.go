@@ -31,7 +31,7 @@ const (
 	refsMasterLineFormat                      = "%s refs/heads/master\n"
 	refsSymRefAssignment                      = "symref="
 	refsOldRefAssignment                      = "oldref="
-	refsFetchURLTemplate                      = "https://%s/.git/info/refs?service=git-upload-pack"
+	refsFetchURLTemplate                      = "https://%s.git/info/refs?service=git-upload-pack"
 	refsAugmentedHeadLineFormat               = "%s HEAD\n"
 	refsAugmentedSymrefHeadLineFormat         = "%s HEAD\x00symref=HEAD:%s\n"
 	refsAugmentedHeadLineWithCapsFormat       = "%s HEAD\x00%s\n"
@@ -189,11 +189,13 @@ func FetchRefs(githubRoot string) (Refs, error) {
 	if res.StatusCode >= 400 && res.StatusCode < 500 {
 		return Refs{}, fmt.Errorf(errorRefsFetchNoSuchRepo, githubRoot)
 	} else if res.StatusCode >= 500 {
+		// FYI no reliable way to get test coverage here; this never happens
 		return Refs{}, fmt.Errorf(errorRefsFetchGithubError, res.Status)
 	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		// FYI no reliable way to get test coverage here; this never happens
 		return Refs{}, fmt.Errorf(errorRefsFetchGithubParseError, err)
 	}
 
