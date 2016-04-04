@@ -46,8 +46,8 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash3 HEAD\x00symref=HEAD:refs/heads/v1",
-		"00000000000000000000000000000000000hash3 refs/heads/master",
+		"00000000000000000000000000000000000hash4 HEAD\x00symref=HEAD:refs/heads/v2",
+		"00000000000000000000000000000000000hash4 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/heads/v0",
 		"00000000000000000000000000000000000hash3 refs/heads/v1",
 		"00000000000000000000000000000000000hash4 refs/heads/v2",
@@ -92,8 +92,8 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash3 HEAD\x00symref=HEAD:refs/heads/v1.3",
-		"00000000000000000000000000000000000hash3 refs/heads/master",
+		"00000000000000000000000000000000000hash4 HEAD\x00symref=HEAD:refs/heads/v1.2",
+		"00000000000000000000000000000000000hash4 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/heads/v1.1",
 		"00000000000000000000000000000000000hash3 refs/heads/v1.3",
 		"00000000000000000000000000000000000hash4 refs/heads/v1.2",
@@ -187,8 +187,8 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash3 HEAD",
-		"00000000000000000000000000000000000hash3 refs/heads/master",
+		"00000000000000000000000000000000000hash4 HEAD",
+		"00000000000000000000000000000000000hash4 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/tags/v0",
 		"00000000000000000000000000000000000hash3 refs/tags/v1",
 		"00000000000000000000000000000000000hash4 refs/tags/v2",
@@ -234,8 +234,8 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash4 HEAD",
-		"00000000000000000000000000000000000hash4 refs/heads/master",
+		"00000000000000000000000000000000000hash5 HEAD",
+		"00000000000000000000000000000000000hash5 refs/heads/master",
 		"00000000000000000000000000000000000hash3 refs/tags/v1",
 		"00000000000000000000000000000000000hash4 refs/tags/v1^{}",
 		"00000000000000000000000000000000000hash5 refs/tags/v2",
@@ -283,8 +283,8 @@ var refsTests = []refsTest{{
 	),
 	"v1-unstable",
 	reflines(
-		"00000000000000000000000000000000000hash5 HEAD\x00symref=HEAD:refs/heads/v1.3-unstable",
-		"00000000000000000000000000000000000hash5 refs/heads/master",
+		"00000000000000000000000000000000000hash7 HEAD\x00symref=HEAD:refs/heads/v2",
+		"00000000000000000000000000000000000hash7 refs/heads/master",
 		"00000000000000000000000000000000000hash3 refs/heads/v1",
 		"00000000000000000000000000000000000hash4 refs/heads/v1.1-unstable",
 		"00000000000000000000000000000000000hash5 refs/heads/v1.3-unstable",
@@ -388,5 +388,12 @@ func TestRefs(t *testing.T) {
 		refs, err := NewRefs([]byte(test.original))
 		assert.Nil(t, err, "refs should have been parsed correctly")
 		assert.True(t, candidatesMatch(t, test.versionCandidates, refs.Candidates), "parsed version candidates should be correct")
+
+		if len(refs.Candidates) > 0 {
+			lastCandidate := refs.Candidates[len(refs.Candidates)-1]
+			reserializedRefs, err := refs.Reserialize(lastCandidate)
+			assert.Nil(t, err, "refs should have been serialized correctly")
+			assert.Equal(t, test.changed, string(reserializedRefs[:]), "refs should have been serialized correctly")
+		}
 	}
 }

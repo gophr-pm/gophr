@@ -136,7 +136,7 @@ func NewRefs(data []byte) (Refs, error) {
 			indexHeadLineEnd = j
 		} else if name == refsHeadMaster {
 			indexMasterLineStart = i
-			indexHeadLineEnd = j
+			indexMasterLineEnd = j
 		} else if captureGroups := versionRefRegex.FindStringSubmatch(name); captureGroups != nil {
 			var (
 				majorVersion      = captureGroups[1]
@@ -268,6 +268,7 @@ func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) ([]byte, err
 			line = fmt.Sprintf(refsAugmentedHeadLineWithCapsFormat, versionRefHash, caps)
 		}
 	}
+	fmt.Fprintf(&buf, "%04x%s", 4+len(line), line)
 
 	// Insert the master reference line.
 	line = fmt.Sprintf(refsMasterLineFormat, versionRefHash)
