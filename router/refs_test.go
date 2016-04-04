@@ -153,6 +153,30 @@ var refsTests = []refsTest{{
 		},
 	},
 }, {
+	"Disable original symref capability with tags",
+	reflines(
+		"00000000000000000000000000000000000hash1 HEAD\x00foo symref=bar baz",
+		"00000000000000000000000000000000000hash2 refs/tags/v1",
+	),
+	"v1",
+	reflines(
+		"00000000000000000000000000000000000hash2 HEAD\x00symref=HEAD:refs/heads/v1 foo oldref=bar baz",
+		"00000000000000000000000000000000000hash2 refs/tags/master",
+		"00000000000000000000000000000000000hash2 refs/tags/v1",
+	),
+	[]SemverCandidate{
+		{
+			"00000000000000000000000000000000000hash2", // hash
+			"refs/tags/v1",                             // name
+			1,                                          // major
+			0,                                          // minor
+			0,                                          // patch
+			"",                                         // pre-release label
+			0,                                          // pre-release version
+			false,                                      // pre-release exists
+		},
+	},
+}, {
 	"Replace original master branch",
 	reflines(
 		"00000000000000000000000000000000000hash1 HEAD",
