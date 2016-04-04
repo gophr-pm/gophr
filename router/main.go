@@ -16,9 +16,7 @@ func annoy() {
 }
 
 func main() {
-	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
-	})
+	http.HandleFunc("/status", healthCheckHandler)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Sup, I'm routerr. I love %s!", r.URL.Path[1:])
 	})
