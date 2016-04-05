@@ -247,6 +247,113 @@ func NewSemverSelector(
 	return semver, nil
 }
 
+func (s SemverSelector) Matches(candidate SemverCandidate) {
+	if s.IsFlexible {
+		if s.Suffix == semverSelectorSuffixGreaterThan {
+			if s.MajorVersion.Number > candidate.MajorVersion {
+				return true
+			} else if s.MajorVersion.Number < candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return true
+			} else if s.MinorVersion.Number < candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return true
+			} else if s.PatchVersion.Number < candidate.PatchVersion {
+				return false
+			} else if len(s.PrereleaseLabel) == 0 && len(candidate.PrereleaseLabel) > 0 {
+				return false
+			} else if len(s.PrereleaseLabel) > 0 && len(candidate.PrereleaseLabel) == 0 {
+				return true
+			} else if s.PrereleaseLabel != candidate.PrereleaseLabel {
+				return false
+			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+				return candidate.PrereleaseVersion >= s.PrereleaseVersion.Number
+			} else {
+				return true
+			}
+		} else if s.Suffix == semverSelectorSuffixLessThan {
+			if s.MajorVersion.Number > candidate.MajorVersion {
+				return false
+			} else if s.MajorVersion.Number < candidate.MajorVersion {
+				return true
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return false
+			} else if s.MinorVersion.Number < candidate.MinorVersion {
+				return true
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			} else if s.PatchVersion.Number < candidate.PatchVersion {
+				return true
+			} else if len(s.PrereleaseLabel) == 0 && len(candidate.PrereleaseLabel) > 0 {
+				return true
+			} else if len(s.PrereleaseLabel) > 0 && len(candidate.PrereleaseLabel) == 0 {
+				return false
+			} else if s.PrereleaseLabel != candidate.PrereleaseLabel {
+				return true
+			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+				return candidate.PrereleaseVersion <= s.PrereleaseVersion.Number
+			} else {
+				return true
+			}
+		} else if s.Prefix == semverSelectorPrefixCarat {
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			} else {
+				return len(candidate.PrereleaseLabel) == 0
+			}
+		} else if s.Prefix == semverSelectorPrefixTilde {
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number != candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			} else {
+				return len(candidate.PrereleaseLabel) == 0
+			}
+		} else {
+			// This means that we have at least one wildcard
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			}
+			switch s.MinorVersion.Type {
+			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+				return true
+			}
+			switch s.PatchVersion.Type {
+			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+				return true
+			}
+			return s.PrereleaseLabel != candidate.PrereleaseLabel
+		}
+	} else {
+		primaryVersionsMatch := s.MajorVersion.Number == candidate.MajorVersion &&
+			s.MinorVersion.Number == candidate.MinorVersion &&
+			s.PatchVersion.Number == candidate.PatchVersion
+
+		if len(s.PrereleaseLabel) > 0 {
+			matchesUpToLabel := primaryVersionsMatch &&
+				s.PrereleaseLabel == candidate.PrereleaseLabel
+
+			if matchesUpToLabel {
+				if s.PrereleaseVersion.Type == semverSegmentTypeUnspecified {
+					return true
+				} else {
+					return s.PrereleaseVersion.Number == candidate.PrereleaseVersion
+				}
+			}
+		} else {
+			return primaryVersionsMatch
+		}
+	}
+}
+
 func (s SemverSelector) String() string {
 	var (
 		buffer                 bytes.Buffer

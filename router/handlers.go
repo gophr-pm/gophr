@@ -21,7 +21,7 @@ import "net/http"
 // 	//   - /user/repo@1.1.1-
 // 	// - Matches within patch level of version (carat in npm):
 // 	//   - /user/repo@~1.1.1
-// 	repoURLRegex = regexp.MustCompile(`^/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])/([a-zA-Z0-9\-_]+)(?:@(~?)([0-9]+)\.(?:([0-9]|x))(?:\.([0-9]|x))?(?:\-([a-zA-Z0-9\-_]+)\.([0-9]+))?([+-]?))?`)
+// 	repoURLRegex = regexp.MustCompile(`\/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\/([a-zA-Z0-9\-_]+)(?:@(~?)([0-9]+)\.(?:([0-9]|x))(?:\.([0-9]|x))?(?:\-([a-zA-Z0-9\-_]+)(?:\.([0-9]|x+))?)?([+-]?))?`)
 // )
 
 func healthCheckHandler(resp http.ResponseWriter, req *http.Request) {
