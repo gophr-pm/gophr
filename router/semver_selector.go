@@ -228,8 +228,10 @@ func NewSemverSelector(
 		if !semver.IsFlexible {
 			if suffix[0] == semverSelectorGreaterThanChar {
 				semver.Suffix = semverSelectorSuffixGreaterThan
+				semver.IsFlexible = true
 			} else if suffix[0] == semverSelectorLessThanChar {
 				semver.Suffix = semverSelectorSuffixLessThan
+				semver.IsFlexible = true
 			} else {
 				return semver, fmt.Errorf(
 					errorSemverParseFailureInvalidSegment,
@@ -245,6 +247,138 @@ func NewSemverSelector(
 	}
 
 	return semver, nil
+}
+
+func (s SemverSelector) Matches(candidate SemverCandidate) bool {
+	if s.IsFlexible {
+		if s.Suffix == semverSelectorSuffixGreaterThan {
+			if s.MajorVersion.Number > candidate.MajorVersion {
+				return false
+			} else if s.MajorVersion.Number < candidate.MajorVersion {
+				return true
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return false
+			} else if s.MinorVersion.Number < candidate.MinorVersion {
+				return true
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			} else if s.PatchVersion.Number < candidate.PatchVersion {
+				return true
+			} else if len(s.PrereleaseLabel) == 0 && len(candidate.PrereleaseLabel) > 0 {
+				// Don't match a pre-release candidate if possible
+				return false
+			} else if len(s.PrereleaseLabel) > 0 && len(candidate.PrereleaseLabel) == 0 {
+				// If the selector has a pre-release, and the candidate doesn't, then
+				// we can conclude that it is greater
+				return true
+			} else if s.PrereleaseLabel != candidate.PrereleaseLabel {
+				// If the selector's pre-release doesn't match the candidate's
+				// pre-release, then they should not match
+				return false
+			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+				// The fact that we've gotten this far means that the pre-release labels
+				// match - we just need to check that the version itself is greater
+				return candidate.PrereleaseVersion >= s.PrereleaseVersion.Number
+			} else {
+				// If we got this far, the pre-release version of the selector was
+				// unspecified, so, since anything is greater than nothing, we default
+				// to true
+				return true
+			}
+		} else if s.Suffix == semverSelectorSuffixLessThan {
+			if s.MajorVersion.Number > candidate.MajorVersion {
+				return true
+			} else if s.MajorVersion.Number < candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return true
+			} else if s.MinorVersion.Number < candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return true
+			} else if s.PatchVersion.Number < candidate.PatchVersion {
+				return false
+			} else if len(s.PrereleaseLabel) == 0 && len(candidate.PrereleaseLabel) > 0 {
+				// Don't match a pre-release candidate if possible
+				return false
+			} else if len(s.PrereleaseLabel) > 0 && len(candidate.PrereleaseLabel) == 0 {
+				// If the selector has a pre-release, and the candidate doesn't, then
+				// the candidate probably doesn't match given that pre-release means the
+				// version is "less than" one without a pre-release
+				return false
+			} else if s.PrereleaseLabel != candidate.PrereleaseLabel {
+				// If the selector's pre-release doesn't match the candidate's
+				// pre-release, then they should not match
+				return false
+			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+				// The fact that we've gotten this far means that the pre-release labels
+				// match - we just need to check that the version itself is lesser
+				return candidate.PrereleaseVersion <= s.PrereleaseVersion.Number
+			} else {
+				// If we got this far, the pre-release version of the selector was
+				// unspecified. We treat that virtually as pre-release version 0. Since
+				// only a candidate with pre-release version 0 could match, we'll
+				// make it the return condition.
+				return candidate.PrereleaseVersion == 0
+			}
+		} else if s.Prefix == semverSelectorPrefixCarat {
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number > candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			}
+
+			return len(candidate.PrereleaseLabel) == 0
+		} else if s.Prefix == semverSelectorPrefixTilde {
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			} else if s.MinorVersion.Number != candidate.MinorVersion {
+				return false
+			} else if s.PatchVersion.Number > candidate.PatchVersion {
+				return false
+			}
+
+			return len(candidate.PrereleaseLabel) == 0
+		} else {
+			// This means that we have at least one wildcard
+			if s.MajorVersion.Number != candidate.MajorVersion {
+				return false
+			}
+			switch s.MinorVersion.Type {
+			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+				return true
+			}
+			switch s.PatchVersion.Type {
+			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+				return true
+			}
+
+			return s.PrereleaseLabel == candidate.PrereleaseLabel
+		}
+	} else {
+		primaryVersionsMatch := s.MajorVersion.Number == candidate.MajorVersion &&
+			s.MinorVersion.Number == candidate.MinorVersion &&
+			s.PatchVersion.Number == candidate.PatchVersion
+
+		if len(s.PrereleaseLabel) > 0 {
+			matchesUpToLabel := primaryVersionsMatch &&
+				s.PrereleaseLabel == candidate.PrereleaseLabel
+
+			if matchesUpToLabel {
+				if s.PrereleaseVersion.Type == semverSegmentTypeUnspecified {
+					return true
+				}
+
+				return s.PrereleaseVersion.Number == candidate.PrereleaseVersion
+			}
+
+			return false
+		}
+
+		return primaryVersionsMatch
+	}
 }
 
 func (s SemverSelector) String() string {
