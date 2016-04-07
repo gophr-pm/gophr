@@ -106,6 +106,18 @@ func selector(selector string) *semverMatchTuple {
 	return &semverMatchTuple{selector: selector}
 }
 
+func (tuple *semverMatchTuple) bounds(candidate string) *semverMatchTuple {
+	tuple.correct = true
+	tuple.candidate = candidate
+	return tuple
+}
+
+func (tuple *semverMatchTuple) doesntBound(candidate string) *semverMatchTuple {
+	tuple.correct = false
+	tuple.candidate = candidate
+	return tuple
+}
+
 func (tuple *semverMatchTuple) compile() {
 	matches := selectorRegex.FindStringSubmatch(tuple.selector)
 	if matches != nil {
@@ -148,18 +160,6 @@ func (tuple *semverMatchTuple) compile() {
 	} else {
 		panic(fmt.Sprint("A test candidate was invalid:", tuple.candidate))
 	}
-}
-
-func (tuple *semverMatchTuple) bounds(candidate string) *semverMatchTuple {
-	tuple.correct = true
-	tuple.candidate = candidate
-	return tuple
-}
-
-func (tuple *semverMatchTuple) doesntBound(candidate string) *semverMatchTuple {
-	tuple.correct = false
-	tuple.candidate = candidate
-	return tuple
 }
 
 func TestNewSemverSelector(t *testing.T) {
