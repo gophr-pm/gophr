@@ -136,6 +136,18 @@ func (list SemverCandidateList) Less(i, j int) bool {
 	return list[i].CompareTo(list[j]) < 0
 }
 
+func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateList {
+	var newList []SemverCandidate
+
+	for _, candidate := range list {
+		if selector.Matches(candidate) {
+			newList = append(newList, candidate)
+		}
+	}
+
+	return newList
+}
+
 func (list SemverCandidateList) Lowest() *SemverCandidate {
 	listLength := len(list)
 	if listLength < 1 {
