@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -16,8 +17,6 @@ type SemverCandidate struct {
 	PrereleaseVersion       int
 	PrereleaseVersionExists bool
 }
-
-type SemverCandidateList []SemverCandidate
 
 func NewSemverCandidate(
 	gitRefHash string,
@@ -121,4 +120,38 @@ func (this SemverCandidate) CompareTo(that SemverCandidate) int {
 	// If we got this far, then the versions are clearly identical
 	// (which is super weird)
 	return 0
+}
+
+type SemverCandidateList []SemverCandidate
+
+func (list SemverCandidateList) Len() int {
+	return len(list)
+}
+
+func (list SemverCandidateList) Swap(i, j int) {
+	list[i], list[j] = list[j], list[i]
+}
+
+func (list SemverCandidateList) Less(i, j int) bool {
+	return list[i].CompareTo(list[j]) < 0
+}
+
+func (list SemverCandidateList) Lowest() *SemverCandidate {
+	listLength := len(list)
+	if listLength < 1 {
+		return nil
+	}
+
+	sort.Sort(list)
+	return &list[0]
+}
+
+func (list SemverCandidateList) Highest() *SemverCandidate {
+	listLength := len(list)
+	if listLength < 1 {
+		return nil
+	}
+
+	sort.Sort(list)
+	return &list[listLength-1]
 }
