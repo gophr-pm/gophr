@@ -1,10 +1,118 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var inequalityTuples = []*semverInequalityTuple{
+	// Absolute comparison greater-thans
+	version("1.2.3").isGreaterThanVersion("1.2.2"),
+	version("2.3.4").isGreaterThanVersion("1.3.4"),
+	version("2.3.4").isGreaterThanVersion("2.2.4"),
+	version("2.3.4").isGreaterThanVersion("2.3.4-alpha"),
+	version("1.2.3").isGreaterThanVersion("1.2.2"),
+	version("2.3.4").isGreaterThanVersion("1.3.4"),
+	version("2.3.4").isGreaterThanVersion("2.2.4"),
+	version("2.3.4").isGreaterThanVersion("2.3.4-alpha"),
+	version("1.2.3").isGreaterThanVersion("1.2.2"),
+	version("2.3.4").isGreaterThanVersion("2.3.3"),
+	version("2.3.4-alpha.2").isGreaterThanVersion("2.3.4-alpha.1"),
+	// Absolute comparison less-thans
+	version("1.2.3").isLessThanVersion("2.2.3"),
+	version("1.2.3").isLessThanVersion("1.3.3"),
+	version("1.2.3").isLessThanVersion("1.2.4"),
+	version("1.2.3-alpha").isLessThanVersion("1.2.3"),
+	version("1.2.3-alpha").isLessThanVersion("1.2.3-beta"),
+	version("1.2.3-beta.1").isLessThanVersion("1.2.3-beta.3"),
+	version("1.2.3").isLessThanVersion("2.2.3"),
+	version("1.2.3").isLessThanVersion("1.3.3"),
+	version("1.2.3").isLessThanVersion("1.2.4"),
+	version("1.2.3-alpha").isLessThanVersion("1.2.3"),
+	version("1.2.3-alpha").isLessThanVersion("1.2.3-beta"),
+	version("1.2.3-beta.1").isLessThanVersion("1.2.3-beta.3"),
+	version("1.2.2").isLessThanVersion("1.2.3"),
+	version("2.3.3").isLessThanVersion("2.3.4"),
+	version("2.3.4-alpha.1").isLessThanVersion("2.3.4-alpha.2"),
+	// Absolute comparison equal-tos
+	version("1.2.2").isEqualToVersion("1.2.2"),
+	version("1.2.3-beta").isEqualToVersion("1.2.3-beta"),
+	version("1.2.3-beta.1").isEqualToVersion("1.2.3-beta.1"),
+}
+
+type semverInequalityTuple struct {
+	expected                        int
+	subject, object                 string
+	compiledSubject, compiledObject SemverCandidate
+}
+
+func version(subject string) *semverInequalityTuple {
+	return &semverInequalityTuple{subject: subject}
+}
+
+func (tuple *semverInequalityTuple) isGreaterThanVersion(object string) *semverInequalityTuple {
+	tuple.object = object
+	tuple.expected = 1
+	return tuple
+}
+
+func (tuple *semverInequalityTuple) isEqualToVersion(object string) *semverInequalityTuple {
+	tuple.object = object
+	tuple.expected = 0
+	return tuple
+}
+
+func (tuple *semverInequalityTuple) isLessThanVersion(object string) *semverInequalityTuple {
+	tuple.object = object
+	tuple.expected = -1
+	return tuple
+}
+
+func (tuple *semverInequalityTuple) compile() {
+	matches := candidateRegex.FindStringSubmatch(tuple.subject)
+	if matches != nil {
+		compiledSubject, err := NewSemverCandidate(
+			"fakeHash",
+			"fakeName",
+			matches[1],
+			matches[2],
+			matches[3],
+			matches[4],
+			matches[5],
+		)
+
+		if err == nil {
+			tuple.compiledSubject = compiledSubject
+		} else {
+			panic(fmt.Sprint("A test subject could not be initialized:", tuple.subject, "(", err, ")"))
+		}
+	} else {
+		panic(fmt.Sprint("A test subject was invalid:", tuple.subject))
+	}
+
+	matches = candidateRegex.FindStringSubmatch(tuple.object)
+	if matches != nil {
+		compiledObject, err := NewSemverCandidate(
+			"fakeHash",
+			"fakeName",
+			matches[1],
+			matches[2],
+			matches[3],
+			matches[4],
+			matches[5],
+		)
+
+		if err == nil {
+			tuple.compiledObject = compiledObject
+		} else {
+			panic(fmt.Sprint("A test object could not be initialized:", tuple.object, "(", err, ")"))
+		}
+	} else {
+		panic(fmt.Sprint("A test object was invalid:", tuple.object))
+	}
+}
 
 func TestNewSemverCandidate(t *testing.T) {
 	var (
@@ -54,4 +162,26 @@ func TestNewSemverCandidate(t *testing.T) {
 	assert.Equal(t, "alpha", candidate.PrereleaseLabel, "prerelease label should match")
 	assert.Equal(t, 4, candidate.PrereleaseVersion, "prerelease version should match")
 	assert.Equal(t, true, candidate.PrereleaseVersionExists, "prerelease version should exist")
+}
+
+func TestSemverCandidateCompareTo(t *testing.T) {
+	// Compile all the things first
+	for _, tuple := range inequalityTuples {
+		tuple.compile()
+	}
+
+	// Run all the tests fam
+	for _, tuple := range inequalityTuples {
+		assert.Equal(
+			t,
+			tuple.expected,
+			tuple.compiledSubject.CompareTo(tuple.compiledObject),
+			fmt.Sprintf(
+				`"%s" compared to "%s" should be %d`,
+				tuple.subject,
+				tuple.object,
+				tuple.expected,
+			),
+		)
+	}
 }
