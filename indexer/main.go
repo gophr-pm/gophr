@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	//"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"log"
@@ -42,8 +41,10 @@ func main() {
 		})
 
 		if strings.Contains(githubURL, "github.com") {
+			// TODO build go doc url
 			//goDocUrl =
 
+			// TODO check for descriptions with just github url and remove
 			if githubURL == "/"+githubURL {
 				description = ""
 			}
@@ -52,6 +53,7 @@ func main() {
 		}
 	})
 
+	// TODO temp write JSON files
 	jsonData := []byte(buffer.String())
 	_ = ioutil.WriteFile("./tmp.json", jsonData, 0644)
 	log.Println("Finished")
