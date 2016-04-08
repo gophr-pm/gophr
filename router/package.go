@@ -85,6 +85,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		packageRepo          = matches[packageRequestRegexIndexRepo]
 		packageCreator       = matches[packageRequestRegexIndexUser]
 		packageSubpath       = matches[packageRequestRegexIndexSubpath]
+		requesterIsGoGet     = req.FormValue(formKeyGoGet) == formValueGoGet
 		hasMatchedCandidate  = false
 		semverSelectorExists = false
 
@@ -112,65 +113,68 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		semverSelectorExists = true
 	}
 
-	refs, err := FetchRefs(fmt.Sprintf(
-		githubRootTemplate,
-		packageCreator,
-		packageRepo,
-	))
+	// Only go out to fetch refs if they're going to get used
+	if requesterIsGoGet || packageSubpath == gitRefsInfoSubPath {
+		refs, err := FetchRefs(fmt.Sprintf(
+			githubRootTemplate,
+			packageCreator,
+			packageRepo,
+		))
 
-	if err != nil {
-		return err
-	}
-
-	if semverSelectorExists &&
-		refs.Candidates != nil &&
-		len(refs.Candidates) > 0 {
-		// Get the list of candidates that match the selector
-		matchedCandidates := refs.Candidates.Match(semverSelector)
-		// Only proceed if there is at least one matched candidate
-		if matchedCandidates != nil && len(matchedCandidates) > 0 {
-			if len(matchedCandidates) == 1 {
-				matchedCandidate = matchedCandidates[0]
-				hasMatchedCandidate = true
-			} else {
-				selectorHasLessThan :=
-					semverSelector.Suffix == semverSelectorSuffixLessThan
-				selectorHasWildcards :=
-					semverSelector.MinorVersion.Type == semverSegmentTypeWildcard ||
-						semverSelector.PatchVersion.Type == semverSegmentTypeWildcard ||
-						semverSelector.PrereleaseVersion.Type == semverSegmentTypeWildcard
-
-				var matchedCandidateReference *SemverCandidate
-				if selectorHasWildcards || selectorHasLessThan {
-					matchedCandidateReference = matchedCandidates.Highest()
-				} else {
-					matchedCandidateReference = matchedCandidates.Lowest()
-				}
-
-				matchedCandidate = *matchedCandidateReference
-				hasMatchedCandidate = true
-			}
-		} else {
-			return fmt.Errorf(
-				errorPackageRequestParseNoSuchVersion,
-				packageCreator,
-				packageRepo,
-				packageSubpath,
-				semverSelector.String(),
-			)
-		}
-	}
-
-	if hasMatchedCandidate {
-		refsData, err := refs.Reserialize(matchedCandidate)
 		if err != nil {
 			return err
 		}
-		packageRefsData = refsData
-	} else {
-		// If there was no matched candidate, and we're fine with it, then return
-		// the original refs that we downloaded from github
-		packageRefsData = refs.Data
+
+		if semverSelectorExists &&
+			refs.Candidates != nil &&
+			len(refs.Candidates) > 0 {
+			// Get the list of candidates that match the selector
+			matchedCandidates := refs.Candidates.Match(semverSelector)
+			// Only proceed if there is at least one matched candidate
+			if matchedCandidates != nil && len(matchedCandidates) > 0 {
+				if len(matchedCandidates) == 1 {
+					matchedCandidate = matchedCandidates[0]
+					hasMatchedCandidate = true
+				} else {
+					selectorHasLessThan :=
+						semverSelector.Suffix == semverSelectorSuffixLessThan
+					selectorHasWildcards :=
+						semverSelector.MinorVersion.Type == semverSegmentTypeWildcard ||
+							semverSelector.PatchVersion.Type == semverSegmentTypeWildcard ||
+							semverSelector.PrereleaseVersion.Type == semverSegmentTypeWildcard
+
+					var matchedCandidateReference *SemverCandidate
+					if selectorHasWildcards || selectorHasLessThan {
+						matchedCandidateReference = matchedCandidates.Highest()
+					} else {
+						matchedCandidateReference = matchedCandidates.Lowest()
+					}
+
+					matchedCandidate = *matchedCandidateReference
+					hasMatchedCandidate = true
+				}
+			} else {
+				return fmt.Errorf(
+					errorPackageRequestParseNoSuchVersion,
+					packageCreator,
+					packageRepo,
+					packageSubpath,
+					semverSelector.String(),
+				)
+			}
+		}
+
+		if hasMatchedCandidate {
+			refsData, err := refs.Reserialize(matchedCandidate)
+			if err != nil {
+				return err
+			}
+			packageRefsData = refsData
+		} else {
+			// If there was no matched candidate, and we're fine with it, then return
+			// the original refs that we downloaded from github
+			packageRefsData = refs.Data
+		}
 	}
 
 	switch packageSubpath {
@@ -184,7 +188,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
 		res.Write(packageRefsData)
 	default:
-		if req.FormValue(formKeyGoGet) == formValueGoGet {
+		if requesterIsGoGet {
 			// This request came directly from go get
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			err := goGetTemplate.Execute(res, GoGetTemplateDataSource{
