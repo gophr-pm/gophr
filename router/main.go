@@ -5,21 +5,20 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 )
 
-func annoy() {
-	for {
-		fmt.Println("Still here fam")
-		time.Sleep(1 * time.Second)
-	}
-}
+const (
+	healthCheckRoute       = "/status"
+	wildcardHandlerPattern = "/"
+)
+
+var (
+	statusCheckResponse = []byte("ok")
+)
 
 func main() {
-	http.HandleFunc("/status", healthCheckHandler)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Sup, I'm routerr. I love %s!", r.URL.Path[1:])
-	})
+	http.HandleFunc(wildcardHandlerPattern, handler)
+
 	portStr := os.Getenv("PORT")
 	var port int
 	if len(portStr) == 0 {
@@ -33,7 +32,16 @@ func main() {
 		port = 3000
 	}
 
-	go annoy()
-
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == healthCheckRoute {
+		w.Write(statusCheckResponse)
+	} else {
+		err := RespondToPackageRequest(r, w)
+		if err != nil {
+			respondWithError(w, err)
+		}
+	}
 }

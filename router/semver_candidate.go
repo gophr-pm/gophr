@@ -10,6 +10,7 @@ import (
 type SemverCandidate struct {
 	GitRefHash              string
 	GitRefName              string
+	GitRefLabel             string
 	MajorVersion            int
 	MinorVersion            int
 	PatchVersion            int
@@ -21,6 +22,7 @@ type SemverCandidate struct {
 func NewSemverCandidate(
 	gitRefHash string,
 	gitRefName string,
+	gitRefLabel string,
 	majorVersion string,
 	minorVersion string,
 	patchVersion string,
@@ -80,6 +82,7 @@ func NewSemverCandidate(
 	return SemverCandidate{
 		GitRefHash:              gitRefHash,
 		GitRefName:              gitRefName,
+		GitRefLabel:             gitRefLabel,
 		MajorVersion:            majorVersionNumber,
 		MinorVersion:            minorVersionNumber,
 		PatchVersion:            patchVersionNumber,

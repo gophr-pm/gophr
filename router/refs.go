@@ -22,6 +22,15 @@ const (
 )
 
 const (
+	versionRefRegexIndexLabel             = 1
+	versionRefRegexIndexMajorVersion      = 2
+	versionRefRegexIndexMinorVersion      = 3
+	versionRefRegexIndexPatchVersion      = 4
+	versionRefRegexIndexPrereleaseLabel   = 5
+	versionRefRegexIndexPrereleaseVersion = 6
+)
+
+const (
 	refsHead                                  = "HEAD"
 	refsLineCap                               = "\n\x00"
 	refsSpaceChar                             = ' '
@@ -40,7 +49,7 @@ const (
 
 var (
 	httpClient      = &http.Client{Timeout: 10 * time.Second}
-	versionRefRegex = regexp.MustCompile(`^refs\/(?:tags|heads)\/v?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:\-([a-zA-Z0-9\-_]+))?(?:\.([0-9]+))?(?:\^\{\})?`)
+	versionRefRegex = regexp.MustCompile(`^refs\/(?:tags|heads)\/(v?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:\-([a-zA-Z0-9\-_]+))?(?:\.([0-9]+))?)(?:\^\{\})?`)
 )
 
 type Refs struct {
@@ -139,11 +148,12 @@ func NewRefs(data []byte) (Refs, error) {
 			indexMasterLineEnd = j
 		} else if captureGroups := versionRefRegex.FindStringSubmatch(name); captureGroups != nil {
 			var (
-				majorVersion      = captureGroups[1]
-				minorVersion      = captureGroups[2]
-				patchVersion      = captureGroups[3]
-				prereleaseLabel   = captureGroups[4]
-				prereleaseVersion = captureGroups[5]
+				gitRefLabel       = captureGroups[versionRefRegexIndexLabel]
+				majorVersion      = captureGroups[versionRefRegexIndexMajorVersion]
+				minorVersion      = captureGroups[versionRefRegexIndexMinorVersion]
+				patchVersion      = captureGroups[versionRefRegexIndexPatchVersion]
+				prereleaseLabel   = captureGroups[versionRefRegexIndexPrereleaseLabel]
+				prereleaseVersion = captureGroups[versionRefRegexIndexPrereleaseVersion]
 			)
 
 			// Annotated tag is peeled off and overrides the same version just parsed
@@ -154,6 +164,7 @@ func NewRefs(data []byte) (Refs, error) {
 			versionCandidate, err := NewSemverCandidate(
 				hash,
 				name,
+				gitRefLabel,
 				majorVersion,
 				minorVersion,
 				patchVersion,
