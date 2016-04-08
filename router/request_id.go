@@ -3,15 +3,14 @@ package main
 import "github.com/nu7hatch/gouuid"
 
 var (
-	uuidNamespace     = []byte("gophr.pm")
 	requestIDFallback = "???"
 )
 
-func generateRequestId() string {
-	u5, err := uuid.NewV5(uuid.NamespaceURL, uuidNamespace)
+func generateRequestID() string {
+	u4, err := uuid.NewV4()
 	if err != nil {
 		return requestIDFallback
-	} else {
-		return u5.String()
 	}
+
+	return u4.String()
 }

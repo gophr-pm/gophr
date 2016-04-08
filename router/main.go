@@ -37,7 +37,7 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	requestID := generaterequestID()
+	requestID := generateRequestID()
 
 	log.Printf("[%s] New request received: %s\n", requestID, r.URL.Path)
 
