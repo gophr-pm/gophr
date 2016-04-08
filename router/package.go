@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -75,9 +76,14 @@ type GoGetTemplateDataSource struct {
 	GithubTree string
 }
 
-func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
+func RespondToPackageRequest(
+	requestID string,
+	req *http.Request,
+	res http.ResponseWriter,
+) error {
 	matches := packageRequestRegex.FindStringSubmatch(req.URL.Path)
 	if matches == nil {
+		log.Printf("[%s] Failed to process request as a package request because the URL format didn't match the regular expression\n", requestID)
 		return errors.New(errorPackageRequestParsePathDoesntMatch)
 	}
 
@@ -111,10 +117,14 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 
 		semverSelector = selector
 		semverSelectorExists = true
+
+		log.Printf("[%s] Found a version selector in the request URL\n", requestID)
 	}
 
 	// Only go out to fetch refs if they're going to get used
 	if requesterIsGoGet || packageSubpath == gitRefsInfoSubPath {
+		log.Printf("[%s] Fetching Github refs since this request is either from a go get or has an info path\n", requestID)
+
 		refs, err := FetchRefs(fmt.Sprintf(
 			githubRootTemplate,
 			packageCreator,
@@ -122,6 +132,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		))
 
 		if err != nil {
+			log.Printf("[%s] Github ref fetch failed\n", requestID)
 			return err
 		}
 
@@ -130,6 +141,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 			len(refs.Candidates) > 0 {
 			// Get the list of candidates that match the selector
 			matchedCandidates := refs.Candidates.Match(semverSelector)
+			log.Printf("[%s] Matched candidates to the version selector\n", requestID)
 			// Only proceed if there is at least one matched candidate
 			if matchedCandidates != nil && len(matchedCandidates) > 0 {
 				if len(matchedCandidates) == 1 {
@@ -153,7 +165,11 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 					matchedCandidate = *matchedCandidateReference
 					hasMatchedCandidate = true
 				}
+
+				log.Printf("[%s] There was at least one candidate matched to the version selector\n", requestID)
 			} else {
+				log.Printf("[%s] Couldn't find any candidates to match to the version selector\n", requestID)
+
 				return fmt.Errorf(
 					errorPackageRequestParseNoSuchVersion,
 					packageCreator,
@@ -165,6 +181,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		}
 
 		if hasMatchedCandidate {
+			log.Printf("[%s] Tweaked the refs to focus on the matched candidate\n", requestID)
 			refsData, err := refs.Reserialize(matchedCandidate)
 			if err != nil {
 				return err
@@ -179,17 +196,22 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 
 	switch packageSubpath {
 	case gitUploadPackSubPath:
+		log.Printf("[%s] Responding with the Github upload pack permanent redirect\n", requestID)
+
 		res.Header().Set(
 			httpLocationHeader,
 			fmt.Sprintf(githubUploadPackURLTemplate, packageCreator, packageRepo),
 		)
 		res.WriteHeader(http.StatusMovedPermanently)
 	case gitRefsInfoSubPath:
+		log.Printf("[%s] Responding with the git refs pulled from Github\n", requestID)
+
 		res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
 		res.Write(packageRefsData)
 	default:
 		if requesterIsGoGet {
-			// This request came directly from go get
+			log.Printf("[%s] Responding with html formatted for go get\n", requestID)
+
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			err := goGetTemplate.Execute(res, GoGetTemplateDataSource{
 				GophrRoot: FormatGophrRoot(
@@ -208,21 +230,24 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 				GithubRoot: FormatGithubRoot(packageCreator, packageRepo),
 				GithubTree: FormatGithubTree(hasMatchedCandidate, matchedCandidate),
 			})
+
 			if err != nil {
+				log.Printf("[%s] Failed to respond with html formatted for go get\n", requestID)
 				return err
 			}
 		} else {
-			http.Redirect(
-				res,
-				req,
+			log.Printf("[%s] Responding with a permanent redirect to the gophr package webpage\n", requestID)
+
+			res.Header().Set(
+				httpLocationHeader,
 				fmt.Sprintf(
 					packagePageURLTemplate,
 					getConfig().getDomain(),
 					packageCreator,
 					packageRepo,
 				),
-				http.StatusMovedPermanently,
 			)
+			res.WriteHeader(http.StatusMovedPermanently)
 		}
 	}
 
@@ -231,7 +256,6 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 
 func FormatGophrRoot(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector) string {
 	var buffer bytes.Buffer
-	buffer.WriteString("https://")
 	buffer.WriteString(getConfig().getDomain())
 	buffer.WriteByte('/')
 	buffer.WriteString(user)
@@ -246,6 +270,7 @@ func FormatGophrRoot(user string, repo string, semverSelectorExists bool, semver
 
 func FormatGophrPath(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector, subpath string) string {
 	var buffer bytes.Buffer
+	buffer.WriteString("https://")
 	buffer.WriteString(FormatGophrRoot(user, repo, semverSelectorExists, semverSelector))
 	buffer.WriteString(subpath)
 	return buffer.String()

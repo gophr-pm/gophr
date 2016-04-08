@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -36,10 +37,18 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
+	requestID := generaterequestID()
+
+	log.Printf("[%s] New request received: %s\n", requestID, r.URL.Path)
+
 	if r.URL.Path == healthCheckRoute {
+		log.Printf("[%s] Handling request for \"%s\" as a health check\n", requestID, r.URL.Path)
+
 		w.Write(statusCheckResponse)
 	} else {
-		err := RespondToPackageRequest(r, w)
+		log.Printf("[%s] Handling request for \"%s\" as a package request\n", requestID, r.URL.Path)
+
+		err := RespondToPackageRequest(requestID, r, w)
 		if err != nil {
 			respondWithError(w, err)
 		}
