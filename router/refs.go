@@ -52,6 +52,7 @@ var (
 	versionRefRegex = regexp.MustCompile(`^refs\/(?:tags|heads)\/(v?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:\-([a-zA-Z0-9\-_]+))?(?:\.([0-9]+))?)(?:\^\{\})?`)
 )
 
+// Refs collects information about git references for one specific repository.
 type Refs struct {
 	Data                 []byte
 	DataStr              string
@@ -64,6 +65,8 @@ type Refs struct {
 	IndexMasterLineStart int
 }
 
+// NewRefs creates a new Refs instance from raw refs data fetched from Github
+// (or elsewhere).
 func NewRefs(data []byte) (Refs, error) {
 	var (
 		dataStr    = string(data)
@@ -189,6 +192,8 @@ func NewRefs(data []byte) (Refs, error) {
 	}, nil
 }
 
+// FetchRefs downloads and processes refs data from Github and ultimately
+// contructs a Refs instance with it.
 func FetchRefs(githubRoot string) (Refs, error) {
 	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
 	if err != nil {

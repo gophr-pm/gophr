@@ -145,6 +145,7 @@ func (tuple *semverMatchTuple) compile() {
 		compiledCandidate, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
+			"fakeLabel",
 			matches[1],
 			matches[2],
 			matches[3],

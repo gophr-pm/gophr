@@ -76,6 +76,7 @@ func (tuple *semverInequalityTuple) compile() {
 		compiledSubject, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
+			"fakeLabel",
 			matches[1],
 			matches[2],
 			matches[3],
@@ -97,6 +98,7 @@ func (tuple *semverInequalityTuple) compile() {
 		compiledObject, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
+			"fakeLabel",
 			matches[1],
 			matches[2],
 			matches[3],
@@ -120,28 +122,28 @@ func TestNewSemverCandidate(t *testing.T) {
 		candidate SemverCandidate
 	)
 
-	candidate, err = NewSemverCandidate("", "b", "", "", "", "", "")
+	candidate, err = NewSemverCandidate("", "b", "", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid ref hash")
 
-	candidate, err = NewSemverCandidate("a", "", "", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "", "", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid ref name")
 
-	candidate, err = NewSemverCandidate("a", "b", "1asdlkj", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1asdlkj", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid major")
 
-	candidate, err = NewSemverCandidate("a", "b", "", "2", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "", "2", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid major")
 
-	candidate, err = NewSemverCandidate("a", "b", "1", "uds", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "uds", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid minor")
 
-	candidate, err = NewSemverCandidate("a", "b", "1", "2", "asdjhak", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "asdjhak", "", "")
 	assert.NotNil(t, err, "should fail for invalid patch")
 
-	candidate, err = NewSemverCandidate("a", "b", "1", "2", "3", "whatever", "kjdahkdjsh")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "3", "whatever", "kjdahkdjsh")
 	assert.NotNil(t, err, "should fail for invalid prerelease")
 
-	candidate, err = NewSemverCandidate("a", "b", "1", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "", "", "", "")
 	assert.Nil(t, err, "should not return an error in simple cases")
 	assert.Equal(t, "a", candidate.GitRefHash, "hash should match")
 	assert.Equal(t, "b", candidate.GitRefName, "name should match")
@@ -152,7 +154,7 @@ func TestNewSemverCandidate(t *testing.T) {
 	assert.Equal(t, 0, candidate.PrereleaseVersion, "prerelease version should match")
 	assert.Equal(t, false, candidate.PrereleaseVersionExists, "prerelease version should not exist")
 
-	candidate, err = NewSemverCandidate("a", "b", "1", "2", "3", "alpha", "4")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "3", "alpha", "4")
 	assert.Nil(t, err, "should not return an error in simple cases")
 	assert.Equal(t, "a", candidate.GitRefHash, "hash should match")
 	assert.Equal(t, "b", candidate.GitRefName, "name should match")

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"regexp"
 )
@@ -32,8 +33,6 @@ const (
 	formValueGoGet              = "1"
 	contentTypeHTML             = "text/html"
 	masterGitRefLabel           = "master"
-	gophrRootTemplate           = "%s/%s/%s"
-	gophrPathTemplate           = "https://%s/%s/%s%s"
 	gitRefsInfoSubPath          = "/info/refs"
 	githubRootTemplate          = "github.com/%s/%s"
 	httpLocationHeader          = "Location"
@@ -64,20 +63,85 @@ var (
 	packageRequestRegex = regexp.MustCompile(packageRequestRegexStr)
 
 	goGetTemplate = template.Must(template.New("").Parse(
-		`{{$gophrRoot := .GophrRoot}}{{$githubRoot := .GithubRoot}}{{$githubTree := .GithubTree}}<html><head><meta name="go-import" content="{{$gophrRoot}} git https://{{$gophrRoot}}"><meta name="go-source" content="{{.GophrRoot}} _ https://{{$githubRoot}}/tree/{{$githubTree}}{/dir} https://{{$githubRoot}}/blob/{{$githubTree}}{/dir}/{file}#L{line}"></head><body>go get {{.GophrPath}}</body></html>`,
+		`{{$gophrRoot := .GophrRoot}}{{$githubRoot := .GithubRoot}}{{$githubTree := .GithubTree}}<html><head><meta name="go-import" content="{{$gophrRoot}} git {{.Protocol}}://{{$gophrRoot}}"><meta name="go-source" content="{{.GophrRoot}} _ https://{{$githubRoot}}/tree/{{$githubTree}}{/dir} https://{{$githubRoot}}/blob/{{$githubTree}}{/dir}/{file}#L{line}"></head><body>go get {{.GophrPath}}</body></html>`,
 	))
 )
 
+// GoGetTemplateDataSource has all the fields necessary to compile the template
+// used to respond to go get metadata requests.
 type GoGetTemplateDataSource struct {
+	Protocol   string
 	GophrRoot  string
 	GophrPath  string
 	GithubRoot string
 	GithubTree string
 }
 
-func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
+// NewGoGetTemplateDataSource creates a new instance of GoGetTemplateDataSource.
+func NewGoGetTemplateDataSource(
+	user string,
+	repo string,
+	semverSelectorExists bool,
+	semverSelector SemverSelector,
+	subpath string,
+	hasMatchedCandidate bool,
+	matchedCandidate SemverCandidate,
+) GoGetTemplateDataSource {
+	var (
+		buffer bytes.Buffer
+
+		config     = getConfig()
+		templateDS = GoGetTemplateDataSource{}
+	)
+
+	if config.dev {
+		templateDS.Protocol = "http"
+	} else {
+		templateDS.Protocol = "https"
+	}
+
+	buffer.WriteString(config.domain)
+	buffer.WriteByte('/')
+	buffer.WriteString(user)
+	buffer.WriteByte('/')
+	buffer.WriteString(repo)
+	if semverSelectorExists {
+		buffer.WriteByte('@')
+		buffer.WriteString(semverSelector.String())
+	}
+	templateDS.GophrRoot = buffer.String()
+
+	buffer.WriteString(subpath)
+	templateDS.GophrPath = buffer.String()
+
+	buffer.Reset()
+	buffer.WriteString("github.com")
+	buffer.WriteByte('/')
+	buffer.WriteString(user)
+	buffer.WriteByte('/')
+	buffer.WriteString(repo)
+	templateDS.GithubRoot = buffer.String()
+
+	if hasMatchedCandidate {
+		templateDS.GithubTree = matchedCandidate.GitRefLabel
+	} else {
+		templateDS.GithubTree = masterGitRefLabel
+	}
+
+	return templateDS
+}
+
+// RespondToPackageRequest processes an incoming request, evaluates whether is a
+// correctly formatted request for package-related data, and either responds
+// appropriately or returns an error indicating what went wrong.
+func RespondToPackageRequest(
+	requestID string,
+	req *http.Request,
+	res http.ResponseWriter,
+) error {
 	matches := packageRequestRegex.FindStringSubmatch(req.URL.Path)
 	if matches == nil {
+		log.Printf("[%s] Failed to process request as a package request because the URL format didn't match the regular expression\n", requestID)
 		return errors.New(errorPackageRequestParsePathDoesntMatch)
 	}
 
@@ -85,6 +149,7 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 		packageRepo          = matches[packageRequestRegexIndexRepo]
 		packageCreator       = matches[packageRequestRegexIndexUser]
 		packageSubpath       = matches[packageRequestRegexIndexSubpath]
+		requesterIsGoGet     = req.FormValue(formKeyGoGet) == formValueGoGet
 		hasMatchedCandidate  = false
 		semverSelectorExists = false
 
@@ -106,143 +171,135 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 
 		if err != nil {
 			return err
-		} else {
-			semverSelector = selector
-			semverSelectorExists = true
 		}
+
+		semverSelector = selector
+		semverSelectorExists = true
+
+		log.Printf("[%s] Found a version selector in the request URL\n", requestID)
 	}
 
-	refs, err := FetchRefs(fmt.Sprintf(
-		githubRootTemplate,
-		packageCreator,
-		packageRepo,
-	))
+	// Only go out to fetch refs if they're going to get used
+	if requesterIsGoGet || packageSubpath == gitRefsInfoSubPath {
+		log.Printf("[%s] Fetching Github refs since this request is either from a go get or has an info path\n", requestID)
 
-	if err != nil {
-		return err
-	}
+		refs, err := FetchRefs(fmt.Sprintf(
+			githubRootTemplate,
+			packageCreator,
+			packageRepo,
+		))
 
-	if semverSelectorExists &&
-		refs.Candidates != nil &&
-		len(refs.Candidates) > 0 {
-		// Get the list of candidates that match the selector
-		matchedCandidates := refs.Candidates.Match(semverSelector)
-		// Only proceed if there is at least one matched candidate
-		if matchedCandidates != nil && len(matchedCandidates) > 0 {
-			if len(matchedCandidates) == 1 {
-				matchedCandidate = matchedCandidates[0]
-				hasMatchedCandidate = true
-			} else {
-				selectorHasLessThan :=
-					semverSelector.Suffix == semverSelectorSuffixLessThan
-				selectorHasWildcards :=
-					semverSelector.MinorVersion.Type == semverSegmentTypeWildcard ||
-						semverSelector.PatchVersion.Type == semverSegmentTypeWildcard ||
-						semverSelector.PrereleaseVersion.Type == semverSegmentTypeWildcard
-
-				var matchedCandidateReference *SemverCandidate
-				if selectorHasWildcards || selectorHasLessThan {
-					matchedCandidateReference = matchedCandidates.Highest()
-				} else {
-					matchedCandidateReference = matchedCandidates.Lowest()
-				}
-
-				matchedCandidate = *matchedCandidateReference
-				hasMatchedCandidate = true
-			}
-		} else {
-			return fmt.Errorf(
-				errorPackageRequestParseNoSuchVersion,
-				packageCreator,
-				packageRepo,
-				packageSubpath,
-				semverSelector.String(),
-			)
-		}
-	}
-
-	if hasMatchedCandidate {
-		refsData, err := refs.Reserialize(matchedCandidate)
 		if err != nil {
+			log.Printf("[%s] Github ref fetch failed\n", requestID)
 			return err
 		}
-		packageRefsData = refsData
-	} else {
-		// If there was no matched candidate, and we're fine with it, then return
-		// the original refs that we downloaded from github
-		packageRefsData = refs.Data
+
+		if semverSelectorExists &&
+			refs.Candidates != nil &&
+			len(refs.Candidates) > 0 {
+			// Get the list of candidates that match the selector
+			matchedCandidates := refs.Candidates.Match(semverSelector)
+			log.Printf("[%s] Matched candidates to the version selector\n", requestID)
+			// Only proceed if there is at least one matched candidate
+			if matchedCandidates != nil && len(matchedCandidates) > 0 {
+				if len(matchedCandidates) == 1 {
+					matchedCandidate = matchedCandidates[0]
+					hasMatchedCandidate = true
+				} else {
+					selectorHasLessThan :=
+						semverSelector.Suffix == semverSelectorSuffixLessThan
+					selectorHasWildcards :=
+						semverSelector.MinorVersion.Type == semverSegmentTypeWildcard ||
+							semverSelector.PatchVersion.Type == semverSegmentTypeWildcard ||
+							semverSelector.PrereleaseVersion.Type == semverSegmentTypeWildcard
+
+					var matchedCandidateReference *SemverCandidate
+					if selectorHasWildcards || selectorHasLessThan {
+						matchedCandidateReference = matchedCandidates.Highest()
+					} else {
+						matchedCandidateReference = matchedCandidates.Lowest()
+					}
+
+					matchedCandidate = *matchedCandidateReference
+					hasMatchedCandidate = true
+				}
+
+				log.Printf("[%s] There was at least one candidate matched to the version selector\n", requestID)
+			} else {
+				log.Printf("[%s] Couldn't find any candidates to match to the version selector\n", requestID)
+
+				return fmt.Errorf(
+					errorPackageRequestParseNoSuchVersion,
+					packageCreator,
+					packageRepo,
+					packageSubpath,
+					semverSelector.String(),
+				)
+			}
+		}
+
+		if hasMatchedCandidate {
+			log.Printf("[%s] Tweaked the refs to focus on the matched candidate\n", requestID)
+			refsData, err := refs.Reserialize(matchedCandidate)
+			if err != nil {
+				return err
+			}
+			packageRefsData = refsData
+		} else {
+			// If there was no matched candidate, and we're fine with it, then return
+			// the original refs that we downloaded from github
+			packageRefsData = refs.Data
+		}
 	}
 
 	switch packageSubpath {
 	case gitUploadPackSubPath:
+		log.Printf("[%s] Responding with the Github upload pack permanent redirect\n", requestID)
+
 		res.Header().Set(
 			httpLocationHeader,
 			fmt.Sprintf(githubUploadPackURLTemplate, packageCreator, packageRepo),
 		)
 		res.WriteHeader(http.StatusMovedPermanently)
 	case gitRefsInfoSubPath:
+		log.Printf("[%s] Responding with the git refs pulled from Github\n", requestID)
+
 		res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
 		res.Write(packageRefsData)
 	default:
-		if req.FormValue(formKeyGoGet) == formValueGoGet {
-			// This request came directly from go get
+		if requesterIsGoGet {
+			log.Printf("[%s] Responding with html formatted for go get\n", requestID)
+
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
-			err := goGetTemplate.Execute(res, GoGetTemplateDataSource{
-				GophrRoot: FormatGophrRoot(packageCreator, packageRepo),
-				GophrPath: FormatGophrPath(
-					packageCreator,
-					packageRepo,
-					semverSelectorExists,
-					semverSelector,
-					packageSubpath,
-				),
-				GithubRoot: FormatGithubRoot(packageCreator, packageRepo),
-				GithubTree: FormatGithubTree(hasMatchedCandidate, matchedCandidate),
-			})
+			err := goGetTemplate.Execute(res, NewGoGetTemplateDataSource(
+				packageCreator,
+				packageRepo,
+				semverSelectorExists,
+				semverSelector,
+				packageSubpath,
+				hasMatchedCandidate,
+				matchedCandidate,
+			))
+
 			if err != nil {
+				log.Printf("[%s] Failed to respond with html formatted for go get\n", requestID)
 				return err
 			}
 		} else {
-			http.Redirect(
-				res,
-				req,
+			log.Printf("[%s] Responding with a permanent redirect to the gophr package webpage\n", requestID)
+
+			res.Header().Set(
+				httpLocationHeader,
 				fmt.Sprintf(
 					packagePageURLTemplate,
-					getConfig().getDomain(),
+					getConfig().domain,
 					packageCreator,
 					packageRepo,
 				),
-				http.StatusMovedPermanently,
 			)
+			res.WriteHeader(http.StatusMovedPermanently)
 		}
 	}
 
 	return nil
-}
-
-func FormatGophrRoot(user string, repo string) string {
-	return fmt.Sprintf(gophrRootTemplate, getConfig().getDomain(), user, repo)
-}
-
-func FormatGophrPath(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector, subpath string) string {
-	var buffer bytes.Buffer
-	buffer.WriteString(FormatGophrRoot(user, repo))
-	if semverSelectorExists {
-		buffer.WriteByte('@')
-		buffer.WriteString(semverSelector.String())
-	}
-	buffer.WriteString(subpath)
-	return buffer.String()
-}
-
-func FormatGithubRoot(user string, repo string) string {
-	return fmt.Sprintf(githubRootTemplate, user, repo)
-}
-
-func FormatGithubTree(hasMatchedCandidate bool, matchedCandidate SemverCandidate) string {
-	if hasMatchedCandidate {
-		return matchedCandidate.GitRefLabel
-	} else {
-		return masterGitRefLabel
-	}
 }
