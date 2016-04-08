@@ -106,10 +106,10 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 
 		if err != nil {
 			return err
-		} else {
-			semverSelector = selector
-			semverSelectorExists = true
 		}
+
+		semverSelector = selector
+		semverSelectorExists = true
 	}
 
 	refs, err := FetchRefs(fmt.Sprintf(
@@ -188,7 +188,12 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 			// This request came directly from go get
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			err := goGetTemplate.Execute(res, GoGetTemplateDataSource{
-				GophrRoot: FormatGophrRoot(packageCreator, packageRepo),
+				GophrRoot: FormatGophrRoot(
+					packageCreator,
+					packageRepo,
+					semverSelectorExists,
+					semverSelector,
+				),
 				GophrPath: FormatGophrPath(
 					packageCreator,
 					packageRepo,
@@ -220,17 +225,24 @@ func RespondToPackageRequest(req *http.Request, res http.ResponseWriter) error {
 	return nil
 }
 
-func FormatGophrRoot(user string, repo string) string {
-	return fmt.Sprintf(gophrRootTemplate, getConfig().getDomain(), user, repo)
-}
-
-func FormatGophrPath(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector, subpath string) string {
+func FormatGophrRoot(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector) string {
 	var buffer bytes.Buffer
-	buffer.WriteString(FormatGophrRoot(user, repo))
+	buffer.WriteString("https://")
+	buffer.WriteString(getConfig().getDomain())
+	buffer.WriteByte('/')
+	buffer.WriteString(user)
+	buffer.WriteByte('/')
+	buffer.WriteString(repo)
 	if semverSelectorExists {
 		buffer.WriteByte('@')
 		buffer.WriteString(semverSelector.String())
 	}
+	return buffer.String()
+}
+
+func FormatGophrPath(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector, subpath string) string {
+	var buffer bytes.Buffer
+	buffer.WriteString(FormatGophrRoot(user, repo, semverSelectorExists, semverSelector))
 	buffer.WriteString(subpath)
 	return buffer.String()
 }
