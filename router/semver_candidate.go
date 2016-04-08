@@ -7,6 +7,9 @@ import (
 	"strings"
 )
 
+// SemverCandidate is a semver version that has been confirmed to exist for a
+// given package. It carries versioning metadata, but it also has git ref info
+// so that the commit of the version can be isolated.
 type SemverCandidate struct {
 	GitRefHash              string
 	GitRefName              string
@@ -19,6 +22,8 @@ type SemverCandidate struct {
 	PrereleaseVersionExists bool
 }
 
+// NewSemverCandidate creates a new instance of a SemverCandidate from a variety
+// of data points about a specific version-related git ref.
 func NewSemverCandidate(
 	gitRefHash string,
 	gitRefName string,
@@ -92,32 +97,36 @@ func NewSemverCandidate(
 	}, nil
 }
 
-func (this SemverCandidate) CompareTo(that SemverCandidate) int {
-	if this.MajorVersion > that.MajorVersion {
+// CompareTo compares the current candidate to another candidate and returns a
+// number indicating the relationship between the two. -1 means this candidate
+// is lower than the other. 1 implies the opposite. 0 means that the candidates
+// are functionally equivalent.
+func (candidate SemverCandidate) CompareTo(other SemverCandidate) int {
+	if candidate.MajorVersion > other.MajorVersion {
 		return 1
-	} else if this.MajorVersion < that.MajorVersion {
+	} else if candidate.MajorVersion < other.MajorVersion {
 		return -1
-	} else if this.MinorVersion > that.MinorVersion {
+	} else if candidate.MinorVersion > other.MinorVersion {
 		return 1
-	} else if this.MinorVersion < that.MinorVersion {
+	} else if candidate.MinorVersion < other.MinorVersion {
 		return -1
-	} else if this.PatchVersion > that.PatchVersion {
+	} else if candidate.PatchVersion > other.PatchVersion {
 		return 1
-	} else if this.PatchVersion < that.PatchVersion {
+	} else if candidate.PatchVersion < other.PatchVersion {
 		return -1
-	} else if len(this.PrereleaseLabel) > 0 && len(that.PrereleaseLabel) == 0 {
+	} else if len(candidate.PrereleaseLabel) > 0 && len(other.PrereleaseLabel) == 0 {
 		// Prerelease immediately means that the version is lesser
 		return -1
-	} else if len(this.PrereleaseLabel) == 0 && len(that.PrereleaseLabel) > 0 {
+	} else if len(candidate.PrereleaseLabel) == 0 && len(other.PrereleaseLabel) > 0 {
 		// Prerelease immediately means that the version is lesser
 		return 1
-	} else if this.PrereleaseLabel != that.PrereleaseLabel {
+	} else if candidate.PrereleaseLabel != other.PrereleaseLabel {
 		// Prerelease labels don't match, so return a comparison
-		return strings.Compare(this.PrereleaseLabel, that.PrereleaseLabel)
-	} else if this.PrereleaseVersion > that.PrereleaseVersion {
+		return strings.Compare(candidate.PrereleaseLabel, other.PrereleaseLabel)
+	} else if candidate.PrereleaseVersion > other.PrereleaseVersion {
 		// Prerelease labels are identical, so continue comparison to versions
 		return 1
-	} else if this.PrereleaseVersion < that.PrereleaseVersion {
+	} else if candidate.PrereleaseVersion < other.PrereleaseVersion {
 		return -1
 	}
 	// If we got this far, then the versions are clearly identical
@@ -125,6 +134,9 @@ func (this SemverCandidate) CompareTo(that SemverCandidate) int {
 	return 0
 }
 
+// SemverCandidateList is an abstraction for a slice of SemverCandidates with
+// some useful properties; namely, a SemverCandidateList is sortable and knows
+// how to reduce itself to only matches that are relevant.
 type SemverCandidateList []SemverCandidate
 
 func (list SemverCandidateList) Len() int {
@@ -139,6 +151,8 @@ func (list SemverCandidateList) Less(i, j int) bool {
 	return list[i].CompareTo(list[j]) < 0
 }
 
+// Match returns a new SemverCandidateList with only candidates that match the
+// specified selector.
 func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateList {
 	var newList []SemverCandidate
 
@@ -151,6 +165,8 @@ func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateLi
 	return newList
 }
 
+// Lowest sorts the list of candidates and returns the candidate that appaeared
+// first in the list (which is by default the lowest).
 func (list SemverCandidateList) Lowest() *SemverCandidate {
 	listLength := len(list)
 	if listLength < 1 {
@@ -161,6 +177,8 @@ func (list SemverCandidateList) Lowest() *SemverCandidate {
 	return &list[0]
 }
 
+// Highest sorts the list of candidates and returns the candidate that appaeared
+// last in the list (which is by default the highest).
 func (list SemverCandidateList) Highest() *SemverCandidate {
 	listLength := len(list)
 	if listLength < 1 {

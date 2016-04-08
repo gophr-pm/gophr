@@ -33,8 +33,6 @@ const (
 	formValueGoGet              = "1"
 	contentTypeHTML             = "text/html"
 	masterGitRefLabel           = "master"
-	gophrRootTemplate           = "%s/%s/%s"
-	gophrPathTemplate           = "https://%s/%s/%s%s"
 	gitRefsInfoSubPath          = "/info/refs"
 	githubRootTemplate          = "github.com/%s/%s"
 	httpLocationHeader          = "Location"
@@ -65,17 +63,77 @@ var (
 	packageRequestRegex = regexp.MustCompile(packageRequestRegexStr)
 
 	goGetTemplate = template.Must(template.New("").Parse(
-		`{{$gophrRoot := .GophrRoot}}{{$githubRoot := .GithubRoot}}{{$githubTree := .GithubTree}}<html><head><meta name="go-import" content="{{$gophrRoot}} git https://{{$gophrRoot}}"><meta name="go-source" content="{{.GophrRoot}} _ https://{{$githubRoot}}/tree/{{$githubTree}}{/dir} https://{{$githubRoot}}/blob/{{$githubTree}}{/dir}/{file}#L{line}"></head><body>go get {{.GophrPath}}</body></html>`,
+		`{{$gophrRoot := .GophrRoot}}{{$githubRoot := .GithubRoot}}{{$githubTree := .GithubTree}}<html><head><meta name="go-import" content="{{$gophrRoot}} git {{.Protocol}}://{{$gophrRoot}}"><meta name="go-source" content="{{.GophrRoot}} _ https://{{$githubRoot}}/tree/{{$githubTree}}{/dir} https://{{$githubRoot}}/blob/{{$githubTree}}{/dir}/{file}#L{line}"></head><body>go get {{.GophrPath}}</body></html>`,
 	))
 )
 
+// GoGetTemplateDataSource has all the fields necessary to compile the template
+// used to respond to go get metadata requests.
 type GoGetTemplateDataSource struct {
+	Protocol   string
 	GophrRoot  string
 	GophrPath  string
 	GithubRoot string
 	GithubTree string
 }
 
+// NewGoGetTemplateDataSource creates a new instance of GoGetTemplateDataSource.
+func NewGoGetTemplateDataSource(
+	user string,
+	repo string,
+	semverSelectorExists bool,
+	semverSelector SemverSelector,
+	subpath string,
+	hasMatchedCandidate bool,
+	matchedCandidate SemverCandidate,
+) GoGetTemplateDataSource {
+	var (
+		buffer bytes.Buffer
+
+		config     = getConfig()
+		templateDS = GoGetTemplateDataSource{}
+	)
+
+	if config.dev {
+		templateDS.Protocol = "http"
+	} else {
+		templateDS.Protocol = "https"
+	}
+
+	buffer.WriteString(config.domain)
+	buffer.WriteByte('/')
+	buffer.WriteString(user)
+	buffer.WriteByte('/')
+	buffer.WriteString(repo)
+	if semverSelectorExists {
+		buffer.WriteByte('@')
+		buffer.WriteString(semverSelector.String())
+	}
+	templateDS.GophrRoot = buffer.String()
+
+	buffer.WriteString(subpath)
+	templateDS.GophrPath = buffer.String()
+
+	buffer.Reset()
+	buffer.WriteString("github.com")
+	buffer.WriteByte('/')
+	buffer.WriteString(user)
+	buffer.WriteByte('/')
+	buffer.WriteString(repo)
+	templateDS.GithubRoot = buffer.String()
+
+	if hasMatchedCandidate {
+		templateDS.GithubTree = matchedCandidate.GitRefLabel
+	} else {
+		templateDS.GithubTree = masterGitRefLabel
+	}
+
+	return templateDS
+}
+
+// RespondToPackageRequest processes an incoming request, evaluates whether is a
+// correctly formatted request for package-related data, and either responds
+// appropriately or returns an error indicating what went wrong.
 func RespondToPackageRequest(
 	requestID string,
 	req *http.Request,
@@ -213,23 +271,15 @@ func RespondToPackageRequest(
 			log.Printf("[%s] Responding with html formatted for go get\n", requestID)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
-			err := goGetTemplate.Execute(res, GoGetTemplateDataSource{
-				GophrRoot: FormatGophrRoot(
-					packageCreator,
-					packageRepo,
-					semverSelectorExists,
-					semverSelector,
-				),
-				GophrPath: FormatGophrPath(
-					packageCreator,
-					packageRepo,
-					semverSelectorExists,
-					semverSelector,
-					packageSubpath,
-				),
-				GithubRoot: FormatGithubRoot(packageCreator, packageRepo),
-				GithubTree: FormatGithubTree(hasMatchedCandidate, matchedCandidate),
-			})
+			err := goGetTemplate.Execute(res, NewGoGetTemplateDataSource(
+				packageCreator,
+				packageRepo,
+				semverSelectorExists,
+				semverSelector,
+				packageSubpath,
+				hasMatchedCandidate,
+				matchedCandidate,
+			))
 
 			if err != nil {
 				log.Printf("[%s] Failed to respond with html formatted for go get\n", requestID)
@@ -242,7 +292,7 @@ func RespondToPackageRequest(
 				httpLocationHeader,
 				fmt.Sprintf(
 					packagePageURLTemplate,
-					getConfig().getDomain(),
+					getConfig().domain,
 					packageCreator,
 					packageRepo,
 				),
@@ -252,38 +302,4 @@ func RespondToPackageRequest(
 	}
 
 	return nil
-}
-
-func FormatGophrRoot(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector) string {
-	var buffer bytes.Buffer
-	buffer.WriteString(getConfig().getDomain())
-	buffer.WriteByte('/')
-	buffer.WriteString(user)
-	buffer.WriteByte('/')
-	buffer.WriteString(repo)
-	if semverSelectorExists {
-		buffer.WriteByte('@')
-		buffer.WriteString(semverSelector.String())
-	}
-	return buffer.String()
-}
-
-func FormatGophrPath(user string, repo string, semverSelectorExists bool, semverSelector SemverSelector, subpath string) string {
-	var buffer bytes.Buffer
-	buffer.WriteString("https://")
-	buffer.WriteString(FormatGophrRoot(user, repo, semverSelectorExists, semverSelector))
-	buffer.WriteString(subpath)
-	return buffer.String()
-}
-
-func FormatGithubRoot(user string, repo string) string {
-	return fmt.Sprintf(githubRootTemplate, user, repo)
-}
-
-func FormatGithubTree(hasMatchedCandidate bool, matchedCandidate SemverCandidate) string {
-	if hasMatchedCandidate {
-		return matchedCandidate.GitRefLabel
-	} else {
-		return masterGitRefLabel
-	}
 }

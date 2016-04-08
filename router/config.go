@@ -7,6 +7,7 @@ var _config *Config
 func getConfig() *Config {
 	if _config == nil {
 		_config = &Config{
+			dev:    true,
 			domain: "gophr.dev",
 		}
 	}
@@ -14,10 +15,9 @@ func getConfig() *Config {
 	return _config
 }
 
+// Config keeps track of environment related configuration variables that
+// affect server behavior and execution.
 type Config struct {
+	dev    bool
 	domain string
-}
-
-func (c *Config) getDomain() string {
-	return c.domain
 }

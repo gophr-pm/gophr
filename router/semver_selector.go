@@ -249,6 +249,8 @@ func NewSemverSelector(
 	return semver, nil
 }
 
+// Matches simply determines whether the given candidate fits within the range
+// defined by this version selector.
 func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 	if s.IsFlexible {
 		if s.Suffix == semverSelectorSuffixGreaterThan {
