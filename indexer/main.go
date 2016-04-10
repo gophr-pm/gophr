@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type GoPackage struct {
 }
 
 func main() {
+	start := time.Now()
 	log.Println("Started Download of Godoc/index")
 
 	doc, err := goquery.NewDocument("https://godoc.org/-/index")
@@ -82,54 +84,55 @@ func main() {
 	log.Println("Finished Download of awesome-go/README.md\n")
 	log.Println("Started scraping awesome-go/README.md")
 
-	awesomeGoCount := 0
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		childURL, _ := s.Attr("href")
-		fmt.Println(childURL)
+		childURL = strings.Trim(childURL, "/")
 		goPackage, goPackageExists := goPackageMap[childURL]
 
-		if goPackageExists {
+		if goPackageExists == true {
 			goPackage.AwesomeGo = true
 			goPackageMap[childURL] = goPackage
-			awesomeGoCount++
 		}
 	})
 
-	log.Println("Finished scraping ", awesomeGoCount, " awesome-go/README.md\n")
-	log.Println("Started retrieving versions for go packages")
+	// TODO ADD A FUCKING COUNT THAT FUCKING WORKS, FUCK
+	log.Println("Finished scraping awesome-go/README.md\n")
+	log.Println("Started retrieving versions for go packages\n")
 
-	resc, errc := make(chan *GoPackage), make(chan *GoPackage)
 	var goErrorPackageMap = make(map[string]*GoPackage)
 
+	// TODO Write a constant for this
+	nbConcurrentGet := 20
+	urls := make(chan *GoPackage, nbConcurrentGet)
+	var wg sync.WaitGroup
+	for i := 0; i < nbConcurrentGet; i++ {
+		wg.Add(1)
+		go func() {
+			for goPackage := range urls {
+				refs, err := common.FetchRefs(goPackage.GitHubURL)
+				if err != nil {
+					log.Println("ERROR", goPackage.GitHubURL, " failed to return.\n", err)
+					delete(goPackageMap, goPackage.GitHubURL)
+					goErrorPackageMap[goPackage.GitHubURL] = goPackage
+				} else {
+					var versions []string
+					for _, version := range refs.Candidates {
+						versions = append(versions, version.String())
+					}
+					goPackage.Versions = versions
+					goPackageMap[goPackage.GitHubURL] = goPackage
+				}
+			}
+			wg.Done()
+		}()
+	}
+
 	for _, goPackage := range goPackageMap {
-		go func(goPackage *GoPackage) {
-			refs, err := common.FetchRefs(goPackage.GitHubURL)
-			if err != nil {
-				log.Println("ERROR", goPackage.GitHubURL, " failed to return.", err)
-				errc <- goPackage
-				return
-			}
-
-			var versions []string
-			for _, version := range refs.Candidates {
-				versions = append(versions, version.String())
-			}
-			goPackage.Versions = versions
-			resc <- goPackage
-		}(goPackage)
+		urls <- goPackage
 	}
 
-	// Create Errored out Map
-	length := len(goPackageMap)
-	for i := 0; i < length; i++ {
-		select {
-		case goPackage := <-resc:
-			goPackageMap[goPackage.GitHubURL] = goPackage
-		case errPackage := <-errc:
-			delete(goPackageMap, errPackage.GitHubURL)
-			goErrorPackageMap[errPackage.GitHubURL] = errPackage
-		}
-	}
+	close(urls)
+	wg.Wait()
 
 	log.Println("SUCCESS: ", len(goPackageMap), " GoPackages were successfully built")
 	log.Println("Creating JSON dump of ", len(goPackageMap), " valid go packages")
@@ -137,9 +140,12 @@ func main() {
 	log.Println("Finished creating JSON dump\n")
 
 	log.Println("WARNING: ", len(goErrorPackageMap), " GoPackages were not found on github")
-	log.Println("Creating JSON dump of ", len(goPackageMap), " err packages")
+	log.Println("Creating JSON dump of ", len(goErrorPackageMap), " err packages")
 	createJSONDump(goErrorPackageMap, "invalid-go-packages")
-	log.Println("Finished creating JSON dump")
+	log.Println("Finished creating JSON dump\n")
+
+	elapsed := time.Since(start)
+	log.Printf("Program took %s to fully execute", elapsed)
 }
 
 // Create a tmp JSON dump of all serialized goPackageData
