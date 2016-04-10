@@ -278,7 +278,7 @@ function do_test {
     print_test_help
   elif [[ "$1" == "web" ]]; then
     (cd $project_dir/web && npm run test)
-  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" ]]; then
+  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "common" ]]; then
     (cd $project_dir/$1 && go test -v -coverprofile coverage.out && go tool cover -html=coverage.out)
   else
     print_error "Invalid component was specified"
