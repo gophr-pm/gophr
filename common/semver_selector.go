@@ -9,12 +9,26 @@ import (
 )
 
 const (
-	SemverSelectorTildeChar                 = '~'
-	SemverSelectorCaratChar                 = '^'
-	SemverSelectorWildcardChar              = 'x'
-	SemverSelectorLessThanChar              = '-'
-	SemverSelectorSeparatorChar             = '.'
-	SemverSelectorGreaterThanChar           = '+'
+	// SemverSelectorTildeChar is the character that represents flexible patch
+	// version selection.
+	SemverSelectorTildeChar = '~'
+	// SemverSelectorCaratChar is the character that represents flexible minor &
+	// patch version selection.
+	SemverSelectorCaratChar = '^'
+	// SemverSelectorWildcardChar is the character that represents variable major,
+	// minor, patch or pre-release version selection.
+	SemverSelectorWildcardChar = 'x'
+	// SemverSelectorLessThanChar is the character that represents the less-than
+	// version inequality.
+	SemverSelectorLessThanChar = '-'
+	// SemverSelectorSeparatorChar is the character that separates segements of a
+	// semver version.
+	SemverSelectorSeparatorChar = '.'
+	// SemverSelectorGreaterThanChar is the character that represents the
+	// greater-than version inequality.
+	SemverSelectorGreaterThanChar = '+'
+	// SemverSelectorPrereleaseLabelPrefixChar is the character that separates the
+	// patch version segment and the pre-release label.
 	SemverSelectorPrereleaseLabelPrefixChar = '-'
 )
 
@@ -27,30 +41,52 @@ const (
 )
 
 const (
-	SemverSelectorPrefixNone  = iota
+	// SemverSelectorPrefixNone is the prefix enum value for an unspecified
+	// prefix.
+	SemverSelectorPrefixNone = iota
+	// SemverSelectorPrefixTilde is the prefix enum value for a tilde prefix.
 	SemverSelectorPrefixTilde = iota
+	// SemverSelectorPrefixCarat is the prefix enum value for a carat prefix.
 	SemverSelectorPrefixCarat = iota
 )
 
 const (
-	SemverSelectorSuffixNone        = iota
-	SemverSelectorSuffixLessThan    = iota
+	// SemverSelectorSuffixNone is the suffix enum value for an unspecified
+	// suffix.
+	SemverSelectorSuffixNone = iota
+	// SemverSelectorSuffixLessThan is the suffix enum value for a less-than
+	// suffix.
+	SemverSelectorSuffixLessThan = iota
+	// SemverSelectorSuffixGreaterThan is the suffix enum value for a greater-than
+	// suffix.
 	SemverSelectorSuffixGreaterThan = iota
 )
 
 const (
-	SemverSegmentTypeNumber      = iota
-	SemverSegmentTypeWildcard    = iota
+	// SemverSegmentTypeNumber is the segment type enum value for segment of type
+	// number.
+	SemverSegmentTypeNumber = iota
+	// SemverSegmentTypeWildcard is the segment type enum value for segment of
+	// type wildcard.
+	SemverSegmentTypeWildcard = iota
+	// SemverSegmentTypeUnspecified is the segment type enum value for an
+	// unspecified segment.
 	SemverSegmentTypeUnspecified = iota
 )
 
 const (
-	SemverSegmentNamePrefix     = "prefix"
-	SemverSegmentNameMajor      = "major"
-	SemverSegmentNameMinor      = "minor"
-	SemverSegmentNamePatch      = "patch"
+	// SemverSegmentNamePrefix is the name of the prefix semver segment.
+	SemverSegmentNamePrefix = "prefix"
+	// SemverSegmentNameMajor is the name of the major semver segment.
+	SemverSegmentNameMajor = "major"
+	// SemverSegmentNameMinor is the name of the minor semver segment.
+	SemverSegmentNameMinor = "minor"
+	// SemverSegmentNamePatch is the name of the patch semver segment.
+	SemverSegmentNamePatch = "patch"
+	// SemverSegmentNamePrerelease is the name of the pre-release semver segment.
 	SemverSegmentNamePrerelease = "pre-release"
-	SemverSegmentNameSuffix     = "suffix"
+	// SemverSegmentNameSuffix is the name of the suffix semver segment.
+	SemverSegmentNameSuffix = "suffix"
 )
 
 // SemverSelectorSegment is the atomic unit of a semver version.
