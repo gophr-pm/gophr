@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+
+	"github.com/skeswa/gophr/common"
 )
 
 const (
@@ -46,13 +48,13 @@ const (
 var (
 	versionSelectorRegexStr = fmt.Sprintf(
 		`([\%c\%c]?)([0-9]+)(?:\.([0-9]+|%c))?(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([\%c\%c]?)`,
-		semverSelectorTildeChar,
-		semverSelectorCaratChar,
-		semverSelectorWildcardChar,
-		semverSelectorWildcardChar,
-		semverSelectorWildcardChar,
-		semverSelectorLessThanChar,
-		semverSelectorGreaterThanChar,
+		common.SemverSelectorTildeChar,
+		common.SemverSelectorCaratChar,
+		common.SemverSelectorWildcardChar,
+		common.SemverSelectorWildcardChar,
+		common.SemverSelectorWildcardChar,
+		common.SemverSelectorLessThanChar,
+		common.SemverSelectorGreaterThanChar,
 	)
 
 	packageRequestRegexStr = fmt.Sprintf(
@@ -82,10 +84,10 @@ func NewGoGetTemplateDataSource(
 	user string,
 	repo string,
 	semverSelectorExists bool,
-	semverSelector SemverSelector,
+	semverSelector common.SemverSelector,
 	subpath string,
 	hasMatchedCandidate bool,
-	matchedCandidate SemverCandidate,
+	matchedCandidate common.SemverCandidate,
 ) GoGetTemplateDataSource {
 	var (
 		buffer bytes.Buffer
@@ -153,13 +155,13 @@ func RespondToPackageRequest(
 		hasMatchedCandidate  = false
 		semverSelectorExists = false
 
-		semverSelector   SemverSelector
+		semverSelector   common.SemverSelector
 		packageRefsData  []byte
-		matchedCandidate SemverCandidate
+		matchedCandidate common.SemverCandidate
 	)
 
 	if len(matches[packageRequestRegexIndexSemverMajorVersion]) > 0 {
-		selector, err := NewSemverSelector(
+		selector, err := common.NewSemverSelector(
 			matches[packageRequestRegexIndexSemverPrefix],
 			matches[packageRequestRegexIndexSemverMajorVersion],
 			matches[packageRequestRegexIndexSemverMinorVersion],
@@ -183,7 +185,7 @@ func RespondToPackageRequest(
 	if requesterIsGoGet || packageSubpath == gitRefsInfoSubPath {
 		log.Printf("[%s] Fetching Github refs since this request is either from a go get or has an info path\n", requestID)
 
-		refs, err := FetchRefs(fmt.Sprintf(
+		refs, err := common.FetchRefs(fmt.Sprintf(
 			githubRootTemplate,
 			packageCreator,
 			packageRepo,
@@ -207,13 +209,13 @@ func RespondToPackageRequest(
 					hasMatchedCandidate = true
 				} else {
 					selectorHasLessThan :=
-						semverSelector.Suffix == semverSelectorSuffixLessThan
+						semverSelector.Suffix == common.SemverSelectorSuffixLessThan
 					selectorHasWildcards :=
-						semverSelector.MinorVersion.Type == semverSegmentTypeWildcard ||
-							semverSelector.PatchVersion.Type == semverSegmentTypeWildcard ||
-							semverSelector.PrereleaseVersion.Type == semverSegmentTypeWildcard
+						semverSelector.MinorVersion.Type == common.SemverSegmentTypeWildcard ||
+							semverSelector.PatchVersion.Type == common.SemverSegmentTypeWildcard ||
+							semverSelector.PrereleaseVersion.Type == common.SemverSegmentTypeWildcard
 
-					var matchedCandidateReference *SemverCandidate
+					var matchedCandidateReference *common.SemverCandidate
 					if selectorHasWildcards || selectorHasLessThan {
 						matchedCandidateReference = matchedCandidates.Highest()
 					} else {
