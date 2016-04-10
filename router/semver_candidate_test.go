@@ -187,3 +187,36 @@ func TestSemverCandidateCompareTo(t *testing.T) {
 		)
 	}
 }
+
+func TestSemverCandidateList(t *testing.T) {
+	var (
+		list                               SemverCandidateList
+		c, expectedLowest, expectedHighest SemverCandidate
+	)
+
+	c, _ = NewSemverCandidate("a", "b", "c", "1", "2", "3", "", "")
+	list = append(list, c)
+	c, _ = NewSemverCandidate("a", "b", "c", "2", "3", "4", "", "")
+	list = append(list, c)
+	expectedLowest, _ = NewSemverCandidate("a", "b", "c", "1", "2", "3", "alpha", "2")
+	list = append(list, expectedLowest)
+	c, _ = NewSemverCandidate("a", "b", "c", "2", "1", "1", "", "")
+	list = append(list, c)
+	expectedHighest, _ = NewSemverCandidate("a", "b", "c", "3", "5", "6", "", "")
+	list = append(list, expectedHighest)
+
+	lowest := list.Lowest()
+	highest := list.Highest()
+
+	assert.Equal(t, 0, lowest.CompareTo(expectedLowest), "The lowest candidate should be correct")
+	assert.Equal(t, 0, highest.CompareTo(expectedHighest), "The highest candidate should be correct")
+
+	selector, err := NewSemverSelector("", "1", "x", "", "", "", "")
+	matchedList := list.Match(selector)
+	assert.Nil(t, err, "Match should always work for normal candidate lists")
+	assert.Equal(t, 2, len(matchedList), "Match should return the correct number of elements")
+
+	list = []SemverCandidate{}
+	assert.Nil(t, list.Lowest(), "Lowset should return nil when there are no elements to sort")
+	assert.Nil(t, list.Highest(), "Highest should return nil when there are no elements to sort")
+}
