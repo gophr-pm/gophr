@@ -188,6 +188,45 @@ func TestSemverCandidateCompareTo(t *testing.T) {
 	}
 }
 
+func TestSemverCandidateString(t *testing.T) {
+	c1, _ := NewSemverCandidate(
+		"someHash",
+		"someRef",
+		"someLabel",
+		"1",
+		"2",
+		"3",
+		"",
+		"",
+	)
+
+	c2, _ := NewSemverCandidate(
+		"someHash",
+		"someRef",
+		"someLabel",
+		"1",
+		"2",
+		"3",
+		"alpha",
+		"",
+	)
+
+	c3, _ := NewSemverCandidate(
+		"someHash",
+		"someRef",
+		"someLabel",
+		"1",
+		"2",
+		"3",
+		"beta",
+		"4",
+	)
+
+	assert.Equal(t, "1.2.3", c1.String(), "Candidates without pre-release data should just be 3 numbers")
+	assert.Equal(t, "1.2.3-alpha", c2.String(), "Candidates with a pre-release label and without a pre-release version should omit the pre-release version entirely")
+	assert.Equal(t, "1.2.3-beta.4", c3.String(), "Candidates with a pre-release label and a pre-release version should show in full")
+}
+
 func TestSemverCandidateList(t *testing.T) {
 	var (
 		list                               SemverCandidateList
