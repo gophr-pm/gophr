@@ -18,18 +18,26 @@ type GoPackage struct {
 	GoDocURL       string
 	IndexTime      string
 	HttpStatusCode int
+	AwesomeGo      bool
 }
 
-func main() {
-	log.Println("Begining download")
-	doc, err := goquery.NewDocument("https://godoc.org/-/index")
+const (
+	refsFetchURLTemplate = "https://%s.git/info/refs?service=git-upload-pack"
+)
 
+func main() {
+	log.Println("Started Download of Godoc/index")
+
+	doc, err := goquery.NewDocument("https://godoc.org/-/index")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Println("Finished download")
+	log.Println("Finished Download of Godoc/index")
+	log.Println("Started scraping all github packages from Godoc/index")
+
 	var goPackageList = make([]*GoPackage, 0)
+	var goPackageMap = make(map[string]*GoPackage)
 
 	// For each tr element on the page
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
@@ -64,11 +72,38 @@ func main() {
 
 			// Add goPackage to goPackageList
 			goPackageList = append(goPackageList, goPackage)
+			// Hash the goPackage.GitHubURL for lookup
+			goPackageMap[goPackage.GitHubURL] = goPackage
 		}
 	})
 
-	for _, goPackage := range goPackageList {
-		resp, err := http.Get("http://www." + goPackage.GitHubURL)
+	log.Println("Finished scraping all github packages from Godoc/index")
+	log.Println("Started Download of awesome-go/README.md")
+
+	doc, err = goquery.NewDocument("https://godoc.org/-/index")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Finished Download of awesome-go/README.md")
+	log.Println("Started scraping awesome-go/README.md")
+
+	doc.Find("a").Each(func(i int, s *goquery.Selection) {
+		childURL, _ := s.Attr("href")
+
+		goPackage, goPackageExists := goPackageMap[childURL]
+
+		if goPackageExists {
+			goPackage.AwesomeGo = true
+			goPackageMap[childURL] = goPackage
+			printGoPackage(goPackage)
+		}
+	})
+
+	log.Println("Finished scraping awesome-go/README.md")
+
+	for _, goPackage := range goPackageMap {
+		resp, err := http.Get("http://www.example.com")
 		if err != nil {
 			fmt.Println("ERROR")
 		}
@@ -108,5 +143,6 @@ func printGoPackage(gp *GoPackage) {
 	fmt.Println("GitHub URL = ", gp.GitHubURL)
 	fmt.Println("Description = ", gp.Description)
 	fmt.Println("Index time = ", gp.IndexTime)
-	fmt.Println("GoDocURL = ", gp.GoDocURL, "\n")
+	fmt.Println("GoDocURL = ", gp.GoDocURL)
+	fmt.Println("AwesomeGo = ", gp.AwesomeGo, "\n")
 }
