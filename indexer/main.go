@@ -58,9 +58,9 @@ func main() {
 
 		// Only continue if this goPackage contains a GitHub URL
 		// TODO check to make sure github.com is the prefix
-		gitHubUrlTokens := strings.Split(goPackage.GitHubURL, "/")
+		gitHubURLTokens := strings.Split(goPackage.GitHubURL, "/")
 
-		if strings.Contains(goPackage.GitHubURL, "github.com") && len(gitHubUrlTokens) == 3 {
+		if strings.Contains(goPackage.GitHubURL, "github.com") && len(gitHubURLTokens) == 3 {
 			// Build go doc url
 			goPackage.GoDocURL = ("https://godoc.org/" + goPackage.GitHubURL)
 
@@ -112,16 +112,17 @@ func main() {
 				refs, err := common.FetchRefs(goPackage.GitHubURL)
 				if err != nil {
 					log.Println("ERROR", goPackage.GitHubURL, " failed to return.\n", err)
-					delete(goPackageMap, goPackage.GitHubURL)
+					goPackage.HttpStatusCode = 404
 					goErrorPackageMap[goPackage.GitHubURL] = goPackage
 				} else {
+					goPackage.HttpStatusCode = 200
 					var versions []string
 					for _, version := range refs.Candidates {
 						versions = append(versions, version.String())
 					}
 					goPackage.Versions = versions
-					goPackageMap[goPackage.GitHubURL] = goPackage
 				}
+				goPackageMap[goPackage.GitHubURL] = goPackage
 			}
 			wg.Done()
 		}()
@@ -134,8 +135,9 @@ func main() {
 	close(urls)
 	wg.Wait()
 
-	log.Println("SUCCESS: ", len(goPackageMap), " GoPackages were successfully built")
-	log.Println("Creating JSON dump of ", len(goPackageMap), " valid go packages")
+	successfulNumPackages := len(goPackageMap) - len(goErrorPackageMap)
+	log.Println("SUCCESS: ", successfulNumPackages, " GoPackages were successfully built")
+	log.Println("Creating JSON dump of ", len(goPackageMap), " go packages")
 	createJSONDump(goPackageMap, "valid-go-packages")
 	log.Println("Finished creating JSON dump\n")
 
