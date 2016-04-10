@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"bytes"
@@ -56,6 +56,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v0",                            // name
+			"v0",                                       // label
 			0,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -65,6 +66,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/heads/v1",                            // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -74,6 +76,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/heads/v2",                            // name
+			"v2",                                       // label
 			2,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -102,6 +105,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1.1",                          // name
+			"v1.1",                                     // label
 			1,                                          // major
 			1,                                          // minor
 			0,                                          // patch
@@ -111,6 +115,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/heads/v1.3",                          // name
+			"v1.3",                                     // label
 			1,                                          // major
 			3,                                          // minor
 			0,                                          // patch
@@ -120,6 +125,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/heads/v1.2",                          // name
+			"v1.2",                                     // label
 			1,                                          // major
 			2,                                          // minor
 			0,                                          // patch
@@ -144,6 +150,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1",                            // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -168,6 +175,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/tags/v1",                             // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -193,6 +201,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1",                            // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -221,6 +230,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/tags/v0",                             // name
+			"v0",                                       // label
 			0,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -230,6 +240,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/tags/v1",                             // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -239,6 +250,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/tags/v2",                             // name
+			"v2",                                       // label
 			2,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -268,6 +280,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/tags/v1",                             // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -277,6 +290,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/tags/v1",                             // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -286,6 +300,7 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash5", // hash
 			"refs/tags/v2",                             // name
+			"v2",                                       // label
 			2,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -319,6 +334,7 @@ var refsTests = []refsTest{{
 		{
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/heads/v1",                            // name
+			"v1",                                       // label
 			1,                                          // major
 			0,                                          // minor
 			0,                                          // patch
@@ -328,33 +344,37 @@ var refsTests = []refsTest{{
 		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/heads/v1.1-unstable",                 // name
-			1,          // major
-			1,          // minor
-			0,          // patch
-			"unstable", // pre-release label
-			0,          // pre-release version
-			true,       // pre-release exists
+			"v1.1-unstable",                            // label
+			1,                                          // major
+			1,                                          // minor
+			0,                                          // patch
+			"unstable",                                 // pre-release label
+			0,                                          // pre-release version
+			true,                                       // pre-release exists
 		}, {
 			"00000000000000000000000000000000000hash5", // hash
 			"refs/heads/v1.3-unstable",                 // name
-			1,          // major
-			3,          // minor
-			0,          // patch
-			"unstable", // pre-release label
-			0,          // pre-release version
-			true,       // pre-release exists
+			"v1.3-unstable",                            // label
+			1,                                          // major
+			3,                                          // minor
+			0,                                          // patch
+			"unstable",                                 // pre-release label
+			0,                                          // pre-release version
+			true,                                       // pre-release exists
 		}, {
 			"00000000000000000000000000000000000hash6", // hash
 			"refs/heads/v1.2-unstable",                 // name
-			1,          // major
-			2,          // minor
-			0,          // patch
-			"unstable", // pre-release label
-			0,          // pre-release version
-			true,       // pre-release exists
+			"v1.2-unstable",                            // label
+			1,                                          // major
+			2,                                          // minor
+			0,                                          // patch
+			"unstable",                                 // pre-release label
+			0,                                          // pre-release version
+			true,                                       // pre-release exists
 		}, {
 			"00000000000000000000000000000000000hash7", // hash
 			"refs/heads/v2",                            // name
+			"v2",                                       // label
 			2,                                          // major
 			0,                                          // minor
 			0,                                          // patch

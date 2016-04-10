@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"bytes"
@@ -9,13 +9,27 @@ import (
 )
 
 const (
-	semverSelectorTildeChar                 = '~'
-	semverSelectorCaratChar                 = '^'
-	semverSelectorWildcardChar              = 'x'
-	semverSelectorLessThanChar              = '-'
-	semverSelectorSeparatorChar             = '.'
-	semverSelectorGreaterThanChar           = '+'
-	semverSelectorPrereleaseLabelPrefixChar = '-'
+	// SemverSelectorTildeChar is the character that represents flexible patch
+	// version selection.
+	SemverSelectorTildeChar = '~'
+	// SemverSelectorCaratChar is the character that represents flexible minor &
+	// patch version selection.
+	SemverSelectorCaratChar = '^'
+	// SemverSelectorWildcardChar is the character that represents variable major,
+	// minor, patch or pre-release version selection.
+	SemverSelectorWildcardChar = 'x'
+	// SemverSelectorLessThanChar is the character that represents the less-than
+	// version inequality.
+	SemverSelectorLessThanChar = '-'
+	// SemverSelectorSeparatorChar is the character that separates segements of a
+	// semver version.
+	SemverSelectorSeparatorChar = '.'
+	// SemverSelectorGreaterThanChar is the character that represents the
+	// greater-than version inequality.
+	SemverSelectorGreaterThanChar = '+'
+	// SemverSelectorPrereleaseLabelPrefixChar is the character that separates the
+	// patch version segment and the pre-release label.
+	SemverSelectorPrereleaseLabelPrefixChar = '-'
 )
 
 const (
@@ -27,30 +41,52 @@ const (
 )
 
 const (
-	semverSelectorPrefixNone  = iota
-	semverSelectorPrefixTilde = iota
-	semverSelectorPrefixCarat = iota
+	// SemverSelectorPrefixNone is the prefix enum value for an unspecified
+	// prefix.
+	SemverSelectorPrefixNone = iota
+	// SemverSelectorPrefixTilde is the prefix enum value for a tilde prefix.
+	SemverSelectorPrefixTilde = iota
+	// SemverSelectorPrefixCarat is the prefix enum value for a carat prefix.
+	SemverSelectorPrefixCarat = iota
 )
 
 const (
-	semverSelectorSuffixNone        = iota
-	semverSelectorSuffixLessThan    = iota
-	semverSelectorSuffixGreaterThan = iota
+	// SemverSelectorSuffixNone is the suffix enum value for an unspecified
+	// suffix.
+	SemverSelectorSuffixNone = iota
+	// SemverSelectorSuffixLessThan is the suffix enum value for a less-than
+	// suffix.
+	SemverSelectorSuffixLessThan = iota
+	// SemverSelectorSuffixGreaterThan is the suffix enum value for a greater-than
+	// suffix.
+	SemverSelectorSuffixGreaterThan = iota
 )
 
 const (
-	semverSegmentTypeNumber      = iota
-	semverSegmentTypeWildcard    = iota
-	semverSegmentTypeUnspecified = iota
+	// SemverSegmentTypeNumber is the segment type enum value for segment of type
+	// number.
+	SemverSegmentTypeNumber = iota
+	// SemverSegmentTypeWildcard is the segment type enum value for segment of
+	// type wildcard.
+	SemverSegmentTypeWildcard = iota
+	// SemverSegmentTypeUnspecified is the segment type enum value for an
+	// unspecified segment.
+	SemverSegmentTypeUnspecified = iota
 )
 
 const (
-	semverSegmentNamePrefix     = "prefix"
-	semverSegmentNameMajor      = "major"
-	semverSegmentNameMinor      = "minor"
-	semverSegmentNamePatch      = "patch"
-	semverSegmentNamePrerelease = "pre-release"
-	semverSegmentNameSuffix     = "suffix"
+	// SemverSegmentNamePrefix is the name of the prefix semver segment.
+	SemverSegmentNamePrefix = "prefix"
+	// SemverSegmentNameMajor is the name of the major semver segment.
+	SemverSegmentNameMajor = "major"
+	// SemverSegmentNameMinor is the name of the minor semver segment.
+	SemverSegmentNameMinor = "minor"
+	// SemverSegmentNamePatch is the name of the patch semver segment.
+	SemverSegmentNamePatch = "patch"
+	// SemverSegmentNamePrerelease is the name of the pre-release semver segment.
+	SemverSegmentNamePrerelease = "pre-release"
+	// SemverSegmentNameSuffix is the name of the suffix semver segment.
+	SemverSegmentNameSuffix = "suffix"
 )
 
 // SemverSelectorSegment is the atomic unit of a semver version.
@@ -89,30 +125,30 @@ func NewSemverSelector(
 	)
 
 	if len(prefix) > 0 {
-		if prefix[0] == semverSelectorTildeChar {
-			semver.Prefix = semverSelectorPrefixTilde
+		if prefix[0] == SemverSelectorTildeChar {
+			semver.Prefix = SemverSelectorPrefixTilde
 			semver.IsFlexible = true
-		} else if prefix[0] == semverSelectorCaratChar {
-			semver.Prefix = semverSelectorPrefixCarat
+		} else if prefix[0] == SemverSelectorCaratChar {
+			semver.Prefix = SemverSelectorPrefixCarat
 			semver.IsFlexible = true
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureInvalidSegment,
-				semverSegmentNamePrefix,
+				SemverSegmentNamePrefix,
 				prefix)
 		}
 	} else {
-		semver.Prefix = semverSelectorPrefixNone
+		semver.Prefix = SemverSelectorPrefixNone
 	}
 
 	if len(majorVersion) > 0 {
 		if number, err := strconv.Atoi(majorVersion); err == nil {
-			semver.MajorVersion.Type = semverSegmentTypeNumber
+			semver.MajorVersion.Type = SemverSegmentTypeNumber
 			semver.MajorVersion.Number = number
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureInvalidSegment,
-				semverSegmentNameMajor,
+				SemverSegmentNameMajor,
 				majorVersion)
 		}
 	} else {
@@ -120,60 +156,60 @@ func NewSemverSelector(
 	}
 
 	if len(minorVersion) > 0 {
-		if strings.ToLower(minorVersion)[0] == semverSelectorWildcardChar {
-			if semver.Prefix == semverSelectorPrefixNone {
+		if strings.ToLower(minorVersion)[0] == SemverSelectorWildcardChar {
+			if semver.Prefix == SemverSelectorPrefixNone {
 				if !semver.IsFlexible {
 					semver.IsFlexible = true
 				}
-				semver.MinorVersion.Type = semverSegmentTypeWildcard
+				semver.MinorVersion.Type = SemverSegmentTypeWildcard
 				versionCompleted = true
 			} else {
 				return semver, errors.New(
 					errorSemverParseFailurePrefixMixedWithWildcard)
 			}
 		} else if number, err := strconv.Atoi(minorVersion); err == nil {
-			semver.MinorVersion.Type = semverSegmentTypeNumber
+			semver.MinorVersion.Type = SemverSegmentTypeNumber
 			semver.MinorVersion.Number = number
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureInvalidSegment,
-				semverSegmentNameMinor,
+				SemverSegmentNameMinor,
 				minorVersion)
 		}
 	} else {
-		semver.MinorVersion.Type = semverSegmentTypeUnspecified
+		semver.MinorVersion.Type = SemverSegmentTypeUnspecified
 		versionCompleted = true
 	}
 
 	if len(patchVersion) > 0 {
 		if !versionCompleted {
-			if strings.ToLower(patchVersion)[0] == semverSelectorWildcardChar {
-				if semver.Prefix == semverSelectorPrefixNone {
+			if strings.ToLower(patchVersion)[0] == SemverSelectorWildcardChar {
+				if semver.Prefix == SemverSelectorPrefixNone {
 					if !semver.IsFlexible {
 						semver.IsFlexible = true
 					}
-					semver.PatchVersion.Type = semverSegmentTypeWildcard
+					semver.PatchVersion.Type = SemverSegmentTypeWildcard
 					versionCompleted = true
 				} else {
 					return semver, errors.New(
 						errorSemverParseFailurePrefixMixedWithWildcard)
 				}
 			} else if number, err := strconv.Atoi(patchVersion); err == nil {
-				semver.PatchVersion.Type = semverSegmentTypeNumber
+				semver.PatchVersion.Type = SemverSegmentTypeNumber
 				semver.PatchVersion.Number = number
 			} else {
 				return semver, fmt.Errorf(
 					errorSemverParseFailureInvalidSegment,
-					semverSegmentNamePatch,
+					SemverSegmentNamePatch,
 					patchVersion)
 			}
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureVersionTerminated,
-				semverSegmentNamePatch)
+				SemverSegmentNamePatch)
 		}
 	} else {
-		semver.PatchVersion.Type = semverSegmentTypeUnspecified
+		semver.PatchVersion.Type = SemverSegmentTypeUnspecified
 		if !versionCompleted {
 			versionCompleted = true
 		}
@@ -185,7 +221,7 @@ func NewSemverSelector(
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureInvalidSegment,
-				semverSegmentNamePrerelease,
+				SemverSegmentNamePrerelease,
 				prereleaseVersion)
 		}
 	} else {
@@ -196,46 +232,46 @@ func NewSemverSelector(
 
 	if len(prereleaseVersion) > 0 {
 		if !versionCompleted {
-			if strings.ToLower(prereleaseVersion)[0] == semverSelectorWildcardChar {
-				if semver.Prefix == semverSelectorPrefixNone {
+			if strings.ToLower(prereleaseVersion)[0] == SemverSelectorWildcardChar {
+				if semver.Prefix == SemverSelectorPrefixNone {
 					if !semver.IsFlexible {
 						semver.IsFlexible = true
 					}
-					semver.PrereleaseVersion.Type = semverSegmentTypeWildcard
+					semver.PrereleaseVersion.Type = SemverSegmentTypeWildcard
 				} else {
 					return semver, errors.New(
 						errorSemverParseFailurePrefixMixedWithWildcard)
 				}
 			} else if number, err := strconv.Atoi(prereleaseVersion); err == nil {
-				semver.PrereleaseVersion.Type = semverSegmentTypeNumber
+				semver.PrereleaseVersion.Type = SemverSegmentTypeNumber
 				semver.PrereleaseVersion.Number = number
 			} else {
 				return semver, fmt.Errorf(
 					errorSemverParseFailureInvalidSegment,
-					semverSegmentNamePrerelease,
+					SemverSegmentNamePrerelease,
 					prereleaseVersion)
 			}
 		} else {
 			return semver, fmt.Errorf(
 				errorSemverParseFailureVersionTerminated,
-				semverSegmentNamePrerelease)
+				SemverSegmentNamePrerelease)
 		}
 	} else {
-		semver.PrereleaseVersion.Type = semverSegmentTypeUnspecified
+		semver.PrereleaseVersion.Type = SemverSegmentTypeUnspecified
 	}
 
 	if len(suffix) > 0 {
 		if !semver.IsFlexible {
-			if suffix[0] == semverSelectorGreaterThanChar {
-				semver.Suffix = semverSelectorSuffixGreaterThan
+			if suffix[0] == SemverSelectorGreaterThanChar {
+				semver.Suffix = SemverSelectorSuffixGreaterThan
 				semver.IsFlexible = true
-			} else if suffix[0] == semverSelectorLessThanChar {
-				semver.Suffix = semverSelectorSuffixLessThan
+			} else if suffix[0] == SemverSelectorLessThanChar {
+				semver.Suffix = SemverSelectorSuffixLessThan
 				semver.IsFlexible = true
 			} else {
 				return semver, fmt.Errorf(
 					errorSemverParseFailureInvalidSegment,
-					semverSegmentNameSuffix,
+					SemverSegmentNameSuffix,
 					suffix)
 			}
 		} else {
@@ -243,15 +279,17 @@ func NewSemverSelector(
 				errorSemverParseFailureSuffixMixedWithPrefixOrWildcard)
 		}
 	} else {
-		semver.Suffix = semverSelectorSuffixNone
+		semver.Suffix = SemverSelectorSuffixNone
 	}
 
 	return semver, nil
 }
 
+// Matches simply determines whether the given candidate fits within the range
+// defined by this version selector.
 func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 	if s.IsFlexible {
-		if s.Suffix == semverSelectorSuffixGreaterThan {
+		if s.Suffix == SemverSelectorSuffixGreaterThan {
 			if s.MajorVersion.Number > candidate.MajorVersion {
 				return false
 			} else if s.MajorVersion.Number < candidate.MajorVersion {
@@ -275,7 +313,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				// If the selector's pre-release doesn't match the candidate's
 				// pre-release, then they should not match
 				return false
-			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+			} else if s.PrereleaseVersion.Type == SemverSegmentTypeNumber {
 				// The fact that we've gotten this far means that the pre-release labels
 				// match - we just need to check that the version itself is greater
 				return candidate.PrereleaseVersion >= s.PrereleaseVersion.Number
@@ -285,7 +323,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				// to true
 				return true
 			}
-		} else if s.Suffix == semverSelectorSuffixLessThan {
+		} else if s.Suffix == SemverSelectorSuffixLessThan {
 			if s.MajorVersion.Number > candidate.MajorVersion {
 				return true
 			} else if s.MajorVersion.Number < candidate.MajorVersion {
@@ -310,7 +348,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				// If the selector's pre-release doesn't match the candidate's
 				// pre-release, then they should not match
 				return false
-			} else if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
+			} else if s.PrereleaseVersion.Type == SemverSegmentTypeNumber {
 				// The fact that we've gotten this far means that the pre-release labels
 				// match - we just need to check that the version itself is lesser
 				return candidate.PrereleaseVersion <= s.PrereleaseVersion.Number
@@ -321,7 +359,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				// make it the return condition.
 				return candidate.PrereleaseVersion == 0
 			}
-		} else if s.Prefix == semverSelectorPrefixCarat {
+		} else if s.Prefix == SemverSelectorPrefixCarat {
 			if s.MajorVersion.Number != candidate.MajorVersion {
 				return false
 			} else if s.MinorVersion.Number > candidate.MinorVersion {
@@ -331,7 +369,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 			}
 
 			return len(candidate.PrereleaseLabel) == 0
-		} else if s.Prefix == semverSelectorPrefixTilde {
+		} else if s.Prefix == SemverSelectorPrefixTilde {
 			if s.MajorVersion.Number != candidate.MajorVersion {
 				return false
 			} else if s.MinorVersion.Number != candidate.MinorVersion {
@@ -347,11 +385,11 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				return false
 			}
 			switch s.MinorVersion.Type {
-			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+			case SemverSegmentTypeWildcard, SemverSegmentTypeUnspecified:
 				return true
 			}
 			switch s.PatchVersion.Type {
-			case semverSegmentTypeWildcard, semverSegmentTypeUnspecified:
+			case SemverSegmentTypeWildcard, SemverSegmentTypeUnspecified:
 				return true
 			}
 
@@ -367,7 +405,7 @@ func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 				s.PrereleaseLabel == candidate.PrereleaseLabel
 
 			if matchesUpToLabel {
-				if s.PrereleaseVersion.Type == semverSegmentTypeUnspecified {
+				if s.PrereleaseVersion.Type == SemverSegmentTypeUnspecified {
 					return true
 				}
 
@@ -387,18 +425,18 @@ func (s SemverSelector) String() string {
 		versionStringCompleted = false
 	)
 
-	if s.Prefix == semverSelectorPrefixTilde {
-		buffer.WriteByte(semverSelectorTildeChar)
-	} else if s.Prefix == semverSelectorPrefixCarat {
-		buffer.WriteByte(semverSelectorCaratChar)
+	if s.Prefix == SemverSelectorPrefixTilde {
+		buffer.WriteByte(SemverSelectorTildeChar)
+	} else if s.Prefix == SemverSelectorPrefixCarat {
+		buffer.WriteByte(SemverSelectorCaratChar)
 	}
 
-	if s.MajorVersion.Type == semverSegmentTypeNumber {
+	if s.MajorVersion.Type == SemverSegmentTypeNumber {
 		buffer.WriteString(strconv.Itoa(s.MajorVersion.Number))
 	} else {
 		var majorValue string
 
-		if s.MajorVersion.Type == semverSegmentTypeWildcard {
+		if s.MajorVersion.Type == SemverSegmentTypeWildcard {
 			majorValue = "a wildcard"
 		} else {
 			majorValue = "unspecified"
@@ -408,23 +446,23 @@ func (s SemverSelector) String() string {
 			fmt.Sprintf("Cannot stringify invalid semver (major is %s)", majorValue))
 	}
 
-	if s.MinorVersion.Type == semverSegmentTypeNumber {
-		buffer.WriteByte(semverSelectorSeparatorChar)
+	if s.MinorVersion.Type == SemverSegmentTypeNumber {
+		buffer.WriteByte(SemverSelectorSeparatorChar)
 		buffer.WriteString(strconv.Itoa(s.MinorVersion.Number))
-	} else if s.MinorVersion.Type == semverSegmentTypeWildcard {
-		buffer.WriteByte(semverSelectorSeparatorChar)
-		buffer.WriteByte(semverSelectorWildcardChar)
+	} else if s.MinorVersion.Type == SemverSegmentTypeWildcard {
+		buffer.WriteByte(SemverSelectorSeparatorChar)
+		buffer.WriteByte(SemverSelectorWildcardChar)
 	} else {
 		versionStringCompleted = true
 	}
 
 	if !versionStringCompleted {
-		if s.PatchVersion.Type == semverSegmentTypeNumber {
-			buffer.WriteByte(semverSelectorSeparatorChar)
+		if s.PatchVersion.Type == SemverSegmentTypeNumber {
+			buffer.WriteByte(SemverSelectorSeparatorChar)
 			buffer.WriteString(strconv.Itoa(s.PatchVersion.Number))
-		} else if s.PatchVersion.Type == semverSegmentTypeWildcard {
-			buffer.WriteByte(semverSelectorSeparatorChar)
-			buffer.WriteByte(semverSelectorWildcardChar)
+		} else if s.PatchVersion.Type == SemverSegmentTypeWildcard {
+			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorWildcardChar)
 		} else {
 			versionStringCompleted = true
 		}
@@ -432,7 +470,7 @@ func (s SemverSelector) String() string {
 
 	if !versionStringCompleted {
 		if len(s.PrereleaseLabel) > 0 {
-			buffer.WriteByte(semverSelectorPrereleaseLabelPrefixChar)
+			buffer.WriteByte(SemverSelectorPrereleaseLabelPrefixChar)
 			buffer.WriteString(s.PrereleaseLabel)
 		} else {
 			versionStringCompleted = true
@@ -440,19 +478,19 @@ func (s SemverSelector) String() string {
 	}
 
 	if !versionStringCompleted {
-		if s.PrereleaseVersion.Type == semverSegmentTypeNumber {
-			buffer.WriteByte(semverSelectorSeparatorChar)
+		if s.PrereleaseVersion.Type == SemverSegmentTypeNumber {
+			buffer.WriteByte(SemverSelectorSeparatorChar)
 			buffer.WriteString(strconv.Itoa(s.PrereleaseVersion.Number))
-		} else if s.PrereleaseVersion.Type == semverSegmentTypeWildcard {
-			buffer.WriteByte(semverSelectorSeparatorChar)
-			buffer.WriteByte(semverSelectorWildcardChar)
+		} else if s.PrereleaseVersion.Type == SemverSegmentTypeWildcard {
+			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorWildcardChar)
 		}
 	}
 
-	if s.Suffix == semverSelectorSuffixLessThan {
-		buffer.WriteByte(semverSelectorLessThanChar)
-	} else if s.Suffix == semverSelectorSuffixGreaterThan {
-		buffer.WriteByte(semverSelectorGreaterThanChar)
+	if s.Suffix == SemverSelectorSuffixLessThan {
+		buffer.WriteByte(SemverSelectorLessThanChar)
+	} else if s.Suffix == SemverSelectorSuffixGreaterThan {
+		buffer.WriteByte(SemverSelectorGreaterThanChar)
 	}
 
 	return buffer.String()

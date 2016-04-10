@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"fmt"
@@ -12,22 +12,22 @@ var (
 	selectorRegex = regexp.MustCompile(
 		fmt.Sprintf(
 			`([%c%c]?)([0-9]+)\.(?:([0-9]+|%c))(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([%c%c]?)`,
-			semverSelectorTildeChar,
-			semverSelectorCaratChar,
-			semverSelectorWildcardChar,
-			semverSelectorWildcardChar,
-			semverSelectorWildcardChar,
-			semverSelectorLessThanChar,
-			semverSelectorGreaterThanChar,
+			SemverSelectorTildeChar,
+			SemverSelectorCaratChar,
+			SemverSelectorWildcardChar,
+			SemverSelectorWildcardChar,
+			SemverSelectorWildcardChar,
+			SemverSelectorLessThanChar,
+			SemverSelectorGreaterThanChar,
 		),
 	)
 
 	candidateRegex = regexp.MustCompile(
 		fmt.Sprintf(
 			`([0-9]+)\.(?:([0-9]+|%c))(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+)(?:\.([0-9]+|%c))?)?`,
-			semverSelectorWildcardChar,
-			semverSelectorWildcardChar,
-			semverSelectorWildcardChar,
+			SemverSelectorWildcardChar,
+			SemverSelectorWildcardChar,
+			SemverSelectorWildcardChar,
 		),
 	)
 
@@ -145,6 +145,7 @@ func (tuple *semverMatchTuple) compile() {
 		compiledCandidate, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
+			"fakeLabel",
 			matches[1],
 			matches[2],
 			matches[3],
@@ -230,77 +231,77 @@ func TestNewSemverSelector(t *testing.T) {
 
 	semver, err = NewSemverSelector("", "1", "", "", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, semverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
+	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
 	semver, err = NewSemverSelector("", "2", "", "", "", "", "-")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 2, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, semverSelectorSuffixLessThan, semver.Suffix, "suffix should be less than")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
+	assert.Equal(t, SemverSelectorSuffixLessThan, semver.Suffix, "suffix should be less than")
 
 	semver, err = NewSemverSelector("~", "1", "2", "", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixTilde, semver.Prefix, "prefix should be a tilde")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixTilde, semver.Prefix, "prefix should be a tilde")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, 2, semver.MinorVersion.Number, "minor should be the correct number")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, semverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
+	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
 	semver, err = NewSemverSelector("^", "1", "2", "3", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixCarat, semver.Prefix, "prefix should be a carat")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixCarat, semver.Prefix, "prefix should be a carat")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, 2, semver.MinorVersion.Number, "minor should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
 	assert.Equal(t, 3, semver.PatchVersion.Number, "patch should be the correct number")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
-	assert.Equal(t, semverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, semverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
+	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
 	semver, err = NewSemverSelector("", "1", "2", "3", "alpha", "x", "")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, 2, semver.MinorVersion.Number, "minor should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
 	assert.Equal(t, 3, semver.PatchVersion.Number, "patch should be the correct number")
 	assert.Equal(t, "alpha", semver.PrereleaseLabel, "prerelease label should be alpha")
-	assert.Equal(t, semverSegmentTypeWildcard, semver.PrereleaseVersion.Type, "prerelease should be type wildcard")
-	assert.Equal(t, semverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeWildcard, semver.PrereleaseVersion.Type, "prerelease should be type wildcard")
+	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
 	semver, err = NewSemverSelector("", "1", "2", "3", "beta", "43", "+")
 	assert.Nil(t, err)
-	assert.Equal(t, semverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
+	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, 2, semver.MinorVersion.Number, "minor should be the correct number")
-	assert.Equal(t, semverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.PatchVersion.Type, "patch should be type number")
 	assert.Equal(t, 3, semver.PatchVersion.Number, "patch should be the correct number")
 	assert.Equal(t, "beta", semver.PrereleaseLabel, "prerelease label should be alpha")
-	assert.Equal(t, semverSegmentTypeNumber, semver.PrereleaseVersion.Type, "prerelease should be type number")
+	assert.Equal(t, SemverSegmentTypeNumber, semver.PrereleaseVersion.Type, "prerelease should be type number")
 	assert.Equal(t, 43, semver.PrereleaseVersion.Number, "prerelease should the correct number")
-	assert.Equal(t, semverSelectorSuffixGreaterThan, semver.Suffix, "suffix should be greater than")
+	assert.Equal(t, SemverSelectorSuffixGreaterThan, semver.Suffix, "suffix should be greater than")
 }
 
 func TestSemverMatches(t *testing.T) {
@@ -374,7 +375,7 @@ func TestSemverString(t *testing.T) {
 
 	semver = SemverSelector{
 		MajorVersion: SemverSelectorSegment{
-			Type: semverSegmentTypeWildcard,
+			Type: SemverSegmentTypeWildcard,
 		},
 	}
 	assert.Panics(t, func() {
@@ -383,7 +384,7 @@ func TestSemverString(t *testing.T) {
 
 	semver = SemverSelector{
 		MajorVersion: SemverSelectorSegment{
-			Type: semverSegmentTypeUnspecified,
+			Type: SemverSegmentTypeUnspecified,
 		},
 	}
 	assert.Panics(t, func() {

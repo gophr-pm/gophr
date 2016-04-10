@@ -2,24 +2,24 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 )
 
-func annoy() {
-	for {
-		fmt.Println("Still here fam")
-		time.Sleep(1 * time.Second)
-	}
-}
+const (
+	healthCheckRoute       = "/status"
+	wildcardHandlerPattern = "/"
+)
+
+var (
+	statusCheckResponse = []byte("ok")
+)
 
 func main() {
-	http.HandleFunc("/status", healthCheckHandler)
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Sup, I'm routerr. I love %s!", r.URL.Path[1:])
-	})
+	http.HandleFunc(wildcardHandlerPattern, handler)
+
 	portStr := os.Getenv("PORT")
 	var port int
 	if len(portStr) == 0 {
@@ -33,7 +33,24 @@ func main() {
 		port = 3000
 	}
 
-	go annoy()
-
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	requestID := generateRequestID()
+
+	log.Printf("[%s] New request received: %s\n", requestID, r.URL.Path)
+
+	if r.URL.Path == healthCheckRoute {
+		log.Printf("[%s] Handling request for \"%s\" as a health check\n", requestID, r.URL.Path)
+
+		w.Write(statusCheckResponse)
+	} else {
+		log.Printf("[%s] Handling request for \"%s\" as a package request\n", requestID, r.URL.Path)
+
+		err := RespondToPackageRequest(requestID, r, w)
+		if err != nil {
+			respondWithError(w, err)
+		}
+	}
 }
