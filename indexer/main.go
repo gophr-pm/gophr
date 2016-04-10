@@ -131,12 +131,12 @@ func main() {
 		}
 	}
 
-	log.Println("Finished Building ", len(goPackageMap), " GoPackages")
+	log.Println("SUCCESS: ", len(goPackageMap), " GoPackages were successfully built")
 	log.Println("Creating JSON dump of ", len(goPackageMap), " valid go packages")
 	createJSONDump(goPackageMap, "valid-go-packages")
 	log.Println("Finished creating JSON dump\n")
 
-	log.Println(len(goErrorPackageMap), " GoPackages where not found on github")
+	log.Println("WARNING: ", len(goErrorPackageMap), " GoPackages were not found on github")
 	log.Println("Creating JSON dump of ", len(goPackageMap), " err packages")
 	createJSONDump(goErrorPackageMap, "invalid-go-packages")
 	log.Println("Finished creating JSON dump")
