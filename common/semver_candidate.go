@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"errors"
 	"sort"
 	"strconv"
@@ -132,6 +133,31 @@ func (candidate SemverCandidate) CompareTo(other SemverCandidate) int {
 	// If we got this far, then the versions are clearly identical
 	// (which is super weird)
 	return 0
+}
+
+// String returns a string-serialized version of the SemverCandidate. The git
+// ref metadata is excluded such that the output of this function resembles a
+// semver-compliant version string.
+func (candidate SemverCandidate) String() string {
+	var buffer bytes.Buffer
+
+	buffer.WriteString(strconv.Itoa(candidate.MajorVersion))
+	buffer.WriteByte(SemverSelectorSeparatorChar)
+	buffer.WriteString(strconv.Itoa(candidate.MinorVersion))
+	buffer.WriteByte(SemverSelectorSeparatorChar)
+	buffer.WriteString(strconv.Itoa(candidate.PatchVersion))
+
+	if len(candidate.PrereleaseLabel) > 0 {
+		buffer.WriteByte(SemverSelectorPrereleaseLabelPrefixChar)
+		buffer.WriteString(candidate.PrereleaseLabel)
+
+		if candidate.PrereleaseVersion > 0 {
+			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteString(strconv.Itoa(candidate.PrereleaseVersion))
+		}
+	}
+
+	return buffer.String()
 }
 
 // SemverCandidateList is an abstraction for a slice of SemverCandidates with
