@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/skeswa/gophr/common"
 	"io/ioutil"
 	"log"
-	//"os"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -19,6 +18,7 @@ type GoPackage struct {
 	IndexTime      string
 	HttpStatusCode int
 	AwesomeGo      bool
+	Versions       []string
 }
 
 const (
@@ -50,7 +50,7 @@ func main() {
 			childDescription := s.Text()
 
 			if childURLexists == true {
-				goPackage.GitHubURL = childURL
+				goPackage.GitHubURL = strings.Trim(childURL, "/")
 			}
 
 			if len(childDescription) > 0 {
@@ -103,21 +103,17 @@ func main() {
 	log.Println("Finished scraping awesome-go/README.md")
 
 	for _, goPackage := range goPackageMap {
-		resp, err := http.Get("http://www.example.com")
+		refs, err := common.FetchRefs(goPackage.GitHubURL)
 		if err != nil {
-			fmt.Println("ERROR")
+			log.Println("ERROR", goPackage.GitHubURL, " failed to return.", err)
 		}
-		defer resp.Body.Close()
 
-		// TODO Check resp status code
-		goPackage.HttpStatusCode = resp.StatusCode
-
-		_, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			panic(err)
+		var versions []string
+		for _, version := range refs.Candidates {
+			versions = append(versions, version.String())
 		}
-		// Call Router Functionality to Parse for array of versions
 
+		goPackage.Versions = versions
 	}
 
 	log.Println("Finished Building GoPackages")
