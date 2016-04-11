@@ -223,7 +223,7 @@ func FetchRefs(githubRoot string) (Refs, error) {
 //
 // This code was written by Gustavo Niemeyer, Nathan Youngman and
 // Geert-Johan Riemer.
-func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) ([]byte, error) {
+func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) []byte {
 	var (
 		buf bytes.Buffer
 
@@ -300,5 +300,5 @@ func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) ([]byte, err
 		buf.Write(data[indexHeadLineEnd:])
 	}
 
-	return buf.Bytes(), nil
+	return buf.Bytes()
 }

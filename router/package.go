@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"regexp"
@@ -58,29 +57,16 @@ var (
 	)
 
 	packageRequestRegexStr = fmt.Sprintf(
-		`^\/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\/([a-zA-Z0-9\-_]+)(?:@%s)?((?:\/[a-zA-Z0-9][-.a-zA-Z0-9]*)*)`,
+		`^\/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\/([a-zA-Z0-9\.\-_]+)(?:@%s)?((?:\/[a-zA-Z0-9][-.a-zA-Z0-9]*)*)`,
 		versionSelectorRegexStr,
 	)
 
 	packageRequestRegex = regexp.MustCompile(packageRequestRegexStr)
 
-	goGetTemplate = template.Must(template.New("").Parse(
-		`{{$gophrRoot := .GophrRoot}}{{$githubRoot := .GithubRoot}}{{$githubTree := .GithubTree}}<html><head><meta name="go-import" content="{{$gophrRoot}} git {{.Protocol}}://{{$gophrRoot}}"><meta name="go-source" content="{{.GophrRoot}} _ https://{{$githubRoot}}/tree/{{$githubTree}}{/dir} https://{{$githubRoot}}/blob/{{$githubTree}}{/dir}/{file}#L{line}"></head><body>go get {{.GophrPath}}</body></html>`,
-	))
+	goGetMetadataTemplate = `<html><head><meta name="go-import" content="%s git %s://%s"><meta name="go-source" content="%s _ https://%s/tree/%s{/dir} https://%s/blob/%s{/dir}/{file}#L{line}"></head><body>go get %s</body></html>`
 )
 
-// GoGetTemplateDataSource has all the fields necessary to compile the template
-// used to respond to go get metadata requests.
-type GoGetTemplateDataSource struct {
-	Protocol   string
-	GophrRoot  string
-	GophrPath  string
-	GithubRoot string
-	GithubTree string
-}
-
-// NewGoGetTemplateDataSource creates a new instance of GoGetTemplateDataSource.
-func NewGoGetTemplateDataSource(
+func generateGoGetMetadata(
 	user string,
 	repo string,
 	semverSelectorExists bool,
@@ -88,18 +74,22 @@ func NewGoGetTemplateDataSource(
 	subpath string,
 	hasMatchedCandidate bool,
 	matchedCandidate common.SemverCandidate,
-) GoGetTemplateDataSource {
+) string {
 	var (
 		buffer bytes.Buffer
 
 		config     = getConfig()
-		templateDS = GoGetTemplateDataSource{}
+		protocol   string
+		gophrRoot  string
+		gophrPath  string
+		githubRoot string
+		githubTree string
 	)
 
 	if config.dev {
-		templateDS.Protocol = "http"
+		protocol = "http"
 	} else {
-		templateDS.Protocol = "https"
+		protocol = "https"
 	}
 
 	buffer.WriteString(config.domain)
@@ -111,10 +101,10 @@ func NewGoGetTemplateDataSource(
 		buffer.WriteByte('@')
 		buffer.WriteString(semverSelector.String())
 	}
-	templateDS.GophrRoot = buffer.String()
+	gophrRoot = buffer.String()
 
 	buffer.WriteString(subpath)
-	templateDS.GophrPath = buffer.String()
+	gophrPath = buffer.String()
 
 	buffer.Reset()
 	buffer.WriteString("github.com")
@@ -122,15 +112,26 @@ func NewGoGetTemplateDataSource(
 	buffer.WriteString(user)
 	buffer.WriteByte('/')
 	buffer.WriteString(repo)
-	templateDS.GithubRoot = buffer.String()
+	githubRoot = buffer.String()
 
 	if hasMatchedCandidate {
-		templateDS.GithubTree = matchedCandidate.GitRefLabel
+		githubTree = matchedCandidate.GitRefLabel
 	} else {
-		templateDS.GithubTree = masterGitRefLabel
+		githubTree = masterGitRefLabel
 	}
 
-	return templateDS
+	return fmt.Sprintf(
+		goGetMetadataTemplate,
+		gophrRoot,
+		protocol,
+		gophrRoot,
+		gophrRoot,
+		githubRoot,
+		githubTree,
+		githubRoot,
+		githubTree,
+		gophrPath,
+	)
 }
 
 // RespondToPackageRequest processes an incoming request, evaluates whether is a
@@ -232,11 +233,7 @@ func RespondToPackageRequest(
 
 		if hasMatchedCandidate {
 			log.Printf("[%s] Tweaked the refs to focus on the matched candidate\n", requestID)
-			refsData, err := refs.Reserialize(matchedCandidate)
-			if err != nil {
-				return err
-			}
-			packageRefsData = refsData
+			packageRefsData = refs.Reserialize(matchedCandidate)
 		} else {
 			if !semverSelectorExists {
 				// Since there was no selector, we are fine with the fact that we didn't
@@ -276,7 +273,7 @@ func RespondToPackageRequest(
 			log.Printf("[%s] Responding with html formatted for go get\n", requestID)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
-			err := goGetTemplate.Execute(res, NewGoGetTemplateDataSource(
+			res.Write([]byte(generateGoGetMetadata(
 				packageCreator,
 				packageRepo,
 				semverSelectorExists,
@@ -284,12 +281,7 @@ func RespondToPackageRequest(
 				packageSubpath,
 				hasMatchedCandidate,
 				matchedCandidate,
-			))
-
-			if err != nil {
-				log.Printf("[%s] Failed to respond with html formatted for go get\n", requestID)
-				return err
-			}
+			)))
 		} else {
 			log.Printf("[%s] Responding with a permanent redirect to the gophr package webpage\n", requestID)
 

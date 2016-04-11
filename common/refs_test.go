@@ -464,8 +464,7 @@ func TestUseRefs(t *testing.T) {
 
 		if len(refs.Candidates) > 0 {
 			lastCandidate := refs.Candidates[len(refs.Candidates)-1]
-			reserializedRefs, err := refs.Reserialize(lastCandidate)
-			assert.Nil(t, err, "refs should have been serialized correctly")
+			reserializedRefs := refs.Reserialize(lastCandidate)
 			assert.Equal(t, test.changed, string(reserializedRefs[:]), "refs should have been serialized correctly")
 		}
 	}
