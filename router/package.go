@@ -227,16 +227,6 @@ func RespondToPackageRequest(
 				}
 
 				log.Printf("[%s] There was at least one candidate matched to the version selector\n", requestID)
-			} else {
-				log.Printf("[%s] Couldn't find any candidates to match to the version selector\n", requestID)
-
-				return fmt.Errorf(
-					errorPackageRequestParseNoSuchVersion,
-					packageCreator,
-					packageRepo,
-					packageSubpath,
-					semverSelector.String(),
-				)
 			}
 		}
 
@@ -248,9 +238,22 @@ func RespondToPackageRequest(
 			}
 			packageRefsData = refsData
 		} else {
-			// If there was no matched candidate, and we're fine with it, then return
-			// the original refs that we downloaded from github
-			packageRefsData = refs.Data
+			if !semverSelectorExists {
+				// Since there was no selector, we are fine with the fact that we didn't
+				// find a match. Now, return the original refs that we downloaded from
+				// github that point to master by default.
+				packageRefsData = refs.Data
+			} else {
+				log.Printf("[%s] Couldn't find any candidates to match to the version selector \"%s\"\n", requestID, semverSelector.String())
+
+				return fmt.Errorf(
+					errorPackageRequestParseNoSuchVersion,
+					packageCreator,
+					packageRepo,
+					packageSubpath,
+					semverSelector.String(),
+				)
+			}
 		}
 	}
 
