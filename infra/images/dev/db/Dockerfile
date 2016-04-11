@@ -1,6 +1,7 @@
 FROM cassandra:3
 
 RUN set -x \
+    && apt-get update \
     && apt-get install -y wget maven unzip openjdk-8-jdk --no-install-recommends \
     && (mkdir lucene-index-tmp \
       && cd lucene-index-tmp \
@@ -10,5 +11,7 @@ RUN set -x \
       && update-ca-certificates -f \
       && mvn clean package \
       && cp plugin/target/cassandra-lucene-index-plugin-*.jar /usr/share/cassandra/lib \
-
-# TODO(skeswa): this is incomplete; finish this
+      && cd ../.. \
+      && rm -rf lucene-index-tmp) \
+    && apt-get purge -y --auto-remove wget maven unzip openjdk-8-jdk \
+    && rm -rf /var/lib/apt/lists/*

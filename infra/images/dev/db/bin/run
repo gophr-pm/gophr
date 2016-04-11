@@ -31,7 +31,9 @@ $bin_dir/kill
 echo "Starting '$IMAGE_NAME:$IMAGE_TAG' container..."
 docker run \
   -d \
-  -p 5432:5432 \
+  -p 7000:7000 \
+  -p 7001:7001 \
+  -p 9042:9042 \
   --name "$CONTAINER_NAME" \
   "$IMAGE_NAME:$IMAGE_TAG" && \
 echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' container was started successfully!${no_color}"
