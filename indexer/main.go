@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"io/ioutil"
 	"log"
@@ -100,8 +101,15 @@ func main() {
 	log.Println("Started retrieving versions for go packages\n")
 
 	var goErrorPackageMap = make(map[string]*GoPackage)
+	cluster := gocql.NewCluster("gophr.dev")
+	cluster.ProtoVersion = 4
+	cluster.Keyspace = "excelsior"
+	cluster.Consistency = gocql.One
+	session, _ := cluster.CreateSession()
+	defer session.Close()
 
 	// TODO Write a constant for this
+	// TODO figure out how to assign workers
 	nbConcurrentGet := 20
 	urls := make(chan *GoPackage, nbConcurrentGet)
 	var wg sync.WaitGroup
@@ -123,6 +131,7 @@ func main() {
 					goPackage.Versions = versions
 				}
 				goPackageMap[goPackage.GitHubURL] = goPackage
+				insertIntoDb(session, goPackage)
 			}
 			wg.Done()
 		}()
@@ -148,6 +157,14 @@ func main() {
 
 	elapsed := time.Since(start)
 	log.Printf("Program took %s to fully execute", elapsed)
+}
+
+func insertIntoDb(session *gocql.Session, goPackage *GoPackage) {
+	if err := session.Query(`INSERT INTO package
+	(github_root, awesome_go, description, exists, go_doc_url, index_time, versions) VALUES (?, ?, ?, ?, ?, ? , ?)`, goPackage.GitHubURL, goPackage.AwesomeGo, goPackage.Description, true, goPackage.GoDocURL, goPackage.IndexTime, goPackage.Versions).Exec(); err != nil {
+		fmt.Println(err)
+		printGoPackage(goPackage)
+	}
 }
 
 // Create a tmp JSON dump of all serialized goPackageData
