@@ -1,0 +1,39 @@
+#! /bin/bash
+
+# Constants
+IMAGE_TAG="dev"
+IMAGE_NAME="gophr-db"
+CONTAINER_NAME="gophr-db"
+DOCKER_MACHINE_NAME="gophr-dev"
+
+# Get base directories
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+image_dir="$( dirname $bin_dir )"
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+green_color=$esc_seq"32;01m"
+
+# Start the docker machine
+echo "Starting the docker machine..."
+docker-machine start $DOCKER_MACHINE_NAME &>/dev/null
+echo -e "${green_color}✓ Docker machine started successfully!${no_color}"
+
+# Connect to the docker machine
+echo "Connecting to the docker machine..."
+eval $(docker-machine env "$DOCKER_MACHINE_NAME")
+echo -e "${green_color}✓ Connected to the docker machine successfully!${no_color}"
+
+# Kill the existing container
+$bin_dir/kill
+
+echo "Starting '$IMAGE_NAME:$IMAGE_TAG' container..."
+docker run \
+  -d \
+  -p 7000:7000 \
+  -p 7001:7001 \
+  -p 9042:9042 \
+  --name "$CONTAINER_NAME" \
+  "$IMAGE_NAME:$IMAGE_TAG" && \
+echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' container was started successfully!${no_color}"
