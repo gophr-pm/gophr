@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"io/ioutil"
 	"log"
@@ -13,13 +14,15 @@ import (
 )
 
 type GoPackage struct {
-	Description    string
-	GitHubURL      string
-	GoDocURL       string
-	IndexTime      string
-	HttpStatusCode int
-	AwesomeGo      bool
-	Versions       []string
+	Description string
+	GitHubURL   string
+	Author      string
+	Repo        string
+	GoDocURL    string
+	IndexTime   time.Time
+	Exists      bool
+	AwesomeGo   bool
+	Versions    []string
 }
 
 func main() {
@@ -47,7 +50,8 @@ func main() {
 			childDescription := s.Text()
 
 			if childURLexists == true {
-				goPackage.GitHubURL = strings.Trim(childURL, "/")
+				childURL = strings.Trim(childURL, "/")
+				goPackage.GitHubURL = childURL
 			}
 
 			if len(childDescription) > 0 {
@@ -61,12 +65,15 @@ func main() {
 		gitHubURLTokens := strings.Split(goPackage.GitHubURL, "/")
 
 		if strings.Contains(goPackage.GitHubURL, "github.com") && len(gitHubURLTokens) == 3 {
+			gitHubURLTokens := strings.Split(goPackage.GitHubURL, "/")
+			log.Println(gitHubURLTokens)
+			goPackage.Author = gitHubURLTokens[1]
+			goPackage.Repo = gitHubURLTokens[2]
 			// Build go doc url
 			goPackage.GoDocURL = ("https://godoc.org/" + goPackage.GitHubURL)
 
 			// Create Index Time
-			t := time.Now()
-			time := t.String()
+			time := time.Now()
 			goPackage.IndexTime = time
 
 			goPackageMap[goPackage.GitHubURL] = goPackage
@@ -100,8 +107,15 @@ func main() {
 	log.Println("Started retrieving versions for go packages\n")
 
 	var goErrorPackageMap = make(map[string]*GoPackage)
+	cluster := gocql.NewCluster("gophr.dev")
+	cluster.ProtoVersion = 4
+	cluster.Keyspace = "gophr"
+	cluster.Consistency = gocql.One
+	session, _ := cluster.CreateSession()
+	defer session.Close()
 
 	// TODO Write a constant for this
+	// TODO figure out how to assign workers
 	nbConcurrentGet := 20
 	urls := make(chan *GoPackage, nbConcurrentGet)
 	var wg sync.WaitGroup
@@ -112,10 +126,10 @@ func main() {
 				refs, err := common.FetchRefs(goPackage.GitHubURL)
 				if err != nil {
 					log.Println("ERROR", goPackage.GitHubURL, " failed to return.\n", err)
-					goPackage.HttpStatusCode = 404
+					goPackage.Exists = false
 					goErrorPackageMap[goPackage.GitHubURL] = goPackage
 				} else {
-					goPackage.HttpStatusCode = 200
+					goPackage.Exists = true
 					var versions []string
 					for _, version := range refs.Candidates {
 						versions = append(versions, version.String())
@@ -123,6 +137,7 @@ func main() {
 					goPackage.Versions = versions
 				}
 				goPackageMap[goPackage.GitHubURL] = goPackage
+				insertIntoDb(session, goPackage)
 			}
 			wg.Done()
 		}()
@@ -150,16 +165,23 @@ func main() {
 	log.Printf("Program took %s to fully execute", elapsed)
 }
 
+func insertIntoDb(session *gocql.Session, goPackage *GoPackage) {
+	if err := session.Query(`INSERT INTO packages
+	(author, repo, awesome_go, description, exists, godoc_url, index_time, versions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, goPackage.Author, goPackage.Repo, goPackage.AwesomeGo, goPackage.Description, true, goPackage.GoDocURL, goPackage.IndexTime, goPackage.Versions).Exec(); err != nil {
+		fmt.Println(err)
+	}
+}
+
 // Create a tmp JSON dump of all serialized goPackageData
 func createJSONDump(goPackageMap map[string]*GoPackage, fileName string) {
 	var buffer bytes.Buffer
-
-	for _, goPackage := range goPackageMap {
-		buffer.WriteString("{\"url\": \"" + goPackage.GitHubURL + "\", \"description\": \"" + goPackage.Description + "\", \"index_time\": \"" + goPackage.IndexTime + "\" }, \"versions\": \"" + fmt.Sprintf("%v", goPackage.Versions) + "\" \n")
-	}
-
 	t := time.Now()
 	time := strings.Replace(t.String(), " ", "", -1)
+
+	for _, goPackage := range goPackageMap {
+		buffer.WriteString("{\"url\": \"" + goPackage.GitHubURL + "\", \"description\": \"" + goPackage.Description + "\", \"index_time\": \"" + time + "\" }, \"versions\": \"" + fmt.Sprintf("%v", goPackage.Versions) + "\" \n")
+	}
+
 	jsonData := []byte(buffer.String())
 	_ = ioutil.WriteFile("./"+time+"-"+fileName+".json", jsonData, 0644)
 }
