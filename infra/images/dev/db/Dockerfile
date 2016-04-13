@@ -15,3 +15,9 @@ RUN set -x \
       && rm -rf lucene-index-tmp) \
     && apt-get purge -y --auto-remove wget maven unzip openjdk-8-jdk \
     && rm -rf /var/lib/apt/lists/*
+
+COPY ./files/docker-entrypoint.sh /docker-entrypoint.sh
+COPY ./files/create-schema.sh /create-schema.sh
+COPY ./files/schema.cql /schema.cql
+ENTRYPOINT ["/docker-entrypoint.sh"] 
+CMD ["cassandra", "-f"]
