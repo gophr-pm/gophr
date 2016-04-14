@@ -10,10 +10,17 @@ const (
 	nonPublicLogMessageFormat = "Could not repsond to request with non-public error: %v"
 )
 
+// PublicError is an error that has an outside-friendly error message, and a
+// corresponding status code.
 type PublicError interface {
+	// PublicError returns an outside-friendly error message, and a
+	// corresponding status code.
 	PublicError() (int, string)
 }
 
+// RespondWithError responds, using the supplied response writer, with an error.
+// If the error is a PublicError, then its message is sent in the response.
+// Otherwise, a generic internal server error message is sent.
 func RespondWithError(w http.ResponseWriter, err error) {
 	switch e := err.(type) {
 	case PublicError:
