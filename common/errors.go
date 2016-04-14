@@ -4,12 +4,18 @@ import "fmt"
 
 /***************************** INVALID PARAMETER ******************************/
 
+// InvalidParameterError is an error that occurs when a particular defies
+// expectations.
 type InvalidParameterError struct {
 	ParameterName  string
 	ParameterValue interface{}
 }
 
-func NewInvalidParameterError(parameterName string, parameterValue interface{}) InvalidParameterError {
+// NewInvalidParameterError creates a new InvalidParameterError.
+func NewInvalidParameterError(
+	parameterName string,
+	parameterValue interface{},
+) InvalidParameterError {
 	return InvalidParameterError{
 		ParameterName:  parameterName,
 		ParameterValue: parameterValue,
@@ -30,10 +36,13 @@ func (err InvalidParameterError) String() string {
 
 /********************************* QUERY SCAN *********************************/
 
+// QueryScanError is an error that occurs when the result of a database query
+// was not processed successfully.
 type QueryScanError struct {
 	ScanError, CloseError error
 }
 
+// NewQueryScanError creates a new QueryScanError.
 func NewQueryScanError(scanError, closeError error) QueryScanError {
 	return QueryScanError{
 		ScanError:  scanError,

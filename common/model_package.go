@@ -10,8 +10,12 @@ import (
 	"github.com/gocql/gocql"
 )
 
+// Constants directly related to interacting with the packages model in the
+// cassandra database.
 const (
-	TableNamePackages             = "packages"
+	// TableNamePackages is the name of the table containing the packages model
+	TableNamePackages = "packages"
+	// IndexNamePackages is the name of the lucene index
 	IndexNamePackages             = "packages_index"
 	ColumnNamePackagesRepo        = "repo"
 	ColumnNamePackagesExists      = "exists"
@@ -45,6 +49,7 @@ var (
 	alphanumericFilterRegex = regexp.MustCompile(`[^\sa-zA-Z0-9\-_]+`)
 )
 
+// PackageModel is a struct representing one individual package in the database.
 type PackageModel struct {
 	Repo        *string    `json:"repo,omitempty"`
 	Exists      *bool      `json:"exists,omitempty"`
@@ -57,6 +62,8 @@ type PackageModel struct {
 	Description *string    `json:"description,omitempty"`
 }
 
+// NewPackageModelForInsert creates an instance of PackageModel that is
+// optimized and validated for the insert operation in the database.
 func NewPackageModelForInsert(
 	repo string,
 	exists bool,
@@ -97,6 +104,9 @@ func NewPackageModelForInsert(
 	}, nil
 }
 
+// NewPackageModelFromBulkSelect creates an instance of PackageModel that is
+// optimized and validated for a select operation designed to get data about
+// multiple packages from the database.
 func NewPackageModelFromBulkSelect(
 	repo string,
 	author string,
@@ -116,6 +126,9 @@ func NewPackageModelFromBulkSelect(
 	}, nil
 }
 
+// NewPackageModelFromSingleSelect creates an instance of PackageModel that is
+// optimized and validated for a select operation designed to get data about
+// a single package from the database.
 func NewPackageModelFromSingleSelect(
 	repo string,
 	exists bool,
@@ -146,7 +159,8 @@ func NewPackageModelFromSingleSelect(
 	}, nil
 }
 
-// FuzzySearchPackages fuzzy searches packages by author, package & description.
+// FuzzySearchPackages finds a list of packages relevant to a query phrase
+// string. The search takes author, package and description into account.
 func FuzzySearchPackages(
 	session *gocql.Session,
 	searchText string,
