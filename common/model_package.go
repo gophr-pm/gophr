@@ -43,6 +43,20 @@ var (
 		ColumnNamePackagesSearchBlob,
 		"%s",
 	)
+
+	cqlQueryInsertSearchPackage = fmt.Sprintf(
+		`INSERT INTO %s (%s,%s,%s,%s,%s,%s,%s,%s,%s) VALUES (?,?,?,?,?,?,?,?,?)`,
+		TableNamePackages,
+		ColumnNamePackagesRepo,
+		ColumnNamePackagesExists,
+		ColumnNamePackagesAuthor,
+		ColumnNamePackagesVersions,
+		ColumnNamePackagesGodocURL,
+		ColumnNamePackagesIndexTime,
+		ColumnNamePackagesAwesomeGo,
+		ColumnNamePackagesSearchBlob,
+		ColumnNamePackagesDescription,
+	)
 )
 
 var (
@@ -171,6 +185,55 @@ func FuzzySearchPackages(
 	query := fmt.Sprintf(cqlQueryFormatFuzzySearchPackages, searchText)
 	// Return the processed results of the query
 	return scanPackageModels(session.Query(query))
+}
+
+// InsertPackages inserts a slice of package models into the database.
+func InsertPackages(
+	session *gocql.Session,
+	packageModels []*PackageModel,
+) error {
+	batch := gocql.NewBatch(gocql.LoggedBatch)
+
+	if packageModels == nil || len(packageModels) == 0 {
+		return NewInvalidParameterError("packageModels", packageModels)
+	}
+
+	for _, packageModel := range packageModels {
+		if packageModel != nil &&
+			packageModel.Repo != nil &&
+			packageModel.Exists != nil &&
+			packageModel.Author != nil &&
+			packageModel.GodocURL != nil &&
+			packageModel.IndexTime != nil &&
+			packageModel.AwesomeGo != nil &&
+			packageModel.SearchBlob != nil &&
+			packageModel.Description != nil {
+			batch.Query(
+				cqlQueryInsertSearchPackage,
+				*packageModel.Repo,
+				*packageModel.Exists,
+				*packageModel.Author,
+				packageModel.Versions,
+				*packageModel.GodocURL,
+				*packageModel.IndexTime,
+				*packageModel.AwesomeGo,
+				*packageModel.SearchBlob,
+				*packageModel.Description,
+			)
+		} else {
+			return NewInvalidParameterError(
+				"packageModels",
+				fmt.Sprintf("[ ..., %v, ... ]", packageModel),
+			)
+		}
+	}
+
+	err := session.ExecuteBatch(batch)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 /********************************** HELPERS ***********************************/
