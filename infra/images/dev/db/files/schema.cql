@@ -8,6 +8,7 @@ CREATE TABLE gophr.packages (
     awesome_go boolean,
     exists boolean,
     godoc_url text,
+    search_blob text,
     index_time timestamp,
     versions list<text>,
     PRIMARY KEY (author, repo)
@@ -28,8 +29,6 @@ CREATE TABLE gophr.packages (
     AND speculative_retry = '99PERCENTILE';
 CREATE CUSTOM INDEX packages_index ON gophr.packages () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {'refresh_seconds': '1', 'schema': '{
         fields : {
-            author : {type : "string"},
-            repo : {type : "string"},
-            description : {type : "string"}
+            search_blob : {type : "string"}
         }
     }'};

@@ -5,23 +5,23 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"time"
+
+	"github.com/gocql/gocql"
 )
 
-func annoy() {
-	for {
-		fmt.Println("Still here fam")
-		time.Sleep(1 * time.Second)
-	}
-}
-
 func main() {
+	cluster := gocql.NewCluster("gophr.dev")
+	cluster.ProtoVersion = 4
+	cluster.Keyspace = "gophr"
+	cluster.Consistency = gocql.One
+	session, _ := cluster.CreateSession()
+	defer session.Close()
+
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "OK")
 	})
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Sup, I'm api. I love %s!", r.URL.Path[1:])
-	})
+	http.HandleFunc("/search", SearchHandler(session))
+
 	portStr := os.Getenv("PORT")
 	var port int
 	if len(portStr) == 0 {
@@ -34,8 +34,6 @@ func main() {
 		fmt.Println("Port was invalid; setting port to 3000.")
 		port = 3000
 	}
-
-	go annoy()
 
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
