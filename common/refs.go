@@ -37,6 +37,7 @@ const (
 	refsHeadPrefix                            = "refs/heads/"
 	refsLineFormat                            = "%04x%s"
 	refsHeadMaster                            = "refs/heads/master"
+	githubRootTemplate                        = "github.com/%s/%s"
 	refsMasterLineFormat                      = "%s refs/heads/master\n"
 	refsSymRefAssignment                      = "symref="
 	refsOldRefAssignment                      = "oldref="
@@ -194,7 +195,13 @@ func NewRefs(data []byte) (Refs, error) {
 
 // FetchRefs downloads and processes refs data from Github and ultimately
 // contructs a Refs instance with it.
-func FetchRefs(githubRoot string) (Refs, error) {
+func FetchRefs(author, repo string) (Refs, error) {
+	githubRoot := fmt.Sprintf(
+		githubRootTemplate,
+		author,
+		repo,
+	)
+
 	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
 	if err != nil {
 		return Refs{}, errors.New(errorRefsFetchNetworkFailure)
@@ -223,15 +230,13 @@ func FetchRefs(githubRoot string) (Refs, error) {
 //
 // This code was written by Gustavo Niemeyer, Nathan Youngman and
 // Geert-Johan Riemer.
-func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) []byte {
+func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 	var (
 		buf bytes.Buffer
 
 		data                 = refsData.Data
 		dataLen              = refsData.DataLen
 		dataStr              = refsData.DataStr
-		versionRefName       = selectedCandidate.GitRefName
-		versionRefHash       = selectedCandidate.GitRefHash
 		indexHeadLineEnd     = refsData.IndexHeadLineEnd
 		indexHeadLineStart   = refsData.IndexHeadLineStart
 		indexMasterLineEnd   = refsData.IndexMasterLineEnd
