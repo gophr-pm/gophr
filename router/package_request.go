@@ -218,8 +218,7 @@ func processPackageRefRequest(
 	)
 
 	// Only go out to fetch refs if they're going to get used
-	if req.FormValue(formKeyGoGet) == formValueGoGet ||
-		packageSubpath == gitRefsInfoSubPath {
+	if packageSubpath == gitRefsInfoSubPath {
 		refs, err := common.FetchRefs(packageAuthor, packageRepo)
 		if err != nil {
 			return PackageRequest{}, err
@@ -268,8 +267,7 @@ func processBarePackageRequest(
 	)
 
 	// Only go out to fetch refs if they're going to get used
-	if req.FormValue(formKeyGoGet) == formValueGoGet ||
-		packageSubpath == gitRefsInfoSubPath {
+	if packageSubpath == gitRefsInfoSubPath {
 		refs, err := common.FetchRefs(packageAuthor, packageRepo)
 		if err != nil {
 			return PackageRequest{}, err
