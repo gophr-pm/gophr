@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/skeswa/gophr/common"
 )
 
 const (
@@ -37,20 +39,28 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	requestID := generateRequestID()
+	context := common.NewRequestContext(nil)
 
-	log.Printf("[%s] New request received: %s\n", requestID, r.URL.Path)
+	log.Printf("[%s] New request received: %s\n", context.RequestID, r.URL.Path)
 
 	if r.URL.Path == healthCheckRoute {
-		log.Printf("[%s] Handling request for \"%s\" as a health check\n", requestID, r.URL.Path)
+		log.Printf(
+			"[%s] Handling request for \"%s\" as a health check\n",
+			context.RequestID,
+			r.URL.Path,
+		)
 
 		w.Write(statusCheckResponse)
 	} else {
-		log.Printf("[%s] Handling request for \"%s\" as a package request\n", requestID, r.URL.Path)
+		log.Printf(
+			"[%s] Handling request for \"%s\" as a package request\n",
+			context.RequestID,
+			r.URL.Path,
+		)
 
-		err := RespondToPackageRequest(requestID, r, w)
+		err := RespondToPackageRequest(context, r, w)
 		if err != nil {
-			respondWithError(w, err)
+			common.RespondWithError(w, err)
 		}
 	}
 }

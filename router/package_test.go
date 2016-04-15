@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/skeswa/gophr/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -183,7 +184,11 @@ func TestRespondToPackageRequest(t *testing.T) {
 		req := generateRequestFor(tuple)
 		res := &fakeResponseWriter{statusCode: 200}
 
-		err := RespondToPackageRequest("fakeReqID", req, res)
+		err := RespondToPackageRequest(
+			common.NewRequestContext(nil),
+			req,
+			res,
+		)
 		if tuple.willError {
 			assert.NotNil(t, err, "There should be an error for "+tuple.path)
 		} else {
