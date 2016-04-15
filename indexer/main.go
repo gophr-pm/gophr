@@ -167,7 +167,7 @@ func main() {
 
 func insertIntoDb(session *gocql.Session, goPackage *GoPackage) {
 	if err := session.Query(`INSERT INTO packages
-	(author, repo, awesome_go, description, exists, godoc_url, index_time, versions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, goPackage.Author, goPackage.Repo, goPackage.AwesomeGo, goPackage.Description, true, goPackage.GoDocURL, goPackage.IndexTime, goPackage.Versions).Exec(); err != nil {
+	(author, repo, awesome_go, description, exists, godoc_url, index_time, versions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, goPackage.Author, goPackage.Repo, goPackage.AwesomeGo, goPackage.Description, goPackage.Exists, goPackage.GoDocURL, goPackage.IndexTime, goPackage.Versions).Exec(); err != nil {
 		fmt.Println(err)
 	}
 }
