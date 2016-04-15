@@ -84,8 +84,8 @@ var (
 
 // PackageRequest is stuct that standardizes the output of all the scenarios
 // through which a package may be requested. PackageRequest is essentially a
-// helper struct to move data between the sub-functions of RespondToPackageRequest
-// and RespondToPackageRequest itself.
+// helper struct to move data between the sub-functions of
+// RespondToPackageRequest and RespondToPackageRequest itself.
 type PackageRequest struct {
 	Repo       string
 	Author     string
