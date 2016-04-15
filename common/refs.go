@@ -37,6 +37,7 @@ const (
 	refsHeadPrefix                            = "refs/heads/"
 	refsLineFormat                            = "%04x%s"
 	refsHeadMaster                            = "refs/heads/master"
+	githubRootTemplate                        = "github.com/%s/%s"
 	refsMasterLineFormat                      = "%s refs/heads/master\n"
 	refsSymRefAssignment                      = "symref="
 	refsOldRefAssignment                      = "oldref="
@@ -194,7 +195,13 @@ func NewRefs(data []byte) (Refs, error) {
 
 // FetchRefs downloads and processes refs data from Github and ultimately
 // contructs a Refs instance with it.
-func FetchRefs(githubRoot string) (Refs, error) {
+func FetchRefs(author, repo string) (Refs, error) {
+	githubRoot := fmt.Sprintf(
+		githubRootTemplate,
+		author,
+		repo,
+	)
+
 	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
 	if err != nil {
 		return Refs{}, errors.New(errorRefsFetchNetworkFailure)

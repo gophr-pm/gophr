@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/skeswa/gophr/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -149,10 +148,8 @@ var (
 )
 
 func TestGenerateGoGetMetadata(t *testing.T) {
-	selector, _ := common.NewSemverSelector("", "1", "x", "", "", "", "")
-
 	getConfig().dev = true
-	str := generateGoGetMetadata("skeswa", "gophr", false, common.SemverSelector{}, "", false, common.SemverCandidate{})
+	str := generateGoGetMetadata("skeswa", "gophr", "", "", "")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr git http://gophr.dev/skeswa/gophr"><meta name="go-source" content="gophr.dev/skeswa/gophr _ https://github.com/skeswa/gophr/tree/master{/dir} https://github.com/skeswa/gophr/blob/master{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr</body></html>`,
@@ -161,7 +158,7 @@ func TestGenerateGoGetMetadata(t *testing.T) {
 	)
 
 	getConfig().dev = false
-	str = generateGoGetMetadata("skeswa", "gophr", true, selector, "/test", false, common.SemverCandidate{})
+	str = generateGoGetMetadata("skeswa", "gophr", "1.x", "/test", "")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr@1.x git https://gophr.dev/skeswa/gophr@1.x"><meta name="go-source" content="gophr.dev/skeswa/gophr@1.x _ https://github.com/skeswa/gophr/tree/master{/dir} https://github.com/skeswa/gophr/blob/master{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr@1.x/test</body></html>`,
@@ -170,8 +167,7 @@ func TestGenerateGoGetMetadata(t *testing.T) {
 	)
 
 	getConfig().dev = true
-	candidate, _ := common.NewSemverCandidate("a", "b", "somelabel", "1", "1", "1", "", "")
-	str = generateGoGetMetadata("skeswa", "gophr", true, selector, "", true, candidate)
+	str = generateGoGetMetadata("skeswa", "gophr", "1.x", "", "somelabel")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr@1.x git http://gophr.dev/skeswa/gophr@1.x"><meta name="go-source" content="gophr.dev/skeswa/gophr@1.x _ https://github.com/skeswa/gophr/tree/somelabel{/dir} https://github.com/skeswa/gophr/blob/somelabel{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr@1.x</body></html>`,
