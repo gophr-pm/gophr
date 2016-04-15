@@ -60,6 +60,39 @@ func (err InvalidPackageRequestError) PublicError() (int, string) {
 	)
 }
 
+/********************** INVALID PACKAGE REF REQUEST ***********************/
+
+// InvalidPackageRefRequestURLError is an error that occurs when an incoming
+// request URL is an invalid package version request.
+type InvalidPackageRefRequestURLError struct {
+	RequestURL string
+	CausedBy   []error
+}
+
+// NewInvalidPackageRefRequestURLError creates a new
+// InvalidPackageRefRequestURLError.
+func NewInvalidPackageRefRequestURLError(
+	requestURL string,
+	causes ...error,
+) InvalidPackageRefRequestURLError {
+	return InvalidPackageRefRequestURLError{
+		RequestURL: requestURL,
+		CausedBy:   causes,
+	}
+}
+
+func (err InvalidPackageRefRequestURLError) Error() string {
+	return fmt.Sprintf(
+		`"%s" is not a valid package ref request URL.`,
+		err.RequestURL,
+	)
+}
+
+// Causes returns the error(s) that caused this error.
+func (err InvalidPackageRefRequestURLError) Causes() []error {
+	return err.CausedBy
+}
+
 /************************ INVALID BARE PACKAGE REQUEST ************************/
 
 // InvalidBarePackageRequestURLError is an error that occurs when an incoming

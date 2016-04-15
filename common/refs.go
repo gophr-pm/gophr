@@ -230,15 +230,13 @@ func FetchRefs(author, repo string) (Refs, error) {
 //
 // This code was written by Gustavo Niemeyer, Nathan Youngman and
 // Geert-Johan Riemer.
-func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) []byte {
+func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 	var (
 		buf bytes.Buffer
 
 		data                 = refsData.Data
 		dataLen              = refsData.DataLen
 		dataStr              = refsData.DataStr
-		versionRefName       = selectedCandidate.GitRefName
-		versionRefHash       = selectedCandidate.GitRefHash
 		indexHeadLineEnd     = refsData.IndexHeadLineEnd
 		indexHeadLineStart   = refsData.IndexHeadLineStart
 		indexMasterLineEnd   = refsData.IndexMasterLineEnd

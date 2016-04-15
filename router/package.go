@@ -33,6 +33,7 @@ const (
 	subPathRegexStr                 = `((?:\/[a-zA-Z0-9][-.a-zA-Z0-9]*)*)`
 	userRepoRegexStr                = `^\/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\/([a-zA-Z0-9\.\-_]+)`
 	masterGitRefLabel               = "master"
+	someFakeGitTagRef               = "refs/tags/thisisnotathinginanyrepo"
 	gitRefsInfoSubPath              = "/info/refs"
 	httpLocationHeader              = "Location"
 	refSelectorRegexStr             = "([a-fA-F0-9]{40})"
@@ -104,13 +105,13 @@ func RespondToPackageRequest(
 	)
 
 	// Attempt every request parsing strategy in order or popularity
-	packageRequest, err = ProcessPackageVersionRequest(context, req)
+	packageRequest, err = processPackageVersionRequest(context, req)
 	if err != nil {
 		refReqErr := err
-		packageRequest, err = ProcessPackageRefRequest(context, req)
+		packageRequest, err = processPackageRefRequest(context, req)
 		if err != nil {
 			verReqErr := err
-			packageRequest, err = ProcessBarePackageRequest(context, req)
+			packageRequest, err = processBarePackageRequest(context, req)
 			if err != nil {
 				return NewInvalidPackageRequestError(
 					req.URL.Path,
@@ -184,15 +185,61 @@ func RespondToPackageRequest(
 	return nil
 }
 
-func ProcessPackageRefRequest(
+// processPackageRefRequest is a sub-function of RespondToPackageRequest that
+// parses and simplifies the information in a package ref request into an
+// instance of PackageRequest.
+func processPackageRefRequest(
 	context common.RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
-	// TODO
-	return PackageRequest{}, nil
+	var (
+		matches    []string
+		requestURL string
+	)
+
+	requestURL = req.URL.Path
+	matches = packageRefRequestRegex.FindStringSubmatch(requestURL)
+	if matches == nil {
+		return PackageRequest{},
+			NewInvalidPackageRefRequestURLError(requestURL)
+	}
+
+	var (
+		packageRef     = matches[packageRefRequestRegexIndexRef]
+		packageRepo    = matches[packageRequestRegexIndexRepo]
+		packageAuthor  = matches[packageRequestRegexIndexAuthor]
+		packageSubpath = matches[packageRefRequestRegexIndexSubpath]
+
+		packageRefsData []byte
+	)
+
+	// Only go out to fetch refs if they're going to get used
+	if req.FormValue(formKeyGoGet) == formValueGoGet ||
+		packageSubpath == gitRefsInfoSubPath {
+		refs, err := common.FetchRefs(packageAuthor, packageRepo)
+		if err != nil {
+			return PackageRequest{}, err
+		}
+		// Reserialize the refs data with everything pointing at the specified ref.
+		// The ref hash is obviously packageRef, but the name is empty needs to be a
+		// made up tag.
+		packageRefsData = refs.Reserialize(someFakeGitTagRef, packageRef)
+	}
+
+	return PackageRequest{
+		Repo:       packageRepo,
+		Author:     packageAuthor,
+		Subpath:    packageSubpath,
+		RefsData:   packageRefsData,
+		Selector:   packageRef,
+		GithubTree: packageRef,
+	}, nil
 }
 
-func ProcessBarePackageRequest(
+// processBarePackageRequest is a sub-function of RespondToPackageRequest that
+// parses and simplifies the information in a base package request into an
+// instance of PackageRequest.
+func processBarePackageRequest(
 	context common.RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
@@ -238,7 +285,10 @@ func ProcessBarePackageRequest(
 	}, nil
 }
 
-func ProcessPackageVersionRequest(
+// processPackageVersionRequest is a sub-function of RespondToPackageRequest
+// that parses and simplifies the information in a package version request into
+// an instance of PackageRequest.
+func processPackageVersionRequest(
 	context common.RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
@@ -349,7 +399,10 @@ func ProcessPackageVersionRequest(
 				"[%s] Tweaked the refs to focus on the matched candidate\n",
 				context.RequestID,
 			)
-			packageRefsData = refs.Reserialize(matchedCandidate)
+			packageRefsData = refs.Reserialize(
+				matchedCandidate.GitRefName,
+				matchedCandidate.GitRefHash,
+			)
 			matchedCandidateLabel = matchedCandidate.GitRefLabel
 		} else {
 			if !semverSelectorExists {
