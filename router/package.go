@@ -445,6 +445,9 @@ func processPackageVersionRequest(
 	}, nil
 }
 
+// generateGoGetMetadata generates the format of metadata that the go get tool
+// expects to receive from unknown repository domains before its starts pulling
+// down source code.
 func generateGoGetMetadata(
 	user string,
 	repo string,
