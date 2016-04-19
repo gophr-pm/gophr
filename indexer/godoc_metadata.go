@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"strings"
 	"unicode/utf8"
 
@@ -49,7 +48,6 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 
 		if strings.Contains(godocMetadata.githubURL, "github.com") && len(githubURLTokens) == 3 {
 			githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
-			log.Println(githubURLTokens)
 			godocMetadata.author = githubURLTokens[1]
 			godocMetadata.repo = githubURLTokens[2]
 
