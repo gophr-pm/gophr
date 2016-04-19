@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync"
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
@@ -42,21 +43,22 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	log.Println("Preparing to insert packages into database")
+	var wg sync.WaitGroup
 	for _, packageModel := range packageModels {
 		err = common.InsertPackage(session, packageModel)
-		if err != nil {
-			json, errz := packageModel.MarshalJSON()
-			if errz == nil {
-				log.Fatalln(string(json[:]), err)
+		go func(packageModel *common.PackageModel) {
+			wg.Add(1)
+			if err != nil {
+				json, errz := packageModel.MarshalJSON()
+				if errz == nil {
+					log.Fatalln(string(json[:]), err)
+				}
 			}
-		}
+			wg.Done()
+		}(packageModel)
 	}
+	wg.Wait()
 
-	/*
-		log.Println("Inserting packages into the db")
-		err = common.InsertPackages(session, packageModels)
-		if err != nil {
-			log.Println("Inserting packages into db failed")
-			log.Fatalln(err)
-		}*/
+	log.Println("Finished inserting packages into database")
 }
