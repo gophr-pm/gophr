@@ -533,31 +533,17 @@ func (mj *PackageListItemDTO) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{ `)
-	if len(mj.Repo) != 0 {
-		buf.WriteString(`"repo":`)
-		fflib.WriteJsonString(buf, string(mj.Repo))
-		buf.WriteByte(',')
+	buf.WriteString(`{"repo":`)
+	fflib.WriteJsonString(buf, string(mj.Repo))
+	buf.WriteString(`,"author":`)
+	fflib.WriteJsonString(buf, string(mj.Author))
+	if mj.Awesome {
+		buf.WriteString(`,"awesome":true`)
+	} else {
+		buf.WriteString(`,"awesome":false`)
 	}
-	if len(mj.Author) != 0 {
-		buf.WriteString(`"author":`)
-		fflib.WriteJsonString(buf, string(mj.Author))
-		buf.WriteByte(',')
-	}
-	if mj.Awesome != false {
-		if mj.Awesome {
-			buf.WriteString(`"awesome":true`)
-		} else {
-			buf.WriteString(`"awesome":false`)
-		}
-		buf.WriteByte(',')
-	}
-	if len(mj.Description) != 0 {
-		buf.WriteString(`"description":`)
-		fflib.WriteJsonString(buf, string(mj.Description))
-		buf.WriteByte(',')
-	}
-	buf.Rewind(1)
+	buf.WriteString(`,"description":`)
+	fflib.WriteJsonString(buf, string(mj.Description))
 	buf.WriteByte('}')
 	return nil
 }

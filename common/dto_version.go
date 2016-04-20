@@ -1,6 +1,6 @@
 package common
 
-import "github.com/pquerna/ffjson/ffjson"
+import "bytes"
 
 //go:generate ffjson $GOFILE
 
@@ -20,7 +20,7 @@ const (
 // or git ref).
 type VersionDTO struct {
 	Type  string `json:"type"`
-	Value string `json:"type"`
+	Value string `json:"value"`
 }
 
 // NewVersionDTO creates a new VersionDTO.
@@ -72,5 +72,26 @@ func NewVersionListDTOFromSemverCandidateList(candidates SemverCandidateList) Ve
 
 // MarshalJSON returns the JSON encoding of the VersionListDTO.
 func (dto VersionListDTO) MarshalJSON() ([]byte, error) {
-	return ffjson.Marshal(dto)
+	var (
+		err    error
+		json   []byte
+		buffer bytes.Buffer
+	)
+
+	buffer.WriteByte(JSONCharOpenArray)
+	for i, item := range dto {
+		json, err = item.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		if i > 0 {
+			buffer.WriteByte(JSONCharArrayDelimiter)
+		}
+
+		buffer.Write(json)
+	}
+	buffer.WriteByte(JSONCharCloseArray)
+
+	return buffer.Bytes(), nil
 }

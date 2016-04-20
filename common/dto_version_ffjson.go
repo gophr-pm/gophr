@@ -6,6 +6,7 @@
 package common
 
 import (
+	"bytes"
 	"fmt"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
 )
@@ -31,14 +32,26 @@ func (mj *VersionDTO) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	var obj []byte
 	_ = obj
 	_ = err
-	buf.WriteString(`{}`)
+	buf.WriteString(`{"type":`)
+	fflib.WriteJsonString(buf, string(mj.Type))
+	buf.WriteString(`,"value":`)
+	fflib.WriteJsonString(buf, string(mj.Value))
+	buf.WriteByte('}')
 	return nil
 }
 
 const (
 	ffj_t_VersionDTObase = iota
 	ffj_t_VersionDTOno_such_key
+
+	ffj_t_VersionDTO_Type
+
+	ffj_t_VersionDTO_Value
 )
+
+var ffj_key_VersionDTO_Type = []byte("type")
+
+var ffj_key_VersionDTO_Value = []byte("value")
 
 func (uj *VersionDTO) UnmarshalJSON(input []byte) error {
 	fs := fflib.NewFFLexer(input)
@@ -99,6 +112,34 @@ mainparse:
 			} else {
 				switch kn[0] {
 
+				case 't':
+
+					if bytes.Equal(ffj_key_VersionDTO_Type, kn) {
+						currentKey = ffj_t_VersionDTO_Type
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				case 'v':
+
+					if bytes.Equal(ffj_key_VersionDTO_Value, kn) {
+						currentKey = ffj_t_VersionDTO_Value
+						state = fflib.FFParse_want_colon
+						goto mainparse
+					}
+
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_VersionDTO_Value, kn) {
+					currentKey = ffj_t_VersionDTO_Value
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.SimpleLetterEqualFold(ffj_key_VersionDTO_Type, kn) {
+					currentKey = ffj_t_VersionDTO_Type
+					state = fflib.FFParse_want_colon
+					goto mainparse
 				}
 
 				currentKey = ffj_t_VersionDTOno_such_key
@@ -118,6 +159,12 @@ mainparse:
 			if tok == fflib.FFTok_left_brace || tok == fflib.FFTok_left_bracket || tok == fflib.FFTok_integer || tok == fflib.FFTok_double || tok == fflib.FFTok_string || tok == fflib.FFTok_bool || tok == fflib.FFTok_null {
 				switch currentKey {
 
+				case ffj_t_VersionDTO_Type:
+					goto handle_Type
+
+				case ffj_t_VersionDTO_Value:
+					goto handle_Value
+
 				case ffj_t_VersionDTOno_such_key:
 					err = fs.SkipField(tok)
 					if err != nil {
@@ -131,6 +178,58 @@ mainparse:
 			}
 		}
 	}
+
+handle_Type:
+
+	/* handler: uj.Type type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.Type = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_Value:
+
+	/* handler: uj.Value type=string kind=string quoted=false*/
+
+	{
+
+		{
+			if tok != fflib.FFTok_string && tok != fflib.FFTok_null {
+				return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for string", tok))
+			}
+		}
+
+		if tok == fflib.FFTok_null {
+
+		} else {
+
+			outBuf := fs.Output.Bytes()
+
+			uj.Value = string(string(outBuf))
+
+		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
 
 wantedvalue:
 	return fs.WrapErr(fmt.Errorf("wanted value token, but got token: %v", tok))

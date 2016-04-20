@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -75,12 +76,12 @@ func NewRefs(data []byte) (Refs, error) {
 		dataLen    = len(data)
 		dataStrLen = len(dataStr)
 
-		masterRefHash                            string
-		versionCandidates                        []SemverCandidate
-		indexHashStart, indexHashEnd             int
-		indexNameStart, indexNameEnd             int
-		indexHeadLineStart, indexHeadLineEnd     int
-		indexMasterLineStart, indexMasterLineEnd int
+		masterRefHash                                 string
+		indexHashStart, indexHashEnd                  int
+		indexNameStart, indexNameEnd                  int
+		indexHeadLineStart, indexHeadLineEnd          int
+		indexMasterLineStart, indexMasterLineEnd      int
+		versionCandidates, sanitizedVersionCandidates []SemverCandidate
 	)
 
 	for i, j := 0, 0; i < dataLen; i = j {
@@ -183,12 +184,27 @@ func NewRefs(data []byte) (Refs, error) {
 		}
 	}
 
+	if versionCandidates != nil && len(versionCandidates) > 0 {
+		// First attach the sortable type to the slice of candidates.
+		versionCandidatesList := SemverCandidateList(versionCandidates)
+		// Sort the list of candidates.
+		sort.Sort(versionCandidatesList)
+		// Remove duplicates by adding them to a new slice altogether.
+		var lastInsertedCandidate SemverCandidate
+		for i, versionCandidate := range versionCandidatesList {
+			if i == 0 || versionCandidate.CompareTo(lastInsertedCandidate) != 0 {
+				sanitizedVersionCandidates = append(sanitizedVersionCandidates, versionCandidate)
+				lastInsertedCandidate = versionCandidate
+			}
+		}
+	}
+
 	return Refs{
 		Data:                 data,
 		DataStr:              dataStr,
 		DataLen:              dataLen,
 		DataStrLen:           dataStrLen,
-		Candidates:           versionCandidates,
+		Candidates:           sanitizedVersionCandidates,
 		MasterRefHash:        masterRefHash,
 		IndexHeadLineEnd:     indexHeadLineEnd,
 		IndexMasterLineEnd:   indexMasterLineEnd,

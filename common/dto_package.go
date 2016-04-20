@@ -1,6 +1,6 @@
 package common
 
-import "github.com/pquerna/ffjson/ffjson"
+import "bytes"
 
 //go:generate ffjson $GOFILE
 
@@ -17,10 +17,10 @@ type PackageDTO struct {
 // PackageListItemDTO is the data transfer object for one package represented in
 // a list of other package.
 type PackageListItemDTO struct {
-	Repo        string `json:"repo,omitempty"`
-	Author      string `json:"author,omitempty"`
-	Awesome     bool   `json:"awesome,omitempty"`
-	Description string `json:"description,omitempty"`
+	Repo        string `json:"repo"`
+	Author      string `json:"author"`
+	Awesome     bool   `json:"awesome"`
+	Description string `json:"description"`
 }
 
 // NewPackageListItemDTO creates a new PackageListItemDTO.
@@ -74,5 +74,26 @@ func NewPackageListDTOFromPackageModelList(packageModels []*PackageModel) Packag
 
 // MarshalJSON returns the JSON encoding of the PackageListDTO.
 func (dto PackageListDTO) MarshalJSON() ([]byte, error) {
-	return ffjson.Marshal(dto)
+	var (
+		err    error
+		json   []byte
+		buffer bytes.Buffer
+	)
+
+	buffer.WriteByte(JSONCharOpenArray)
+	for i, item := range dto {
+		json, err = item.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		if i > 0 {
+			buffer.WriteByte(JSONCharArrayDelimiter)
+		}
+
+		buffer.Write(json)
+	}
+	buffer.WriteByte(JSONCharCloseArray)
+
+	return buffer.Bytes(), nil
 }

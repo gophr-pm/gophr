@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	cluster := gocql.NewCluster("gophr-db")
+	cluster := gocql.NewCluster("gophr.dev")
 	cluster.ProtoVersion = 4
 	cluster.Keyspace = "gophr"
 	cluster.Consistency = gocql.One

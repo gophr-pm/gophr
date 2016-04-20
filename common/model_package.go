@@ -85,9 +85,9 @@ type PackageModel struct {
 // NewPackageModelForInsert creates an instance of PackageModel that is
 // optimized and validated for the insert operation in the database.
 func NewPackageModelForInsert(
-	repo string,
-	exists bool,
 	author string,
+	exists bool,
+	repo string,
 	versions []string,
 	godocURL string,
 	indexTime time.Time,
@@ -128,8 +128,8 @@ func NewPackageModelForInsert(
 // optimized and validated for a select operation designed to get data about
 // multiple packages from the database.
 func NewPackageModelFromBulkSelect(
-	repo string,
 	author string,
+	repo string,
 	description string,
 ) (*PackageModel, error) {
 	if len(repo) < 1 {
@@ -150,9 +150,9 @@ func NewPackageModelFromBulkSelect(
 // optimized and validated for a select operation designed to get data about
 // a single package from the database.
 func NewPackageModelFromSingleSelect(
-	repo string,
-	exists bool,
 	author string,
+	exists bool,
+	repo string,
 	versions []string,
 	godocURL string,
 	awesomeGo bool,
@@ -307,7 +307,7 @@ func scanPackageModels(query *gocql.Query) ([]*PackageModel, error) {
 	)
 
 	for iter.Scan(&repo, &author, &description) {
-		packageModel, err = NewPackageModelFromBulkSelect(repo, author, description)
+		packageModel, err = NewPackageModelFromBulkSelect(author, repo, description)
 		if err != nil {
 			scanError = err
 			break
