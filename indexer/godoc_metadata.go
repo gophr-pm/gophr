@@ -42,11 +42,9 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 			}
 		})
 
-		// Only continue if this  contains a GitHub URL
-		// TODO check to make sure github.com is the prefix
 		githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
 
-		if strings.Contains(godocMetadata.githubURL, "github.com") && len(githubURLTokens) == 3 {
+		if len(githubURLTokens) == 3 && githubURLTokens[0] == "github.com" {
 			githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
 			godocMetadata.author = githubURLTokens[1]
 			godocMetadata.repo = githubURLTokens[2]
