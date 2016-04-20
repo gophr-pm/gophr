@@ -60,6 +60,7 @@ type Refs struct {
 	DataLen              int
 	DataStrLen           int
 	Candidates           SemverCandidateList
+	MasterRefHash        string
 	IndexHeadLineEnd     int
 	IndexHeadLineStart   int
 	IndexMasterLineEnd   int
@@ -74,6 +75,7 @@ func NewRefs(data []byte) (Refs, error) {
 		dataLen    = len(data)
 		dataStrLen = len(dataStr)
 
+		masterRefHash                            string
 		versionCandidates                        []SemverCandidate
 		indexHashStart, indexHashEnd             int
 		indexNameStart, indexNameEnd             int
@@ -150,6 +152,7 @@ func NewRefs(data []byte) (Refs, error) {
 		} else if name == refsHeadMaster {
 			indexMasterLineStart = i
 			indexMasterLineEnd = j
+			masterRefHash = hash
 		} else if captureGroups := versionRefRegex.FindStringSubmatch(name); captureGroups != nil {
 			var (
 				gitRefLabel       = captureGroups[versionRefRegexIndexLabel]
@@ -186,6 +189,7 @@ func NewRefs(data []byte) (Refs, error) {
 		DataLen:              dataLen,
 		DataStrLen:           dataStrLen,
 		Candidates:           versionCandidates,
+		MasterRefHash:        masterRefHash,
 		IndexHeadLineEnd:     indexHeadLineEnd,
 		IndexMasterLineEnd:   indexMasterLineEnd,
 		IndexHeadLineStart:   indexHeadLineStart,

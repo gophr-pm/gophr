@@ -438,13 +438,10 @@ func candidatesMatch(t *testing.T, candidates1 []SemverCandidate, candidates2 []
 }
 
 func TestGetRefs(t *testing.T) {
-	_, err := FetchRefs("aljkfdhaksdajfhadfsjhlkjadshfaj.alsduj/sldkf/s")
+	_, err := FetchRefs("thisisnotarealthing", "notevenalittle")
 	assert.NotNil(t, err, "fetch should fail since the github root is invalid")
 
-	_, err = FetchRefs("github.com/thisisnotarealthing/notevenalittle")
-	assert.NotNil(t, err, "fetch should fail since the github root is invalid")
-
-	_, err = FetchRefs("github.com/skeswa/gophr")
+	_, err = FetchRefs("skeswa", "gophr")
 	assert.Nil(t, err, "fetch should work for valid repos")
 }
 
@@ -464,7 +461,7 @@ func TestUseRefs(t *testing.T) {
 
 		if len(refs.Candidates) > 0 {
 			lastCandidate := refs.Candidates[len(refs.Candidates)-1]
-			reserializedRefs := refs.Reserialize(lastCandidate)
+			reserializedRefs := refs.Reserialize(lastCandidate.GitRefName, lastCandidate.GitRefHash)
 			assert.Equal(t, test.changed, string(reserializedRefs[:]), "refs should have been serialized correctly")
 		}
 	}

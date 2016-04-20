@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sort"
 	"sync"
 	"time"
 
@@ -14,8 +15,12 @@ func fetchPackageVersions(metadata godocMetadata) ([]string, error) {
 		return nil, err
 	}
 
+	// Make sure the candidates are sorted first
+	candidates := refs.Candidates
+	sort.Sort(candidates)
+
 	var versions []string
-	for _, version := range refs.Candidates {
+	for _, version := range candidates {
 		versions = append(versions, version.String())
 	}
 

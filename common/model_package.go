@@ -1,7 +1,5 @@
 package common
 
-//go:generate ffjson $GOFILE
-
 import (
 	"fmt"
 	"regexp"
@@ -33,7 +31,7 @@ const (
 )
 
 var (
-	cqlQueryFormatFuzzySearchPackages = fmt.Sprintf(
+	cqlQueryFuzzySearchPackagesTemplate = fmt.Sprintf(
 		`SELECT %s,%s,%s FROM %s WHERE expr(%s,'{query:{type:"fuzzy",field:"%s",value:"%s"}}') LIMIT 10`,
 		ColumnNamePackagesRepo,
 		ColumnNamePackagesAuthor,
@@ -42,6 +40,14 @@ var (
 		IndexNamePackages,
 		ColumnNamePackagesSearchBlob,
 		"%s",
+	)
+
+	cqlQuerySelectPackageVersions = fmt.Sprintf(
+		`SELECT %s FROM %s WHERE %s = ? AND %s = ? LIMIT 1`,
+		ColumnNamePackagesVersions,
+		TableNamePackages,
+		ColumnNamePackagesAuthor,
+		ColumnNamePackagesRepo,
 	)
 
 	cqlQueryInsertSearchPackage = fmt.Sprintf(
@@ -65,15 +71,15 @@ var (
 
 // PackageModel is a struct representing one individual package in the database.
 type PackageModel struct {
-	Repo        *string    `json:"repo,omitempty"`
-	Exists      *bool      `json:"exists,omitempty"`
-	Author      *string    `json:"author,omitempty"`
-	Versions    []string   `json:"versions,omitempty"`
-	GodocURL    *string    `json:"godocURL,omitempty"`
-	IndexTime   *time.Time `json:"-"`
-	AwesomeGo   *bool      `json:"awesome,omitempty"`
-	SearchBlob  *string    `json:"-"`
-	Description *string    `json:"description,omitempty"`
+	Repo        *string
+	Exists      *bool
+	Author      *string
+	Versions    []string
+	GodocURL    *string
+	IndexTime   *time.Time
+	AwesomeGo   *bool
+	SearchBlob  *string
+	Description *string
 }
 
 // NewPackageModelForInsert creates an instance of PackageModel that is
@@ -173,6 +179,28 @@ func NewPackageModelFromSingleSelect(
 	}, nil
 }
 
+// FindPackageVersions gets the versions of a package from the database. If
+// no such package exists, or there were no versions for said package, then nil
+// is returned.
+func FindPackageVersions(session *gocql.Session, author string, repo string) ([]string, error) {
+	var (
+		err      error
+		versions []string
+	)
+
+	iter := session.Query(cqlQuerySelectPackageVersions, author, repo).Iter()
+
+	if !iter.Scan(&versions) {
+		return nil, nil
+	}
+
+	if err = iter.Close(); err != nil {
+		return nil, NewQueryScanError(nil, err)
+	}
+
+	return versions, nil
+}
+
 // FuzzySearchPackages finds a list of packages relevant to a query phrase
 // string. The search takes author, package and description into account.
 func FuzzySearchPackages(
@@ -182,11 +210,12 @@ func FuzzySearchPackages(
 	// First, remove all non-essential characters
 	searchText = alphanumericFilterRegex.ReplaceAllString(searchText, "")
 	// Next put the search text into a query string
-	query := fmt.Sprintf(cqlQueryFormatFuzzySearchPackages, searchText)
+	query := fmt.Sprintf(cqlQueryFuzzySearchPackagesTemplate, searchText)
 	// Return the processed results of the query
 	return scanPackageModels(session.Query(query))
 }
 
+// InsertPackage inserts an individual package into the database.
 func InsertPackage(
 	session *gocql.Session,
 	packageModel *PackageModel,
