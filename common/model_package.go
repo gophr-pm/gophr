@@ -187,6 +187,25 @@ func FuzzySearchPackages(
 	return scanPackageModels(session.Query(query))
 }
 
+func InsertPackage(
+	session *gocql.Session,
+	packageModel *PackageModel,
+) error {
+	err := session.Query(cqlQueryInsertSearchPackage,
+		*packageModel.Repo,
+		*packageModel.Exists,
+		*packageModel.Author,
+		packageModel.Versions,
+		*packageModel.GodocURL,
+		*packageModel.IndexTime,
+		*packageModel.AwesomeGo,
+		*packageModel.SearchBlob,
+		*packageModel.Description,
+	).Exec()
+
+	return err
+}
+
 // InsertPackages inserts a slice of package models into the database.
 func InsertPackages(
 	session *gocql.Session,
