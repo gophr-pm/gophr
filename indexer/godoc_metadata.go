@@ -38,7 +38,7 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 
 			if len(childDescription) > 0 {
 				// TODO check if description isn't just the url, if so dont set it
-				godocMetadata.description = sanitizeUTF8String(childDescription)
+				godocMetadata.description = sanitizeUTF8String(strings.TrimPrefix(childDescription, childURL))
 			}
 		})
 

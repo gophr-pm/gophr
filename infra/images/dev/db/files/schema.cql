@@ -29,6 +29,6 @@ CREATE TABLE gophr.packages (
     AND speculative_retry = '99PERCENTILE';
 CREATE CUSTOM INDEX packages_index ON gophr.packages () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {'refresh_seconds': '1', 'schema': '{
         fields : {
-            search_blob : {type : "string"}
+            search_blob : {type : "text"}
         }
     }'};
