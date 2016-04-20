@@ -44,21 +44,34 @@ func main() {
 	}
 
 	log.Println("Preparing to insert packages into database")
+
 	var wg sync.WaitGroup
-	for _, packageModel := range packageModels {
-		err = common.InsertPackage(session, packageModel)
-		go func(packageModel *common.PackageModel) {
-			wg.Add(1)
-			if err != nil {
-				json, errz := packageModel.MarshalJSON()
-				if errz == nil {
-					log.Fatalln(string(json[:]), err)
+	var insertPackageErrors []error
+
+	nbConcurrentInserts := 20
+	packageChan := make(chan *common.PackageModel, nbConcurrentInserts)
+	for i := 0; i < nbConcurrentInserts; i++ {
+		wg.Add(1)
+		go func() {
+			for packageModel := range packageChan {
+				err := common.InsertPackage(session, packageModel)
+				if err != nil {
+					insertPackageErrors = append(insertPackageErrors, err)
 				}
 			}
 			wg.Done()
-		}(packageModel)
+		}()
 	}
+
+	for _, packageModel := range packageModels {
+		packageChan <- packageModel
+	}
+	close(packageChan)
 	wg.Wait()
+
+	for _, insertErr := range insertPackageErrors {
+		log.Println(insertErr)
+	}
 
 	log.Println("Finished inserting packages into database")
 }
