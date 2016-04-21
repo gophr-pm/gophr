@@ -2,25 +2,32 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/gocql/gocql"
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	cluster := gocql.NewCluster("gophr-db")
+	cluster := gocql.NewCluster("gophr.dev")
 	cluster.ProtoVersion = 4
 	cluster.Keyspace = "gophr"
 	cluster.Consistency = gocql.One
-	session, _ := cluster.CreateSession()
+	session, err := cluster.CreateSession()
 	defer session.Close()
 
-	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "OK")
-	})
-	http.HandleFunc("/search", SearchHandler(session))
+	if err != nil {
+		log.Fatalln("Failed to connect to the database:", err)
+	}
+
+	r := mux.NewRouter()
+	r.HandleFunc("/status", StatusHandler()).Methods("GET")
+	r.HandleFunc("/search", SearchHandler(session)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions", urlVarAuthor, urlVarRepo), VersionsHandler(session)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions/latest", urlVarAuthor, urlVarRepo), LatestVersionHandler(session)).Methods("GET")
 
 	portStr := os.Getenv("PORT")
 	var port int
@@ -35,5 +42,5 @@ func main() {
 		port = 3000
 	}
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }

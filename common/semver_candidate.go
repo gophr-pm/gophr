@@ -3,7 +3,6 @@ package common
 import (
 	"bytes"
 	"errors"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -191,26 +190,24 @@ func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateLi
 	return newList
 }
 
-// Lowest sorts the list of candidates and returns the candidate that appaeared
-// first in the list (which is by default the lowest).
+// Lowest returns the candidate that appaeared first in the list (which is by
+// default the lowest).
 func (list SemverCandidateList) Lowest() *SemverCandidate {
 	listLength := len(list)
 	if listLength < 1 {
 		return nil
 	}
 
-	sort.Sort(list)
 	return &list[0]
 }
 
-// Highest sorts the list of candidates and returns the candidate that appaeared
-// last in the list (which is by default the highest).
+// Highest returns the candidate that appaeared last in the list (which is by
+// default the highest).
 func (list SemverCandidateList) Highest() *SemverCandidate {
 	listLength := len(list)
 	if listLength < 1 {
 		return nil
 	}
 
-	sort.Sort(list)
 	return &list[listLength-1]
 }
