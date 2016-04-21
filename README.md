@@ -35,6 +35,6 @@ $ gophrctl up
 ```
 This starts every component of the dev server. Lastly, in order to compile the web application, run:
 ```sh
-$ gophrcrl web
+$ gophrctrl web
 ```
 At this point, you should be able to open https://gophr.dev/ in your favorite browser.
