@@ -51,6 +51,7 @@ function print_general_help {
   echo -e "${SOFT_TAB}ls\t\t${HELP_COMM_DESC_LIST}"
   echo -e "${SOFT_TAB}log\t\t${HELP_COMM_DESC_LOG}"
   echo -e "${SOFT_TAB}run\t\t${HELP_COMM_DESC_RUN}"
+  echo -e "${SOFT_TAB}test\t${HELP_COMM_DESC_TEST}"
   echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_UP}"
   echo -e "${SOFT_TAB}web\t\t${HELP_COMM_DESC_WEB}"
   echo ""
