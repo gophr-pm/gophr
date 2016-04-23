@@ -25,9 +25,6 @@ func main() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
-	r.HandleFunc("/search", SearchHandler(session)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions", urlVarAuthor, urlVarRepo), VersionsHandler(session)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions/latest", urlVarAuthor, urlVarRepo), LatestVersionHandler(session)).Methods("GET")
 
 	portStr := os.Getenv("PORT")
 	var port int
