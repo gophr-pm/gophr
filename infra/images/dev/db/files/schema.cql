@@ -38,6 +38,7 @@ CREATE CUSTOM INDEX packages_index ON gophr.packages () USING 'com.stratio.cassa
 CREATE TABLE gophr.all_time_install_totals (
     package_author text,
     package_repo text,
+    package_description text,
     total bigint,
     PRIMARY KEY (package_author, package_repo)
 ) WITH bloom_filter_fp_chance = 0.01
@@ -66,6 +67,7 @@ CREATE TABLE gophr.ranged_install_totals (
     date timestamp,
     package_author text,
     package_repo text,
+    package_description text,
     daily_total bigint,
     monthly_total bigint,
     weekly_total bigint,

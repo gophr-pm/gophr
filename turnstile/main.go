@@ -9,6 +9,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
+	"github.com/skeswa/gophr/common"
 )
 
 func main() {
@@ -18,6 +19,9 @@ func main() {
 	cluster.Consistency = gocql.One
 	session, err := cluster.CreateSession()
 	defer session.Close()
+
+	results, err := common.GetAllTimeInstallTotalTopTen(session)
+	fmt.Println("->", results, err)
 
 	if err != nil {
 		log.Fatalln("Failed to connect to the database:", err)
