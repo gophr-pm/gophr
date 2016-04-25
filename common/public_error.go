@@ -18,6 +18,12 @@ type PublicError interface {
 	PublicError() (int, string)
 }
 
+// ResultingError is an error that reuslted from other errors.
+type ResultingError interface {
+	// Causes returns the list of errors that preceded this one.
+	Causes() []error
+}
+
 // RespondWithError responds, using the supplied response writer, with an error.
 // If the error is a PublicError, then its message is sent in the response.
 // Otherwise, a generic internal server error message is sent.

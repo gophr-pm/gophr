@@ -32,6 +32,6 @@ func main() {
 	router.HandleFunc("/status", StatusHandler()).Methods("GET")
 	router.HandleFunc("/packages/installs/record", RecordInstallHandler(dbSession)).Methods("POST")
 
-	log.Printf("Server is listening on port %d for HTTP requests...\n", httpPort)
+	log.Printf("Server is listening on port %d.\n", httpPort)
 	http.ListenAndServe(fmt.Sprintf(":%d", httpPort), router)
 }

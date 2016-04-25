@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"sync"
 	"time"
 
@@ -38,6 +39,8 @@ func recordPackageInstall(
 	author string,
 	repo string,
 ) error {
+	log.Printf("Recording package install for %s/%s.\n", author, repo)
+
 	// Get the key for the author & repo.
 	key := lockMapKeyOf(author, repo)
 
@@ -102,15 +105,21 @@ func recordPackageInstall(
 					packageLock.PendingBumpsLock.Lock()
 					packageLock.PendingBumps = packageLock.PendingBumps + bumpAmount
 					packageLock.PendingBumpsLock.Unlock()
+					packageLock.BumpLoopingLock.Lock()
+					packageLock.BumpLooping = false
+					packageLock.BumpLoopingLock.Unlock()
 					return err
 				} // If there was no error, continue bump looping.
 			} else {
 				// There's nothing left to bump, so its time to exit.
+				packageLock.BumpLoopingLock.Lock()
+				packageLock.BumpLooping = false
+				packageLock.BumpLoopingLock.Unlock()
 				return nil
 			}
 		}
 	} else {
-		// We're no looping, so we can exit.
+		// We're not looping, so we can exit.
 		return nil
 	}
 }

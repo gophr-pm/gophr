@@ -317,6 +317,7 @@ func BumpRangedInstallTotals(
 			// Get get data from the database for this date.
 			model, err := ReadRangedInstallTotal(session, date, packageAuthor, packageRepo)
 			if err != nil {
+				//TODO (Sandile): log these errors.
 				// If we bumped into an error, send zeroes back through the chan.
 				selectOutputChan <- &RangedInstallTotalModel{
 					Date:                 date,
