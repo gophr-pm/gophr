@@ -4,44 +4,34 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
-	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
 	"github.com/skeswa/gophr/common"
 )
 
 func main() {
-	cluster := gocql.NewCluster("gophr-db")
-	cluster.ProtoVersion = 4
-	cluster.Keyspace = "gophr"
-	cluster.Consistency = gocql.One
-	session, err := cluster.CreateSession()
-	defer session.Close()
+	var (
+		isDev     = common.ReadEnvIsDev()
+		httpPort  = common.ReadEnvHTTPPort()
+		dbAddress = common.ReadEnvDatabaseAddress()
+	)
 
-	results, err := common.GetAllTimeInstallTotalTopTen(session)
-	fmt.Println("->", results, err)
-
+	dbSession, err := common.OpenDBConnection(dbAddress, isDev)
 	if err != nil {
-		log.Fatalln("Failed to connect to the database:", err)
-	}
-
-	r := mux.NewRouter()
-	r.HandleFunc("/status", StatusHandler()).Methods("GET")
-
-	portStr := os.Getenv("PORT")
-	var port int
-	if len(portStr) == 0 {
-		fmt.Println("Port left unspecified; setting port to 3000.")
-		port = 3000
-	} else if portNum, err := strconv.Atoi(portStr); err == nil {
-		fmt.Printf("Port was specified as %d.\n", portNum)
-		port = portNum
+		log.Fatalf(
+			"Failed to open a connection with the database (%s): %v\n",
+			dbAddress,
+			err,
+		)
 	} else {
-		fmt.Println("Port was invalid; setting port to 3000.")
-		port = 3000
+		// Ensure that the session ends when the connection exits.
+		defer common.CloseDBConnection(dbSession)
 	}
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
+	router := mux.NewRouter()
+	router.HandleFunc("/status", StatusHandler()).Methods("GET")
+	router.HandleFunc("/packages/installs/record", RecordInstallHandler(dbSession)).Methods("POST")
+
+	log.Printf("Server is listening on port %d for HTTP requests...\n", httpPort)
+	http.ListenAndServe(fmt.Sprintf(":%d", httpPort), router)
 }

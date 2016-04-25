@@ -283,6 +283,7 @@ func BumpRangedInstallTotals(
 	date time.Time,
 	packageAuthor string,
 	packageRepo string,
+	bumpAmount int64,
 ) error {
 	// Generate a list of dates for the next 30 days (incl. this one).
 	dates := make([]time.Time, timeRangeMonthLength)
@@ -348,14 +349,14 @@ func BumpRangedInstallTotals(
 	for _, installModel := range installModels {
 		switch {
 		case installModel.Date.Before(dayDateBoundary):
-			installModel.TotalDailyInstalls = installModel.TotalDailyInstalls + 1
-			installModel.TotalWeeklyInstalls = installModel.TotalWeeklyInstalls + 1
-			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + 1
+			installModel.TotalDailyInstalls = installModel.TotalDailyInstalls + bumpAmount
+			installModel.TotalWeeklyInstalls = installModel.TotalWeeklyInstalls + bumpAmount
+			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + bumpAmount
 		case installModel.Date.Before(weekDateBoundary):
-			installModel.TotalWeeklyInstalls = installModel.TotalWeeklyInstalls + 1
-			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + 1
+			installModel.TotalWeeklyInstalls = installModel.TotalWeeklyInstalls + bumpAmount
+			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + bumpAmount
 		case installModel.Date.Before(monthDateBoundary):
-			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + 1
+			installModel.TotalMonthlyInstalls = installModel.TotalMonthlyInstalls + bumpAmount
 		}
 	}
 
