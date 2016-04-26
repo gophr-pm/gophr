@@ -3,22 +3,31 @@
 const path              = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
+var webpack = require('webpack');
+
 module.exports = {
-  entry: path.join(__dirname, '..', 'src', 'main.ts'),
+  entry: [
+    path.join(__dirname, '..', 'src', 'index'),
+    'webpack-dev-server/client?http://localhost:8080',
+    'webpack/hot/only-dev-server',
+    './src/index'
+  ],
   output: {
     path: path.join(__dirname, '..', 'dist'),
+    publicPath: '/',
     filename: 'gophr.js'
   },
   resolve: {
     extensions: [
       '',
       '.ts',
-      '.js'
+      '.js',
+      '.jsx'
     ]
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, '..', 'src', 'main.html'),
+      template: path.join(__dirname, '..', 'src', 'index.html'),
       inject: 'body',
       minify: {
         minifyJS: true,
@@ -26,8 +35,13 @@ module.exports = {
         removeComments: true,
         collapseWhitespace: true
       }
-    })
+    }),
+    new webpack.HotModuleReplacementPlugin()
   ],
+  devServer: {
+    contentBase: './dist',
+    hot: true
+  },
   module: {
     loaders: [
       {
@@ -42,6 +56,11 @@ module.exports = {
         test: /\.(jpg|png|woff)$/,
         loader: 'url-loader?limit=100000'
       },
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules/,
+        loader: 'react-hot!babel'
+      }
     ]
   }
 };
