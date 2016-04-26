@@ -8,10 +8,10 @@ import (
 	"github.com/gocql/gocql"
 )
 
-// Constants directly related to interacting with the packages model in the
+// Constants directly related to interacting with the package model in the
 // cassandra database.
 const (
-	// TableNamePackages is the name of the table containing the packages model
+	// TableNamePackages is the name of the table containing the package model.
 	TableNamePackages = "packages"
 	// IndexNamePackages is the name of the lucene index
 	IndexNamePackages             = "packages_index"
@@ -50,7 +50,7 @@ var (
 		ColumnNamePackagesRepo,
 	)
 
-	cqlQueryInsertSearchPackage = fmt.Sprintf(
+	cqlQueryInsertPackage = fmt.Sprintf(
 		`INSERT INTO %s (%s,%s,%s,%s,%s,%s,%s,%s,%s) VALUES (?,?,?,?,?,?,?,?,?)`,
 		TableNamePackages,
 		ColumnNamePackagesRepo,
@@ -220,7 +220,7 @@ func InsertPackage(
 	session *gocql.Session,
 	packageModel *PackageModel,
 ) error {
-	err := session.Query(cqlQueryInsertSearchPackage,
+	err := session.Query(cqlQueryInsertPackage,
 		*packageModel.Repo,
 		*packageModel.Exists,
 		*packageModel.Author,
@@ -257,7 +257,7 @@ func InsertPackages(
 			packageModel.SearchBlob != nil &&
 			packageModel.Description != nil {
 			batch.Query(
-				cqlQueryInsertSearchPackage,
+				cqlQueryInsertPackage,
 				*packageModel.Repo,
 				*packageModel.Exists,
 				*packageModel.Author,
