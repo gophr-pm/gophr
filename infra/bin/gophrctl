@@ -15,7 +15,7 @@ HELP_COMM_DESC_TEST="Runs tests for a specific component"
 HELP_COMM_DESC_UP="An alias for 'gophrctl run all'"
 HELP_COMM_DESC_WEB="Starts the web assets compiler"
 HELP_OPT_DESC_HELP="Prints a helpful description"
-HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, ws"
+HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, turnstile, ws"
 
 # Resolve bin & project dir
 script_src="${BASH_SOURCE[0]}"
@@ -308,7 +308,7 @@ function do_test {
     print_test_help
   elif [[ "$1" == "web" ]]; then
     (cd $project_dir/web && npm run test)
-  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "common" ]]; then
+  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "turnstile" || "$1" == "common" ]]; then
     (cd $project_dir/$1 && go test -v -coverprofile coverage.out && go tool cover -html=coverage.out)
   else
     print_error "Invalid component was specified"
