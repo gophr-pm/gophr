@@ -10,11 +10,12 @@ HELP_COMM_DESC_KILL="Kills a specific component's running container"
 HELP_COMM_DESC_LIST="Lists the currently running components"
 HELP_COMM_DESC_LOG="Logs a specific component's running container"
 HELP_COMM_DESC_RUN="Turns a specific component's image into the corresponding container and runs it"
+HELP_COMM_DESC_SSH="Exposes the shell of a running component"
 HELP_COMM_DESC_TEST="Runs tests for a specific component"
 HELP_COMM_DESC_UP="An alias for 'gophrctl run all'"
 HELP_COMM_DESC_WEB="Starts the web assets compiler"
 HELP_OPT_DESC_HELP="Prints a helpful description"
-HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, ws"
+HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, turnstile, ws"
 
 # Resolve bin & project dir
 script_src="${BASH_SOURCE[0]}"
@@ -51,6 +52,8 @@ function print_general_help {
   echo -e "${SOFT_TAB}ls\t\t${HELP_COMM_DESC_LIST}"
   echo -e "${SOFT_TAB}log\t\t${HELP_COMM_DESC_LOG}"
   echo -e "${SOFT_TAB}run\t\t${HELP_COMM_DESC_RUN}"
+  echo -e "${SOFT_TAB}ssh\t\t${HELP_COMM_DESC_SSH}"
+  echo -e "${SOFT_TAB}test\t${HELP_COMM_DESC_TEST}"
   echo -e "${SOFT_TAB}up\t\t${HELP_COMM_DESC_UP}"
   echo -e "${SOFT_TAB}web\t\t${HELP_COMM_DESC_WEB}"
   echo ""
@@ -138,6 +141,18 @@ function print_run_help {
   echo "Usage: gophrctl run [OPTIONS] COMPONENT"
   echo ""
   echo "$HELP_COMM_DESC_RUN"
+  echo ""
+  echo -e "$HELP_COMP_LIST"
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}--help\t${HELP_OPT_DESC_HELP}"
+}
+
+function print_ssh_help {
+  echo ""
+  echo "Usage: gophrctl ssh [OPTIONS] COMPONENT"
+  echo ""
+  echo "$HELP_COMM_DESC_SSH"
   echo ""
   echo -e "$HELP_COMP_LIST"
   echo ""
@@ -270,6 +285,21 @@ function do_run {
   fi
 }
 
+function do_ssh {
+  if [[ "$1" == "--help" ]]; then
+    print_ssh_help
+  elif [[ -z "$1" ]]; then
+    print_error "Invalid component was specified"
+    print_ssh_help
+  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "turnstile" || "$1" == "web" ]]; then
+    eval $(docker-machine env gophr-dev)
+    docker exec -it "gophr-${1}" /bin/sh
+  else
+    print_error "Invalid component was specified"
+    print_ssh_help
+  fi
+}
+
 function do_test {
   if [[ "$1" == "--help" ]]; then
     print_test_help
@@ -278,7 +308,7 @@ function do_test {
     print_test_help
   elif [[ "$1" == "web" ]]; then
     (cd $project_dir/web && npm run test)
-  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "common" ]]; then
+  elif [[ "$1" == "api" || "$1" == "indexer" || "$1" == "router" || "$1" == "turnstile" || "$1" == "common" ]]; then
     (cd $project_dir/$1 && go test -v -coverprofile coverage.out && go tool cover -html=coverage.out)
   else
     print_error "Invalid component was specified"
@@ -335,6 +365,10 @@ case $comm in
   run)
     shift
     do_run $1 $2
+    ;;
+  ssh)
+    shift
+    do_ssh $1 $2
     ;;
   test)
     shift

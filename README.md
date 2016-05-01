@@ -35,6 +35,20 @@ $ gophrctl up
 ```
 This starts every component of the dev server. Lastly, in order to compile the web application, run:
 ```sh
-$ gophrcrl web
+$ gophrctrl web
 ```
 At this point, you should be able to open https://gophr.dev/ in your favorite browser.
+
+## Running the indexer
+
+We've already created a new default db keyspace `gophr` with a table named `packages`in our cassandra db via our dockerfile. Now we need to load data in to work with. The indexer pulls go package metadata from various sources and compiles them into packageDTOs and inserts them into the DB.
+
+Navigate to the `indexer` folder:
+```sh
+$ cd $GOPHR_REPO/indexer
+```
+
+Buld the indexer binary:
+```sh
+$ go build && ./indexer
+```

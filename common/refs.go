@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,7 @@ const (
 	refsHeadPrefix                            = "refs/heads/"
 	refsLineFormat                            = "%04x%s"
 	refsHeadMaster                            = "refs/heads/master"
+	githubRootTemplate                        = "github.com/%s/%s"
 	refsMasterLineFormat                      = "%s refs/heads/master\n"
 	refsSymRefAssignment                      = "symref="
 	refsOldRefAssignment                      = "oldref="
@@ -59,6 +61,7 @@ type Refs struct {
 	DataLen              int
 	DataStrLen           int
 	Candidates           SemverCandidateList
+	MasterRefHash        string
 	IndexHeadLineEnd     int
 	IndexHeadLineStart   int
 	IndexMasterLineEnd   int
@@ -73,11 +76,12 @@ func NewRefs(data []byte) (Refs, error) {
 		dataLen    = len(data)
 		dataStrLen = len(dataStr)
 
-		versionCandidates                        []SemverCandidate
-		indexHashStart, indexHashEnd             int
-		indexNameStart, indexNameEnd             int
-		indexHeadLineStart, indexHeadLineEnd     int
-		indexMasterLineStart, indexMasterLineEnd int
+		masterRefHash                                 string
+		indexHashStart, indexHashEnd                  int
+		indexNameStart, indexNameEnd                  int
+		indexHeadLineStart, indexHeadLineEnd          int
+		indexMasterLineStart, indexMasterLineEnd      int
+		versionCandidates, sanitizedVersionCandidates []SemverCandidate
 	)
 
 	for i, j := 0, 0; i < dataLen; i = j {
@@ -149,6 +153,7 @@ func NewRefs(data []byte) (Refs, error) {
 		} else if name == refsHeadMaster {
 			indexMasterLineStart = i
 			indexMasterLineEnd = j
+			masterRefHash = hash
 		} else if captureGroups := versionRefRegex.FindStringSubmatch(name); captureGroups != nil {
 			var (
 				gitRefLabel       = captureGroups[versionRefRegexIndexLabel]
@@ -179,12 +184,28 @@ func NewRefs(data []byte) (Refs, error) {
 		}
 	}
 
+	if versionCandidates != nil && len(versionCandidates) > 0 {
+		// First attach the sortable type to the slice of candidates.
+		versionCandidatesList := SemverCandidateList(versionCandidates)
+		// Sort the list of candidates.
+		sort.Sort(versionCandidatesList)
+		// Remove duplicates by adding them to a new slice altogether.
+		var lastInsertedCandidate SemverCandidate
+		for i, versionCandidate := range versionCandidatesList {
+			if i == 0 || versionCandidate.CompareTo(lastInsertedCandidate) != 0 {
+				sanitizedVersionCandidates = append(sanitizedVersionCandidates, versionCandidate)
+				lastInsertedCandidate = versionCandidate
+			}
+		}
+	}
+
 	return Refs{
 		Data:                 data,
 		DataStr:              dataStr,
 		DataLen:              dataLen,
 		DataStrLen:           dataStrLen,
-		Candidates:           versionCandidates,
+		Candidates:           sanitizedVersionCandidates,
+		MasterRefHash:        masterRefHash,
 		IndexHeadLineEnd:     indexHeadLineEnd,
 		IndexMasterLineEnd:   indexMasterLineEnd,
 		IndexHeadLineStart:   indexHeadLineStart,
@@ -194,7 +215,13 @@ func NewRefs(data []byte) (Refs, error) {
 
 // FetchRefs downloads and processes refs data from Github and ultimately
 // contructs a Refs instance with it.
-func FetchRefs(githubRoot string) (Refs, error) {
+func FetchRefs(author, repo string) (Refs, error) {
+	githubRoot := fmt.Sprintf(
+		githubRootTemplate,
+		author,
+		repo,
+	)
+
 	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
 	if err != nil {
 		return Refs{}, errors.New(errorRefsFetchNetworkFailure)
@@ -223,15 +250,13 @@ func FetchRefs(githubRoot string) (Refs, error) {
 //
 // This code was written by Gustavo Niemeyer, Nathan Youngman and
 // Geert-Johan Riemer.
-func (refsData Refs) Reserialize(selectedCandidate SemverCandidate) []byte {
+func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 	var (
 		buf bytes.Buffer
 
 		data                 = refsData.Data
 		dataLen              = refsData.DataLen
 		dataStr              = refsData.DataStr
-		versionRefName       = selectedCandidate.GitRefName
-		versionRefHash       = selectedCandidate.GitRefHash
 		indexHeadLineEnd     = refsData.IndexHeadLineEnd
 		indexHeadLineStart   = refsData.IndexHeadLineStart
 		indexMasterLineEnd   = refsData.IndexMasterLineEnd

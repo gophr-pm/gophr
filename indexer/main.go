@@ -1,169 +1,77 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/skeswa/gophr/common"
-	"io/ioutil"
 	"log"
-	"strings"
 	"sync"
-	"time"
+
+	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common"
 )
 
-type GoPackage struct {
-	Description    string
-	GitHubURL      string
-	GoDocURL       string
-	IndexTime      string
-	HttpStatusCode int
-	AwesomeGo      bool
-	Versions       []string
-}
-
 func main() {
-	start := time.Now()
-	log.Println("Started Download of Godoc/index")
-
-	doc, err := goquery.NewDocument("https://godoc.org/-/index")
+	log.Println("Establishing connection to DB")
+	cluster := gocql.NewCluster("gophr.dev")
+	cluster.ProtoVersion = 4
+	cluster.Keyspace = "gophr"
+	cluster.Consistency = gocql.One
+	session, err := cluster.CreateSession()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Connection failed to establish successfully")
+		log.Fatalln(err)
+	}
+	defer session.Close()
+	log.Println("Connection established successfully")
+
+	log.Println("Fetching godoc metadata")
+	godocMetadataList, err := fetchGodocMetadata()
+	if err != nil {
+		log.Println("Failed to fetch godoc metadata")
+		log.Fatalln(err)
 	}
 
-	log.Println("Finished Download of Godoc/index\n")
-	log.Println("Started scraping all github packages from Godoc/index")
-
-	var goPackageMap = make(map[string]*GoPackage)
-
-	// For each tr element on the page
-	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
-		children := s.Children()
-		goPackage := new(GoPackage)
-
-		// For each child in the tr element
-		children.Each(func(i int, s2 *goquery.Selection) {
-			childURL, childURLexists := s.Find("a").Attr("href")
-			childDescription := s.Text()
-
-			if childURLexists == true {
-				goPackage.GitHubURL = strings.Trim(childURL, "/")
-			}
-
-			if len(childDescription) > 0 {
-				// TODO check if description isn't just the url, if so dont set it
-				goPackage.Description = childDescription
-			}
-		})
-
-		// Only continue if this goPackage contains a GitHub URL
-		// TODO check to make sure github.com is the prefix
-		gitHubURLTokens := strings.Split(goPackage.GitHubURL, "/")
-
-		if strings.Contains(goPackage.GitHubURL, "github.com") && len(gitHubURLTokens) == 3 {
-			// Build go doc url
-			goPackage.GoDocURL = ("https://godoc.org/" + goPackage.GitHubURL)
-
-			// Create Index Time
-			t := time.Now()
-			time := t.String()
-			goPackage.IndexTime = time
-
-			goPackageMap[goPackage.GitHubURL] = goPackage
-		}
-	})
-
-	log.Println("Finished scraping ", len(goPackageMap), " github packages from Godoc/index\n")
-	log.Println("Started Download of awesome-go/README.md")
-
-	doc, err = goquery.NewDocument("https://godoc.org/-/index")
+	log.Println("Fetching awesome go list")
+	awesomeGoIndex, err := fetchAwesomeGoList()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Failed to fetch awesome go list")
+		log.Fatalln(err)
 	}
 
-	log.Println("Finished Download of awesome-go/README.md\n")
-	log.Println("Started scraping awesome-go/README.md")
+	log.Println("Preparing to build package models")
+	packageModels, err := buildPackageModels(godocMetadataList, awesomeGoIndex)
+	if err != nil {
+		log.Println("Failed to build package models")
+		log.Fatalln(err)
+	}
 
-	doc.Find("a").Each(func(i int, s *goquery.Selection) {
-		childURL, _ := s.Attr("href")
-		childURL = strings.Trim(childURL, "/")
-		goPackage, goPackageExists := goPackageMap[childURL]
+	log.Println("Preparing to insert packages into database")
 
-		if goPackageExists == true {
-			goPackage.AwesomeGo = true
-			goPackageMap[childURL] = goPackage
-		}
-	})
-
-	// TODO ADD A FUCKING COUNT THAT FUCKING WORKS, FUCK
-	log.Println("Finished scraping awesome-go/README.md\n")
-	log.Println("Started retrieving versions for go packages\n")
-
-	var goErrorPackageMap = make(map[string]*GoPackage)
-
-	// TODO Write a constant for this
-	nbConcurrentGet := 20
-	urls := make(chan *GoPackage, nbConcurrentGet)
 	var wg sync.WaitGroup
-	for i := 0; i < nbConcurrentGet; i++ {
+	var insertPackageErrors []error
+
+	nbConcurrentInserts := 20
+	packageChan := make(chan *common.PackageModel, nbConcurrentInserts)
+	for i := 0; i < nbConcurrentInserts; i++ {
 		wg.Add(1)
 		go func() {
-			for goPackage := range urls {
-				refs, err := common.FetchRefs(goPackage.GitHubURL)
+			for packageModel := range packageChan {
+				err := common.InsertPackage(session, packageModel)
 				if err != nil {
-					log.Println("ERROR", goPackage.GitHubURL, " failed to return.\n", err)
-					goPackage.HttpStatusCode = 404
-					goErrorPackageMap[goPackage.GitHubURL] = goPackage
-				} else {
-					goPackage.HttpStatusCode = 200
-					var versions []string
-					for _, version := range refs.Candidates {
-						versions = append(versions, version.String())
-					}
-					goPackage.Versions = versions
+					insertPackageErrors = append(insertPackageErrors, err)
 				}
-				goPackageMap[goPackage.GitHubURL] = goPackage
 			}
 			wg.Done()
 		}()
 	}
 
-	for _, goPackage := range goPackageMap {
-		urls <- goPackage
+	for _, packageModel := range packageModels {
+		packageChan <- packageModel
 	}
-
-	close(urls)
+	close(packageChan)
 	wg.Wait()
 
-	successfulNumPackages := len(goPackageMap) - len(goErrorPackageMap)
-	log.Println("SUCCESS: ", successfulNumPackages, " GoPackages were successfully built")
-	log.Println("Creating JSON dump of ", len(goPackageMap), " go packages")
-	createJSONDump(goPackageMap, "valid-go-packages")
-	log.Println("Finished creating JSON dump\n")
-
-	log.Println("WARNING: ", len(goErrorPackageMap), " GoPackages were not found on github")
-	log.Println("Creating JSON dump of ", len(goErrorPackageMap), " err packages")
-	createJSONDump(goErrorPackageMap, "invalid-go-packages")
-	log.Println("Finished creating JSON dump\n")
-
-	elapsed := time.Since(start)
-	log.Printf("Program took %s to fully execute", elapsed)
-}
-
-// Create a tmp JSON dump of all serialized goPackageData
-func createJSONDump(goPackageMap map[string]*GoPackage, fileName string) {
-	var buffer bytes.Buffer
-
-	for _, goPackage := range goPackageMap {
-		buffer.WriteString("{\"url\": \"" + goPackage.GitHubURL + "\", \"description\": \"" + goPackage.Description + "\", \"index_time\": \"" + goPackage.IndexTime + "\" }, \"versions\": \"" + fmt.Sprintf("%v", goPackage.Versions) + "\" \n")
+	for _, insertErr := range insertPackageErrors {
+		log.Println(insertErr)
 	}
 
-	t := time.Now()
-	time := strings.Replace(t.String(), " ", "", -1)
-	jsonData := []byte(buffer.String())
-	_ = ioutil.WriteFile("./"+time+"-"+fileName+".json", jsonData, 0644)
-}
-
-func printGoPackage(goPackage *GoPackage) {
-	fmt.Printf("%v", goPackage)
+	log.Println("Finished inserting packages into database")
 }
