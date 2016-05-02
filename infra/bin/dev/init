@@ -10,6 +10,17 @@ esc_seq="\x1b["
 no_color=$esc_seq"39;49;00m"
 green_color=$esc_seq"32;01m"
 
+# Helpers
+command_exists() {
+  type "$1" &> /dev/null ;
+}
+
+# Install all the requisite tools
+if ! command_exists gpg ; then
+  sudo chown -R $USER /usr/local
+  brew install gpg
+fi
+
 # Check if the docker machine already exists
 if [[ -z $(docker-machine ls | grep "^$DOCKER_MACHINE_NAME ") ]]; then
   # Stop the other docker machines before creating this one
