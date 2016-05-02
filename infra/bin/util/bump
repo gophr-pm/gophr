@@ -68,21 +68,23 @@ function command-bump {
   while true; do
     echo -e "The current version is ${blue_color}${version}${no_color}.
 What level of this version should be bumped?
+  ${yellow_color}(0)${no_color} None
   ${yellow_color}(1)${no_color} Major
   ${yellow_color}(2)${no_color} Minor
   ${yellow_color}(3)${no_color} Patch
 "
-    read -p 'Selected Level [1]: ' level
+    read -p 'Selected Level [3]: ' level
     case $level in
-        1) new="$(($major + 1)).0.0"; break;;
-        2) new="${major}.$(($minor + 1)).0"; break;;
-        3) new="${major}.${minor}.$(($patch + 1))"; break;;
-        '') new="${major}.${minor}.$(($patch + 1))"; break;;
-        * ) echo -e "${red_color}\nPlease select a valid level.\n${no_color}";;
+      0) exit 1; break;;
+      1) new="$(($major + 1)).0.0"; break;;
+      2) new="${major}.$(($minor + 1)).0"; break;;
+      3) new="${major}.${minor}.$(($patch + 1))"; break;;
+      '') new="${major}.${minor}.$(($patch + 1))"; break;;
+      * ) echo -e "${red_color}\nPlease select a valid level.\n${no_color}";;
     esac
   done
 
-  echo -e "${green_color}\n✓ Version set to ${blue_color}${new}${green_color} successfully!\n${no_color}"
+  echo -e "${green_color}✓ Version set to ${blue_color}${new}${green_color} successfully!\n${no_color}"
   {
     echo $new | tee $VERSION_FILE
   } &> /dev/null

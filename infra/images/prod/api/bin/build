@@ -1,7 +1,6 @@
 #! /bin/bash
 
 # Constants
-IMAGE_TAG="dev"
 IMAGE_NAME="gophr-api"
 DOCKER_MACHINE_NAME="gophr-dev"
 
@@ -24,9 +23,10 @@ echo "Connecting to the docker machine..."
 eval $(docker-machine env "$DOCKER_MACHINE_NAME")
 echo -e "${green_color}✓ Connected to the docker machine successfully!${no_color}"
 
-echo "Building '$IMAGE_NAME:$IMAGE_TAG' image..."
-docker build \
-  --rm \
-  -t "$IMAGE_NAME:$IMAGE_TAG" \
-  "$image_dir"
-echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' image was built successfully!${no_color}"
+echo -e "\nResolving new image version..." \
+&& (cd $image_dir && $bump_script) \
+&& IMAGE_TAG="$(cat ${image_dir}/Versionfile)" \
+&& echo "Building '$IMAGE_NAME:$IMAGE_TAG' image..." \
+&& docker build --rm -t "$IMAGE_NAME:$IMAGE_TAG" "$image_dir" \
+&& docker tag "$IMAGE_NAME:$IMAGE_TAG" "$IMAGE_NAME:latest" \
+&& echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' image was built successfully!${no_color}"
