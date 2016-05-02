@@ -50,7 +50,7 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        loader: 'style-loader!css-loader!postcss-loader?modules'
+        loader: 'style-loader!css-loader?modules'
       },
       {
         test: /\.(jpg|png|woff)$/,
@@ -62,8 +62,10 @@ module.exports = {
         loader: 'react-hot!babel'
       }
     ]
-  },
+  }/*,
   postcss: function () {
     return [require('autoprefixer'), require('precss')];
-  }
+  }*/
 };
+
+//!postcss-loader
