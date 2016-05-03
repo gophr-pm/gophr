@@ -1,0 +1,5 @@
+#! /bin/bash
+
+DOCKER_MACHINE_NAME="gophr-staging"
+docker-machine start $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null;
+docker-machine ssh "$DOCKER_MACHINE_NAME" -N -L 8080:localhost:8080

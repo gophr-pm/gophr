@@ -15,6 +15,7 @@ HELP_COMM_DESC_TEST="Runs tests for a specific component"
 HELP_COMM_DESC_UP="An alias for 'gophrctl run all'"
 HELP_COMM_DESC_WEB="Starts the web assets compiler"
 HELP_OPT_DESC_HELP="Prints a helpful description"
+HELP_OPT_DESC_STAGING="Switches context of the command to the staging environment"
 HELP_COMP_LIST="Components:\n${SOFT_TAB}api, db, indexer, router, turnstile, ws"
 
 # Resolve bin & project dir
@@ -38,10 +39,13 @@ function print_error {
 }
 
 function print_general_help {
-  echo "Usage: gophrctl COMMAND [arg...]"
+  echo "Usage: gophrctl COMMAND [OPTIONS] [arg...]"
   echo "       gophrctl [--help]"
   echo ""
   echo "The environment helper for the gophr project repository."
+  echo ""
+  echo "Options:"
+  echo -e "${SOFT_TAB}-s, --staging\t${HELP_OPT_DESC_STAGING}"
   echo ""
   echo "Commands:"
   echo -e "${SOFT_TAB}build\t${HELP_COMM_DESC_BUILD}"
@@ -194,14 +198,31 @@ function print_web_help {
 }
 
 function do_build {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_build_help
   elif [[ -z "$1" ]]; then
-    $bin_dir/dev/build
+    $bin_dir/$env/build
   elif [[ "$1" == "all" ]]; then
-    $bin_dir/dev/build
-  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
-    $project_dir/infra/images/dev/$1/bin/build
+    $bin_dir/$env/build
+  elif [[ $env == "staging" ]]; then
+    # ws is the only component that has a specific staging image
+    if [[ "$1" != "ws" ]]; then
+      env="prod"
+    fi
+    if [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
+      $project_dir/infra/images/$env/$1/bin/build
+    else
+      print_error "Invalid component was specified"
+      print_build_help
+    fi
+  elif [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
+    $project_dir/infra/images/$env/$1/bin/build
   else
     print_error "Invalid component was specified"
     print_build_help
@@ -209,19 +230,31 @@ function do_build {
 }
 
 function do_down {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_down_help
   else
-    $bin_dir/dev/down
+    $bin_dir/$env/down
   fi
 }
 
 
 function do_host {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_host_help
   else
-    $bin_dir/dev/host
+    $bin_dir/$env/host
   fi
 }
 
@@ -234,6 +267,12 @@ function do_init {
 }
 
 function do_kill {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_kill_help
   elif [[ -z "$1" ]]; then
@@ -241,8 +280,8 @@ function do_kill {
     print_kill_help
   elif [[ "$1" == "all" ]]; then
     $bin_dir/dev/down
-  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
-    $project_dir/infra/images/dev/$1/bin/kill
+  elif [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
+    $project_dir/infra/images/$env/$1/bin/kill
   else
     print_error "Invalid component was specified"
     print_kill_help
@@ -250,26 +289,46 @@ function do_kill {
 }
 
 function do_list {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_list_help
   else
-    $bin_dir/dev/list
+    $bin_dir/$env/list
   fi
 }
 
 function do_log {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="staging"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_log_help
   elif [[ -z "$1" ]]; then
     print_error "Invalid component was specified"
     print_log_help
-  else
+  elif [[ $env == "dev" ]]; then
     eval $(docker-machine env gophr-dev)
     docker logs -f gophr-$1
+  elif [[ $env == "staging" ]]; then
+    kubectl logs -f gophr-$1
   fi
 }
 
 function do_run {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="prod"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_run_help
   elif [[ -z "$1" ]]; then
@@ -277,8 +336,8 @@ function do_run {
     print_run_help
   elif [[ "$1" == "all" ]]; then
     $bin_dir/dev/up
-  elif [[ -d "$project_dir/infra/images/dev/$1/bin" ]]; then
-    $project_dir/infra/images/dev/$1/bin/run
+  elif [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
+    $project_dir/infra/images/$env/$1/bin/run
   else
     print_error "Invalid component was specified"
     print_run_help
@@ -286,6 +345,12 @@ function do_run {
 }
 
 function do_ssh {
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    print_error "SSH cannot be performed in staging or production"
+    print_ssh_help
+    exit 1
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_ssh_help
   elif [[ -z "$1" ]]; then
@@ -301,6 +366,12 @@ function do_ssh {
 }
 
 function do_test {
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    print_error "Testing cannot be performed in staging or production"
+    print_ssh_help
+    exit 1
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_test_help
   elif [[ -z "$1" ]]; then
@@ -317,14 +388,26 @@ function do_test {
 }
 
 function do_up {
+  local env="dev"
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    env="prod"
+    shift
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_up_help
   else
-    $bin_dir/dev/up
+    $bin_dir/$env/up
   fi
 }
 
 function do_web {
+  if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
+    print_error "Webpack cannot be run in staging or production"
+    print_ssh_help
+    exit 1
+  fi
+
   if [[ "$1" == "--help" ]]; then
     print_web_help
   else
@@ -336,51 +419,51 @@ comm="$1"
 case $comm in
   build)
     shift
-    do_build $1 $2
+    do_build $@
     ;;
   down)
     shift
-    do_down $1 $2
+    do_down $@
     ;;
   host)
     shift
-    do_host $1 $2
+    do_host $@
     ;;
   init)
     shift
-    do_init $1 $2
+    do_init $@
     ;;
   kill)
     shift
-    do_kill $1 $2
+    do_kill $@
     ;;
   ls)
     shift
-    do_list $1 $2
+    do_list $@
     ;;
   log)
     shift
-    do_log $1 $2
+    do_log $@
     ;;
   run)
     shift
-    do_run $1 $2
+    do_run $@
     ;;
   ssh)
     shift
-    do_ssh $1 $2
+    do_ssh $@
     ;;
   test)
     shift
-    do_test $1 $2
+    do_test $@
     ;;
   up)
     shift
-    do_up $1 $2
+    do_up $@
     ;;
   web)
     shift
-    do_web $1 $2
+    do_web $@
     ;;
   --help)
     print_general_help
