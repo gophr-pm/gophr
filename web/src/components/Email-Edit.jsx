@@ -6,7 +6,7 @@ export default React.createClass({
   },
   render: function() {
     return <div className="Email-Edit">
-      <h1>Email Edit<h1>
+      <h1>Email Edit</h1>
     </div>;
   }
 });

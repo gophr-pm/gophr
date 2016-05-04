@@ -6,7 +6,7 @@ export default React.createClass({
   },
   render: function() {
     return <div className="Home">
-      <h1>Home</h2>
+      <h1>Home</h1>
     </div>;
   }
 });
