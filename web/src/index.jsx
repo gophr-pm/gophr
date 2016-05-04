@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import {RaisedButton} from 'material-ui';
 //import injectTapEventPlugin from 'react-tap-event-plugin';
 
 //import Voting from './components/Voting';
@@ -17,6 +18,7 @@ var Main = React.createClass({
           <h1>{entry}</h1>
         </button>
       )}
+      <RaisedButton label="Default" />
     </div>;
   }
 });
