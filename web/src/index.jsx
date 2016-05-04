@@ -20,19 +20,18 @@ import NoMatch from './components/Home';
 ReactDOM.render((
   <Router>
     <Route path="/" component={Home} >
-      <Route path="/About" component={About} />
-      <Route path="/Email-Edit" component={EmailEdit} />
-      <Route path="/Home" component={Home} />
-      <Route path="/Package" component={Package} >
+      <Route path="About" component={About} />
+      <Route path="Email-Edit" component={EmailEdit} />
+      <Route path="Home" component={Home} />
+      <Route path="Package" component={Package} >
         <Route path="/:name" />
       </Route>
-      <Route path="/Password-Edit" component={PasswordEdit} />
-      <Route path="/Profile" component={Profile} />
-      <Route path="/Subscriptions-Edit" component={SubscriptionsEdit} />
-      <Route path="/Support" component={Support} />
-      <Route path="/Tokens" component={Tokens} />
-      <Route path="/Tutorial" component={Tutorial} />
-      <Route path="*" component={Package}/>
+      <Route path="Password-Edit" component={PasswordEdit} />
+      <Route path="Profile" component={Profile} />
+      <Route path="Subscriptions-Edit" component={SubscriptionsEdit} />
+      <Route path="Support" component={Support} />
+      <Route path="Tokens" component={Tokens} />
+      <Route path="Tutorial" component={Tutorial} />
     </Route>
   </Router>
   ),document.getElementById('app')
