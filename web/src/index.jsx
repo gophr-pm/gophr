@@ -4,6 +4,7 @@ import {RaisedButton} from 'material-ui';
 import { Router, Route, Link } from 'react-router'
 //import injectTapEventPlugin from 'react-tap-event-plugin';
 
+import App from './components/App';
 import About from './components/About';
 import EmailEdit from './components/Email-Edit';
 import Home from './components/Home';
@@ -19,20 +20,20 @@ import NoMatch from './components/Home';
 
 ReactDOM.render((
   <Router>
-    <Route path="/" component={Home} >
-      <Route path="About" component={About} />
-      <Route path="Email-Edit" component={EmailEdit} />
-      <Route path="Home" component={Home} />
-      <Route path="Package" component={Package} >
-        <Route path="/:name" />
-      </Route>
-      <Route path="Password-Edit" component={PasswordEdit} />
-      <Route path="Profile" component={Profile} />
-      <Route path="Subscriptions-Edit" component={SubscriptionsEdit} />
-      <Route path="Support" component={Support} />
-      <Route path="Tokens" component={Tokens} />
-      <Route path="Tutorial" component={Tutorial} />
+    <Route path="App" component={App} />
+    <Route path="About" component={About} />
+    <Route path="Email-Edit" component={EmailEdit} />
+    <Route path="Home" component={Home} />
+    <Route path="Package" component={Package} >
+      <Route path=":name"  component={Package} />
     </Route>
+    <Route path="Password-Edit" component={PasswordEdit} />
+    <Route path="Profile" component={Profile} />
+    <Route path="Subscriptions-Edit" component={SubscriptionsEdit} />
+    <Route path="Support" component={Support} />
+    <Route path="Tokens" component={Tokens} />
+    <Route path="Tutorial" component={Tutorial} />
+    <Route path="Home" component={Home} />
   </Router>
   ),document.getElementById('app')
 );
