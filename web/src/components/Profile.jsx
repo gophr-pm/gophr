@@ -6,7 +6,7 @@ export default React.createClass({
   },
   render: function() {
     return <div className="Profile">
-      <h1>Profile</h1>
+      <h1>Edit your profile</h1>
     </div>;
   }
 });

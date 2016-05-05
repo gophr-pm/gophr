@@ -6,7 +6,8 @@ export default React.createClass({
   },
   render: function() {
     return <div className="Package">
-      <h1>Package</h1>
+      <h1 class="package-name">Neural-Network</h1>
+      <p class="package-description">Packages allows user to use all the Nueral networking</p>
     </div>;
   }
 });

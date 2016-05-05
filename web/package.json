@@ -69,6 +69,7 @@
   "dependencies": {
     "immutable": "^3.8.1",
     "material-ui": "^0.14.4",
+    "postcss-neat": "^2.5.2",
     "react": "^15.0.1",
     "react-addons-pure-render-mixin": "^15.0.1",
     "react-addons-test-utils": "^15.0.1",

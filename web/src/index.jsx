@@ -29,6 +29,7 @@ ReactDOM.render((
       </Route>
       <Route path="Password-Edit" component={PasswordEdit} />
       <Route path="Profile" component={Profile} />
+      <Route path="Profile-Edit" component={ProfileEdit} />
       <Route path="Subscriptions-Edit" component={SubscriptionsEdit} />
       <Route path="Support" component={Support} />
       <Route path="Tokens" component={Tokens} />
