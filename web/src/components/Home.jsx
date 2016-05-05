@@ -7,6 +7,9 @@ export default React.createClass({
   render: function() {
     return <div className="Home">
       <h1>Home</h1>
+      <h2>Popular Gophr Packages</h2>
+      <h2>Getting Started</h2>
+      <h2>Recently Updated Packages</h2>
     </div>;
   }
 });
