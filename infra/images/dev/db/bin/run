@@ -31,6 +31,7 @@ $bin_dir/kill
 echo "Starting '$IMAGE_NAME:$IMAGE_TAG' container..."
 docker run \
   -d \
+  -v gophr-db:/var/lib/cassandra \
   -p 7000:7000 \
   -p 7001:7001 \
   -p 9042:9042 \
