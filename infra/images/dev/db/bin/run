@@ -5,6 +5,8 @@ IMAGE_TAG="dev"
 IMAGE_NAME="gophr-db"
 CONTAINER_NAME="gophr-db"
 DOCKER_MACHINE_NAME="gophr-dev"
+CONTAINER_VOLUME_NAME="cassandra-db-volume"
+DB_DIR="/var/lib/cassandra"
 
 # Get base directories
 bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -31,6 +33,7 @@ $bin_dir/kill
 echo "Starting '$IMAGE_NAME:$IMAGE_TAG' container..."
 docker run \
   -d \
+  -v "$CONTAINER_VOLUME_NAME:$DB_DIR" \
   -p 7000:7000 \
   -p 7001:7001 \
   -p 9042:9042 \
