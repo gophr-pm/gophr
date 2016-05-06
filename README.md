@@ -48,7 +48,7 @@ Navigate to the `indexer` folder:
 $ cd $GOPHR_REPO/indexer
 ```
 
-Buld the indexer binary:
+Build the indexer binary:
 ```sh
 $ go build && ./indexer
 ```
