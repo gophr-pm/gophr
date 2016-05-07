@@ -198,6 +198,8 @@ function print_web_help {
 }
 
 function do_build {
+  echo "$@"
+
   local env="dev"
   if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
     env="staging"
@@ -212,7 +214,7 @@ function do_build {
     $bin_dir/$env/build
   elif [[ $env == "staging" ]]; then
     # ws is the only component that has a specific staging image
-    if [[ "$1" != "ws" ]]; then
+    if ! [[ "$1" == "ws" ]]; then
       env="prod"
     fi
     if [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
