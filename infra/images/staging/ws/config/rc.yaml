@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: gophr-ws-rc
+spec:
+  replicas: 1
+  selector:
+    component: ws

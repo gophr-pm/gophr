@@ -14,10 +14,9 @@ set -e
 
 # Only expose the the port if it isn't exposed already
 if [[ -z "$(ps aux | grep "[d]ocker-machine ssh $DOCKER_MACHINE_NAME -N -L 8080:localhost:8080")" ]]; then
-  echo -e "${green_color}✓ Kubernetes port exposed successfully!${no_color}"
-  docker-machine start $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null || true;
-  docker-machine ssh "$DOCKER_MACHINE_NAME" -N -L 8080:localhost:8080 &
-else
-  echo -e "${red_color}✗ Kubernetes port is already exposed.${no_color}"
+  echo -e "${red_color}✗ Kubernetes port is not exposed.${no_color}"
   exit 1
+else
+  kill $(ps aux | grep "[d]ocker-machine ssh $DOCKER_MACHINE_NAME -N -L 8080:localhost:8080" | awk '{print $2}')
+  echo -e "${green_color}✓ Kubernetes port unexposed successfully!${no_color}"
 fi
