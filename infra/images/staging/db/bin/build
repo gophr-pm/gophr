@@ -1,0 +1,6 @@
+#! /bin/bash
+
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+build_script="$( dirname $( dirname $( dirname $bin_dir ) ) )/prod/db/bin/build"
+
+$build_script

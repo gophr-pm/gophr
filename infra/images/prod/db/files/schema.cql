@@ -1,7 +1,7 @@
 
 CREATE KEYSPACE IF NOT EXISTS gophr WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'}  AND durable_writes = true;
 
-CREATE TABLE gophr.packages (
+CREATE TABLE IF NOT EXISTS gophr.packages (
     author text,
     repo text,
     description text,
@@ -27,7 +27,7 @@ CREATE TABLE gophr.packages (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-CREATE CUSTOM INDEX packages_index ON gophr.packages () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
+CREATE CUSTOM INDEX IF NOT EXISTS packages_index ON gophr.packages () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
   'schema': '{
     fields : {
       search_blob : { type : "text" }
@@ -35,7 +35,7 @@ CREATE CUSTOM INDEX packages_index ON gophr.packages () USING 'com.stratio.cassa
   }'
 };
 
-CREATE TABLE gophr.all_time_install_totals (
+CREATE TABLE IF NOT EXISTS gophr.all_time_install_totals (
     package_author text,
     package_repo text,
     package_description text,
@@ -55,7 +55,7 @@ CREATE TABLE gophr.all_time_install_totals (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-CREATE CUSTOM INDEX all_time_install_totals_index ON gophr.all_time_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
+CREATE CUSTOM INDEX IF NOT EXISTS all_time_install_totals_index ON gophr.all_time_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
   'schema': '{
     fields: {
       total: { type: "bigint", sorted: true }
@@ -63,7 +63,7 @@ CREATE CUSTOM INDEX all_time_install_totals_index ON gophr.all_time_install_tota
   }'
 };
 
-CREATE TABLE gophr.ranged_install_totals (
+CREATE TABLE IF NOT EXISTS gophr.ranged_install_totals (
     date timestamp,
     package_author text,
     package_repo text,
@@ -87,7 +87,7 @@ CREATE TABLE gophr.ranged_install_totals (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-CREATE CUSTOM INDEX ranged_install_totals_index ON gophr.ranged_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
+CREATE CUSTOM INDEX IF NOT EXISTS ranged_install_totals_index ON gophr.ranged_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
   'schema': '{
     fields: {
       daily_total: { type: "bigint", sorted: true },
@@ -97,7 +97,7 @@ CREATE CUSTOM INDEX ranged_install_totals_index ON gophr.ranged_install_totals (
   }'
 };
 
-CREATE TABLE gophr.ranged_versioned_install_totals (
+CREATE TABLE IF NOT EXISTS gophr.ranged_versioned_install_totals (
     date timestamp,
     package_author text,
     package_repo text,
@@ -121,7 +121,7 @@ CREATE TABLE gophr.ranged_versioned_install_totals (
     AND min_index_interval = 128
     AND read_repair_chance = 0.0
     AND speculative_retry = '99PERCENTILE';
-CREATE CUSTOM INDEX ranged_versioned_install_totals_index ON gophr.ranged_versioned_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
+CREATE CUSTOM INDEX IF NOT EXISTS ranged_versioned_install_totals_index ON gophr.ranged_versioned_install_totals () USING 'com.stratio.cassandra.lucene.Index' WITH OPTIONS = {
   'schema': '{
     fields: {
       daily_total: { type: "bigint", sorted: true },

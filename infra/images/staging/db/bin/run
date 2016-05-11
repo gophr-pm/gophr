@@ -7,8 +7,8 @@ red_color=$esc_seq"31;01m"
 green_color=$esc_seq"32;01m"
 
 # Constants
-IMAGE_TAG="staging"
-IMAGE_NAME="gophr-ws"
+IMAGE_TAG="latest"
+IMAGE_NAME="gophr-db"
 CLUSTER_NAME="gophr-staging"
 DOCKER_MACHINE_NAME="gophr-staging"
 
@@ -47,12 +47,12 @@ echo -e "${green_color}✓ Connected to the cluster successfully!${no_color}"
 
 echo "Destroying old kubernetes resources..."
 kubectl delete -f "$config_dir/svc.yaml" &> /dev/null || true
-kubectl delete -f "$config_dir/rc.yaml" &> /dev/null || true
+kubectl delete -f "$config_dir/ds.yaml" &> /dev/null || true
 echo -e "${green_color}✓ Old kubernetes resources destroyed successfully!${no_color}"
 
 echo "Creating new kubernetes resources..."
 echo "$config_dir/pod.yaml"
-kubectl create -f "$config_dir/rc.yaml"
+kubectl create -f "$config_dir/ds.yaml"
 kubectl create -f "$config_dir/svc.yaml"
 echo -e "${green_color}✓ New kubernetes resources created successfully!${no_color}"
 

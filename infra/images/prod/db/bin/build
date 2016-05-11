@@ -2,7 +2,7 @@
 
 # Constants
 IMAGE_NAME="gophr-db"
-DOCKER_MACHINE_NAME="gophr-dev"
+DOCKER_MACHINE_NAME="gophr-staging"
 
 # Get base directories
 bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
