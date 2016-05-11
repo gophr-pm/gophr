@@ -198,8 +198,6 @@ function print_web_help {
 }
 
 function do_build {
-  echo "$@"
-
   local env="dev"
   if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
     env="staging"
@@ -212,17 +210,6 @@ function do_build {
     $bin_dir/$env/build
   elif [[ "$1" == "all" ]]; then
     $bin_dir/$env/build
-  elif [[ $env == "staging" ]]; then
-    # ws is the only component that has a specific staging image
-    if ! [[ "$1" == "ws" ]]; then
-      env="prod"
-    fi
-    if [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
-      $project_dir/infra/images/$env/$1/bin/build
-    else
-      print_error "Invalid component was specified"
-      print_build_help
-    fi
   elif [[ -d "$project_dir/infra/images/$env/$1/bin" ]]; then
     $project_dir/infra/images/$env/$1/bin/build
   else
@@ -333,7 +320,7 @@ function do_log {
 function do_run {
   local env="dev"
   if [[ "$1" == "-s" || "$1" == "--staging" ]]; then
-    env="prod"
+    env="staging"
     shift
   fi
 

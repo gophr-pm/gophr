@@ -6,3 +6,14 @@ spec:
   replicas: 1
   selector:
     component: ws
+  template:
+    metadata:
+      labels:
+        component: ws
+    spec:
+      containers:
+      - name: gophr-ws
+        image: gophr-ws:staging
+        ports:
+          - containerPort: 80
+          - containerPort: 443
