@@ -52,3 +52,8 @@ Build the indexer binary:
 ```sh
 $ go build && ./indexer
 ```
+
+## Using Gophr-cli
+
+Now that you've completely setup your `gophr dev environment` and have loaded data via the `indexer` you're ready to use the [Gophr-cli](https://github.com/Shikkic/gophr-cli) tool that integrates with the Gophr dev environment.
+
