@@ -1,0 +1,27 @@
+#! /bin/bash
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+green_color=$esc_seq"32;01m"
+
+# Constants
+DOCKER_MACHINE_NAME="gophr-staging"
+
+# Create an exit hook
+on_premature_exit() {
+  if [[ "$?" -ne "0" ]]; then
+    echo -e "${red_color}✗ Failed to stop '${DOCKER_MACHINE_NAME}'.${no_color}"
+  fi
+}
+
+# Setup the exit hook
+trap 'on_premature_exit' EXIT
+
+# Exit on error
+set -e
+
+docker-machine stop "$DOCKER_MACHINE_NAME"
+
+echo -e "${green_color}✓ '${DOCKER_MACHINE_NAME}' stopped successfully!${no_color}"

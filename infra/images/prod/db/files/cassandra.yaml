@@ -300,7 +300,10 @@ concurrent_counter_writes: 32
 #   heap_buffers:    on heap nio buffers
 #   offheap_buffers: off heap (direct) nio buffers
 #   offheap_objects: native memory, eliminating nio buffer heap overhead
-memtable_allocation_type: offheap_objects
+#
+# TODO(skeswa 05/11/16): This was originally `offheap_objects`. Return this
+# configuration value to its correct value when cassandra is upgraded to 3.4+.
+memtable_allocation_type: heap_buffers
 
 # Total space to use for commitlogs.  Since commitlog segments are
 # mmapped, and hence use up address space, the default size is 32

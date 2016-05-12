@@ -75,7 +75,7 @@ What level of this version should be bumped?
 "
     read -p 'Selected Level [3]: ' level
     case $level in
-      0) exit 1; break;;
+      0) exit 0; break;;
       1) new="$(($major + 1)).0.0"; break;;
       2) new="${major}.$(($minor + 1)).0"; break;;
       3) new="${major}.${minor}.$(($patch + 1))"; break;;

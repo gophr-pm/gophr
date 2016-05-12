@@ -2,11 +2,12 @@
 
 # Constants
 IMAGE_NAME="gophr-api"
-DOCKER_MACHINE_NAME="gophr-dev"
+DOCKER_MACHINE_NAME="gophr-staging"
 
 # Get base directories
 bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 image_dir="$( dirname $bin_dir )"
+bump_script="$( dirname $( dirname $( dirname $( dirname $bin_dir ) ) ) )/bin/util/bump"
 
 # Color variables
 esc_seq="\x1b["

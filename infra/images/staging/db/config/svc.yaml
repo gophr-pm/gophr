@@ -7,7 +7,7 @@ spec:
   ports:
     - name: cql
       port: 9042
-      nodePort: 32942
+      nodePort: 31942
       targetPort: 9042
   selector:
     component: db

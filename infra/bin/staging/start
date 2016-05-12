@@ -1,0 +1,30 @@
+#! /bin/bash
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+green_color=$esc_seq"32;01m"
+
+# Constants
+K8S_VERSION="v1.2.4"
+DOCKER_MACHINE_NAME="gophr-staging"
+
+# Create an exit hook
+on_premature_exit() {
+  if [[ "$?" -ne "0" ]]; then
+    echo -e "${red_color}✗ Failed to start '${DOCKER_MACHINE_NAME}'.${no_color}"
+  fi
+}
+
+# Setup the exit hook
+trap 'on_premature_exit' EXIT
+
+# Exit on error
+set -e
+
+docker-machine start $DOCKER_MACHINE_NAME
+eval "$(docker-machine env ${DOCKER_MACHINE_NAME})"
+docker start kubelet 
+
+echo -e "${green_color}✓ '${DOCKER_MACHINE_NAME}' started successfully!${no_color}"
