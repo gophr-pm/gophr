@@ -4,6 +4,12 @@ import {RaisedButton} from 'material-ui';
 import { Router, Route, Link, browserHistory  } from 'react-router'
 //import injectTapEventPlugin from 'react-tap-event-plugin';
 
+//import css
+//import './mainold.html'
+import './stylesheets/styles.css';
+//console.log('__dirname', __dirname + 'css/styles.scss')
+
+//import app components
 import App from './components/App';
 import About from './components/About';
 import EmailEdit from './components/Email-Edit';
@@ -20,12 +26,12 @@ import NoMatch from './components/Home';
 
 ReactDOM.render((
   <Router>
-    <Route path="/" component={App} >
+    <Route path="" component={App} >
       <Route path="About" component={About} />
       <Route path="Email-Edit" component={EmailEdit} />
       <Route path="Home" component={Home} />
       <Route path="Package" component={Package} >
-        <Route path=":name"  component={Package} />
+        <Route path=":name" component={Package} />
       </Route>
       <Route path="Password-Edit" component={PasswordEdit} />
       <Route path="Profile" component={Profile} />
@@ -34,7 +40,7 @@ ReactDOM.render((
       <Route path="Support" component={Support} />
       <Route path="Tokens" component={Tokens} />
       <Route path="Tutorial" component={Tutorial} />
-      <Route path="*" component={Home} />
+      <Route path="/" component={Home} />
     </Route>
   </Router>
   ),document.getElementById('app')

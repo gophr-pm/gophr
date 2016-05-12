@@ -6,7 +6,20 @@ export default React.createClass({
   },
   render: function() {
     return <div className="Tokens">
-      <h1>Tokens</h1>
+      <h2>Tokens</h2>
+      <table>
+        <th>
+          <td>
+            Tokens
+          </td>
+          <td>
+            Created
+          </td>
+          <td>
+            delete
+          </td>
+        </th>
+      </table>
     </div>;
   }
 });
