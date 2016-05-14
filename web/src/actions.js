@@ -234,9 +234,51 @@ export function updateProfile() {
   };
 }
 
+export function updateProfileRequest() {
+  return {
+    type: UPDATE_PROFILE_REQUEST
+  };
+}
+
+export function updateProfileSuccess() {
+  return {
+    type: UPDATE_PROFILE_SUCCESS
+  };
+}
+
+export function updateProfileFailure() {
+  return {
+    type: UPDATE_PROFILE_FAILURE
+  };
+}
+
+export function validateProfileForm() {
+  return {
+    type: VALIDATE_PROFILE_FORM
+  };
+}
+
 export function getProfile() {
   return {
     type: GET_PROFILE
+  };
+}
+
+export function getProfileRequest() {
+  return {
+    type: GET_PROFILE_REQUEST
+  };
+}
+
+export function getProfileSuccess() {
+  return {
+    type: GET_PROFILE_SUCCESS
+  };
+}
+
+export function getProfileFailure() {
+  return {
+    type: GET_PROFILE_FAILURE
   };
 }
 
@@ -246,8 +288,44 @@ export function getSubscriptions() {
   };
 }
 
+export function getSubscriptionsRequest() {
+  return {
+    type: GET_SUBCRIPTIONS_REQUEST
+  };
+}
+
+export function getSubscriptionsSuccess() {
+  return {
+    type: GET_SUBCRIPTIONS_SUCCESS
+  };
+}
+
+export function getSubscriptionsFailure() {
+  return {
+    type: GET_SUBCRIPTIONS_FAILURE
+  };
+}
+
 export function getTokens() {
   return {
     type: GET_TOKENS
+  };
+}
+
+export function getTokensRequest() {
+  return {
+    type: GET_TOKENS_REQUEST
+  };
+}
+
+export function getTokensSuccess() {
+  return {
+    type: GET_TOKENS_SUCCESS
+  };
+}
+
+export function getTokensFailure() {
+  return {
+    type: GET_TOKENS_FAILURE
   };
 }
