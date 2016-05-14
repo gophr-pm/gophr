@@ -22,10 +22,10 @@ export const AUTHENTICATION_FAILURE = 'AUTHENTICATION_FAILURE';
 export const VALIDATE_LOGIN_FORM = 'VALIDATE_LOGIN_FORM';
 
 export const SET_PASSWORD = 'SET_PASSWORD';
-export const VALIDATE_PASSWORD_FORM = 'VALIDATE_PASSWORD_FORM';
 export const SET_PASSWORD_REQUEST = 'SET_PASSWORD_REQUEST';
 export const SET_PASSWORD_SUCCESS = 'SET_PASSWORD_SUCCESS';
 export const SET_PASSWORD_FAILURE = 'SET_PASSWORD_FAILURE';
+export const VALIDATE_PASSWORD_FORM = 'VALIDATE_PASSWORD_FORM';
 
 export const SET_EMAIL = 'SET_EMAIL';
 export const SET_EMAIL_REQUEST = 'SET_EMAIL_REQUEST';
@@ -54,14 +54,200 @@ export const GET_TOKENS_REQUEST = 'GET_TOKENS_REQUEST';
 export const GET_TOKENS_SUCCESS = 'GET_TOKENS_SUCCESS';
 export const GET_TOKENS_FAILURE = 'GET_TOKENS_FAILURE';
 
-export function requestGoPackage{
+export function getPackage() {
   return {
-    type: REQUEST_GO_PACKAGES,
+    type: GET_PACKAGE,
   };
 }
 
-export function selectGoPackage{
+export function getPackageRequest() {
   return {
-    type: SELECT_GO_PACKAGE,
+    type: GET_PACKAGE_REQUEST
+  };
+}
+
+export function getPackageSuccess() {
+  return {
+    type: GET_PACKAGE_SUCCESS
+  };
+}
+
+export function getPackageFailure() {
+  return {
+    type: GET_PACKAGE_FAILURE
+  };
+}
+
+export function getPackages() {
+  return {
+    type: GET_PACKAGES,
+  };
+}
+
+export function getPackagesRequest() {
+  return {
+    type: GET_PACKAGES_REQUEST
+  };
+}
+
+export function getPackagesSuccess() {
+  return {
+    type: GET_PACKAGES_SUCCESS
+  };
+}
+
+export function getPackagesFailure() {
+  return {
+    type: GET_PACKAGES_FAILURE
+  };
+}
+
+export function register() {
+  return {
+    type: REGISTER
+  };
+}
+
+export function registerRequest() {
+  return {
+    type: REGISTER_REQUEST
+  };
+}
+
+export function registerSuccess() {
+  return {
+    type: REGISTER_SUCCESS
+  };
+}
+
+export function registerFailure() {
+  return {
+    type: REGISTER_FAILURE
+  };
+}
+
+export function validateRegisterForm() {
+  return {
+    type: VALIDATE_REGISTER_FORM
+  };
+}
+
+export function login() {
+  return {
+    type: LOGIN
+  };
+}
+
+export function logout() {
+  return {
+    type: LOGOUT
+  };
+}
+
+export function authenticationRequest() {
+  return {
+    type: AUTHENTICATION_REQUEST
+  };
+}
+
+export function authenticationSuccess() {
+  return {
+    type: AUTHENTICATION_SUCCESS
+  };
+}
+
+export function authenticationFailure() {
+  return {
+    type: AUTHENTICATED_FAILURE
+  };
+}
+
+export function validateLoginForm() {
+  return {
+    type: VALIDATE_LOGIN_FORM
+  };
+}
+
+export function setPassword() {
+  return {
+    type: SET_PASSWORD
+  };
+}
+
+export function setPasswordRequest() {
+  return {
+    type: SET_PASSWORD_REQUEST
+  };
+}
+
+export function setPasswordSuccess() {
+  return {
+    type: SET_PASSWORD_SUCCESS
+  };
+}
+
+export function setPasswordFailure() {
+  return {
+    type: SET_PASSWORD_FAILURE
+  };
+}
+
+export function validatePasswordForm() {
+  return {
+    type: VALIDATE_PASSWORD_FORM
+  };
+}
+
+export function setEmail() {
+  return {
+    type: SET_EMAIL
+  };
+}
+
+export function setEmailRequest() {
+  return {
+    type: SET_EMAIL_REQUEST
+  };
+}
+
+export function setEmailSuccess() {
+  return {
+    type: SET_EMAIL_SUCCESS
+  };
+}
+
+export function setEmailFailure() {
+  return {
+    type: SET_EMAIL_FAILURE
+  };
+}
+
+export function validateEmailForm() {
+  return {
+    type: VALIDATE_EMAIL_FORM
+  };
+}
+
+export function updateProfile() {
+  return {
+    type: UPDATE_PROFILE
+  };
+}
+
+export function getProfile() {
+  return {
+    type: GET_PROFILE
+  };
+}
+
+export function getSubscriptions() {
+  return {
+    type: GET_SUBCRIPTIONS
+  };
+}
+
+export function getTokens() {
+  return {
+    type: GET_TOKENS
   };
 }
