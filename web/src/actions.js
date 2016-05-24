@@ -54,77 +54,46 @@ export const GET_TOKENS_REQUEST = 'GET_TOKENS_REQUEST';
 export const GET_TOKENS_SUCCESS = 'GET_TOKENS_SUCCESS';
 export const GET_TOKENS_FAILURE = 'GET_TOKENS_FAILURE';
 
-export function getPackage() {
+const api = '/api/v0/';
+
+export function getPackage(packageName) {
   return {
-    type: GET_PACKAGE,
+    // Types of actions to emit before and after
+    types: [GET_PACKAGE_REQUEST, GET_PACKAGE_SUCCESS, GET_PACKAGE_FAILURE],
+
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
+
+    method: 'get',
+    resource: 'package',
+    payload: { name: packageName},
   };
 }
 
-export function getPackageRequest() {
+export function getPackages(query) {
   return {
-    type: GET_PACKAGE_REQUEST
+    types: [GET_PACKAGES_REQUEST, GET_PACKAGES_SUCCESS, GET_PACKAGES_FAILURE],
+
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
+
+    method: 'get',
+    resource: 'packages',
+    payload: query,
   };
 }
 
-export function getPackageSuccess() {
+export function register(account)  {
   return {
-    type: GET_PACKAGE_SUCCESS
-  };
-}
+    types: [REGISTER_REQUEST, REGISTER_SUCCESS, REGISTER_FAILURE],
 
-export function getPackageFailure() {
-  return {
-    type: GET_PACKAGE_FAILURE
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function getPackages() {
-  return {
-    type: GET_PACKAGES,
+    method: 'post',
+    resource: 'register',
+    payload: account,
   };
-}
-
-export function getPackagesRequest() {
-  return {
-    type: GET_PACKAGES_REQUEST
-  };
-}
-
-export function getPackagesSuccess() {
-  return {
-    type: GET_PACKAGES_SUCCESS
-  };
-}
-
-export function getPackagesFailure() {
-  return {
-    type: GET_PACKAGES_FAILURE
-  };
-}
-
-export function register() {
-  return {
-    type: REGISTER
-  };
-}
-
-export function registerRequest() {
-  return {
-    type: REGISTER_REQUEST
-  };
-}
-
-export function registerSuccess() {
-  return {
-    type: REGISTER_SUCCESS
-  };
-}
-
-export function registerFailure() {
-  return {
-    type: REGISTER_FAILURE
-  };
-}
 
 export function validateRegisterForm() {
   return {
@@ -132,9 +101,16 @@ export function validateRegisterForm() {
   };
 }
 
-export function login() {
+export function login(credentials) {
   return {
-    type: LOGIN
+    types: [LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE],
+
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
+
+    method: 'post',
+    resource: 'login',
+    payload: credentials,
   };
 }
 
@@ -144,51 +120,22 @@ export function logout() {
   };
 }
 
-export function authenticationRequest() {
-  return {
-    type: AUTHENTICATION_REQUEST
-  };
-}
-
-export function authenticationSuccess() {
-  return {
-    type: AUTHENTICATION_SUCCESS
-  };
-}
-
-export function authenticationFailure() {
-  return {
-    type: AUTHENTICATED_FAILURE
-  };
-}
-
 export function validateLoginForm() {
   return {
     type: VALIDATE_LOGIN_FORM
   };
 }
 
-export function setPassword() {
+export function setPassword(password) {
   return {
-    type: SET_PASSWORD
-  };
-}
+    types: [SET_PASSWORD_REQUEST, SET_PASSWORD_SUCCESS, SET_PASSWORD_FAILURE],
 
-export function setPasswordRequest() {
-  return {
-    type: SET_PASSWORD_REQUEST
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function setPasswordSuccess() {
-  return {
-    type: SET_PASSWORD_SUCCESS
-  };
-}
-
-export function setPasswordFailure() {
-  return {
-    type: SET_PASSWORD_FAILURE
+    method: 'post',
+    resource: 'password',
+    payload: password,
   };
 }
 
@@ -198,27 +145,16 @@ export function validatePasswordForm() {
   };
 }
 
-export function setEmail() {
+export function setEmail(email) {
   return {
-    type: SET_EMAIL
-  };
-}
+    types: [SET_EMAIL_REQUEST, SET_EMAIL_SUCCESS, SET_EMAIL_FAILURE],
 
-export function setEmailRequest() {
-  return {
-    type: SET_EMAIL_REQUEST
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function setEmailSuccess() {
-  return {
-    type: SET_EMAIL_SUCCESS
-  };
-}
-
-export function setEmailFailure() {
-  return {
-    type: SET_EMAIL_FAILURE
+    method: 'post',
+    resource: 'email',
+    payload: email,
   };
 }
 
@@ -228,27 +164,16 @@ export function validateEmailForm() {
   };
 }
 
-export function updateProfile() {
+export function updateProfile(profile) {
   return {
-    type: UPDATE_PROFILE
-  };
-}
+    types: [UPDATE_PROFILE_REQUEST, UPDATE_PROFILE_SUCCESS, UPDATE_PROFILE_FAILURE],
 
-export function updateProfileRequest() {
-  return {
-    type: UPDATE_PROFILE_REQUEST
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function updateProfileSuccess() {
-  return {
-    type: UPDATE_PROFILE_SUCCESS
-  };
-}
-
-export function updateProfileFailure() {
-  return {
-    type: UPDATE_PROFILE_FAILURE
+    method: 'post',
+    resource: 'profile',
+    payload: profile,
   };
 }
 
@@ -258,74 +183,40 @@ export function validateProfileForm() {
   };
 }
 
-export function getProfile() {
+export function getProfile(profileName) {
   return {
-    type: GET_PROFILE
+    types: [GET_PROFILE_REQUEST, GET_PROFILE_SUCCESS, GET_PROFILE_FAILURE],
+
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
+
+    method: 'get',
+    resource: 'profile',
+    payload: profileName,
   };
 }
 
-export function getProfileRequest() {
+export function getSubscriptions(query) {
   return {
-    type: GET_PROFILE_REQUEST
-  };
-}
+    types: [GET_SUBCRIPTIONS_REQUEST, GET_SUBCRIPTIONS_SUCCESS, GET_SUBCRIPTIONS_FAILURE],
 
-export function getProfileSuccess() {
-  return {
-    type: GET_PROFILE_SUCCESS
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function getProfileFailure() {
-  return {
-    type: GET_PROFILE_FAILURE
-  };
-}
-
-export function getSubscriptions() {
-  return {
-    type: GET_SUBCRIPTIONS
-  };
-}
-
-export function getSubscriptionsRequest() {
-  return {
-    type: GET_SUBCRIPTIONS_REQUEST
-  };
-}
-
-export function getSubscriptionsSuccess() {
-  return {
-    type: GET_SUBCRIPTIONS_SUCCESS
-  };
-}
-
-export function getSubscriptionsFailure() {
-  return {
-    type: GET_SUBCRIPTIONS_FAILURE
+    method: 'get',
+    resource: 'subscription',
+    payload: query,
   };
 }
 
 export function getTokens() {
   return {
-    type: GET_TOKENS
-  };
-}
+    types: [GET_TOKENS_REQUEST, GET_TOKENS_SUCCESS, GET_TOKENS_FAILURE],
 
-export function getTokensRequest() {
-  return {
-    type: GET_TOKENS_REQUEST
-  };
-}
+    // Check the cache (optional):
+    // shouldCallAPI: (state) => shouldFetchPost(state),
 
-export function getTokensSuccess() {
-  return {
-    type: GET_TOKENS_SUCCESS
-  };
-}
-
-export function getTokensFailure() {
-  return {
-    type: GET_TOKENS_FAILURE
+    method: 'get',
+    resource: 'tokens',
   };
 }
