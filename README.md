@@ -1,4 +1,7 @@
+
 # gophr
+![Go Report Card](https://goreportcard.com/badge/github.com/skeswa/gophr)
+
 An end-to-end package management solution for Go.
 
 ## Setting up the dev environment
