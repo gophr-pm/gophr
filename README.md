@@ -1,6 +1,6 @@
 
 # gophr
-![Go Report Card](https://goreportcard.com/badge/github.com/skeswa/gophr)
+[![Go Report Card](https://goreportcard.com/badge/github.com/skeswa/gophr)](https://goreportcard.com/report/github.com/skeswa/gophr)
 
 An end-to-end package management solution for Go.
 
