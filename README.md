@@ -4,6 +4,8 @@
 
 An end-to-end package management solution for Go.
 
+# NB: DEVELOPMENT ON GOPHR IS ON HOLD UNTIL AUGHUST 2016.
+
 ## Setting up the dev environment
 Firstly, make sure you have `docker` (and `docker-machine`) installed. You should be able to run this command:
 ```sh
