@@ -2,6 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {RaisedButton} from 'material-ui';
 import { Router, Route, Link, browserHistory  } from 'react-router'
+import {createStore, applyMiddleware} from 'redux';
+import {Provider} from 'react-redux';
+import reducer from './reducer';
+import { getProfile } from './actions';
+import { callAPIMiddleware } from './middleware/API';
+
 //import injectTapEventPlugin from 'react-tap-event-plugin';
 
 //import css
@@ -24,9 +30,15 @@ import Tokens from './components/Tokens';
 import Tutorial from './components/Tutorial';
 import NoMatch from './components/Home';
 
-ReactDOM.render((
-  <Router>
-    <Route path="" component={App} >
+
+const createStoreWithMiddleware = applyMiddleware(
+  callAPIMiddleware
+)(createStore);
+const store = createStoreWithMiddleware(reducer);
+//store.dispatch(setClientId(getClientId()));
+store.dispatch(getProfile("yasabere"));
+
+const routes = <Route path="" component={App} >
       <Route path="About" component={About} />
       <Route path="Email-Edit" component={EmailEdit} />
       <Route path="Home" component={Home} />
@@ -41,7 +53,13 @@ ReactDOM.render((
       <Route path="Tokens" component={Tokens} />
       <Route path="Tutorial" component={Tutorial} />
       <Route path="/" component={Home} />
-    </Route>
-  </Router>
-  ),document.getElementById('app')
+    </Route>;
+
+ReactDOM.render(
+  <Provider store={store}>
+    <Router >{routes}</Router>
+  </Provider>,
+  document.getElementById('app')
 );
+
+//history={hashHistory}

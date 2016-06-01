@@ -1,4 +1,7 @@
+
+
 export function callAPIMiddleware({dispatch, getstate}) {
+  console.log("calling api")
   return next => action => {
 
     const {
@@ -7,6 +10,8 @@ export function callAPIMiddleware({dispatch, getstate}) {
       callAPI,
       payload
     } = action;
+
+    console.log(action);
 
     if (!types) {
       //Normal action: pass it on
@@ -32,6 +37,8 @@ export function callAPIMiddleware({dispatch, getstate}) {
     dispatch(Object.assign({}, payload, {
       type: requestType,
     }));
+
+
 
   }
 }

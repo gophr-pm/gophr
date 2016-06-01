@@ -9,9 +9,9 @@ export const GET_PACKAGES_SUCCESS = 'GET_PACKAGES_SUCCESS';
 export const GET_PACKAGES_FAILURE = 'GET_PACKAGES_FAILURE';
 
 export const REGISTER = 'REGISTER';
-export const AUTHENTICATION_REQUEST = 'REGISTER_REQUEST';
-export const AUTHENTICATION_SUCCESS = 'REGISTER_SUCCESS';
-export const AUTHENTICATION_FAILURE = 'REGISTER_FAILURE';
+export const REGISTER_REQUEST = 'REGISTER_REQUEST';
+export const REGISTER_SUCCESS = 'REGISTER_SUCCESS';
+export const REGISTER_FAILURE = 'REGISTER_FAILURE';
 export const VALIDATE_REGISTER_FORM = 'VALIDATE_REGISTER_FORM';
 
 export const LOGIN = 'LOGIN';
@@ -68,7 +68,7 @@ export function getPackage(packageName) {
     resource: 'package',
     payload: { name: packageName},
   };
-}
+};
 
 export function getPackages(query) {
   return {
@@ -81,7 +81,7 @@ export function getPackages(query) {
     resource: 'packages',
     payload: query,
   };
-}
+};
 
 export function register(account)  {
   return {
@@ -94,12 +94,13 @@ export function register(account)  {
     resource: 'register',
     payload: account,
   };
+};
 
 export function validateRegisterForm() {
   return {
     type: VALIDATE_REGISTER_FORM
   };
-}
+};
 
 export function login(credentials) {
   return {
@@ -112,19 +113,19 @@ export function login(credentials) {
     resource: 'login',
     payload: credentials,
   };
-}
+};
 
 export function logout() {
   return {
     type: LOGOUT
   };
-}
+};
 
 export function validateLoginForm() {
   return {
     type: VALIDATE_LOGIN_FORM
   };
-}
+};
 
 export function setPassword(password) {
   return {
@@ -137,13 +138,13 @@ export function setPassword(password) {
     resource: 'password',
     payload: password,
   };
-}
+};
 
 export function validatePasswordForm() {
   return {
     type: VALIDATE_PASSWORD_FORM
   };
-}
+};
 
 export function setEmail(email) {
   return {
@@ -156,13 +157,13 @@ export function setEmail(email) {
     resource: 'email',
     payload: email,
   };
-}
+};
 
 export function validateEmailForm() {
   return {
     type: VALIDATE_EMAIL_FORM
   };
-}
+};
 
 export function updateProfile(profile) {
   return {
@@ -175,13 +176,13 @@ export function updateProfile(profile) {
     resource: 'profile',
     payload: profile,
   };
-}
+};
 
 export function validateProfileForm() {
   return {
     type: VALIDATE_PROFILE_FORM
   };
-}
+};
 
 export function getProfile(profileName) {
   return {
@@ -194,7 +195,7 @@ export function getProfile(profileName) {
     resource: 'profile',
     payload: profileName,
   };
-}
+};
 
 export function getSubscriptions(query) {
   return {
@@ -207,7 +208,7 @@ export function getSubscriptions(query) {
     resource: 'subscription',
     payload: query,
   };
-}
+};
 
 export function getTokens() {
   return {
@@ -218,5 +219,6 @@ export function getTokens() {
 
     method: 'get',
     resource: 'tokens',
+    payload:{}
   };
-}
+};
