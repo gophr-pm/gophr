@@ -6,8 +6,11 @@
   "scripts": {
     "clean": "node ./build/scripts/web-clean",
     "assets:dev": "node ./build/scripts/web-assets-dev",
+    "assets:prod": "node ./build/scripts/web-assets-prod",
     "webpack:dev": "NODE_ENV=dev ./node_modules/webpack/bin/webpack.js --config ./build/webpack.config.js --watch --quiet",
+    "webpack:prod": "./node_modules/webpack/bin/webpack.js --config ./build/webpack.config.js --quiet",
     "dev": "npm run clean && node ./node_modules/concurrently/src/main.js --kill-others \"npm run assets:dev\" \"npm run webpack:dev\"",
+    "prod": "npm run clean && npm run assets:prod && npm run webpack:prod",
     "test": "echo 'Uhhhh.....what tests.....'"
   },
   "repository": {

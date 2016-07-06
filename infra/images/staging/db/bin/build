@@ -1,0 +1,43 @@
+#! /bin/bash
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+green_color=$esc_seq"32;01m"
+
+# Constants
+IMAGE_TAG="staging"
+IMAGE_NAME="gophr-db"
+DOCKER_MACHINE_NAME="gophr-staging"
+
+# Get base directories
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+config_dir="$( dirname $bin_dir )/config"
+staging_bin_dir="$( dirname $( dirname $( dirname $( dirname $bin_dir ) ) ) )/bin/staging"
+
+# Create an exit hook
+on_premature_exit() {
+  if [[ "$?" -ne "0" ]]; then
+    echo -e "${red_color}✗ Failed to deploy '$IMAGE_NAME:$IMAGE_TAG'.${no_color}"
+  fi
+}
+
+# Setup the exit hook
+trap 'on_premature_exit' EXIT
+
+# Exit on error
+set -e
+
+# Find the production build script
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+build_script="$( dirname $( dirname $( dirname $bin_dir ) ) )/prod/db/bin/build"
+
+# Execute the production build script
+$build_script
+
+# Connect to the docker machine
+eval $(docker-machine env "$DOCKER_MACHINE_NAME")
+
+# Re-tag the latest image
+docker tag "$IMAGE_NAME:latest" "$IMAGE_NAME:$IMAGE_TAG"

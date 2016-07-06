@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+set -o errexit -o nounset -o pipefail
+
+SEMVER_REGEX="^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(\-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$"
+
+PROG=bump
+VERSION_FILE="Versionfile"
+
+# Color variables
+no_color="\x1b[39;49;00m"
+red_color="\x1b[31;01m"
+blue_color="\x1b[34;01m"
+green_color="\x1b[32;01m"
+yellow_color="\x1b[33;01m"
+
+function error {
+  echo -e "$1" >&2
+  exit 1
+}
+
+function validate-version {
+  local version=$1
+  if [[ "$version" =~ $SEMVER_REGEX ]]; then
+    # if a second argument is passed, store the result in var named by $2
+    if [ "$#" -eq "2" ]; then
+      local major=${BASH_REMATCH[1]}
+      local minor=${BASH_REMATCH[2]}
+      local patch=${BASH_REMATCH[3]}
+      local prere=${BASH_REMATCH[4]}
+      local build=${BASH_REMATCH[5]}
+      eval "$2=(\"$major\" \"$minor\" \"$patch\" \"$prere\" \"$build\")"
+    else
+      echo "$version"
+    fi
+  else
+    error "version $version does not match the semver scheme 'X.Y.Z(-PRERELEASE)(+BUILD)'. See help for more information."
+  fi
+}
+
+# this function will reverse-traverse folders until VERSION_FILE is found
+# or '/' is reached.
+function get-version {
+  while [ -w . ]; do
+    if [ -e $VERSION_FILE ]; then
+      validate-version "$(cat $VERSION_FILE)"
+      return 0
+    fi
+
+    pushd .. > /dev/null
+  done
+
+  error "Version file $VERSION_FILE not found, you may want to initialize this project with 'version init'"
+}
+
+function command-bump {
+  local new; local version=$(get-version); local bump_part;
+
+  # Break down the version
+  validate-version $version split
+  local major=${split[0]}
+  local minor=${split[1]}
+  local patch=${split[2]}
+  local prere=${split[3]}
+  local build=${split[4]}
+
+  # Figure out what the bump part should be
+  while true; do
+    echo -e "The current version is ${blue_color}${version}${no_color}.
+What level of this version should be bumped?
+  ${yellow_color}(0)${no_color} None
+  ${yellow_color}(1)${no_color} Major
+  ${yellow_color}(2)${no_color} Minor
+  ${yellow_color}(3)${no_color} Patch
+"
+    read -p 'Selected Level [3]: ' level
+    case $level in
+      0) exit 0; break;;
+      1) new="$(($major + 1)).0.0"; break;;
+      2) new="${major}.$(($minor + 1)).0"; break;;
+      3) new="${major}.${minor}.$(($patch + 1))"; break;;
+      '') new="${major}.${minor}.$(($patch + 1))"; break;;
+      * ) echo -e "${red_color}\nPlease select a valid level.\n${no_color}";;
+    esac
+  done
+
+  echo -e "${green_color}✓ Version set to ${blue_color}${new}${green_color} successfully!\n${no_color}"
+  {
+    echo $new | tee $VERSION_FILE
+  } &> /dev/null
+
+  exit 0
+}
+
+command-bump

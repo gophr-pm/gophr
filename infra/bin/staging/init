@@ -1,0 +1,109 @@
+#! /bin/bash
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+blue_color=$esc_seq"34;01m"
+green_color=$esc_seq"32;01m"
+
+# Create an exit hook
+on_premature_exit() {
+  if [[ "$?" -ne "0" ]]; then
+    echo -e "${red_color}✗ Failed to initialize gophr environment.${no_color}"
+  fi
+}
+
+# Setup the exit hook
+trap 'on_premature_exit' EXIT
+
+# Exit on error
+set -e
+
+echo -e "${blue_color}ℹ Root permissions are required for hosts file modification.${no_color}"
+sudo echo "Initializing gophr staging environment..."
+
+# Constants
+K8S_VERSION="v1.2.4"
+DOCKER_MACHINE_NAME="gophr-staging"
+
+# Helpers
+command_exists() {
+  type "$1" &> /dev/null ;
+}
+
+# Install all the requisite tools
+if ! command_exists gpg ; then
+  sudo chown -R $USER /usr/local
+  brew install gpg
+fi
+
+# Check if the docker machine already exists
+if [[ -z $(docker-machine ls | grep "^$DOCKER_MACHINE_NAME ") ]]; then
+  # Stop the other docker machines before creating this one
+  echo "Stopping all docker machines..."
+  docker-machine stop $(docker-machine ls --format="{{.Name}}") 1> /dev/null 2> /dev/null || true
+  echo -e "${green_color}✓ All docker machines stopped successfully!${no_color}"
+
+  # Create the gophr docker machine since it doesn't exist yet
+  echo "Creating gophr staging docker machine..."
+  docker-machine create \
+      -d virtualbox \
+      --virtualbox-memory 2048 \
+      --virtualbox-cpu-count 2 \
+      $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null
+  echo -e "${green_color}✓ Gophr staging docker machine created successfully!${no_color}"
+
+  # Install kubernetes
+  echo "Installing the kubernetes server..."
+  eval $(docker-machine env "$DOCKER_MACHINE_NAME")
+  docker run \
+    --volume=/:/rootfs:ro \
+    --volume=/sys:/sys:ro \
+    --volume=/var/lib/docker/:/var/lib/docker:rw \
+    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
+    --volume=/var/run:/var/run:rw \
+    --net=host \
+    --pid=host \
+    --privileged=true \
+    --name=kubelet \
+    -d \
+    gcr.io/google_containers/hyperkube-amd64:${K8S_VERSION} \
+    /hyperkube kubelet \
+        --containerized \
+        --hostname-override="127.0.0.1" \
+        --address="0.0.0.0" \
+        --api-servers=http://localhost:8080 \
+        --config=/etc/kubernetes/manifests \
+        --cluster-dns=10.0.0.10 \
+        --cluster-domain=cluster.local \
+        --allow-privileged=true --v=2
+  echo -e "${green_color}✓ Kubernetes server installed successfully!${no_color}"
+fi
+
+# Ensure the docker machine is running
+echo "Waiting for gophr staging docker machine to start..."
+docker-machine start $DOCKER_MACHINE_NAME 1> /dev/null 2> /dev/null || true
+echo -e "${green_color}✓ Gophr staging docker machine started successfully!${no_color}"
+
+# Make "gophr.staging" a thing
+"$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"/host
+
+# Declare ownership of /usr/local/bin for installation of kubernetes cli
+if [[ -z $(command -v kubectl) ]]; then
+  echo "Installing the kubernetes client..."
+  sudo chown -R $USER /usr/local/bin
+
+  # Download and install kubernetes
+  wget http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/darwin/amd64/kubectl
+  chmod 755 kubectl
+  mv kubectl /usr/local/bin/kubectl
+
+  # Configure the kubernetes cli
+  kubectl config set-cluster ${DOCKER_MACHINE_NAME} --server="http://localhost:8080"
+  kubectl config set-context ${DOCKER_MACHINE_NAME} --cluster="$DOCKER_MACHINE_NAME"
+  kubectl config use-context ${DOCKER_MACHINE_NAME}
+  echo -e "${green_color}✓ Kubernetes client installed successfully!${no_color}"
+fi
+
+echo -e "${green_color}✓ Gophr staging environment initialized successfully!${no_color}"

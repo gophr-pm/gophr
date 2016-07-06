@@ -1,0 +1,67 @@
+#! /bin/bash
+
+# Color variables
+esc_seq="\x1b["
+no_color=$esc_seq"39;49;00m"
+red_color=$esc_seq"31;01m"
+green_color=$esc_seq"32;01m"
+
+# Constants
+IMAGE_TAG="latest"
+IMAGE_NAME="gophr-db"
+CLUSTER_NAME="gophr-staging"
+DOCKER_MACHINE_NAME="gophr-staging"
+
+# Get base directories
+bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+config_dir="$( dirname $bin_dir )/config"
+staging_bin_dir="$( dirname $( dirname $( dirname $( dirname $bin_dir ) ) ) )/bin/staging"
+
+# Runtime flags
+cluster_exposed="false"
+
+# Create an exit hook
+on_premature_exit() {
+  if [[ "$?" -ne "0" ]]; then
+    echo -e "${red_color}✗ Failed to deploy '$IMAGE_NAME:$IMAGE_TAG'.${no_color}"
+  fi
+
+  # Unexpose the cluster
+  if [[ "$cluster_exposed" -eq "true" ]]; then
+    "${staging_bin_dir}/unexpose" &> /dev/null || true
+  fi
+}
+
+# Setup the exit hook
+trap 'on_premature_exit' EXIT
+
+# Exit on error
+set -e
+
+# Start the docker machine if it isn't started already
+"${staging_bin_dir}/start" &> /dev/null || true
+
+# Ensure kubectl is pointing to the right thing
+echo "Connecting to cluster '${CLUSTER_NAME}'..."
+kubectl config use-context ${CLUSTER_NAME}
+"${staging_bin_dir}/expose" || true
+cluster_exposed="true"
+echo -e "${green_color}✓ Connected to the cluster successfully!${no_color}"
+
+echo "Destroying old kubernetes resources..."
+kubectl delete -f "$config_dir/svc.yaml" || true
+kubectl delete -f "$config_dir/ds.yaml" || true
+echo -e "${green_color}✓ Old kubernetes resources destroyed successfully!${no_color}"
+
+echo "Creating new kubernetes resources..."
+# NOTE: THIS IS VERY IMPORTANT. DO NOT CHANGE THE ORDER IN WHICH THESE CONFIGS
+# ARE CREATED. IT WILL RUIN #EVERYTHING#.
+kubectl create -f "$config_dir/svc.yaml"
+kubectl create -f "$config_dir/ds.yaml"
+echo -e "${green_color}✓ New kubernetes resources created successfully!${no_color}"
+
+echo "Disconnecting from cluster '${CLUSTER_NAME}'..."
+"${staging_bin_dir}/unexpose" &> /dev/null || true
+cluster_exposed="false"
+
+echo -e "${green_color}✓ The '$IMAGE_NAME:$IMAGE_TAG' was deployed successfully!${no_color}"
