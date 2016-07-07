@@ -326,3 +326,47 @@ func scanPackageModels(query *gocql.Query) ([]*PackageModel, error) {
 
 	return packageModels, nil
 }
+
+// TODO make query implicit here
+func QueryAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
+	var (
+		err        error
+		scanError  error
+		closeError error
+
+		author      string
+		repo        string
+		awesome_go  bool
+		description string
+		exists      bool
+		godoc_url   string
+		index_time  time.Time
+		search_blob string
+		versions    []string
+
+		query         = session.Query(`SELECT * FROM packages`)
+		iter          = query.Iter()
+		packageModels = make([]*PackageModel, 0)
+	)
+
+	for iter.Scan(&author, &repo, &awesome_go, &description, &exists, &godoc_url, &index_time, &search_blob, &versions) {
+		// TODO create or reuse function to create PackageModel here that can return an error
+		packageModel := PackageModel{&repo, &exists, &author, versions, &godoc_url, &index_time, &awesome_go, &search_blob, &description}
+		if err != nil {
+			scanError = err
+			break
+		} else {
+			packageModels = append(packageModels, &packageModel)
+		}
+	}
+
+	if err = iter.Close(); err != nil {
+		closeError = err
+	}
+
+	if scanError != nil || closeError != nil {
+		return nil, NewQueryScanError(scanError, closeError)
+	}
+
+	return packageModels, nil
+}
