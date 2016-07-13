@@ -146,6 +146,29 @@ func NewPackageModelFromBulkSelect(
 	}, nil
 }
 
+func NewPackageModelTest(
+	author string,
+	repo string,
+	awesome_go bool,
+	description string,
+	exists bool,
+	godoc_url string,
+	index_time time.Time,
+	search_blob string,
+	versions []string,
+) *PackageModel {
+	return &PackageModel{
+		Repo:        &repo,
+		Exists:      &exists,
+		Author:      &author,
+		Versions:    versions,
+		GodocURL:    &godoc_url,
+		IndexTime:   &index_time,
+		AwesomeGo:   &awesome_go,
+		SearchBlob:  &search_blob,
+		Description: &description}
+}
+
 // NewPackageModelFromSingleSelect creates an instance of PackageModel that is
 // optimized and validated for a select operation designed to get data about
 // a single package from the database.
@@ -327,12 +350,12 @@ func scanPackageModels(query *gocql.Query) ([]*PackageModel, error) {
 	return packageModels, nil
 }
 
-// TODO make query implicit here
-func QueryAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
+func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 	var (
-		err        error
-		scanError  error
-		closeError error
+		err          error
+		scanError    error
+		closeError   error
+		packageModel *PackageModel
 
 		author      string
 		repo        string
@@ -350,14 +373,8 @@ func QueryAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 	)
 
 	for iter.Scan(&author, &repo, &awesome_go, &description, &exists, &godoc_url, &index_time, &search_blob, &versions) {
-		// TODO create or reuse function to create PackageModel here that can return an error
-		packageModel := PackageModel{&repo, &exists, &author, versions, &godoc_url, &index_time, &awesome_go, &search_blob, &description}
-		if err != nil {
-			scanError = err
-			break
-		} else {
-			packageModels = append(packageModels, &packageModel)
-		}
+		packageModel = NewPackageModelTest(author, repo, awesome_go, description, exists, godoc_url, index_time, search_blob, versions)
+		packageModels = append(packageModels, packageModel)
 	}
 
 	if err = iter.Close(); err != nil {
