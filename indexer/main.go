@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"sync"
 
 	"github.com/gocql/gocql"
@@ -21,6 +22,9 @@ func main() {
 	}
 	defer session.Close()
 	log.Println("Connection established successfully")
+
+	ReIndexPackageGitHubStats(session)
+	os.Exit(1)
 
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
@@ -74,4 +78,5 @@ func main() {
 	}
 
 	log.Println("Finished inserting packages into database")
+	// TODO run star updater
 }
