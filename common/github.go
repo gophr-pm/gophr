@@ -21,17 +21,20 @@ func NewGitHubRequestService() *GitHubRequestService {
 }
 
 func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(packageModel PackageModel) (map[string]interface{}, error) {
-	APIKeyModel := *gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
-	githubURL := buildGithubAPIURL(packageModel, APIKeyModel)
+	githubURL := buildGithubAPIURL(packageModel, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 || err != nil {
+	// TODO Drop 404s
+	// resp.StatusCode != 200 check for 404s
+	if err != nil {
 		log.Printf("PANIC %v \n", err)
-		os.Exit(3)
+		log.Printf("STATUS CODE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! %d", resp.StatusCode)
 	}
 
 	responseHeader := resp.Header
