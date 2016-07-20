@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -35,6 +36,10 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	if err != nil {
 		log.Printf("PANIC %v \n", err)
 		log.Printf("STATUS CODE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! %d", resp.StatusCode)
+	}
+
+	if resp.StatusCode == 404 {
+		return nil, errors.New("Package does not exist")
 	}
 
 	responseHeader := resp.Header
