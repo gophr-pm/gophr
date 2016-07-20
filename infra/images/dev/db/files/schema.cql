@@ -3,6 +3,7 @@ CREATE KEYSPACE IF NOT EXISTS gophr WITH replication = {'class': 'SimpleStrategy
 
 CREATE TABLE gophr.packages (
     author text,
+    stars int,
     repo text,
     description text,
     awesome_go boolean,
