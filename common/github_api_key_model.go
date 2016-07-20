@@ -3,9 +3,12 @@ package common
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 )
+
+var gitHubAPIBaseUrl = "https://api.github.com/"
 
 // GitHubAPIKeyModel is a struct representing on individual github key in the database
 type GitHubAPIKeyModel struct {
@@ -24,6 +27,21 @@ func (apiKey *GitHubAPIKeyModel) incrementUsage(remainingRequests string, rateLi
 	log.Println("Remaining uses in save ", l)
 	apiKey.RemainingUses = l
 	apiKey.RateLimitResetTime = resetTime
+}
+
+// TODO sent request to api route thats passed in
+// TODO should return error
+func (apiKey *GitHubAPIKeyModel) prime() {
+	githubURL := gitHubAPIBaseUrl + "repos/a/b" + "?access_token=" + apiKey.Key
+	log.Println(githubURL)
+	resp, err := http.Get(githubURL)
+	if err != nil {
+	}
+	defer resp.Body.Close()
+	responseHeader := resp.Header
+	remaingRequests := responseHeader.Get("X-RateLimit-Remaining")
+	rateLimitResetTime := responseHeader.Get("X-RateLimit-Reset")
+	apiKey.incrementUsage(remaingRequests, rateLimitResetTime)
 }
 
 func (apiKey *GitHubAPIKeyModel) reset() {
