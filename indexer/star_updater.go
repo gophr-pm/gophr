@@ -30,15 +30,22 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 		wg.Add(1)
 		go func() {
 			for gitHubPackageModelDTO := range packageChan {
-				packageStarCount := int(gitHubPackageModelDTO.ResponseBody["stargazers_count"].(float64))
+				packageStarCount := parseStarCount(gitHubPackageModelDTO.ResponseBody)
 				indexTime := time.Now()
 				log.Printf("StarCount %d \n", packageStarCount)
 				log.Printf("New index time %s \n", indexTime)
-				// TODO save data to DB
 				packageModel := gitHubPackageModelDTO.Package
 				packageModel.IndexTime = &indexTime
+				packageModel.Stars = &packageStarCount
+				err := common.InsertPackage(session, &packageModel)
+				if err != nil {
+					log.Println("ERRORRRRRR \n\n\n\n")
+					log.Println(err)
+				}
 				log.Println("Index time has been updated")
 				log.Printf("%+v\n", packageModel)
+				// TODO save data to DB
+
 			}
 			wg.Done()
 		}()
