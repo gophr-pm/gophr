@@ -1,10 +1,11 @@
-package common
+package models
 
 import (
 	"fmt"
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/errors"
 )
 
 // Constants directly related to interacting with the install models in the
@@ -164,7 +165,7 @@ func ReadAllTimeInstallTotal(
 	}
 
 	if err = iter.Close(); err != nil {
-		return 0, NewQueryScanError(nil, err)
+		return 0, errors.NewQueryScanError(nil, err)
 	}
 
 	return 0, nil
@@ -206,7 +207,7 @@ func GetAllTimeInstallTotalTopTen(session *gocql.Session) ([]AllTimeInstallTotal
 	}
 
 	if err = iter.Close(); err != nil {
-		return nil, NewQueryScanError(nil, err)
+		return nil, errors.NewQueryScanError(nil, err)
 	}
 
 	return installModels, nil
@@ -244,7 +245,7 @@ func ReadRangedInstallTotal(
 	}
 
 	if err = iter.Close(); err != nil {
-		return RangedInstallTotalModel{}, NewQueryScanError(nil, err)
+		return RangedInstallTotalModel{}, errors.NewQueryScanError(nil, err)
 	}
 
 	return RangedInstallTotalModel{

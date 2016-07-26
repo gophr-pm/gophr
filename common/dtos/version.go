@@ -1,6 +1,10 @@
-package common
+package dtos
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/skeswa/gophr/common/semver"
+)
 
 //go:generate ffjson $GOFILE
 
@@ -60,7 +64,7 @@ func NewVersionListDTOFromVersionStrings(versionStrings []string) VersionListDTO
 
 // NewVersionListDTOFromSemverCandidateList builds a VersionListDTO from a list
 // of version candidates.
-func NewVersionListDTOFromSemverCandidateList(candidates SemverCandidateList) VersionListDTO {
+func NewVersionListDTOFromSemverCandidateList(candidates semver.SemverCandidateList) VersionListDTO {
 	versionDTOs := NewVersionListDTO()
 
 	for _, candidate := range candidates {

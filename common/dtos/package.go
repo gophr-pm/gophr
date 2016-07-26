@@ -1,6 +1,10 @@
-package common
+package dtos
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/skeswa/gophr/common/models"
+)
 
 //go:generate ffjson $GOFILE
 
@@ -24,7 +28,7 @@ type PackageListItemDTO struct {
 }
 
 // NewPackageListItemDTO creates a new PackageListItemDTO.
-func NewPackageListItemDTO(packageModel *PackageModel) *PackageListItemDTO {
+func NewPackageListItemDTO(packageModel *models.PackageModel) *PackageListItemDTO {
 	var (
 		awesome                   bool
 		repo, author, description string
@@ -62,7 +66,7 @@ type PackageListDTO []*PackageListItemDTO
 
 // NewPackageListDTOFromPackageModelList creates a new PackageListDTO from a
 // list of package models.
-func NewPackageListDTOFromPackageModelList(packageModels []*PackageModel) PackageListDTO {
+func NewPackageListDTOFromPackageModelList(packageModels []*models.PackageModel) PackageListDTO {
 	packageListItemDTOs := make(PackageListDTO, 0)
 
 	for _, packageModel := range packageModels {

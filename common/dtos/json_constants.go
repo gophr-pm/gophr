@@ -1,4 +1,4 @@
-package common
+package dtos
 
 const (
 	// EmptyListJSON is the universal JSON encoding for an empty array (or list).

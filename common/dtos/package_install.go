@@ -1,4 +1,4 @@
-package common
+package dtos
 
 //go:generate ffjson $GOFILE
 

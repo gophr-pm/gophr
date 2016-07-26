@@ -4,7 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/dtos"
+	"github.com/skeswa/gophr/common/errors"
+	"github.com/skeswa/gophr/common/models"
 )
 
 const (
@@ -23,24 +25,24 @@ func SearchHandler(session *gocql.Session) func(http.ResponseWriter, *http.Reque
 		}
 
 		if len(searchText) < 1 {
-			common.RespondWithError(w, NewInvalidQueryStringParameterError(
+			errors.RespondWithError(w, NewInvalidQueryStringParameterError(
 				queryStringSearchTextKey,
 				searchText,
 			))
 			return
 		}
 
-		packageModels, err := common.FuzzySearchPackages(session, searchText)
+		packageModels, err := models.FuzzySearchPackages(session, searchText)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		}
 
-		packageListDTO := common.NewPackageListDTOFromPackageModelList(packageModels)
+		packageListDTO := dtos.NewPackageListDTOFromPackageModelList(packageModels)
 		if len(packageListDTO) > 0 {
 			json, err := packageListDTO.MarshalJSON()
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 
@@ -48,7 +50,7 @@ func SearchHandler(session *gocql.Session) func(http.ResponseWriter, *http.Reque
 			w.Write(json)
 		} else {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(common.EmptyListJSON))
+			w.Write([]byte(dtos.EmptyListJSON))
 		}
 	}
 }
