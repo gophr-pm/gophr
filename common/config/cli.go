@@ -49,9 +49,14 @@ func GetConfig() *Config {
 		dbAddress      string
 		migrationsPath string
 
-		app = cli.NewApp()
+		app            = cli.NewApp()
+		actionExecuted = false
 	)
 
+	// Make the cli for config less boring.
+	app.Usage = "a component of the gophr backend"
+
+	// Map config variables 1:1 with flags.
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "environment, e",
@@ -83,6 +88,7 @@ func GetConfig() *Config {
 		},
 	}
 
+	// Use the action to figure out whether the environment variables are accurate.
 	app.Action = func(c *cli.Context) error {
 		if environment != environmentDev && environment != environmentProd {
 			return cli.NewExitError("invalid environment", 1)
@@ -97,17 +103,22 @@ func GetConfig() *Config {
 			return cli.NewExitError("invalid migrations path", 4)
 		}
 
+		actionExecuted = true
 		return nil
 	}
 
+	// Execute the cli; wait to see what happens afterwards.
 	app.Run(os.Args)
 
-	config := Config{
+	// If there wasn't supposed to be an action, don't continue.
+	if !actionExecuted {
+		os.Exit(0)
+	}
+
+	return &Config{
 		IsDev:          environment == environmentDev,
 		Port:           port,
 		DbAddress:      dbAddress,
 		MigrationsPath: migrationsPath,
 	}
-
-	return &config
 }

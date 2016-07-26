@@ -64,8 +64,7 @@ func CloseConnection(session *gocql.Session) {
 // getMigrateConnectionString puts the migrate connection string together.
 func getMigrateConnectionString(c *config.Config) string {
 	// Create the migrate connection string.
-	var buffer bytes.Buffer
-
+	buffer := bytes.Buffer{}
 	buffer.WriteString("cassandra://")
 	buffer.WriteString(c.DbAddress)
 	buffer.WriteByte('/')
@@ -74,7 +73,9 @@ func getMigrateConnectionString(c *config.Config) string {
 	buffer.WriteString(strconv.Itoa(query.DBProtoVersion))
 
 	if c.IsDev {
-		buffer.WriteString("&consistency=one")
+		buffer.WriteString("&consistency=one&timeout=1")
+	} else {
+		buffer.WriteString("&consistency=all&timeout=30")
 	}
 
 	return buffer.String()
