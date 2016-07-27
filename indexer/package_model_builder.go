@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
 )
 
 func fetchPackageVersions(metadata godocMetadata) ([]string, error) {
@@ -27,10 +28,10 @@ func fetchPackageVersions(metadata godocMetadata) ([]string, error) {
 	return versions, nil
 }
 
-func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[string]bool) ([]*common.PackageModel, error) {
+func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[string]bool) ([]*models.PackageModel, error) {
 	nbConcurrentGet := 20
 	metadataChan := make(chan godocMetadata, nbConcurrentGet)
-	packageModelChan := make(chan *common.PackageModel, nbConcurrentGet)
+	packageModelChan := make(chan *models.PackageModel, nbConcurrentGet)
 
 	var wg sync.WaitGroup
 	for i := 0; i < nbConcurrentGet; i++ {
@@ -42,7 +43,7 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 				if err == nil {
 					log.Printf("\"%s\" versions retrieved successfully", metadata.githubURL)
 					_, isAwesome := awesomeGoIndex[metadata.githubURL]
-					packageModel, err := common.NewPackageModelForInsert(
+					packageModel, err := models.NewPackageModelForInsert(
 						metadata.author,
 						true,
 						metadata.repo,
@@ -67,7 +68,7 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 		}()
 	}
 
-	var packageModels []*common.PackageModel
+	var packageModels []*models.PackageModel
 	go func() {
 		wg.Add(1)
 		for i := 0; i < len(godocMetadataList); i++ {

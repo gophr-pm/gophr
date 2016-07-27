@@ -6,19 +6,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/db"
+	"github.com/skeswa/gophr/common"
 )
 
 func main() {
-	conf := config.GetConfig()
-	log.Println("Configuration:\n\n" + conf.String() + "\n")
-	session, err := db.OpenConnection(conf)
-
-	// Exit if we can't connect to the database.
-	if err != nil {
-		log.Fatalln("Could not start the API:", err)
-	}
+	// Initialize the API.
+	config, session := common.Init()
 
 	// Register all of the routes.
 	r := mux.NewRouter()
@@ -28,6 +21,6 @@ func main() {
 	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions/latest", urlVarAuthor, urlVarRepo), LatestVersionHandler(session)).Methods("GET")
 
 	// Start serving.
-	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
-	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), r)
+	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), r)
 }
