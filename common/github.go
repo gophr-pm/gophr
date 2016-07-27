@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 type GitHubRequestService struct {
@@ -31,14 +30,14 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 
 	resp, err := http.Get(githubURL)
 	defer resp.Body.Close()
-	// TODO Drop 404s
-	// resp.StatusCode != 200 check for 404s
+
 	if err != nil {
-		log.Printf("PANIC %v \n", err)
-		log.Printf("STATUS CODE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! %d", resp.StatusCode)
+		return nil, errors.New("Request error.")
 	}
 
+	// TODO Special action for 404s
 	if resp.StatusCode == 404 {
+		// TODO use package not found error here
 		return nil, errors.New("Package does not exist")
 	}
 
@@ -53,38 +52,45 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	// Parse Body Values
 	responseBodyMap, err := parseResponseBody(resp)
 	if err != nil {
-		log.Printf("PANIC %v \n", err)
-		os.Exit(3)
+		return nil, err
 	}
 
 	return responseBodyMap, nil
 }
 
+// TODO potentially return error here
 func buildGithubAPIURL(packageModel PackageModel, APIKeyModel GitHubAPIKeyModel) string {
-	author := packageModel.Author
-	repo := packageModel.Repo
-	url := "https://api.github.com/repos/" + *author + "/" + *repo + "?access_token=" + APIKeyModel.Key
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	url := "https://api.github.com/repos/" + author + "/" + repo + "?access_token=" + APIKeyModel.Key
 	return url
-}
-
-type GitHubPackageModelDTO struct {
-	Package      PackageModel
-	ResponseBody map[string]interface{}
 }
 
 func parseResponseBody(response *http.Response) (map[string]interface{}, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		log.Printf("PANIC %v \n", err)
-		os.Exit(3)
+		return nil, errors.New("Failed to parse response body.")
 	}
 
 	var bodyMap map[string]interface{}
 	err = json.Unmarshal(body, &bodyMap)
 	if err != nil {
-		log.Printf("PANIC %v \n", err)
-		os.Exit(3)
+		return nil, errors.New("Failed to unmarshal response body.")
 	}
 
 	return bodyMap, nil
+}
+
+func ParseStarCount(responseBody map[string]interface{}) int {
+	starCount := responseBody["stargazers_count"]
+	if starCount == nil {
+		return 0
+	}
+
+	return int(starCount.(float64))
+}
+
+type GitHubPackageModelDTO struct {
+	Package      PackageModel
+	ResponseBody map[string]interface{}
 }
