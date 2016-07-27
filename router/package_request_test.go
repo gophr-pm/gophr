@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/skeswa/gophr/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -185,7 +184,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 		res := &fakeResponseWriter{statusCode: 200}
 
 		err := RespondToPackageRequest(
-			common.NewRequestContext(nil),
+			NewRequestContext(nil),
 			req,
 			res,
 		)

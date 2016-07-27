@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"strconv"
 
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/errors"
 )
 
 const (
@@ -20,26 +19,21 @@ var (
 )
 
 func main() {
+	// Initialize the router.
+	config, session := common.Init()
+
+	// Close the session right off the bat.
+	// TODO(skeswa): add download reporting to the router.
+	session.Close()
+
+	// Start serving.
 	http.HandleFunc(wildcardHandlerPattern, handler)
-
-	portStr := os.Getenv("PORT")
-	var port int
-	if len(portStr) == 0 {
-		fmt.Println("Port left unspecified; setting port to 3000.")
-		port = 3000
-	} else if portNum, err := strconv.Atoi(portStr); err == nil {
-		fmt.Printf("Port was specified as %d.\n", portNum)
-		port = portNum
-	} else {
-		fmt.Println("Port was invalid; setting port to 3000.")
-		port = 3000
-	}
-
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), nil)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	context := common.NewRequestContext(nil)
+	context := NewRequestContext(nil)
 
 	log.Printf("[%s] New request received: %s\n", context.RequestID, r.URL.Path)
 
@@ -60,7 +54,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 		err := RespondToPackageRequest(context, r, w)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 		}
 	}
 }
