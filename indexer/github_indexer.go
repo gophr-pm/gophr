@@ -30,7 +30,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 		wg.Add(1)
 		go func() {
 			for gitHubPackageModelDTO := range packageChan {
-				packageStarCount := parseStarCount(gitHubPackageModelDTO.ResponseBody)
+				packageStarCount := common.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
 				indexTime := time.Now()
 				log.Printf("StarCount %d \n", packageStarCount)
 				log.Printf("New index time %s \n", indexTime)
@@ -39,13 +39,10 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				packageModel.Stars = &packageStarCount
 				err := common.InsertPackage(session, &packageModel)
 				if err != nil {
-					log.Println("ERRORRRRRR \n\n\n\n")
 					log.Println(err)
 				}
 				log.Println("Index time has been updated")
 				log.Printf("%+v\n", packageModel)
-				// TODO save data to DB
-
 			}
 			wg.Done()
 		}()
@@ -59,19 +56,10 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 			log.Printf("PANIC %v \n\n\n\n\n\n\n", err)
 		}
 		packageChan <- common.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	close(packageChan)
 	wg.Wait()
 	log.Println("Finished testing star fetching")
-}
-
-func parseStarCount(responseBody map[string]interface{}) int {
-	starCount := responseBody["stargazers_count"]
-	if starCount == nil {
-		return 0
-	}
-
-	return int(starCount.(float64))
 }
