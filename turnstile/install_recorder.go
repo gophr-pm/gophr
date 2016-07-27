@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
 )
 
 var (
@@ -92,7 +92,7 @@ func recordPackageInstall(
 			// lock and be done with it.
 			if bumpAmount > 0 {
 				// Perform the bump itself.
-				err := common.BumpRangedInstallTotals(
+				err := models.BumpRangedInstallTotals(
 					session,
 					time.Now(),
 					author,

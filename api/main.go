@@ -13,6 +13,9 @@ func main() {
 	// Initialize the API.
 	config, session := common.Init()
 
+	// Ensure that the session is closed eventually.
+	defer session.Close()
+
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")

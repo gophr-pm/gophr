@@ -12,10 +12,10 @@ const (
 	environmentDev  = "dev"
 	environmentProd = "prod"
 
-	envVarEnvironment    = "GOPHR_ENV"
-	envVarPort           = "GOPHR_PORT"
-	envVarDbAddress      = "GOPHR_DB_ADDR"
-	envVarMigrationsPath = "GOPHR_MIGRATIONS_PATH"
+	envVarsEnvironment    = "GOPHR_ENV"
+	envVarsPort           = "GOPHR_PORT, PORT"
+	envVarsDbAddress      = "GOPHR_DB_ADDR, GOPHR_DB_PORT_9042_TCP_ADDR"
+	envVarsMigrationsPath = "GOPHR_MIGRATIONS_PATH"
 )
 
 // Config contains vital environment metadata used through out the backend.
@@ -62,28 +62,28 @@ func GetConfig() *Config {
 			Name:        "environment, e",
 			Value:       environmentDev,
 			Usage:       "execution context of this binary",
-			EnvVar:      envVarEnvironment,
+			EnvVar:      envVarsEnvironment,
 			Destination: &environment,
 		},
 		cli.IntFlag{
 			Name:        "port, p",
 			Value:       3000,
 			Usage:       "http port to exposed by this binary",
-			EnvVar:      envVarPort,
+			EnvVar:      envVarsPort,
 			Destination: &port,
 		},
 		cli.StringFlag{
 			Name:        "db-address, d",
 			Value:       "127.0.0.1",
 			Usage:       "address of the database",
-			EnvVar:      envVarDbAddress,
+			EnvVar:      envVarsDbAddress,
 			Destination: &dbAddress,
 		},
 		cli.StringFlag{
 			Name:        "migrations-path, m",
 			Value:       "/gophr/migrations",
 			Usage:       "path to the db migration files",
-			EnvVar:      envVarMigrationsPath,
+			EnvVar:      envVarsMigrationsPath,
 			Destination: &migrationsPath,
 		},
 	}
