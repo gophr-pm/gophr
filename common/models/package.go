@@ -1,4 +1,4 @@
-package common
+package models
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/errors"
 )
 
 // Constants directly related to interacting with the package model in the
@@ -95,13 +96,13 @@ func NewPackageModelForInsert(
 	description string,
 ) (*PackageModel, error) {
 	if len(repo) < 1 {
-		return nil, NewInvalidParameterError("repo", repo)
+		return nil, errors.NewInvalidParameterError("repo", repo)
 	}
 	if len(author) < 1 {
-		return nil, NewInvalidParameterError("author", author)
+		return nil, errors.NewInvalidParameterError("author", author)
 	}
 	if len(godocURL) < 1 {
-		return nil, NewInvalidParameterError("godocURL", godocURL)
+		return nil, errors.NewInvalidParameterError("godocURL", godocURL)
 	}
 
 	searchBlob := fmt.Sprintf(
@@ -133,10 +134,10 @@ func NewPackageModelFromBulkSelect(
 	description string,
 ) (*PackageModel, error) {
 	if len(repo) < 1 {
-		return nil, NewInvalidParameterError("repo", repo)
+		return nil, errors.NewInvalidParameterError("repo", repo)
 	}
 	if len(author) < 1 {
-		return nil, NewInvalidParameterError("author", author)
+		return nil, errors.NewInvalidParameterError("author", author)
 	}
 
 	return &PackageModel{
@@ -159,13 +160,13 @@ func NewPackageModelFromSingleSelect(
 	description string,
 ) (*PackageModel, error) {
 	if len(repo) < 1 {
-		return nil, NewInvalidParameterError("repo", repo)
+		return nil, errors.NewInvalidParameterError("repo", repo)
 	}
 	if len(author) < 1 {
-		return nil, NewInvalidParameterError("author", author)
+		return nil, errors.NewInvalidParameterError("author", author)
 	}
 	if len(godocURL) < 1 {
-		return nil, NewInvalidParameterError("godocURL", godocURL)
+		return nil, errors.NewInvalidParameterError("godocURL", godocURL)
 	}
 
 	return &PackageModel{
@@ -195,7 +196,7 @@ func FindPackageVersions(session *gocql.Session, author string, repo string) ([]
 	}
 
 	if err = iter.Close(); err != nil {
-		return nil, NewQueryScanError(nil, err)
+		return nil, errors.NewQueryScanError(nil, err)
 	}
 
 	return versions, nil
@@ -243,7 +244,7 @@ func InsertPackages(
 	batch := gocql.NewBatch(gocql.LoggedBatch)
 
 	if packageModels == nil || len(packageModels) == 0 {
-		return NewInvalidParameterError("packageModels", packageModels)
+		return errors.NewInvalidParameterError("packageModels", packageModels)
 	}
 
 	for _, packageModel := range packageModels {
@@ -269,7 +270,7 @@ func InsertPackages(
 				*packageModel.Description,
 			)
 		} else {
-			return NewInvalidParameterError(
+			return errors.NewInvalidParameterError(
 				"packageModels",
 				fmt.Sprintf("[ ..., %v, ... ]", packageModel),
 			)
@@ -321,7 +322,7 @@ func scanPackageModels(query *gocql.Query) ([]*PackageModel, error) {
 	}
 
 	if scanError != nil || closeError != nil {
-		return nil, NewQueryScanError(scanError, closeError)
+		return nil, errors.NewQueryScanError(scanError, closeError)
 	}
 
 	return packageModels, nil

@@ -3,12 +3,13 @@
 // source: dto_package.go
 // DO NOT EDIT!
 
-package common
+package dtos
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
+
 	fflib "github.com/pquerna/ffjson/fflib/v1"
 )
 

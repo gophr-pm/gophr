@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/dtos"
+	"github.com/skeswa/gophr/common/errors"
 )
 
 // RecordInstallHandler creates an HTTP request handler that responds to install
@@ -14,7 +15,7 @@ func RecordInstallHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			common.RespondWithError(w, NewInvalidRequestBodyError(
+			errors.RespondWithError(w, NewInvalidRequestBodyError(
 				"a valid PackageInstallDTO",
 				"",
 				err,
@@ -22,10 +23,10 @@ func RecordInstallHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 			return
 		}
 
-		dto := &common.PackageInstallDTO{}
+		dto := &dtos.PackageInstallDTO{}
 		err = dto.UnmarshalJSON(body)
 		if err != nil {
-			common.RespondWithError(w, NewInvalidRequestBodyError(
+			errors.RespondWithError(w, NewInvalidRequestBodyError(
 				"a valid PackageInstallDTO",
 				string(body[:]),
 				err,
@@ -34,7 +35,7 @@ func RecordInstallHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 		}
 
 		if len(dto.Author) < 1 && len(dto.Repo) < 1 {
-			common.RespondWithError(w, NewInvalidRequestBodyError(
+			errors.RespondWithError(w, NewInvalidRequestBodyError(
 				"a valid PackageInstallDTO",
 				string(body[:]),
 			))
@@ -43,7 +44,7 @@ func RecordInstallHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 
 		err = recordPackageInstall(session, dto.Author, dto.Repo)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		}
 
