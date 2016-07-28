@@ -32,8 +32,8 @@ func (qb *KeyspaceQueryBuilder) WithReplication(class string, factor int) *Keysp
 	return qb
 }
 
-// Execute serializes and executes the query.
-func (qb *KeyspaceQueryBuilder) Execute(session *gocql.Session) *gocql.Query {
+// Create serializes and creates the query.
+func (qb *KeyspaceQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("create keyspace if not exists ")

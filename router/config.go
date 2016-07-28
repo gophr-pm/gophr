@@ -1,6 +1,7 @@
 package main
 
 // TODO (Sandile): make this module a real one
+// TODO (Sandile): destroy this configuration
 
 var _config *Config
 
