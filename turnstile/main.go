@@ -10,28 +10,18 @@ import (
 )
 
 func main() {
-	var (
-		isDev     = common.ReadEnvIsDev()
-		httpPort  = common.ReadEnvHTTPPort()
-		dbAddress = common.ReadEnvDatabaseAddress()
-	)
+	// Initialize the API.
+	config, session := common.Init()
 
-	dbSession, err := common.OpenDBConnection(dbAddress, isDev)
-	if err != nil {
-		log.Fatalf(
-			"Failed to open a connection with the database (%s): %v\n",
-			dbAddress,
-			err,
-		)
-	} else {
-		// Ensure that the session ends when the connection exits.
-		defer common.CloseDBConnection(dbSession)
-	}
+	// Ensure that the session is closed eventually.
+	defer session.Close()
 
-	router := mux.NewRouter()
-	router.HandleFunc("/status", StatusHandler()).Methods("GET")
-	router.HandleFunc("/packages/installs/record", RecordInstallHandler(dbSession)).Methods("POST")
+	// Register all of the routes.
+	r := mux.NewRouter()
+	r.HandleFunc("/status", StatusHandler()).Methods("GET")
+	r.HandleFunc("/packages/installs/record", RecordInstallHandler(session)).Methods("POST")
 
-	log.Printf("Server is listening on port %d.\n", httpPort)
-	http.ListenAndServe(fmt.Sprintf(":%d", httpPort), router)
+	// Start serving.
+	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)
+	http.ListenAndServe(fmt.Sprintf(":%d", config.Port), r)
 }

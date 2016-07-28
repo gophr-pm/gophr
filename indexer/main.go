@@ -5,23 +5,16 @@ import (
 	"os"
 	"sync"
 
-	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
 )
 
 func main() {
-	log.Println("Establishing connection to DB")
-	cluster := gocql.NewCluster("gophr.dev")
-	cluster.ProtoVersion = 4
-	cluster.Keyspace = "gophr"
-	cluster.Consistency = gocql.One
-	session, err := cluster.CreateSession()
-	if err != nil {
-		log.Println("Connection failed to establish successfully")
-		log.Fatalln(err)
-	}
+	// Initialize the indexer.
+	_, session := common.Init()
+
+	// Ensure that the session is closed eventually.
 	defer session.Close()
-	log.Println("Connection established successfully")
 
 	ReIndexPackageGitHubStats(session)
 	os.Exit(1)
@@ -53,12 +46,12 @@ func main() {
 	var insertPackageErrors []error
 
 	nbConcurrentInserts := 20
-	packageChan := make(chan *common.PackageModel, nbConcurrentInserts)
+	packageChan := make(chan *models.PackageModel, nbConcurrentInserts)
 	for i := 0; i < nbConcurrentInserts; i++ {
 		wg.Add(1)
 		go func() {
 			for packageModel := range packageChan {
-				err := common.InsertPackage(session, packageModel)
+				err := models.InsertPackage(session, packageModel)
 				if err != nil {
 					insertPackageErrors = append(insertPackageErrors, err)
 				}

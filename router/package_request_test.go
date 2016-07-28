@@ -5,7 +5,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/skeswa/gophr/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -184,8 +183,10 @@ func TestRespondToPackageRequest(t *testing.T) {
 		req := generateRequestFor(tuple)
 		res := &fakeResponseWriter{statusCode: 200}
 
+		// TODO(skeswa): mock the database session.
 		err := RespondToPackageRequest(
-			common.NewRequestContext(nil),
+			nil,
+			NewRequestContext(nil),
 			req,
 			res,
 		)

@@ -6,6 +6,9 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/dtos"
+	"github.com/skeswa/gophr/common/errors"
+	"github.com/skeswa/gophr/common/models"
 )
 
 const (
@@ -35,20 +38,20 @@ func VersionsHandler(session *gocql.Session) func(http.ResponseWriter, *http.Req
 	return func(w http.ResponseWriter, r *http.Request) {
 		author, repo, err := extractPackageRequestMetadata(r)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		}
 
 		// Look in the database first.
-		versions, err := common.FindPackageVersions(session, author, repo)
+		versions, err := models.FindPackageVersions(session, author, repo)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		} else if versions != nil && len(versions) > 0 {
-			versionListDTO := common.NewVersionListDTOFromVersionStrings(versions)
+			versionListDTO := dtos.NewVersionListDTOFromVersionStrings(versions)
 			json, err := versionListDTO.MarshalJSON()
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 
@@ -59,17 +62,17 @@ func VersionsHandler(session *gocql.Session) func(http.ResponseWriter, *http.Req
 			// We didn't find anything in the database, so ask github.
 			refs, err := common.FetchRefs(author, repo)
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 
 			if refs.Candidates != nil && len(refs.Candidates) > 0 {
 				// TODO(skeswa): this means we found versions that we didn't know about
 				// so this needs to  be put into the db for efficieny's sake.
-				versionListDTO := common.NewVersionListDTOFromSemverCandidateList(refs.Candidates)
+				versionListDTO := dtos.NewVersionListDTOFromSemverCandidateList(refs.Candidates)
 				json, err := versionListDTO.MarshalJSON()
 				if err != nil {
-					common.RespondWithError(w, err)
+					errors.RespondWithError(w, err)
 					return
 				}
 
@@ -80,7 +83,7 @@ func VersionsHandler(session *gocql.Session) func(http.ResponseWriter, *http.Req
 
 			// No versions could be found anywhere.
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(common.EmptyListJSON))
+			w.Write([]byte(dtos.EmptyListJSON))
 			return
 		}
 	}
@@ -92,22 +95,22 @@ func LatestVersionHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		author, repo, err := extractPackageRequestMetadata(r)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		}
 
 		// Look in the database first.
-		versions, err := common.FindPackageVersions(session, author, repo)
+		versions, err := models.FindPackageVersions(session, author, repo)
 		if err != nil {
-			common.RespondWithError(w, err)
+			errors.RespondWithError(w, err)
 			return
 		} else if versions != nil && len(versions) > 0 {
 			// In the database, the list of versions are sorted ascendingly.
 			lastVersion := versions[len(versions)-1]
-			versionDTO := common.NewVersionDTO(lastVersion)
+			versionDTO := dtos.NewVersionDTO(lastVersion)
 			json, err := versionDTO.MarshalJSON()
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 
@@ -118,16 +121,16 @@ func LatestVersionHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 			// We didn't find anything in the database, so ask github.
 			refs, err := common.FetchRefs(author, repo)
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 
 			if refs.Candidates != nil && len(refs.Candidates) > 0 {
 				lastCandidate := refs.Candidates.Highest()
-				versionDTO := common.NewVersionDTO(lastCandidate.String())
+				versionDTO := dtos.NewVersionDTO(lastCandidate.String())
 				json, jsonErr := versionDTO.MarshalJSON()
 				if jsonErr != nil {
-					common.RespondWithError(w, jsonErr)
+					errors.RespondWithError(w, jsonErr)
 					return
 				}
 
@@ -136,10 +139,10 @@ func LatestVersionHandler(session *gocql.Session) func(http.ResponseWriter, *htt
 				return
 			}
 
-			versionDTO := common.NewVersionDTO(refs.MasterRefHash)
+			versionDTO := dtos.NewVersionDTO(refs.MasterRefHash)
 			json, err := versionDTO.MarshalJSON()
 			if err != nil {
-				common.RespondWithError(w, err)
+				errors.RespondWithError(w, err)
 				return
 			}
 

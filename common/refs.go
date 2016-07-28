@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/skeswa/gophr/common/semver"
 )
 
 const (
@@ -60,7 +62,7 @@ type Refs struct {
 	DataStr              string
 	DataLen              int
 	DataStrLen           int
-	Candidates           SemverCandidateList
+	Candidates           semver.SemverCandidateList
 	MasterRefHash        string
 	IndexHeadLineEnd     int
 	IndexHeadLineStart   int
@@ -81,7 +83,7 @@ func NewRefs(data []byte) (Refs, error) {
 		indexNameStart, indexNameEnd                  int
 		indexHeadLineStart, indexHeadLineEnd          int
 		indexMasterLineStart, indexMasterLineEnd      int
-		versionCandidates, sanitizedVersionCandidates []SemverCandidate
+		versionCandidates, sanitizedVersionCandidates []semver.SemverCandidate
 	)
 
 	for i, j := 0, 0; i < dataLen; i = j {
@@ -169,7 +171,7 @@ func NewRefs(data []byte) (Refs, error) {
 				name = name[:len(name)-3]
 			}
 
-			versionCandidate, err := NewSemverCandidate(
+			versionCandidate, err := semver.NewSemverCandidate(
 				hash,
 				name,
 				gitRefLabel,
@@ -186,11 +188,11 @@ func NewRefs(data []byte) (Refs, error) {
 
 	if versionCandidates != nil && len(versionCandidates) > 0 {
 		// First attach the sortable type to the slice of candidates.
-		versionCandidatesList := SemverCandidateList(versionCandidates)
+		versionCandidatesList := semver.SemverCandidateList(versionCandidates)
 		// Sort the list of candidates.
 		sort.Sort(versionCandidatesList)
 		// Remove duplicates by adding them to a new slice altogether.
-		var lastInsertedCandidate SemverCandidate
+		var lastInsertedCandidate semver.SemverCandidate
 		for i, versionCandidate := range versionCandidatesList {
 			if i == 0 || versionCandidate.CompareTo(lastInsertedCandidate) != 0 {
 				sanitizedVersionCandidates = append(sanitizedVersionCandidates, versionCandidate)

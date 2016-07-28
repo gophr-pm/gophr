@@ -7,7 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
+	"github.com/skeswa/gophr/common/semver"
 )
 
 const (
@@ -51,13 +54,13 @@ var (
 	goGetMetadataTemplate   = `<html><head><meta name="go-import" content="%s git %s://%s"><meta name="go-source" content="%s _ https://%s/tree/%s{/dir} https://%s/blob/%s{/dir}/{file}#L{line}"></head><body>go get %s</body></html>`
 	versionSelectorRegexStr = fmt.Sprintf(
 		versionSelectorRegexTemplate,
-		common.SemverSelectorTildeChar,
-		common.SemverSelectorCaratChar,
-		common.SemverSelectorWildcardChar,
-		common.SemverSelectorWildcardChar,
-		common.SemverSelectorWildcardChar,
-		common.SemverSelectorLessThanChar,
-		common.SemverSelectorGreaterThanChar,
+		semver.SemverSelectorTildeChar,
+		semver.SemverSelectorCaratChar,
+		semver.SemverSelectorWildcardChar,
+		semver.SemverSelectorWildcardChar,
+		semver.SemverSelectorWildcardChar,
+		semver.SemverSelectorLessThanChar,
+		semver.SemverSelectorGreaterThanChar,
 	)
 	packageRefRequestRegexStr = fmt.Sprintf(
 		packageRequestRegexTemplate,
@@ -99,7 +102,8 @@ type PackageRequest struct {
 // correctly formatted request for package-related data, and either responds
 // appropriately or returns an error indicating what went wrong.
 func RespondToPackageRequest(
-	context common.RequestContext,
+	session *gocql.Session,
+	context RequestContext,
 	req *http.Request,
 	res http.ResponseWriter,
 ) error {
@@ -158,6 +162,15 @@ func RespondToPackageRequest(
 				context.RequestID,
 			)
 
+			// Without blocking, record this event as a download in the database.
+			go recordDownload(
+				session,
+				context,
+				packageRequest.Author,
+				packageRequest.Repo,
+				packageRequest.Selector,
+			)
+
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			res.Write([]byte(generateGoGetMetadata(
 				packageRequest.Author,
@@ -193,7 +206,7 @@ func RespondToPackageRequest(
 // parses and simplifies the information in a package ref request into an
 // instance of PackageRequest.
 func processPackageRefRequest(
-	context common.RequestContext,
+	context RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
 	var (
@@ -243,7 +256,7 @@ func processPackageRefRequest(
 // parses and simplifies the information in a base package request into an
 // instance of PackageRequest.
 func processBarePackageRequest(
-	context common.RequestContext,
+	context RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
 	var (
@@ -291,7 +304,7 @@ func processBarePackageRequest(
 // that parses and simplifies the information in a package version request into
 // an instance of PackageRequest.
 func processPackageVersionRequest(
-	context common.RequestContext,
+	context RequestContext,
 	req *http.Request,
 ) (PackageRequest, error) {
 	var (
@@ -313,13 +326,13 @@ func processPackageVersionRequest(
 		hasMatchedCandidate  = false
 		semverSelectorExists = false
 
-		semverSelector        common.SemverSelector
+		semverSelector        semver.SemverSelector
 		packageRefsData       []byte
-		matchedCandidate      common.SemverCandidate
+		matchedCandidate      semver.SemverCandidate
 		matchedCandidateLabel string
 	)
 
-	selector, err := common.NewSemverSelector(
+	selector, err := semver.NewSemverSelector(
 		matches[packageVersionRequestRegexIndexSemverPrefix],
 		matches[packageVersionRequestRegexIndexSemverMajorVersion],
 		matches[packageVersionRequestRegexIndexSemverMinorVersion],
@@ -372,13 +385,13 @@ func processPackageVersionRequest(
 					hasMatchedCandidate = true
 				} else {
 					selectorHasLessThan :=
-						semverSelector.Suffix == common.SemverSelectorSuffixLessThan
+						semverSelector.Suffix == semver.SemverSelectorSuffixLessThan
 					selectorHasWildcards :=
-						semverSelector.MinorVersion.Type == common.SemverSegmentTypeWildcard ||
-							semverSelector.PatchVersion.Type == common.SemverSegmentTypeWildcard ||
-							semverSelector.PrereleaseVersion.Type == common.SemverSegmentTypeWildcard
+						semverSelector.MinorVersion.Type == semver.SemverSegmentTypeWildcard ||
+							semverSelector.PatchVersion.Type == semver.SemverSegmentTypeWildcard ||
+							semverSelector.PrereleaseVersion.Type == semver.SemverSegmentTypeWildcard
 
-					var matchedCandidateReference *common.SemverCandidate
+					var matchedCandidateReference *semver.SemverCandidate
 					if selectorHasWildcards || selectorHasLessThan {
 						matchedCandidateReference = matchedCandidates.Highest()
 					} else {
@@ -507,4 +520,31 @@ func generateGoGetMetadata(
 		githubTree,
 		gophrPath,
 	)
+}
+
+// recordDownload is a helper function that records the download of a specific
+// package.
+func recordDownload(
+	session *gocql.Session,
+	context RequestContext,
+	author string,
+	repo string,
+	selector string,
+) {
+	err := models.RecordDailyDownload(
+		session,
+		author,
+		repo,
+		selector,
+	)
+
+	// Instead of bubbling this error, just commit it to the logs. That way this
+	// failure is allowed to remain low impact.
+	if err != nil {
+		log.Printf(
+			"[%s] Failed to record package download: %v\n",
+			context.RequestID,
+			err,
+		)
+	}
 }
