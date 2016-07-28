@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/skeswa/gophr/common/semver"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +14,7 @@ type refsTest struct {
 	original          string
 	version           string
 	changed           string
-	versionCandidates []SemverCandidate
+	versionCandidates []semver.SemverCandidate
 }
 
 var refsTests = []refsTest{{
@@ -52,7 +53,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash3 refs/heads/v1",
 		"00000000000000000000000000000000000hash4 refs/heads/v2",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v0",                            // name
@@ -101,7 +102,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash3 refs/heads/v1.3",
 		"00000000000000000000000000000000000hash4 refs/heads/v1.2",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1.1",                          // name
@@ -146,7 +147,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash2 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/heads/v1",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1",                            // name
@@ -171,7 +172,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash2 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/tags/v1",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/tags/v1",                             // name
@@ -197,7 +198,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash2 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/heads/v1",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/heads/v1",                            // name
@@ -226,7 +227,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash3 refs/tags/v1",
 		"00000000000000000000000000000000000hash4 refs/tags/v2",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
 			"refs/tags/v0",                             // name
@@ -276,7 +277,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash4 refs/tags/v1^{}",
 		"00000000000000000000000000000000000hash5 refs/tags/v2",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/tags/v1",                             // name
@@ -330,7 +331,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash6 refs/heads/v1.2-unstable",
 		"00000000000000000000000000000000000hash7 refs/heads/v2",
 	),
-	[]SemverCandidate{
+	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash3", // hash
 			"refs/heads/v1",                            // name
@@ -407,7 +408,7 @@ func sizeTooBigReflines() string {
 	return buf.String()
 }
 
-func candidatesMatch(t *testing.T, candidates1 []SemverCandidate, candidates2 []SemverCandidate) bool {
+func candidatesMatch(t *testing.T, candidates1 []semver.SemverCandidate, candidates2 []semver.SemverCandidate) bool {
 	if candidates1 == nil && candidates2 != nil {
 		t.Logf("Candidates 1 was nil and Candidates 2 was not")
 		return false
