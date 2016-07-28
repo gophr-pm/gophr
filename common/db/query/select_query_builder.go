@@ -84,5 +84,5 @@ func (qb *SelectQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 		buffer.WriteString(strconv.Itoa(*qb.limit))
 	}
 
-	return session.Query(buffer.String(), parameters)
+	return session.Query(buffer.String(), parameters...)
 }

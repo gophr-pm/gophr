@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/gocql/gocql"
 )
@@ -9,8 +10,9 @@ import (
 // ColumnValueAssignment represents a value assignment for a specific column of
 // a row.
 type columnValueAssignment struct {
-	column string
-	value  string
+	column        string
+	value         string
+	parameterized bool
 }
 
 // UpdateQueryBuilder constructs an insert query.
@@ -30,8 +32,19 @@ func Update(table string) *UpdateQueryBuilder {
 // Set adds a value assignment to the update query.
 func (qb *UpdateQueryBuilder) Set(column string, value string) *UpdateQueryBuilder {
 	qb.valueAssignments = append(qb.valueAssignments, columnValueAssignment{
-		column: column,
-		value:  value,
+		column:        column,
+		value:         value,
+		parameterized: true,
+	})
+	return qb
+}
+
+// Increment increases the value of a counter by a specified amount.
+func (qb *UpdateQueryBuilder) Increment(column string, amount int) *UpdateQueryBuilder {
+	qb.valueAssignments = append(qb.valueAssignments, columnValueAssignment{
+		column:        column,
+		value:         (column + "+" + strconv.Itoa(amount)),
+		parameterized: false,
 	})
 	return qb
 }
@@ -65,7 +78,13 @@ func (qb *UpdateQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 		}
 
 		buffer.WriteString(valueAssignment.column)
-		buffer.WriteString("=?")
+		buffer.WriteByte('=')
+		if valueAssignment.parameterized {
+			buffer.WriteByte('?')
+			parameters = append(parameters, valueAssignment.value)
+		} else {
+			buffer.WriteString(valueAssignment.value)
+		}
 	}
 	if qb.conditions != nil {
 		buffer.WriteString(" where ")
@@ -82,5 +101,5 @@ func (qb *UpdateQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 		}
 	}
 
-	return session.Query(buffer.String(), parameters)
+	return session.Query(buffer.String(), parameters...)
 }
