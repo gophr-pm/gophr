@@ -404,7 +404,7 @@ func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 	}
 
 	if scanError != nil || closeError != nil {
-		return nil, NewQueryScanError(scanError, closeError)
+		return nil, errors.NewQueryScanError(scanError, closeError)
 	}
 
 	return packageModels, nil
