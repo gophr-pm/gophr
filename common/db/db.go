@@ -56,17 +56,17 @@ func OpenConnection(c *config.Config) (*gocql.Session, error) {
 }
 
 // getMigrateConnectionString puts the migrate connection string together.
-func getMigrateConnectionString(c *config.Config) string {
+func getMigrateConnectionString(conf *config.Config) string {
 	// Create the migrate connection string.
 	buffer := bytes.Buffer{}
 	buffer.WriteString("cassandra://")
-	buffer.WriteString(c.DbAddress)
+	buffer.WriteString(conf.DbAddress)
 	buffer.WriteByte('/')
 	buffer.WriteString(query.DBKeyspaceName)
 	buffer.WriteString("?protocol=")
 	buffer.WriteString(strconv.Itoa(query.DBProtoVersion))
 
-	if c.IsDev {
+	if conf.IsDev {
 		buffer.WriteString("&consistency=one&timeout=1")
 	} else {
 		buffer.WriteString("&consistency=all&timeout=30")

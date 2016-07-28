@@ -53,5 +53,5 @@ func (qb *InsertQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 	}
 	buffer.WriteByte(')')
 
-	return session.Query(buffer.String(), qb.values)
+	return session.Query(buffer.String(), qb.values...)
 }
