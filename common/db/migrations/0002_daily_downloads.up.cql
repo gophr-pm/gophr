@@ -6,8 +6,8 @@ CREATE TABLE daily_downloads (
   repo text,
   version text,
   total counter,
-  PRIMARY KEY (day, author, repo, version)
-) WITH CLUSTERING ORDER BY (day DESC);
+  PRIMARY KEY ((author, repo), day, version)
+) WITH CLUSTERING ORDER BY (day DESC, version ASC);
 
 --------------------------- ALL TIME INSTALL TOTALS ----------------------------
 
