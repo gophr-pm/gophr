@@ -7,11 +7,12 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
 )
 
 func ReIndexPackageGitHubStats(session *gocql.Session) {
 	log.Println("Starting ReIndexing PackageModel GitHub Data")
-	packageModels, err := common.ScanAllPackageModels(session)
+	packageModels, err := models.ScanAllPackageModels(session)
 	log.Println(err)
 	log.Printf("%d packages found", len(packageModels))
 
@@ -37,7 +38,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				packageModel := gitHubPackageModelDTO.Package
 				packageModel.IndexTime = &indexTime
 				packageModel.Stars = &packageStarCount
-				err := common.InsertPackage(session, &packageModel)
+				err := models.InsertPackage(session, &packageModel)
 				if err != nil {
 					log.Println(err)
 				}

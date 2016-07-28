@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"github.com/skeswa/gophr/common/models"
 )
 
 type GitHubRequestService struct {
@@ -20,7 +22,7 @@ func NewGitHubRequestService() *GitHubRequestService {
 	return &newGitHubRequestService
 }
 
-func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(packageModel PackageModel) (map[string]interface{}, error) {
+func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(packageModel models.PackageModel) (map[string]interface{}, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
@@ -59,7 +61,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 }
 
 // TODO potentially return error here
-func buildGithubAPIURL(packageModel PackageModel, APIKeyModel GitHubAPIKeyModel) string {
+func buildGithubAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
 	url := "https://api.github.com/repos/" + author + "/" + repo + "?access_token=" + APIKeyModel.Key
@@ -91,6 +93,6 @@ func ParseStarCount(responseBody map[string]interface{}) int {
 }
 
 type GitHubPackageModelDTO struct {
-	Package      PackageModel
+	Package      models.PackageModel
 	ResponseBody map[string]interface{}
 }
