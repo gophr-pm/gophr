@@ -28,15 +28,15 @@ func (qb *SelectQueryBuilder) From(table string) *SelectQueryBuilder {
 	return qb
 }
 
-// Where adds a condition to which all of the rows should adhere.
-func (qb *SelectQueryBuilder) Where(c *Condition) *SelectQueryBuilder {
-	qb.conditions = append(qb.conditions, c)
+// Where adds a condition to which all of the selected rows should adhere.
+func (qb *SelectQueryBuilder) Where(condition *Condition) *SelectQueryBuilder {
+	qb.conditions = append(qb.conditions, condition)
 	return qb
 }
 
-// And is an alias for SelectQueryBuilder.Where(c).
-func (qb *SelectQueryBuilder) And(c *Condition) *SelectQueryBuilder {
-	return qb.Where(c)
+// And is an alias for SelectQueryBuilder.Where(condition).
+func (qb *SelectQueryBuilder) And(condition *Condition) *SelectQueryBuilder {
+	return qb.Where(condition)
 }
 
 // Limit specifies the maximum number of results to fetch.
@@ -46,8 +46,8 @@ func (qb *SelectQueryBuilder) Limit(limit int) *SelectQueryBuilder {
 	return qb
 }
 
-// Execute serializes and executes the query.
-func (qb *SelectQueryBuilder) Execute(session *gocql.Session) *gocql.Query {
+// Create serializes and creates the query.
+func (qb *SelectQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 	var (
 		buffer     bytes.Buffer
 		parameters []interface{}

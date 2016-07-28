@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/semver"
 )
 
@@ -100,6 +102,7 @@ type PackageRequest struct {
 // correctly formatted request for package-related data, and either responds
 // appropriately or returns an error indicating what went wrong.
 func RespondToPackageRequest(
+	session *gocql.Session,
 	context RequestContext,
 	req *http.Request,
 	res http.ResponseWriter,
@@ -157,6 +160,15 @@ func RespondToPackageRequest(
 			log.Printf(
 				"[%s] Responding with html formatted for go get\n",
 				context.RequestID,
+			)
+
+			// Without blocking, record this event as a download in the database.
+			go recordDownload(
+				session,
+				context,
+				packageRequest.Author,
+				packageRequest.Repo,
+				packageRequest.Selector,
 			)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
@@ -508,4 +520,31 @@ func generateGoGetMetadata(
 		githubTree,
 		gophrPath,
 	)
+}
+
+// recordDownload is a helper function that records the download of a specific
+// package.
+func recordDownload(
+	session *gocql.Session,
+	context RequestContext,
+	author string,
+	repo string,
+	selector string,
+) {
+	err := models.RecordDailyDownload(
+		session,
+		author,
+		repo,
+		selector,
+	)
+
+	// Instead of bubbling this error, just commit it to the logs. That way this
+	// failure is allowed to remain low impact.
+	if err != nil {
+		log.Printf(
+			"[%s] Failed to record package download: %v\n",
+			context.RequestID,
+			err,
+		)
+	}
 }

@@ -183,7 +183,9 @@ func TestRespondToPackageRequest(t *testing.T) {
 		req := generateRequestFor(tuple)
 		res := &fakeResponseWriter{statusCode: 200}
 
+		// TODO(skeswa): mock the database session.
 		err := RespondToPackageRequest(
+			nil,
 			NewRequestContext(nil),
 			req,
 			res,

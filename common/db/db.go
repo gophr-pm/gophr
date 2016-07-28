@@ -35,11 +35,10 @@ func OpenConnection(c *config.Config) (*gocql.Session, error) {
 
 	// Make sure that the keyspace exists.
 	log.Println("Asserting the existence of the keyspace.")
-	err = query.
-		CreateKeyspace().
+	err = query.CreateKeyspace().
 		WithReplication("SimpleStrategy", 3).
 		WithDurableWrites(true).
-		Execute(session).
+		Create(session).
 		Exec()
 	if err != nil {
 		return nil, err
@@ -54,11 +53,6 @@ func OpenConnection(c *config.Config) (*gocql.Session, error) {
 	}
 
 	return session, nil
-}
-
-// CloseConnection destroys a database session.
-func CloseConnection(session *gocql.Session) {
-	session.Close()
 }
 
 // getMigrateConnectionString puts the migrate connection string together.
