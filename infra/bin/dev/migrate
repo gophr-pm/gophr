@@ -1,0 +1,35 @@
+#! /bin/bash
+
+# Exit on error.
+set -e
+
+# Create color variables.
+no_color="\x1b[39;49;00m"
+red_color="\x1b[31;01m"
+blue_color="\x1b[34;01m"
+green_color="\x1b[32;01m"
+
+# Ensure the migration name exists.
+if [[ $# -lt 1 ]]; then
+  echo -e "${red_color}✗ Migration name was not specified.${no_color}"
+  exit 1
+fi
+
+# Setup variables.
+migration_name="$1"
+bin_dev_dir_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+gophr_dir_path="$(dirname $( dirname $( dirname $bin_dev_dir_path ) ) )"
+migrations_dir_path="$gophr_dir_path/common/db/migrations"
+
+# Calculate the next migration file names.
+next_migration_number="$(cd ${migrations_dir_path} && ls [0-9]* | sed 's/_/ _/' | sort -rn | awk '{printf "%04d", $1 + 1; exit}')"
+shared_migration_file_path_part="${migrations_dir_path}/${next_migration_number}_${migration_name}"
+up_file_path="${shared_migration_file_path_part}.up.cql"
+down_file_path="${shared_migration_file_path_part}.down.cql"
+
+# Create the new migration files.
+touch $up_file_path
+touch $down_file_path
+
+# Report success.
+echo -e "${green_color}✓ Created the following migration files:${no_color}\n${blue_color}up:${no_color}\t${up_file_path}\n${blue_color}down${no_color}:\t${down_file_path}"
