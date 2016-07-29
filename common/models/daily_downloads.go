@@ -29,11 +29,11 @@ func RecordDailyDownload(
 	// Derive today's date.
 	now := time.Now()
 	// Normalize the day date by setting all the time fields to zero.
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, nil)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 
 	// Create the update query for the specific version.
 	update := query.Update(tableNameDailyDownloads).
-		Set(columnNameDailyDownloadsTotal, columnNameDailyDownloadsTotal+"+1").
+		Increment(columnNameDailyDownloadsTotal, 1).
 		Where(query.Column(columnNameDailyDownloadsDay).Equals(today)).
 		And(query.Column(columnNameDailyDownloadsAuthor).Equals(author)).
 		And(query.Column(columnNameDailyDownloadsRepo).Equals(repo)).
@@ -47,7 +47,7 @@ func RecordDailyDownload(
 
 	// Create the update query for the whole package count.
 	update = query.Update(tableNameDailyDownloads).
-		Set(columnNameDailyDownloadsTotal, columnNameDailyDownloadsTotal+"+1").
+		Increment(columnNameDailyDownloadsTotal, 1).
 		Where(query.Column(columnNameDailyDownloadsDay).Equals(today)).
 		And(query.Column(columnNameDailyDownloadsAuthor).Equals(author)).
 		And(query.Column(columnNameDailyDownloadsRepo).Equals(repo)).

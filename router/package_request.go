@@ -168,7 +168,7 @@ func RespondToPackageRequest(
 				context,
 				packageRequest.Author,
 				packageRequest.Repo,
-				packageRequest.Selector,
+				packageRequest.GithubTree,
 			)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
