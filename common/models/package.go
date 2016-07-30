@@ -13,7 +13,7 @@ import (
 // cassandra database.
 const (
 	// TableNamePackages is the name of the table containing the package model.
-	TableNamePackages = "packages"
+	TableNamePackages = "gophr.packages"
 	// IndexNamePackages is the name of the lucene index
 	IndexNamePackages             = "packages_index"
 	ColumnNamePackagesRepo        = "repo"
