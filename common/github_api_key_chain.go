@@ -14,7 +14,7 @@ type GitHubAPIKeyChain struct {
 }
 
 func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
-	log.Println("CREATING NEW KEYCHAIN")
+	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := GitHubAPIKeyChain{}
 
 	_, session := Init()
@@ -22,20 +22,19 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 
 	gitHubAPIKeys, err := scanAllGitHubKey(session)
 	if err != nil {
-		log.Println(err)
+		log.Println("Could not scan github keys, fatal error occured")
+		log.Fatal(err)
 	}
-	log.Println(gitHubAPIKeys)
+	log.Printf("Found %d keys %s \n", len(gitHubAPIKeys), gitHubAPIKeys)
 
-	// TODO RENAME TO initializeGitHubAPIKeyModels
-	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeys(gitHubAPIKeys)
-
-	//TODO sort
+	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeyModels(gitHubAPIKeys)
 	newGitHubAPIKeyChain.setCurrentKey()
+	//TODO sort here
+
 	return &newGitHubAPIKeyChain
 }
 
-// For each api key create a new key model and push to the the list of GitHubAPIKeys
-func initializeGitHubAPIKeys(keys []string) []GitHubAPIKeyModel {
+func initializeGitHubAPIKeyModels(keys []string) []GitHubAPIKeyModel {
 	var gitHubAPIKeyModels = make([]GitHubAPIKeyModel, 0)
 
 	for _, key := range keys {
@@ -61,12 +60,11 @@ func (gitHubAPIKeyChain *GitHubAPIKeyChain) getAPIKeyModel() *GitHubAPIKeyModel 
 		return &gitHubAPIKeyChain.CurrentKey
 	}
 
-	log.Println("KEY NEEDS TO BE SWAPED")
+	log.Println("Current key has hit maxium limit, needs to be swaped")
 	gitHubAPIKeyChain.shuffleKeys()
 	gitHubAPIKeyChain.setCurrentKey()
 	gitHubAPIKeyChain.CurrentKey.prime()
 
-	// If new key's remaining use is 0 set a time out
 	if gitHubAPIKeyChain.CurrentKey.RemainingUses <= 0 {
 		setRequestTimout(gitHubAPIKeyChain.CurrentKey)
 	}
