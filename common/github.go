@@ -37,10 +37,9 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 		return nil, errors.New("Request error.")
 	}
 
-	// TODO Special action for 404s
 	if resp.StatusCode == 404 {
-		// TODO use package not found error here
-		return nil, errors.New("Package does not exist")
+		log.Println("PackageModel was not found on Github")
+		return nil, nil
 	}
 
 	responseHeader := resp.Header
@@ -71,13 +70,13 @@ func buildGithubAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKe
 func parseResponseBody(response *http.Response) (map[string]interface{}, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, errors.New("Failed to parse response body.")
+		return nil, errors.New("Failed to parse response body")
 	}
 
 	var bodyMap map[string]interface{}
 	err = json.Unmarshal(body, &bodyMap)
 	if err != nil {
-		return nil, errors.New("Failed to unmarshal response body.")
+		return nil, errors.New("Failed to unmarshal response body")
 	}
 
 	return bodyMap, nil
