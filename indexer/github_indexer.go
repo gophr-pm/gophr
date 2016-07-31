@@ -10,16 +10,20 @@ import (
 	"github.com/skeswa/gophr/common/models"
 )
 
+var requestTimeBuffer time.Duration = 50 * time.Millisecond
+
 func ReIndexPackageGitHubStats(session *gocql.Session) {
-	log.Println("Starting ReIndexing PackageModel GitHub Data")
+	log.Println("Reindexing packageModel github data")
 	packageModels, err := models.ScanAllPackageModels(session)
-	log.Println(err)
-	log.Printf("%d packages found", len(packageModels))
+	numPackageModels := len(packageModels)
+	log.Printf("%d packages found", numPackageModels)
 
-	totalNumPackages := len(packageModels)
-	log.Printf("Total num packages found = %d ", totalNumPackages)
+	if err != nil || numPackageModels == 0 {
+		log.Println("Error retrieving querying package data")
+		log.Fatalln(err)
+	}
 
-	log.Println("Initializing GitHub Component")
+	log.Println("Initializing gitHub component")
 	gitHubRequestService := common.NewGitHubRequestService()
 
 	var wg sync.WaitGroup
@@ -32,32 +36,42 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 		go func() {
 			for gitHubPackageModelDTO := range packageChan {
 				packageStarCount := common.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
+				log.Printf("Star count %d \n", packageStarCount)
 				indexTime := time.Now()
-				log.Printf("StarCount %d \n", packageStarCount)
 				log.Printf("New index time %s \n", indexTime)
 				packageModel := gitHubPackageModelDTO.Package
 				packageModel.IndexTime = &indexTime
 				packageModel.Stars = &packageStarCount
 				err := models.InsertPackage(session, &packageModel)
 				if err != nil {
+					log.Println("Could not insert packageModel, error occured")
 					log.Println(err)
 				}
-				log.Println("Index time has been updated")
-				log.Printf("%+v\n", packageModel)
 			}
 			wg.Done()
 		}()
 	}
 
-	log.Printf("Preparing to fetch stars for %d repos", totalNumPackages)
+	log.Printf("Preparing to fetch stars for %d repos", numPackageModels)
 	for count, packageModel := range packageModels {
-		log.Printf("PROCESSING PACKAGE %s/%s #%d \n", *packageModel.Author, *packageModel.Repo, count)
+		log.Printf("Processing package %s/%s #%d \n", *packageModel.Author, *packageModel.Repo, count)
 		packageModelGitHubData, err := gitHubRequestService.FetchGitHubDataForPackageModel(*packageModel)
-		if err != nil {
-			log.Printf("PANIC %v \n\n\n\n\n\n\n", err)
+
+		if packageModelGitHubData == nil && err == nil {
+			log.Println(err)
+			wg.Add(1)
+			go func() {
+				log.Println("Preparing to delete packageModel")
+				models.DeletePackageModel(session, packageModel)
+				wg.Done()
+			}()
+		} else if err != nil {
+			log.Println("Package could not be successfully retrieved from Github. Error occured")
+			log.Println(err)
 		}
+
 		packageChan <- common.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(requestTimeBuffer)
 	}
 
 	close(packageChan)
