@@ -10,14 +10,12 @@ import (
 )
 
 func main() {
-	// Initialize the indexer.
+	log.Println("Preparing to initialize DB connection")
 	_, session := common.Init()
-
-	// Ensure that the session is closed eventually.
 	defer session.Close()
 
 	ReIndexPackageGitHubStats(session)
-	os.Exit(1)
+	os.Exit(3)
 
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
@@ -71,5 +69,4 @@ func main() {
 	}
 
 	log.Println("Finished inserting packages into database")
-	// TODO run star updater
 }
