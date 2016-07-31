@@ -29,7 +29,7 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 
 	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeyModels(gitHubAPIKeys)
 	newGitHubAPIKeyChain.setCurrentKey()
-	//TODO sort here
+	// TODO (Shikkic): Optimize sort and choose algo for keys
 
 	return &newGitHubAPIKeyChain
 }

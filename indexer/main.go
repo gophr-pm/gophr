@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 
 	"github.com/skeswa/gophr/common"
@@ -13,9 +12,6 @@ func main() {
 	log.Println("Preparing to initialize DB connection")
 	_, session := common.Init()
 	defer session.Close()
-
-	ReIndexPackageGitHubStats(session)
-	os.Exit(3)
 
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
@@ -69,4 +65,5 @@ func main() {
 	}
 
 	log.Println("Finished inserting packages into database")
+	ReIndexPackageGitHubStats(session)
 }
