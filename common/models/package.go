@@ -13,10 +13,11 @@ import (
 // cassandra database.
 const (
 	// TableNamePackages is the name of the table containing the package model.
-	TableNamePackages = "packages"
+	TableNamePackages = "gophr.packages"
 	// IndexNamePackages is the name of the lucene index
 	IndexNamePackages             = "packages_index"
 	ColumnNamePackagesRepo        = "repo"
+	ColumnNamePackagesStars       = "stars"
 	ColumnNamePackagesExists      = "exists"
 	ColumnNamePackagesAuthor      = "author"
 	ColumnNamePackagesVersions    = "versions"
@@ -52,9 +53,10 @@ var (
 	)
 
 	cqlQueryInsertPackage = fmt.Sprintf(
-		`INSERT INTO %s (%s,%s,%s,%s,%s,%s,%s,%s,%s) VALUES (?,?,?,?,?,?,?,?,?)`,
+		`INSERT INTO %s (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) VALUES (?,?,?,?,?,?,?,?,?,?)`,
 		TableNamePackages,
 		ColumnNamePackagesRepo,
+		ColumnNamePackagesStars,
 		ColumnNamePackagesExists,
 		ColumnNamePackagesAuthor,
 		ColumnNamePackagesVersions,
@@ -63,6 +65,13 @@ var (
 		ColumnNamePackagesAwesomeGo,
 		ColumnNamePackagesSearchBlob,
 		ColumnNamePackagesDescription,
+	)
+
+	cqlQueryDeletePackage = fmt.Sprintf(
+		`DELETE FROM %s WHERE %s = ? AND %s = ?`,
+		TableNamePackages,
+		ColumnNamePackagesAuthor,
+		ColumnNamePackagesRepo,
 	)
 )
 
@@ -73,6 +82,7 @@ var (
 // PackageModel is a struct representing one individual package in the database.
 type PackageModel struct {
 	Repo        *string
+	Stars       *int
 	Exists      *bool
 	Author      *string
 	Versions    []string
@@ -94,6 +104,7 @@ func NewPackageModelForInsert(
 	indexTime time.Time,
 	awesomeGo bool,
 	description string,
+	stars int,
 ) (*PackageModel, error) {
 	if len(repo) < 1 {
 		return nil, errors.NewInvalidParameterError("repo", repo)
@@ -114,6 +125,7 @@ func NewPackageModelForInsert(
 
 	return &PackageModel{
 		Repo:        &repo,
+		Stars:       &stars,
 		Exists:      &exists,
 		Author:      &author,
 		Versions:    versions,
@@ -145,6 +157,32 @@ func NewPackageModelFromBulkSelect(
 		Author:      &author,
 		Description: &description,
 	}, nil
+}
+
+func NewPackageModelTest(
+	author string,
+	repo string,
+	awesome_go bool,
+	description string,
+	exists bool,
+	godoc_url string,
+	index_time time.Time,
+	search_blob string,
+	versions []string,
+	stars int,
+) *PackageModel {
+	return &PackageModel{
+		Repo:        &repo,
+		Stars:       &stars,
+		Exists:      &exists,
+		Author:      &author,
+		Versions:    versions,
+		GodocURL:    &godoc_url,
+		IndexTime:   &index_time,
+		AwesomeGo:   &awesome_go,
+		SearchBlob:  &search_blob,
+		Description: &description,
+	}
 }
 
 // NewPackageModelFromSingleSelect creates an instance of PackageModel that is
@@ -223,6 +261,7 @@ func InsertPackage(
 ) error {
 	err := session.Query(cqlQueryInsertPackage,
 		*packageModel.Repo,
+		*packageModel.Stars,
 		*packageModel.Exists,
 		*packageModel.Author,
 		packageModel.Versions,
@@ -326,4 +365,63 @@ func scanPackageModels(query *gocql.Query) ([]*PackageModel, error) {
 	}
 
 	return packageModels, nil
+}
+
+func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
+	var (
+		err          error
+		scanError    error
+		closeError   error
+		packageModel *PackageModel
+
+		author      string
+		repo        string
+		awesome_go  bool
+		description string
+		exists      bool
+		godoc_url   string
+		index_time  time.Time
+		search_blob string
+		versions    []string
+		stars       int
+
+		query = session.Query(`SELECT
+			author,
+			repo,
+			awesome_go,
+			description,
+			exists,
+			godoc_url,
+			index_time,
+			search_blob,
+			versions,
+			stars
+			FROM gophr.packages`)
+		iter          = query.Iter()
+		packageModels = make([]*PackageModel, 0)
+	)
+
+	for iter.Scan(&author, &repo, &awesome_go, &description, &exists, &godoc_url, &index_time, &search_blob, &versions, &stars) {
+		packageModel = NewPackageModelTest(author, repo, awesome_go, description, exists, godoc_url, index_time, search_blob, versions, stars)
+		packageModels = append(packageModels, packageModel)
+	}
+
+	if err = iter.Close(); err != nil {
+		closeError = err
+	}
+
+	if scanError != nil || closeError != nil {
+		return nil, errors.NewQueryScanError(scanError, closeError)
+	}
+
+	return packageModels, nil
+}
+
+func DeletePackageModel(session *gocql.Session, packageModel *PackageModel) error {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	query := session.Query(cqlQueryDeletePackage, author, repo)
+	err := query.Exec()
+
+	return err
 }

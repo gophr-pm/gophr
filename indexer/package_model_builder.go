@@ -52,6 +52,7 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 						time.Now(),
 						isAwesome,
 						metadata.description,
+						0,
 					)
 					if err == nil {
 						packageModelChan <- packageModel

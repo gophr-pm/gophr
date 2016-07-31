@@ -9,10 +9,8 @@ import (
 )
 
 func main() {
-	// Initialize the indexer.
+	log.Println("Preparing to initialize DB connection")
 	_, session := common.Init()
-
-	// Ensure that the session is closed eventually.
 	defer session.Close()
 
 	log.Println("Fetching godoc metadata")
@@ -67,4 +65,5 @@ func main() {
 	}
 
 	log.Println("Finished inserting packages into database")
+	ReIndexPackageGitHubStats(session)
 }

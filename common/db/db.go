@@ -69,7 +69,8 @@ func getMigrateConnectionString(conf *config.Config) string {
 	if conf.IsDev {
 		buffer.WriteString("&consistency=one&timeout=1")
 	} else {
-		buffer.WriteString("&consistency=all&timeout=30")
+		// TODO(Skeswa): Fix it
+		buffer.WriteString("&consistency=one&timeout=30")
 	}
 
 	return buffer.String()
