@@ -3,6 +3,9 @@ package common
 import (
 	"log"
 	"time"
+
+	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/errors"
 )
 
 type GitHubAPIKeyChain struct {
@@ -14,10 +17,17 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 	log.Println("CREATING NEW KEYCHAIN")
 	newGitHubAPIKeyChain := GitHubAPIKeyChain{}
 
-	// TODO QUERY FOR KEYS
-	keys := []string{}
+	_, session := Init()
+	defer session.Close()
 
-	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeys(keys)
+	gitHubAPIKeys, err := scanAllGitHubKey(session)
+	if err != nil {
+		log.Println(err)
+	}
+	log.Println(gitHubAPIKeys)
+
+	// TODO RENAME TO initializeGitHubAPIKeyModels
+	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeys(gitHubAPIKeys)
 
 	//TODO sort
 	newGitHubAPIKeyChain.setCurrentKey()
@@ -96,4 +106,36 @@ func setRequestTimout(apiKeyModel GitHubAPIKeyModel) {
 	sleepTime := resetTime.Sub(timeNow)
 	log.Printf("Indexer will sleep for %s. \n", sleepTime)
 	time.Sleep(sleepTime)
+}
+
+func scanAllGitHubKey(session *gocql.Session) ([]string, error) {
+	var (
+		err          error
+		scanError    error
+		closeError   error
+		gitHubAPIKey string
+
+		key string
+
+		query = session.Query(`SELECT
+			key
+			FROM gophr.github_api_key`)
+		iter          = query.Iter()
+		gitHubAPIKeys = make([]string, 0)
+	)
+
+	for iter.Scan(&key) {
+		gitHubAPIKey = key
+		gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
+	}
+
+	if err = iter.Close(); err != nil {
+		closeError = err
+	}
+
+	if scanError != nil || closeError != nil {
+		return nil, errors.NewQueryScanError(scanError, closeError)
+	}
+
+	return gitHubAPIKeys, nil
 }

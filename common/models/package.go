@@ -389,7 +389,7 @@ func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 			search_blob,
 			versions,
 			stars
-			FROM packages`)
+			FROM gophr.packages`)
 		iter          = query.Iter()
 		packageModels = make([]*PackageModel, 0)
 	)
