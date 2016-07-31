@@ -66,6 +66,13 @@ var (
 		ColumnNamePackagesSearchBlob,
 		ColumnNamePackagesDescription,
 	)
+
+	cqlQueryDeletePackage = fmt.Sprintf(
+		`DELETE FROM %s WHERE %s = ? AND %s = ?`,
+		TableNamePackages,
+		ColumnNamePackagesAuthor,
+		ColumnNamePackagesRepo,
+	)
 )
 
 var (
@@ -408,4 +415,13 @@ func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 	}
 
 	return packageModels, nil
+}
+
+func DeletePackageModel(session *gocql.Session, packageModel *PackageModel) error {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	query := session.Query(cqlQueryDeletePackage, author, repo)
+	err := query.Exec()
+
+	return err
 }
