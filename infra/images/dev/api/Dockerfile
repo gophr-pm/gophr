@@ -1,8 +1,7 @@
 FROM golang:alpine
-# Install gin
+# Install sparkplug
 RUN set -ex && apk add --update 'git'
-# Install git
-RUN go get github.com/codegangsta/gin
+RUN go get github.com/skeswa/sparkplug
 # Set the environment variables for dev
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
@@ -13,4 +12,6 @@ EXPOSE 3000
 VOLUME ["/go/src/github.com/skeswa/gophr"]
 WORKDIR /go/src/github.com/skeswa/gophr
 # Get all the appropriate dependencies
-CMD cd ./api && go get -d -v && gin
+CMD cd ./api \
+    && go get -d -v \
+    && sparkplug
