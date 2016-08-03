@@ -5,8 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"gopkg.in/urfave/cli.v1"
+)
+
+var (
+	loadingSpinner = spinner.New(spinner.CharSets[11], 100*time.Millisecond)
 )
 
 func readModule(command string, c *cli.Context) (module, error) {
@@ -143,4 +149,24 @@ func exit(
 	}
 
 	os.Exit(code)
+}
+
+func startSpinner(message string) {
+	loadingSpinner.Color("green")
+	loadingSpinner.Suffix = " " + message
+	loadingSpinner.FinalMSG = "done."
+	loadingSpinner.Start()
+}
+
+func stopSpinner() {
+	loadingSpinner.Stop()
+	fmt.Println()
+}
+
+func dockerImageNameOf(moduleID string) string {
+	return "gophr-" + moduleID
+}
+
+func dockerContainerNameOf(moduleID string) string {
+	return "gophr-" + moduleID
 }

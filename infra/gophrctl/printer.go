@@ -1,12 +1,20 @@
 package main
 
-import "github.com/fatih/color"
+import (
+	"fmt"
+
+	"github.com/fatih/color"
+)
 
 var (
 	red   = color.New(color.FgRed)
 	blue  = color.New(color.FgBlue)
 	green = color.New(color.FgGreen)
 )
+
+func print(args ...interface{}) {
+	fmt.Println(args...)
+}
 
 func printSuccess(args ...interface{}) {
 	green.Print("✓ ")
