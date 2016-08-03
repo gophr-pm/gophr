@@ -1,3 +1,3 @@
 FROM nginx:alpine
-COPY files/* /etc/nginx/
+COPY infra/images/dev/ws/files/* /etc/nginx/
 VOLUME ["/usr/share/nginx/html"]

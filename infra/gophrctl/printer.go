@@ -17,16 +17,13 @@ func print(args ...interface{}) {
 }
 
 func printSuccess(args ...interface{}) {
-	green.Print("✓ ")
-	green.Println(args...)
+	green.Println(append([]interface{}{"✓"}, args...)...)
 }
 
 func printInfo(args ...interface{}) {
-	blue.Print("ℹ ")
-	blue.Println(args...)
+	blue.Println(append([]interface{}{"ℹ"}, args...)...)
 }
 
 func printError(args ...interface{}) {
-	red.Print("✗ ")
-	red.Println(args...)
+	red.Println(append([]interface{}{"✗"}, args...)...)
 }

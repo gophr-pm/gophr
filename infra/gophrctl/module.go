@@ -1,6 +1,10 @@
 package main
 
-import "gopkg.in/urfave/cli.v1"
+import (
+	"os"
+
+	"gopkg.in/urfave/cli.v1"
+)
 
 type module interface {
 	id() string
@@ -22,4 +26,32 @@ var modules = map[string]module{
 	indexerModuleID: &indexerModule{},
 	routerModuleID:  &routerModule{},
 	webModuleID:     &webModule{},
+}
+
+func doModuleBuild(
+	moduleID string,
+	targetDev bool,
+	recursive bool,
+	workDir string,
+	dockerfilePath string,
+) {
+	printInfo("Building", moduleID+".")
+
+	// Perform the docker build.
+	startSpinner("Running docker build...")
+	err := doDockerBuild(workDir, dockerfilePath, dockerImageNameOf(moduleID), dockerDevImageTag)
+	stopSpinner()
+
+	// Report on results.
+	if err != nil {
+		printError("Failed to build", moduleID+":")
+		print(err)
+
+		// Only exit if recursive.
+		if recursive {
+			os.Exit(exitCodeBuildFailed)
+		}
+	} else {
+		printSuccess("Built", moduleID, "successfully.")
+	}
 }

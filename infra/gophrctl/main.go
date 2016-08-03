@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"gopkg.in/urfave/cli.v1"
 )
 
 const (
 	cliVersion = "0.0.1"
+	envTypeDev = "dev"
 
 	flagNameEnv      = "env"
 	flagNameRepoPath = "repo-path"
@@ -49,11 +50,7 @@ func main() {
 	}
 
 	// Next, create the default repo path
-	if strings.HasSuffix(gopath, "/") {
-		defaultRepoPath = gopath + "src/github.com/skeswa/gophr"
-	} else {
-		defaultRepoPath = gopath + "/src/github.com/skeswa/gophr"
-	}
+	defaultRepoPath = filepath.Join(gopath, "src/github.com/skeswa/gophr")
 
 	// Then, describe command metadata.
 	app.Name = "gophrctl"
@@ -65,7 +62,7 @@ func main() {
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  flagNameEnv,
-			Value: "dev",
+			Value: envTypeDev,
 			Usage: "gophr execution environment",
 		},
 		cli.StringFlag{

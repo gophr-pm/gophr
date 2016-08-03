@@ -1,12 +1,17 @@
 package main
 
-import "gopkg.in/urfave/cli.v1"
+import (
+	"path/filepath"
+
+	"gopkg.in/urfave/cli.v1"
+)
 
 var (
 	indexerModuleID   = "indexer"
 	indexerModuleDeps = []string{
 		dbModuleID,
 	}
+	indexerDockerfilePath = "infra/images/dev/indexer/Dockerfile"
 )
 
 type indexerModule struct{}
@@ -20,8 +25,15 @@ func (m *indexerModule) deps() []string {
 }
 
 func (m *indexerModule) build(c *cli.Context, shallow bool) error {
-	printInfo("Building", indexerModuleID+"...")
-	printSuccess("Built", indexerModuleID, "successfully.")
+	// Create parameters.
+	workDir := c.GlobalString(flagNameRepoPath)
+	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
+	recursive := !shallow
+	dockerfilePath := filepath.Join(workDir, indexerDockerfilePath)
+
+	// Perform the operation.
+	doModuleBuild(indexerModuleID, targetDev, recursive, workDir, dockerfilePath)
+
 	return nil
 }
 

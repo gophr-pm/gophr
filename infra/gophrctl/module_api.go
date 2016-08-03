@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"path/filepath"
 
 	"gopkg.in/urfave/cli.v1"
@@ -26,27 +25,14 @@ func (m *apiModule) deps() []string {
 }
 
 func (m *apiModule) build(c *cli.Context, shallow bool) error {
-	printInfo("Building", apiModuleID+".")
-
-	// Localize requisite variables.
+	// Create parameters.
 	workDir := c.GlobalString(flagNameRepoPath)
+	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
+	recursive := !shallow
 	dockerfilePath := filepath.Join(workDir, apiDockerfilePath)
 
-	// Perform the docker build.
-	startSpinner("Running docker build...")
-	err := doDockerBuild(workDir, dockerfilePath, dockerImageNameOf(apiModuleID), dockerDevImageTag)
-	stopSpinner()
-
-	// Report on results.
-	if err != nil {
-		printError("Failed to build", apiModuleID+":")
-		print(err)
-
-		// Only exit if not shallow.
-		os.Exit(1)
-	} else {
-		printSuccess("Built", apiModuleID, "successfully.")
-	}
+	// Perform the operation.
+	doModuleBuild(apiModuleID, targetDev, recursive, workDir, dockerfilePath)
 
 	return nil
 }

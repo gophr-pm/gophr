@@ -64,6 +64,11 @@ func traverseModulesDependencyTree(
 	visitedModules map[string]bool,
 	iterator func(module),
 ) error {
+	// Skip the "all" module since it isn't a real module.
+	if moduleID == allModuleID {
+		return nil
+	}
+
 	if !visitedModules[moduleID] {
 		// Get the module that matches this module id.
 		module := modules[moduleID]
@@ -94,11 +99,7 @@ func traverseModules(iterator func(module)) error {
 	visitedModules := make(map[string]bool)
 
 	for id := range modules {
-		// Skip the "all" module since it isn't a real module.
-		if id == allModuleID {
-			continue
-		}
-
+		// Traverse the dependency tree of every module in order.
 		if err := traverseModulesDependencyTree(id, visitedModules, iterator); err != nil {
 			return err
 		}
