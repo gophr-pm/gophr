@@ -20,6 +20,8 @@ func (m *apiModule) deps() []string {
 }
 
 func (m *apiModule) build(c *cli.Context, shallow bool) error {
+	printInfo("Building", apiModuleID+"...")
+	printSuccess("Built", apiModuleID, "successfully.")
 	return nil
 }
 

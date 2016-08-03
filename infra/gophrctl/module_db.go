@@ -18,10 +18,13 @@ func (m *dbModule) deps() []string {
 }
 
 func (m *dbModule) build(c *cli.Context, shallow bool) error {
+	printInfo("Building", dbModuleID+"...")
+	printSuccess("Built", dbModuleID, "successfully.")
 	return nil
 }
 
 func (m *dbModule) start(c *cli.Context, shallow bool) error {
+	printInfo("Starting", dbModuleID)
 	return nil
 }
 

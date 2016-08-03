@@ -20,6 +20,8 @@ func (m *routerModule) deps() []string {
 }
 
 func (m *routerModule) build(c *cli.Context, shallow bool) error {
+	printInfo("Building", routerModuleID+"...")
+	printSuccess("Built", routerModuleID, "successfully.")
 	return nil
 }
 

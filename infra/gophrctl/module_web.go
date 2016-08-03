@@ -21,6 +21,8 @@ func (m *webModule) deps() []string {
 }
 
 func (m *webModule) build(c *cli.Context, shallow bool) error {
+	printInfo("Building", webModuleID+"...")
+	printSuccess("Built", webModuleID, "successfully.")
 	return nil
 }
 

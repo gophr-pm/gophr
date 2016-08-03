@@ -20,6 +20,8 @@ func (m *indexerModule) deps() []string {
 }
 
 func (m *indexerModule) build(c *cli.Context, shallow bool) error {
+	printInfo("Building", indexerModuleID+"...")
+	printSuccess("Built", indexerModuleID, "successfully.")
 	return nil
 }
 
