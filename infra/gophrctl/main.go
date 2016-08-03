@@ -81,7 +81,6 @@ func main() {
 			ArgsUsage: moduleCommandArgsUsage,
 
 			Action: func(c *cli.Context) error {
-				fmt.Println(c.GlobalString(flagNameRepoPath))
 				// Read the module.
 				m, err := readModule(commandNameBuild, c)
 				if err != nil {
