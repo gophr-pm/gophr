@@ -16,5 +16,10 @@ type module interface {
 }
 
 var modules = map[string]module{
-	apiModuleID: &apiModule{},
+	allModuleID:     &allModule{},
+	apiModuleID:     &apiModule{},
+	dbModuleID:      &dbModule{},
+	indexerModuleID: &indexerModule{},
+	routerModuleID:  &routerModule{},
+	webModuleID:     &webModule{},
 }
