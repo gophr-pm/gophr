@@ -12,8 +12,9 @@ const (
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
-	flagNameEnv      = "env"
-	flagNameRepoPath = "repo-path"
+	flagNameEnv        = "env"
+	flagNameRepoPath   = "repo-path"
+	flagNameForeground = "foreground"
 
 	commandNameBuild   = "build"
 	commandDescBuild   = "Updates module images"
@@ -148,6 +149,13 @@ func main() {
 			Name:      commandNameStart,
 			Usage:     commandDescStart,
 			ArgsUsage: moduleCommandArgsUsage,
+
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  flagNameForeground + ",-f",
+					Usage: "makes the container run in the foreground",
+				},
+			},
 
 			Action: func(c *cli.Context) error {
 				// Read the module.

@@ -31,7 +31,7 @@ var modules = map[string]module{
 func doModuleBuild(
 	moduleID string,
 	targetDev bool,
-	recursive bool,
+	exitOnError bool,
 	workDir string,
 	dockerfilePath string,
 ) {
@@ -47,8 +47,8 @@ func doModuleBuild(
 		printError("Failed to build", moduleID+":")
 		print(err)
 
-		// Only exit if recursive.
-		if recursive {
+		// Only exit if necessary.
+		if exitOnError {
 			os.Exit(exitCodeBuildFailed)
 		}
 	} else {

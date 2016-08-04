@@ -163,11 +163,3 @@ func stopSpinner() {
 	loadingSpinner.Stop()
 	fmt.Println()
 }
-
-func dockerImageNameOf(moduleID string) string {
-	return "gophr-" + moduleID
-}
-
-func dockerContainerNameOf(moduleID string) string {
-	return "gophr-" + moduleID
-}

@@ -12,6 +12,12 @@ var (
 		dbModuleID,
 	}
 	apiDockerfilePath = "infra/images/dev/api/Dockerfile"
+	apiContainerPorts = []dockerPortMapping{
+		{
+			hostPort:      3000,
+			containerPort: 3000,
+		},
+	}
 )
 
 type apiModule struct{}
@@ -38,6 +44,14 @@ func (m *apiModule) build(c *cli.Context, shallow bool) error {
 }
 
 func (m *apiModule) start(c *cli.Context, shallow bool) error {
+	// Create parameters.
+	workDir := c.GlobalString(flagNameRepoPath)
+	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
+	recursive := !shallow
+	dockerfilePath := filepath.Join(workDir, apiDockerfilePath)
+
+	// Perform the operation.
+	doModuleBuild(apiModuleID, targetDev, recursive, workDir, dockerfilePath)
 	return nil
 }
 
