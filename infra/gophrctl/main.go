@@ -85,7 +85,7 @@ func main() {
 				// Read the module.
 				m, err := readModule(commandNameBuild, c)
 				if err != nil {
-					exit(1, c, commandNameBuild, err)
+					exit(exitCodeBuildFailed, c, commandNameBuild, err)
 				}
 
 				m.build(c, false)
@@ -161,10 +161,11 @@ func main() {
 				// Read the module.
 				m, err := readModule(commandNameStart, c)
 				if err != nil {
-					return err
+					exit(exitCodeStartFailed, c, commandNameStart, err)
 				}
 
-				return m.build(c, false)
+				m.start(c, false)
+				return nil
 			},
 		},
 

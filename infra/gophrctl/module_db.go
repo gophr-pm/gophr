@@ -1,43 +1,42 @@
 package main
 
-import (
-	"path/filepath"
-
-	"gopkg.in/urfave/cli.v1"
-)
+import "gopkg.in/urfave/cli.v1"
 
 var (
-	dbModuleID       = "db"
-	dbModuleDeps     = []string{}
-	dbDockerfilePath = "infra/images/dev/db/Dockerfile"
+	dbModuleID             = "db"
+	dbModuleDeps           = []string{}
+	dbModuleVolumeName     = "cassandra-db-volume"
+	dbModuleVolumeMount    = "/var/lib/cassandra"
+	dbModuleDockerfilePath = "infra/images/dev/db/Dockerfile"
+	dbModuleContainerPorts = []dockerPortMapping{
+		{hostPort: 7000, containerPort: 7000},
+		{hostPort: 7001, containerPort: 7001},
+		{hostPort: 9042, containerPort: 9042},
+	}
+	dbModuleContainerVolumes = []dockerVolumeMapping{
+		{
+			containerPath: dbModuleVolumeMount,
+			hostPathGenerator: func(repoPath string) string {
+				return dbModuleVolumeName
+			},
+		},
+	}
 )
 
-type dbModule struct{}
-
-func (m *dbModule) id() string {
-	return dbModuleID
+type dbModule struct {
+	baseModule // Extends base module.
 }
 
 func (m *dbModule) deps() []string {
 	return dbModuleDeps
 }
 
-func (m *dbModule) build(c *cli.Context, shallow bool) error {
-	// Create parameters.
-	workDir := c.GlobalString(flagNameRepoPath)
-	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
-	recursive := !shallow
-	dockerfilePath := filepath.Join(workDir, dbDockerfilePath)
-
-	// Perform the operation.
-	doModuleBuild(dbModuleID, targetDev, recursive, workDir, dockerfilePath)
-
-	return nil
+func (m *dbModule) dockerfile() string {
+	return dbModuleDockerfilePath
 }
 
-func (m *dbModule) start(c *cli.Context, shallow bool) error {
-	printInfo("Starting", dbModuleID)
-	return nil
+func (m *dbModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping, []dockerVolumeMapping) {
+	return dbModuleContainerPorts, nil, dbModuleContainerVolumes
 }
 
 func (m *dbModule) stop(c *cli.Context, shallow bool) error {

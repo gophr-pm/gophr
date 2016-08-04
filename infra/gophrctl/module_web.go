@@ -10,36 +10,43 @@ var (
 	webModuleID   = "web"
 	webModuleDeps = []string{
 		apiModuleID,
-		routerModuleID,
+		webModuleID,
 	}
-	webDockerfilePath = "infra/images/dev/ws/Dockerfile"
+	webModuleVolumePath     = "web/dist"
+	webModuleVolumeMount    = "/usr/share/nginx/html"
+	webModuleDockerfilePath = "infra/images/dev/ws/Dockerfile"
+	webModuleContainerPorts = []dockerPortMapping{
+		{hostPort: 80, containerPort: 80},
+		{hostPort: 443, containerPort: 443},
+	}
+	webModuleContainerLinks = []dockerLinkMapping{
+		{moduleID: apiModuleID},
+		{moduleID: routerModuleID},
+	}
+	webModuleContainerVolumes = []dockerVolumeMapping{
+		{
+			containerPath: webModuleVolumeMount,
+			hostPathGenerator: func(repoPath string) string {
+				return filepath.Join(repoPath, webModuleVolumePath)
+			},
+		},
+	}
 )
 
-type webModule struct{}
-
-func (m *webModule) id() string {
-	return webModuleID
+type webModule struct {
+	baseModule // Extends base module.
 }
 
 func (m *webModule) deps() []string {
 	return webModuleDeps
 }
 
-func (m *webModule) build(c *cli.Context, shallow bool) error {
-	// Create parameters.
-	workDir := c.GlobalString(flagNameRepoPath)
-	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
-	recursive := !shallow
-	dockerfilePath := filepath.Join(workDir, webDockerfilePath)
-
-	// Perform the operation.
-	doModuleBuild(webModuleID, targetDev, recursive, workDir, dockerfilePath)
-
-	return nil
+func (m *webModule) dockerfile() string {
+	return webModuleDockerfilePath
 }
 
-func (m *webModule) start(c *cli.Context, shallow bool) error {
-	return nil
+func (m *webModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping, []dockerVolumeMapping) {
+	return webModuleContainerPorts, webModuleContainerLinks, webModuleContainerVolumes
 }
 
 func (m *webModule) stop(c *cli.Context, shallow bool) error {

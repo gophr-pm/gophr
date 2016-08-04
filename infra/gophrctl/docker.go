@@ -16,7 +16,7 @@ type dockerPortMapping struct {
 	containerPort int
 }
 
-func (dpm dockerPortMapping) String() string {
+func (dpm dockerPortMapping) Serialize() string {
 	return fmt.Sprintf("%d:%d", dpm.hostPort, dpm.containerPort)
 }
 
@@ -25,17 +25,24 @@ type dockerLinkMapping struct {
 	hostName string
 }
 
-func (dlm dockerLinkMapping) String() string {
-	return fmt.Sprintf("%s:%s", dockerContainerNameOf(dlm.moduleID), dlm.hostName)
+func (dlm dockerLinkMapping) Serialize() string {
+	hostName := dlm.hostName
+	containerName := dockerContainerNameOf(dlm.moduleID)
+
+	if len(dlm.hostName) < 1 {
+		hostName = containerName
+	}
+
+	return fmt.Sprintf("%s:%s", containerName, hostName)
 }
 
 type dockerVolumeMapping struct {
-	hostPath      int
-	containerPath int
+	containerPath     string
+	hostPathGenerator func(repoPath string) string
 }
 
-func (dvm dockerVolumeMapping) String() string {
-	return fmt.Sprintf("%d:%d", dvm.hostPath, dvm.containerPath)
+func (dvm dockerVolumeMapping) Serialize(repoPath string) string {
+	return fmt.Sprintf("%s:%s", dvm.hostPathGenerator(repoPath), dvm.containerPath)
 }
 
 func doDockerBuild(
@@ -74,13 +81,13 @@ func doDockerRun(
 	}
 	args = append(args, "--name", containerName)
 	for _, volumeMapping := range volumeMappings {
-		args = append(args, "-v", volumeMapping.String())
+		args = append(args, "-v", volumeMapping.Serialize(workDir))
 	}
 	for _, linkMapping := range linkMappings {
-		args = append(args, "--link", linkMapping.String())
+		args = append(args, "--link", linkMapping.Serialize())
 	}
 	for _, portMapping := range portMappings {
-		args = append(args, "-p", portMapping.String())
+		args = append(args, "-p", portMapping.Serialize())
 	}
 	args = append(args, (imageName + ":" + imageTag))
 

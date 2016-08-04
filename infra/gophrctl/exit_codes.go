@@ -1,5 +1,6 @@
 package main
 
 const (
-	exitCodeBuildFailed = 100
+	exitCodeStartFailed = 100
+	exitCodeBuildFailed = 101
 )

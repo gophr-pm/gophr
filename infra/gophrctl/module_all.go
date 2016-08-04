@@ -21,6 +21,14 @@ func (m *allModule) deps() []string {
 	return allModuleDeps
 }
 
+func (m *allModule) dockerfile() string {
+	return ""
+}
+
+func (m *allModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping, []dockerVolumeMapping) {
+	return nil, nil, nil
+}
+
 func (m *allModule) build(c *cli.Context, shallow bool) error {
 	var failedModuleIds []string
 

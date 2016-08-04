@@ -1,58 +1,44 @@
 package main
 
-import (
-	"path/filepath"
-
-	"gopkg.in/urfave/cli.v1"
-)
+import "gopkg.in/urfave/cli.v1"
 
 var (
 	apiModuleID   = "api"
 	apiModuleDeps = []string{
 		dbModuleID,
 	}
-	apiDockerfilePath = "infra/images/dev/api/Dockerfile"
-	apiContainerPorts = []dockerPortMapping{
+	apiModuleVolumeMount    = "/go/src/github.com/skeswa/gophr"
+	apiModuleDockerfilePath = "infra/images/dev/api/Dockerfile"
+	apiModuleContainerPorts = []dockerPortMapping{
+		{hostPort: 3000, containerPort: 3000},
+	}
+	apiModuleContainerLinks = []dockerLinkMapping{
+		{moduleID: dbModuleID},
+	}
+	apiModuleContainerVolumes = []dockerVolumeMapping{
 		{
-			hostPort:      3000,
-			containerPort: 3000,
+			containerPath: apiModuleVolumeMount,
+			hostPathGenerator: func(repoPath string) string {
+				return repoPath
+			},
 		},
 	}
 )
 
-type apiModule struct{}
-
-func (m *apiModule) id() string {
-	return apiModuleID
+type apiModule struct {
+	baseModule // Extends base module.
 }
 
 func (m *apiModule) deps() []string {
 	return apiModuleDeps
 }
 
-func (m *apiModule) build(c *cli.Context, shallow bool) error {
-	// Create parameters.
-	workDir := c.GlobalString(flagNameRepoPath)
-	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
-	recursive := !shallow
-	dockerfilePath := filepath.Join(workDir, apiDockerfilePath)
-
-	// Perform the operation.
-	doModuleBuild(apiModuleID, targetDev, recursive, workDir, dockerfilePath)
-
-	return nil
+func (m *apiModule) dockerfile() string {
+	return apiModuleDockerfilePath
 }
 
-func (m *apiModule) start(c *cli.Context, shallow bool) error {
-	// Create parameters.
-	workDir := c.GlobalString(flagNameRepoPath)
-	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
-	recursive := !shallow
-	dockerfilePath := filepath.Join(workDir, apiDockerfilePath)
-
-	// Perform the operation.
-	doModuleBuild(apiModuleID, targetDev, recursive, workDir, dockerfilePath)
-	return nil
+func (m *apiModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping, []dockerVolumeMapping) {
+	return apiModuleContainerPorts, apiModuleContainerLinks, apiModuleContainerVolumes
 }
 
 func (m *apiModule) stop(c *cli.Context, shallow bool) error {

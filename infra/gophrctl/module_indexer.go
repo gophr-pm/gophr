@@ -1,44 +1,44 @@
 package main
 
-import (
-	"path/filepath"
-
-	"gopkg.in/urfave/cli.v1"
-)
+import "gopkg.in/urfave/cli.v1"
 
 var (
 	indexerModuleID   = "indexer"
 	indexerModuleDeps = []string{
 		dbModuleID,
 	}
-	indexerDockerfilePath = "infra/images/dev/indexer/Dockerfile"
+	indexerModuleVolumeMount    = "/go/src/github.com/skeswa/gophr"
+	indexerModuleDockerfilePath = "infra/images/dev/indexer/Dockerfile"
+	indexerModuleContainerPorts = []dockerPortMapping{
+		{hostPort: 3000, containerPort: 3000},
+	}
+	indexerModuleContainerLinks = []dockerLinkMapping{
+		{moduleID: dbModuleID},
+	}
+	indexerModuleContainerVolumes = []dockerVolumeMapping{
+		{
+			containerPath: indexerModuleVolumeMount,
+			hostPathGenerator: func(repoPath string) string {
+				return repoPath
+			},
+		},
+	}
 )
 
-type indexerModule struct{}
-
-func (m *indexerModule) id() string {
-	return indexerModuleID
+type indexerModule struct {
+	baseModule // Extends base module.
 }
 
 func (m *indexerModule) deps() []string {
 	return indexerModuleDeps
 }
 
-func (m *indexerModule) build(c *cli.Context, shallow bool) error {
-	// Create parameters.
-	workDir := c.GlobalString(flagNameRepoPath)
-	targetDev := c.GlobalString(flagNameEnv) == envTypeDev
-	recursive := !shallow
-	dockerfilePath := filepath.Join(workDir, indexerDockerfilePath)
-
-	// Perform the operation.
-	doModuleBuild(indexerModuleID, targetDev, recursive, workDir, dockerfilePath)
-
-	return nil
+func (m *indexerModule) dockerfile() string {
+	return indexerModuleDockerfilePath
 }
 
-func (m *indexerModule) start(c *cli.Context, shallow bool) error {
-	return nil
+func (m *indexerModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping, []dockerVolumeMapping) {
+	return indexerModuleContainerPorts, indexerModuleContainerLinks, indexerModuleContainerVolumes
 }
 
 func (m *indexerModule) stop(c *cli.Context, shallow bool) error {
