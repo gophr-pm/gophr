@@ -33,8 +33,8 @@ const (
 )
 
 var (
-	moduleCommandArgsUsage           = fmt.Sprintf("[module (%s)] [arguments...]", modulesToString(false))
-	moduleCommandArgsUsageWithoutAll = fmt.Sprintf("[module (%s)] [arguments...]", modulesToString(true))
+	moduleCommandArgsUsage           = fmt.Sprintf("[%s] [arguments...]", modulesToString(false))
+	moduleCommandArgsUsageWithoutAll = fmt.Sprintf("[%s] [arguments...]", modulesToString(true))
 )
 
 func main() {
@@ -152,7 +152,7 @@ func main() {
 
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name:  flagNameForeground + ",-f",
+					Name:  flagNameForeground + ",f",
 					Usage: "makes the container run in the foreground",
 				},
 			},
