@@ -14,7 +14,7 @@ const (
 
 	envVarsEnvironment    = "GOPHR_ENV"
 	envVarsPort           = "GOPHR_PORT, PORT"
-	envVarsDbAddress      = "GOPHR_DB_ADDR, GOPHR_DB_PORT_9042_TCP_ADDR"
+	envVarsDbAddress      = "GOPHR_DB_ADDR"
 	envVarsMigrationsPath = "GOPHR_MIGRATIONS_PATH"
 )
 
