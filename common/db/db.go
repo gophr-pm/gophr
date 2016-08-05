@@ -67,9 +67,9 @@ func getMigrateConnectionString(conf *config.Config) string {
 	buffer.WriteString(strconv.Itoa(query.DBProtoVersion))
 
 	if conf.IsDev {
-		buffer.WriteString("&consistency=one&timeout=1")
+		buffer.WriteString("&consistency=one&timeout=10")
 	} else {
-		// TODO(Skeswa): Fix it
+		// TODO(skeswa): make this consistency all.
 		buffer.WriteString("&consistency=one&timeout=30")
 	}
 
