@@ -43,7 +43,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./web:/web
+      - ../web:/web
 volumes:
   "cassandra-db-volume":
     external: true

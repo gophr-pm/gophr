@@ -1,7 +1,7 @@
 FROM node:latest
 
 # Install nginx.
-ENV NGINX_VERSION 1.11.1-1~jessie
+ENV NGINX_VERSION 1.11.3-1~jessie
 RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
 	&& echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
 	&& apt-get update \
@@ -23,9 +23,6 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 # Copy in the nginx resources.
 COPY files/* /etc/nginx/
 
-# Start nginx.
-RUN ["nginx"]
-
 # Mount the repository.
 VOLUME ["/web"]
 WORKDIR /web
@@ -34,4 +31,6 @@ WORKDIR /web
 EXPOSE 80 443
 
 # Start the web server.
-CMD npm install && npm start
+CMD nginx \
+		&& npm install --no-bin-links \
+		&& npm start
