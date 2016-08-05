@@ -33,10 +33,16 @@ func (c *Config) String() string {
 	buffer.WriteString(strconv.FormatBool(c.IsDev))
 	buffer.WriteString("\nPort:               ")
 	buffer.WriteString(strconv.Itoa(c.Port))
-	buffer.WriteString("\nDatabase address:   ")
-	buffer.WriteString(c.DbAddress)
-	buffer.WriteString("\nMigrations path:    ")
-	buffer.WriteString(c.MigrationsPath)
+
+	if len(c.DbAddress) < 1 {
+		buffer.WriteString("\nDatabase address:   ")
+		buffer.WriteString(c.DbAddress)
+	}
+
+	if len(c.MigrationsPath) < 1 {
+		buffer.WriteString("\nMigrations path:    ")
+		buffer.WriteString(c.MigrationsPath)
+	}
 
 	return buffer.String()
 }
@@ -81,7 +87,6 @@ func GetConfig() *Config {
 		},
 		cli.StringFlag{
 			Name:        "migrations-path, m",
-			Value:       "/gophr/migrations",
 			Usage:       "path to the db migration files",
 			EnvVar:      envVarsMigrationsPath,
 			Destination: &migrationsPath,
@@ -92,15 +97,6 @@ func GetConfig() *Config {
 	app.Action = func(c *cli.Context) error {
 		if environment != environmentDev && environment != environmentProd {
 			return cli.NewExitError("invalid environment", 1)
-		}
-		if port < 1025 {
-			return cli.NewExitError("invalid port", 2)
-		}
-		if len(dbAddress) < 1 {
-			return cli.NewExitError("invalid db address", 3)
-		}
-		if len(migrationsPath) < 1 {
-			return cli.NewExitError("invalid migrations path", 4)
 		}
 
 		actionExecuted = true

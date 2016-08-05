@@ -1,15 +1,11 @@
 package db
 
 import (
-	"bytes"
-	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/db/query"
-	"github.com/skeswa/migrate/migrate"
 
 	// Load the migrate cassandra driver.
 	_ "github.com/skeswa/migrate/driver/cassandra"
@@ -44,34 +40,5 @@ func OpenConnection(c *config.Config) (*gocql.Session, error) {
 		return nil, err
 	}
 
-	// Run the migrator.
-	log.Println("Executing pending database migrations.")
-	errs, ok := migrate.UpSync(getMigrateConnectionString(c), c.MigrationsPath)
-
-	if !ok {
-		return nil, fmt.Errorf("Database migrations failed: %v\n", errs)
-	}
-
 	return session, nil
-}
-
-// getMigrateConnectionString puts the migrate connection string together.
-func getMigrateConnectionString(conf *config.Config) string {
-	// Create the migrate connection string.
-	buffer := bytes.Buffer{}
-	buffer.WriteString("cassandra://")
-	buffer.WriteString(conf.DbAddress)
-	buffer.WriteByte('/')
-	buffer.WriteString(query.DBKeyspaceName)
-	buffer.WriteString("?protocol=")
-	buffer.WriteString(strconv.Itoa(query.DBProtoVersion))
-
-	if conf.IsDev {
-		buffer.WriteString("&consistency=one&timeout=10")
-	} else {
-		// TODO(skeswa): make this consistency all.
-		buffer.WriteString("&consistency=one&timeout=30")
-	}
-
-	return buffer.String()
 }

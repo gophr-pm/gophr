@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS daily_downloads;
 
 --------------------------- ALL TIME INSTALL TOTALS ----------------------------
 
-CREATE TABLE all_time_install_totals (
+CREATE TABLE IF NOT EXISTS all_time_install_totals (
   package_author text,
   package_repo text,
   package_description text,
@@ -12,7 +12,7 @@ CREATE TABLE all_time_install_totals (
   PRIMARY KEY (package_author, package_repo)
 );
 
-CREATE CUSTOM INDEX all_time_install_totals_index
+CREATE CUSTOM INDEX IF NOT EXISTS all_time_install_totals_index
   ON all_time_install_totals ()
   USING 'com.stratio.cassandra.lucene.Index'
   WITH OPTIONS = {
@@ -25,7 +25,7 @@ CREATE CUSTOM INDEX all_time_install_totals_index
 
 ---------------------------- RANGED INSTALL TOTALS -----------------------------
 
-CREATE TABLE ranged_install_totals (
+CREATE TABLE IF NOT EXISTS ranged_install_totals (
   date timestamp,
   package_author text,
   package_repo text,
@@ -36,7 +36,7 @@ CREATE TABLE ranged_install_totals (
   PRIMARY KEY (date, package_author, package_repo)
 ) WITH CLUSTERING ORDER BY (package_author ASC, package_repo ASC);
 
-CREATE CUSTOM INDEX ranged_install_totals_index
+CREATE CUSTOM INDEX IF NOT EXISTS ranged_install_totals_index
   ON ranged_install_totals ()
   USING 'com.stratio.cassandra.lucene.Index'
   WITH OPTIONS = {
@@ -51,7 +51,7 @@ CREATE CUSTOM INDEX ranged_install_totals_index
 
 ----------------------- RANGED VERSIONED INSTALL TOTALS ------------------------
 
-CREATE TABLE ranged_versioned_install_totals (
+CREATE TABLE IF NOT EXISTS ranged_versioned_install_totals (
   date timestamp,
   package_author text,
   package_repo text,
@@ -62,7 +62,7 @@ CREATE TABLE ranged_versioned_install_totals (
   PRIMARY KEY (date, package_author, package_repo, package_version)
 ) WITH CLUSTERING ORDER BY (package_author ASC, package_repo ASC, package_version ASC);
 
-CREATE CUSTOM INDEX ranged_versioned_install_totals_index
+CREATE CUSTOM INDEX IF NOT EXISTS ranged_versioned_install_totals_index
   ON ranged_versioned_install_totals ()
   USING 'com.stratio.cassandra.lucene.Index'
   WITH OPTIONS = {

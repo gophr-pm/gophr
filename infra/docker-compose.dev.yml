@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile.dev
     depends_on:
       - db
+      - migrator
     ports:
       - "3000:3000"
     volumes:
@@ -27,18 +28,24 @@ services:
       dockerfile: Dockerfile.dev
     depends_on:
       - db
-    ports:
-      - "3001:3000"
+      - migrator
     volumes:
       - ..:/go/src/github.com/skeswa/gophr
+  migrator:
+    build:
+      context: ..
+      dockerfile: infra/images/migrator/Dockerfile.dev
+    depends_on:
+      - db
   router:
     build:
       context: ./images/router
       dockerfile: Dockerfile.dev
     depends_on:
       - db
+      - migrator
     ports:
-      - "3002:3000"
+      - "4000:3000"
     volumes:
       - ..:/go/src/github.com/skeswa/gophr
   web:

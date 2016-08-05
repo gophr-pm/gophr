@@ -1,14 +1,13 @@
 FROM golang:alpine
 
-# Install sparkplug
-RUN set -ex && apk add --update 'git'
+# Install sparkplug and dependencies
+RUN set -ex && apk add --update 'git' && apk add 'bash'
 RUN go get github.com/skeswa/sparkplug
 
 # Set the environment variables
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db"
-ENV GOPHR_MIGRATIONS_PATH="/go/src/github.com/skeswa/gophr/common/db/migrations"
 
 # Specify the exposed port
 EXPOSE 3000
@@ -20,4 +19,4 @@ WORKDIR /go/src/github.com/skeswa/gophr
 # Wrap environment with sparkplug.
 CMD cd ./api \
     && go get -d -v \
-    && sparkplug
+    && ../infra/scripts/wait-for-it.sh -h db -p 9042 -t 0 -- sparkplug -p 3000
