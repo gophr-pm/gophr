@@ -5,6 +5,8 @@ services:
     build:
       context: ./images/api
       dockerfile: Dockerfile.dev
+    depends_on:
+      - db
     ports:
       - "3000:3000"
     volumes:
@@ -23,6 +25,8 @@ services:
     build:
       context: ./images/indexer
       dockerfile: Dockerfile.dev
+    depends_on:
+      - db
     ports:
       - "3001:3000"
     volumes:
@@ -31,6 +35,8 @@ services:
     build:
       context: ./images/router
       dockerfile: Dockerfile.dev
+    depends_on:
+      - db
     ports:
       - "3002:3000"
     volumes:
@@ -39,6 +45,9 @@ services:
     build:
       context: ./images/web
       dockerfile: Dockerfile.dev
+    depends_on:
+      - api
+      - router
     ports:
       - "80:80"
       - "443:443"
