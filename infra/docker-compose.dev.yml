@@ -1,0 +1,49 @@
+version: '2'
+
+services:
+  api:
+    build:
+      context: ./images/api
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ..:/go/src/github.com/skeswa/gophr
+  db:
+    build:
+      context: ./images/db
+      dockerfile: Dockerfile.dev
+    ports:
+      - "7000:7000"
+      - "7001:7001"
+      - "9042:9042"
+    volumes:
+      - cassandra-db-volume:/var/lib/cassandra
+  indexer:
+    build:
+      context: ./images/indexer
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3001:3000"
+    volumes:
+      - ..:/go/src/github.com/skeswa/gophr
+  router:
+    build:
+      context: ./images/router
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3002:3000"
+    volumes:
+      - ..:/go/src/github.com/skeswa/gophr
+  web:
+    build:
+      context: ./images/web
+      dockerfile: Dockerfile.dev
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ../web:/web
+volumes:
+  "cassandra-db-volume":
+    external: true
