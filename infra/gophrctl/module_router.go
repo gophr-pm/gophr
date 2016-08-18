@@ -41,22 +41,22 @@ func (m *routerModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMap
 	return routerModuleContainerPorts, routerModuleContainerLinks, routerModuleContainerVolumes
 }
 
-func (m *routerModule) stop(c *cli.Context, shallow bool) error {
+func (m *routerModule) stop(c *cli.Context) error {
 	return nil
 }
 
-func (m *routerModule) log(c *cli.Context, shallow bool) error {
+func (m *routerModule) log(c *cli.Context) error {
 	return nil
 }
 
-func (m *routerModule) ssh(c *cli.Context, shallow bool) error {
+func (m *routerModule) ssh(c *cli.Context) error {
 	return nil
 }
 
-func (m *routerModule) test(c *cli.Context, shallow bool) error {
+func (m *routerModule) test(c *cli.Context) error {
 	return nil
 }
 
-func (m *routerModule) restart(c *cli.Context, shallow bool) error {
+func (m *routerModule) restart(c *cli.Context) error {
 	return nil
 }

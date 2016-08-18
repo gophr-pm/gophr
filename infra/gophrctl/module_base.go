@@ -10,7 +10,7 @@ func (m *baseModule) id() string {
 	return m.moduleID
 }
 
-func (m *baseModule) build(c *cli.Context, shallow bool) error {
+func (m *baseModule) build(c *cli.Context) error {
 	return doModuleBuild(
 		m.moduleID,
 		c.GlobalString(flagNameEnv) == envTypeDev,
@@ -19,7 +19,7 @@ func (m *baseModule) build(c *cli.Context, shallow bool) error {
 	)
 }
 
-func (m *baseModule) start(c *cli.Context, shallow bool) error {
+func (m *baseModule) start(c *cli.Context) error {
 	return doModuleStart(
 		m.moduleID,
 		c.GlobalString(flagNameEnv) == envTypeDev,

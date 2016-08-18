@@ -39,22 +39,22 @@ func (m *dbModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMapping
 	return dbModuleContainerPorts, nil, dbModuleContainerVolumes
 }
 
-func (m *dbModule) stop(c *cli.Context, shallow bool) error {
+func (m *dbModule) stop(c *cli.Context) error {
 	return nil
 }
 
-func (m *dbModule) log(c *cli.Context, shallow bool) error {
+func (m *dbModule) log(c *cli.Context) error {
 	return nil
 }
 
-func (m *dbModule) ssh(c *cli.Context, shallow bool) error {
+func (m *dbModule) ssh(c *cli.Context) error {
 	return nil
 }
 
-func (m *dbModule) test(c *cli.Context, shallow bool) error {
+func (m *dbModule) test(c *cli.Context) error {
 	return nil
 }
 
-func (m *dbModule) restart(c *cli.Context, shallow bool) error {
+func (m *dbModule) restart(c *cli.Context) error {
 	return nil
 }

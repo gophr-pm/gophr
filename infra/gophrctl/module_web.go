@@ -49,22 +49,22 @@ func (m *webModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMappin
 	return webModuleContainerPorts, webModuleContainerLinks, webModuleContainerVolumes
 }
 
-func (m *webModule) stop(c *cli.Context, shallow bool) error {
+func (m *webModule) stop(c *cli.Context) error {
 	return nil
 }
 
-func (m *webModule) log(c *cli.Context, shallow bool) error {
+func (m *webModule) log(c *cli.Context) error {
 	return nil
 }
 
-func (m *webModule) ssh(c *cli.Context, shallow bool) error {
+func (m *webModule) ssh(c *cli.Context) error {
 	return nil
 }
 
-func (m *webModule) test(c *cli.Context, shallow bool) error {
+func (m *webModule) test(c *cli.Context) error {
 	return nil
 }
 
-func (m *webModule) restart(c *cli.Context, shallow bool) error {
+func (m *webModule) restart(c *cli.Context) error {
 	return nil
 }

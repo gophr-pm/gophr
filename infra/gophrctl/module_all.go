@@ -29,7 +29,7 @@ func (m *allModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMappin
 	return nil, nil, nil
 }
 
-func (m *allModule) build(c *cli.Context, shallow bool) error {
+func (m *allModule) build(c *cli.Context) error {
 	var failedModuleIds []string
 
 	// Build the list of module ids to detect if this call failed.
@@ -48,7 +48,7 @@ func (m *allModule) build(c *cli.Context, shallow bool) error {
 	return nil
 }
 
-func (m *allModule) start(c *cli.Context, shallow bool) error {
+func (m *allModule) start(c *cli.Context) error {
 	var failedModuleIds []string
 
 	// Build the list of module ids to detect if this call failed.
@@ -67,7 +67,7 @@ func (m *allModule) start(c *cli.Context, shallow bool) error {
 	return nil
 }
 
-func (m *allModule) stop(c *cli.Context, shallow bool) error {
+func (m *allModule) stop(c *cli.Context) error {
 	var failedModuleIds []string
 
 	// Build the list of module ids to detect if this call failed.
@@ -86,15 +86,15 @@ func (m *allModule) stop(c *cli.Context, shallow bool) error {
 	return nil
 }
 
-func (m *allModule) log(c *cli.Context, shallow bool) error {
+func (m *allModule) log(c *cli.Context) error {
 	return errors.New("Cannot log every module at once.")
 }
 
-func (m *allModule) ssh(c *cli.Context, shallow bool) error {
+func (m *allModule) ssh(c *cli.Context) error {
 	return errors.New("Cannot ssh into every module at once.")
 }
 
-func (m *allModule) test(c *cli.Context, shallow bool) error {
+func (m *allModule) test(c *cli.Context) error {
 	var failedModuleIds []string
 
 	// Build the list of module ids to detect if this call failed.
@@ -113,7 +113,7 @@ func (m *allModule) test(c *cli.Context, shallow bool) error {
 	return nil
 }
 
-func (m *allModule) restart(c *cli.Context, shallow bool) error {
+func (m *allModule) restart(c *cli.Context) error {
 	if err := m.stop(c, false); err != nil {
 		return err
 	} else if err = m.start(c, false); err != nil {
