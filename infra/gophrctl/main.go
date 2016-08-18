@@ -79,75 +79,39 @@ func main() {
 		{
 			Name:      commandNameBuild,
 			Usage:     commandDescBuild,
+			Action:    buildCommand,
 			ArgsUsage: moduleCommandArgsUsage,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameBuild, c)
-				if err != nil {
-					exit(exitCodeBuildFailed, c, commandNameBuild, err)
-				}
-
-				m.build(c, false)
-				return nil
-			},
 		},
 
 		// Log command.
 		{
 			Name:      commandNameLog,
 			Usage:     commandDescLog,
+			Action:    logCommand,
 			ArgsUsage: moduleCommandArgsUsageWithoutAll,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameLog, c)
-				if err != nil {
-					return err
-				}
-
-				return m.build(c, false)
-			},
 		},
 
 		// Restart command.
 		{
 			Name:      commandNameRestart,
 			Usage:     commandDescRestart,
+			Action:    restartCommand,
 			ArgsUsage: moduleCommandArgsUsage,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameRestart, c)
-				if err != nil {
-					return err
-				}
-
-				return m.build(c, false)
-			},
 		},
 
 		// SSH command.
 		{
 			Name:      commandNameSSH,
 			Usage:     commandDescSSH,
+			Action:    sshCommand,
 			ArgsUsage: moduleCommandArgsUsageWithoutAll,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameSSH, c)
-				if err != nil {
-					return err
-				}
-
-				return m.build(c, false)
-			},
 		},
 
 		// Start command.
 		{
 			Name:      commandNameStart,
 			Usage:     commandDescStart,
+			Action:    startCommand,
 			ArgsUsage: moduleCommandArgsUsage,
 
 			Flags: []cli.Flag{
@@ -156,51 +120,22 @@ func main() {
 					Usage: "makes the container run in the foreground",
 				},
 			},
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameStart, c)
-				if err != nil {
-					exit(exitCodeStartFailed, c, commandNameStart, err)
-				}
-
-				m.start(c, false)
-				return nil
-			},
 		},
 
 		// Stop command.
 		{
 			Name:      commandNameStop,
 			Usage:     commandDescStop,
+			Action:    stopCommand,
 			ArgsUsage: moduleCommandArgsUsage,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameStop, c)
-				if err != nil {
-					return err
-				}
-
-				return m.build(c, false)
-			},
 		},
 
 		// Test command.
 		{
 			Name:      commandNameTest,
 			Usage:     commandDescTest,
+			Action:    testCommand,
 			ArgsUsage: moduleCommandArgsUsage,
-
-			Action: func(c *cli.Context) error {
-				// Read the module.
-				m, err := readModule(commandNameTest, c)
-				if err != nil {
-					return err
-				}
-
-				return m.build(c, false)
-			},
 		},
 	}
 

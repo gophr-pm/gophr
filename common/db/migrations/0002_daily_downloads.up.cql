@@ -1,6 +1,6 @@
 ------------------------------- DAILY DOWNLOADS --------------------------------
 
-CREATE TABLE daily_downloads (
+CREATE TABLE IF NOT EXISTS daily_downloads (
   day timestamp,
   author text,
   repo text,

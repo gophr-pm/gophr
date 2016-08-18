@@ -1,7 +1,0 @@
-#! /bin/bash
-
-# Constants
-dev_bin_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-project_dir="$( dirname $( dirname $( dirname $dev_bin_dir ) ) )"
-
-(cd $project_dir/web && npm install && npm run dev)

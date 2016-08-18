@@ -41,22 +41,22 @@ func (m *indexerModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMa
 	return indexerModuleContainerPorts, indexerModuleContainerLinks, indexerModuleContainerVolumes
 }
 
-func (m *indexerModule) stop(c *cli.Context, shallow bool) error {
+func (m *indexerModule) stop(c *cli.Context) error {
 	return nil
 }
 
-func (m *indexerModule) log(c *cli.Context, shallow bool) error {
+func (m *indexerModule) log(c *cli.Context) error {
 	return nil
 }
 
-func (m *indexerModule) ssh(c *cli.Context, shallow bool) error {
+func (m *indexerModule) ssh(c *cli.Context) error {
 	return nil
 }
 
-func (m *indexerModule) test(c *cli.Context, shallow bool) error {
+func (m *indexerModule) test(c *cli.Context) error {
 	return nil
 }
 
-func (m *indexerModule) restart(c *cli.Context, shallow bool) error {
+func (m *indexerModule) restart(c *cli.Context) error {
 	return nil
 }

@@ -41,22 +41,22 @@ func (m *apiModule) containerMetadata() ([]dockerPortMapping, []dockerLinkMappin
 	return apiModuleContainerPorts, apiModuleContainerLinks, apiModuleContainerVolumes
 }
 
-func (m *apiModule) stop(c *cli.Context, shallow bool) error {
+func (m *apiModule) stop(c *cli.Context) error {
 	return nil
 }
 
-func (m *apiModule) log(c *cli.Context, shallow bool) error {
+func (m *apiModule) log(c *cli.Context) error {
 	return nil
 }
 
-func (m *apiModule) ssh(c *cli.Context, shallow bool) error {
+func (m *apiModule) ssh(c *cli.Context) error {
 	return nil
 }
 
-func (m *apiModule) test(c *cli.Context, shallow bool) error {
+func (m *apiModule) test(c *cli.Context) error {
 	return nil
 }
 
-func (m *apiModule) restart(c *cli.Context, shallow bool) error {
+func (m *apiModule) restart(c *cli.Context) error {
 	return nil
 }
