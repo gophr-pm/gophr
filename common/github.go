@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/skeswa/gophr/common/models"
 )
@@ -59,11 +61,58 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	return responseBodyMap, nil
 }
 
+func (gitHubRequestService *GitHubRequestService) FetchCommitByDateRangeForPackageModel(packageModel models.PackageModel, timestamp time.Time) (string, error) {
+	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	log.Println(APIKeyModel)
+	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
+
+	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(packageModel, *APIKeyModel, timestamp)
+	log.Printf("Fetching GitHub data for %s \n", githubURL)
+
+	resp, err := http.Get(githubURL)
+	defer resp.Body.Close()
+
+	if err != nil {
+		return "", errors.New("Request error.")
+	}
+
+	if resp.StatusCode == 404 {
+		log.Println("PackageModel was not found on Github")
+		return "", nil
+	}
+
+	responseHeader := resp.Header
+	remaingRequests := responseHeader.Get("X-RateLimit-Remaining")
+	rateLimitResetTime := responseHeader.Get("X-RateLimit-Reset")
+	APIKeyModel.incrementUsage(remaingRequests, rateLimitResetTime)
+	log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
+	log.Printf("Rate limit remaining requests %s \n", remaingRequests)
+	APIKeyModel.print()
+
+	// Parse Body Values
+	responseBodyMap, err := parseRespBody(resp)
+	if err != nil {
+		return "", err
+	}
+
+	return string(responseBodyMap[0]["sha"].(string)), nil
+}
+
 // TODO potentially return error here
 func buildGithubAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	url := "https://api.github.com/repos/" + author + "/" + repo + "?access_token=" + APIKeyModel.Key
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s?access_token=%s", author, repo, APIKeyModel.Key)
+	return url
+}
+
+func buildGitHubRepoCommitsFromTimestampAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel, timestamp time.Time) string {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?until=%s&access_token=%s", author, repo, strings.Replace(timestamp.String(), " ", "", -1), APIKeyModel.Key)
+	log.Println("URL = ", url)
 	return url
 }
 
@@ -74,6 +123,21 @@ func parseResponseBody(response *http.Response) (map[string]interface{}, error) 
 	}
 
 	var bodyMap map[string]interface{}
+	err = json.Unmarshal(body, &bodyMap)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal response body")
+	}
+
+	return bodyMap, nil
+}
+
+func parseRespBody(response *http.Response) ([]map[string]interface{}, error) {
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.New("Failed to parse response body")
+	}
+
+	var bodyMap []map[string]interface{}
 	err = json.Unmarshal(body, &bodyMap)
 	if err != nil {
 		return nil, errors.New("Failed to unmarshal response body")
