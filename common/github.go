@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/skeswa/gophr/common/dtos"
 	"github.com/skeswa/gophr/common/models"
 )
 
@@ -29,7 +30,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
-	githubURL := buildGithubAPIURL(packageModel, *APIKeyModel)
+	githubURL := buildGitHubRepoDataAPIURL(packageModel, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -44,16 +45,11 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 		return nil, nil
 	}
 
-	responseHeader := resp.Header
-	remaingRequests := responseHeader.Get("X-RateLimit-Remaining")
-	rateLimitResetTime := responseHeader.Get("X-RateLimit-Reset")
-	APIKeyModel.incrementUsage(remaingRequests, rateLimitResetTime)
-	log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
-	log.Printf("Rate limit remaining requests %s \n", remaingRequests)
+	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
 	APIKeyModel.print()
 
 	// Parse Body Values
-	responseBodyMap, err := parseResponseBody(resp)
+	responseBodyMap, err := parseGitHubRepoDataResponseBody(resp)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +57,31 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	return responseBodyMap, nil
 }
 
-func (gitHubRequestService *GitHubRequestService) FetchCommitByDateRangeForPackageModel(packageModel models.PackageModel, timestamp time.Time) (string, error) {
+// TODO potentially return error here
+func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s?access_token=%s", author, repo, APIKeyModel.Key)
+	return url
+}
+
+// TODO Optimize this with ffjson struct!
+func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interface{}, error) {
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, errors.New("Failed to parse response body")
+	}
+
+	var bodyMap map[string]interface{}
+	err = json.Unmarshal(body, &bodyMap)
+	if err != nil {
+		return nil, errors.New("Failed to unmarshal response body")
+	}
+
+	return bodyMap, nil
+}
+
+func (gitHubRequestService *GitHubRequestService) FetchCommitSHAByDateRangeForPackageModel(packageModel models.PackageModel, timestamp time.Time) (string, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
@@ -82,29 +102,16 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitByDateRangeForPacka
 		return "", nil
 	}
 
-	responseHeader := resp.Header
-	remaingRequests := responseHeader.Get("X-RateLimit-Remaining")
-	rateLimitResetTime := responseHeader.Get("X-RateLimit-Reset")
-	APIKeyModel.incrementUsage(remaingRequests, rateLimitResetTime)
-	log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
-	log.Printf("Rate limit remaining requests %s \n", remaingRequests)
+	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
 	APIKeyModel.print()
 
-	// Parse Body Values
-	responseBodyMap, err := parseRespBody(resp)
+	commitSHA, err := parseGitHubCommitLookUpResponseBody(resp)
 	if err != nil {
+		// TODO if we can't find date need to do something here
 		return "", err
 	}
 
-	return string(responseBodyMap[0]["sha"].(string)), nil
-}
-
-// TODO potentially return error here
-func buildGithubAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s?access_token=%s", author, repo, APIKeyModel.Key)
-	return url
+	return commitSHA, nil
 }
 
 func buildGitHubRepoCommitsFromTimestampAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel, timestamp time.Time) string {
@@ -116,36 +123,28 @@ func buildGitHubRepoCommitsFromTimestampAPIURL(packageModel models.PackageModel,
 	return url
 }
 
-func parseResponseBody(response *http.Response) (map[string]interface{}, error) {
+func parseGitHubCommitLookUpResponseBody(response *http.Response) (string, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return nil, errors.New("Failed to parse response body")
+		return "", errors.New("Failed to parse response body")
 	}
 
-	var bodyMap map[string]interface{}
-	err = json.Unmarshal(body, &bodyMap)
+	var commitSHAArray []dtos.GitCommitDTO
+	err = json.Unmarshal(body, &commitSHAArray)
 	if err != nil {
-		return nil, errors.New("Failed to unmarshal response body")
+		return "", errors.New("Failed to unmarshal response body")
 	}
 
-	return bodyMap, nil
+	if len(commitSHAArray) >= 1 {
+		return commitSHAArray[0].SHA, nil
+	}
+
+	return "", errors.New("No commit SHAs available for timestamp given")
 }
 
-func parseRespBody(response *http.Response) ([]map[string]interface{}, error) {
-	body, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, errors.New("Failed to parse response body")
-	}
+// ==== Misc ====
 
-	var bodyMap []map[string]interface{}
-	err = json.Unmarshal(body, &bodyMap)
-	if err != nil {
-		return nil, errors.New("Failed to unmarshal response body")
-	}
-
-	return bodyMap, nil
-}
-
+// TODO Won't need this after implementing FFJSON
 func ParseStarCount(responseBody map[string]interface{}) int {
 	starCount := responseBody["stargazers_count"]
 	if starCount == nil {
@@ -155,6 +154,7 @@ func ParseStarCount(responseBody map[string]interface{}) int {
 	return int(starCount.(float64))
 }
 
+// TODO same here
 type GitHubPackageModelDTO struct {
 	Package      models.PackageModel
 	ResponseBody map[string]interface{}
