@@ -17,15 +17,23 @@ type GitHubAPIKeyModel struct {
 	RateLimitResetTime time.Time
 }
 
-func (apiKey *GitHubAPIKeyModel) incrementUsage(remainingRequests string, rateLimitResetTime string) {
+func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(respHeader http.Header) {
+	remaingRequests := respHeader.Get("X-RateLimit-Remaining")
+	rateLimitResetTime := respHeader.Get("X-RateLimit-Reset")
+
+	remainingRequestsInt, _ := strconv.Atoi(remaingRequests)
 	rateLimitResetInt, _ := strconv.ParseInt(rateLimitResetTime, 0, 64)
 	rateLimitResetTimestamp := time.Unix(rateLimitResetInt, 0)
-	remainingRequestsInt, _ := strconv.Atoi(remainingRequests)
+
 	apiKey.RemainingUses = remainingRequestsInt
 	apiKey.RateLimitResetTime = rateLimitResetTimestamp
+
+	log.Printf("Rate limit remaining requests %s \n", remaingRequests)
+	log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
 	log.Printf("Decrementing APIKeyModel usage to %d uses \n", remainingRequestsInt)
 }
 
+// TODO consider passing url endpoint to prime, or maybe a enum for more accuracy when pinging GH
 func (apiKey *GitHubAPIKeyModel) prime() {
 	githubTestURL := gitHubAPIBaseUrl + "repos/a/b" + "?access_token=" + apiKey.Key
 	log.Printf("Preparing to prime APIKeyModel with key %s and url %s", apiKey.Key, githubTestURL)
@@ -37,10 +45,7 @@ func (apiKey *GitHubAPIKeyModel) prime() {
 	}
 	defer resp.Body.Close()
 
-	responseHeader := resp.Header
-	remaingRequests := responseHeader.Get("X-RateLimit-Remaining")
-	rateLimitResetTime := responseHeader.Get("X-RateLimit-Reset")
-	apiKey.incrementUsage(remaingRequests, rateLimitResetTime)
+	apiKey.incrementUsageFromResponseHeader(resp.Header)
 }
 
 func (apiKey *GitHubAPIKeyModel) reset() {

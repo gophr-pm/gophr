@@ -1,5 +1,5 @@
 -------------------------------- GITHUB API KEY ------------------------------------
 
-CREATE TABLE github_api_key (
+CREATE TABLE IF NOT EXISTS github_api_key (
     key text PRIMARY KEY,
 );

@@ -1,0 +1,22 @@
+FROM golang:alpine
+
+# Install sparkplug and dependencies
+RUN set -ex && apk add --update 'git' && apk add 'bash'
+RUN go get github.com/skeswa/sparkplug
+
+# Set the environment variables
+ENV PORT="3000"
+ENV GOPHR_ENV="dev"
+ENV GOPHR_DB_ADDR="db"
+
+# Specify the exposed port
+EXPOSE 3000
+
+# Specify the volume mount point as current dir
+VOLUME ["/go/src/github.com/skeswa/gophr"]
+WORKDIR /go/src/github.com/skeswa/gophr
+
+# Wrap environment with sparkplug.
+CMD cd ./router \
+    && go get -d -v \
+    && ../infra/scripts/wait-for-it.sh -h db -p 9042 -t 0 -- sparkplug -p 3000
