@@ -90,6 +90,7 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 	return bodyMap, nil
 }
 
+// TODO Instead of pinging try downloading refs, might be more sustainable?
 func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
@@ -131,11 +132,11 @@ func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
 	defer req.Body.Close()
 
 	if err != nil {
-		log.Printf("Error occured whilecreating new github repo %s", err)
+		log.Printf("Error occured whilecreating new github repo %s \n", err)
 		return err
 	}
 	if req.StatusCode != 201 {
-		log.Printf("Error creating repo was not successful")
+		log.Printf("Error creating repo was not successful \n")
 		return errors.New("Error creating repo was not successful")
 	}
 
