@@ -103,10 +103,11 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	}
 
 	if resp.StatusCode == 404 {
-		return errors.New(fmt.Sprintf("Error status code %d, a repo with that name already exists.", resp.StatusCode))
+		log.Printf("No Github repo exists in %s with the name %s \n", github_gophr_org_name, repoName)
+		return nil
 	}
 
-	return nil
+	return errors.New(fmt.Sprintf("Error status code %d, a repo with that name already exists.", resp.StatusCode))
 }
 
 func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
