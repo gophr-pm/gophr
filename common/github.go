@@ -1,6 +1,7 @@
 package common
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,6 +16,8 @@ import (
 )
 
 var (
+	github_base_api_url     = "https://api.github.com"
+	github_gophr_org_name   = "gophr-pm"
 	commits_until_parameter = "until"
 	commits_after_parameter = "after'"
 )
@@ -30,6 +33,7 @@ func NewGitHubRequestService() *GitHubRequestService {
 	return &newGitHubRequestService
 }
 
+// TODO optimize this
 func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(
 	packageModel models.PackageModel,
 ) (map[string]interface{}, error) {
@@ -55,7 +59,6 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
 	APIKeyModel.print()
 
-	// Parse Body Values
 	responseBodyMap, err := parseGitHubRepoDataResponseBody(resp)
 	if err != nil {
 		return nil, err
@@ -64,11 +67,10 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	return responseBodyMap, nil
 }
 
-// TODO potentially return error here
 func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s?access_token=%s", author, repo, APIKeyModel.Key)
+	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", github_base_api_url, author, repo, APIKeyModel.Key)
 	return url
 }
 
@@ -86,6 +88,86 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 	}
 
 	return bodyMap, nil
+}
+
+func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
+	packageModel models.PackageModel,
+) error {
+	repoName := buildNewGitHubRepoName(packageModel)
+	url := fmt.Sprintf("https://github.com/%s/%s", github_gophr_org_name, repoName)
+	resp, err := http.Get(url)
+
+	if err != nil {
+		log.Println("Error, a repo with that name already exists")
+		return err
+	}
+
+	if resp.StatusCode != 404 {
+		log.Println("Error, a repo with that name already exists")
+		return errors.New("Error, a repo with that name already exists.")
+	}
+
+	return nil
+}
+
+func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
+	packageModel models.PackageModel,
+) error {
+	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	log.Println(APIKeyModel)
+	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
+
+	JSONBody := buildNewGitHubRepoJSONBody(packageModel)
+	gitHubURL := buildNewGitHubRepoAPIURL(packageModel, APIKeyModel)
+
+	req, err := http.Post(gitHubURL, "application/json", JSONBody)
+	defer req.Body.Close()
+
+	if err != nil {
+		log.Printf("Error occured whilecreating new github repo %s", err)
+		return err
+	}
+	if req.StatusCode != 201 {
+		log.Printf("Error creating repo was not successful")
+		return errors.New("Error creating repo was not successful")
+	}
+
+	return nil
+}
+
+func buildNewGitHubRepoAPIURL(
+	packageModel models.PackageModel,
+	APIKeyModel *GitHubAPIKeyModel,
+) string {
+	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
+		github_base_api_url,
+		github_gophr_org_name,
+		APIKeyModel.Key,
+	)
+	return url
+}
+
+func buildNewGitHubRepoJSONBody(
+	packageModel models.PackageModel,
+) *bytes.Buffer {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	newGitHubRepoName := buildNewGitHubRepoName(packageModel)
+	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
+	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
+
+	JSONStruct := NewGitHubRepo{Name: newGitHubRepoName, Description: description, Homepage: homepage}
+	JSONByteBuffer := new(bytes.Buffer)
+	json.NewEncoder(JSONByteBuffer).Encode(JSONStruct)
+	return JSONByteBuffer
+}
+
+func buildNewGitHubRepoName(packageModel models.PackageModel) string {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	newGitHubRepoName := fmt.Sprintf("%s-%s", author, repo)
+	return newGitHubRepoName
 }
 
 func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
@@ -157,14 +239,14 @@ func buildGitHubRepoCommitsFromTimestampAPIURL(
 	author := *packageModel.Author
 	repo := *packageModel.Repo
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?%s=%s&access_token=%s",
+	url := fmt.Sprintf("%s/repos/%s/%s/commits?%s=%s&access_token=%s",
+		github_base_api_url,
 		author,
 		repo,
 		timeSelector,
 		strings.Replace(timestamp.String(), " ", "", -1),
 		APIKeyModel.Key,
 	)
-	log.Println("URL = ", url)
 	return url
 }
 
@@ -189,6 +271,18 @@ func parseGitHubCommitLookUpResponseBody(response *http.Response) (string, error
 
 // ==== Misc ====
 
+type NewGitHubRepo struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Homepage    string `json:"homepage"`
+}
+
+// TODO Optimize this
+type GitHubPackageModelDTO struct {
+	Package      models.PackageModel
+	ResponseBody map[string]interface{}
+}
+
 // TODO Won't need this after implementing FFJSON
 func ParseStarCount(responseBody map[string]interface{}) int {
 	starCount := responseBody["stargazers_count"]
@@ -197,10 +291,4 @@ func ParseStarCount(responseBody map[string]interface{}) int {
 	}
 
 	return int(starCount.(float64))
-}
-
-// TODO same here
-type GitHubPackageModelDTO struct {
-	Package      models.PackageModel
-	ResponseBody map[string]interface{}
 }
