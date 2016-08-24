@@ -28,10 +28,9 @@ var (
 )
 
 // TODO (@Shikkic): Possibly add Channel as a param
-func SubVersionPackageModel(packageModel models.PackageModel, version string) {
+func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 	// Set working folder_name for package
-	// TODO (Shikkic): Build the folder name based with algo
-	folder_name = *packageModel.Author + "-" + *packageModel.Repo
+	folder_name = buildFolderName(packageModel)
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
@@ -40,7 +39,7 @@ func SubVersionPackageModel(packageModel models.PackageModel, version string) {
 	log.Printf("Creating new Github repo for %s/%s at %s",
 		*packageModel.Author,
 		*packageModel.Repo,
-		buildTagName(&packageModel),
+		ref,
 	)
 	err := gitHubRequestService.CreateNewGitHubRepo(packageModel)
 	log.Printf("%s", err)
@@ -50,7 +49,7 @@ func SubVersionPackageModel(packageModel models.PackageModel, version string) {
 	checkError(err, folder_name)
 
 	log.Printf("Creating branch %s \n", buildBranchName(&packageModel))
-	err = createBranchCMD(&packageModel)
+	err = createBranchCMD(&packageModel, ref)
 	checkError(err, folder_name)
 
 	log.Printf("Setting remote branch name %s \n", buildRemoteName(&packageModel))
@@ -60,7 +59,7 @@ func SubVersionPackageModel(packageModel models.PackageModel, version string) {
 	log.Printf("Fetching github archive for %s/%s with tag %s \n",
 		*packageModel.Author,
 		*packageModel.Repo,
-		buildTagName(&packageModel),
+		ref,
 	)
 	err = fetchArchiveCMD(&packageModel)
 	checkError(err, folder_name)
@@ -68,7 +67,7 @@ func SubVersionPackageModel(packageModel models.PackageModel, version string) {
 	log.Printf("Fetching github archive for %s/%s with tag %s \n",
 		*packageModel.Author,
 		*packageModel.Repo,
-		buildTagName(&packageModel),
+		ref,
 	)
 	err = unzipArchiveCMD(&packageModel)
 	checkError(err, folder_name)
@@ -99,32 +98,28 @@ func initializeRepoCMD(packageModel *models.PackageModel) error {
 	return err
 }
 
-func createBranchCMD(packageModel *models.PackageModel) error {
+func createBranchCMD(packageModel *models.PackageModel, ref Refs) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	branchName := buildBranchName(packageModel)
-	cmd := fmt.Sprintf(create_branch, navigateFolderCMD, branchName)
+	cmd := fmt.Sprintf(create_branch, navigateFolderCMD, ref)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
 }
 
-func setRemoteCMD(packageModel *models.PackageModel) error {
+func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	remoteName := buildRemoteName(packageModel)
-
-	cmd := fmt.Sprintf(set_remote_command, navigateFolderCMD, remoteName)
+	cmd := fmt.Sprintf(set_remote_command, navigateFolderCMD, ref)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
 }
-func fetchArchiveCMD(packageModel *models.PackageModel) error {
+func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
-	tag := buildTagName(packageModel)
 	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
 
-	cmd := fmt.Sprintf(fetch_repo_archive, navigateFolderCMD, *packageModel.Author, *packageModel.Repo, tag)
+	cmd := fmt.Sprintf(fetch_repo_archive, navigateFolderCMD, *packageModel.Author, *packageModel.Repo, ref)
 	log.Printf("%s FETCH ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -132,12 +127,10 @@ func fetchArchiveCMD(packageModel *models.PackageModel) error {
 	return err
 }
 
-func unzipArchiveCMD(packageModel *models.PackageModel) error {
+func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
 	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	tag := buildTagName(packageModel)
-
-	cmd := fmt.Sprintf(unzip_repo_archive, navigateFolderCMD, tag, tag)
+	cmd := fmt.Sprintf(unzip_repo_archive, navigateFolderCMD, ref, ref)
 	log.Printf("%s UNZIP ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -166,10 +159,9 @@ func commitFilesCMD(packageModel *models.PackageModel) error {
 	return err
 }
 
-func pushFilesCMD(packageModel *models.PackageModel) error {
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
+func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 	branchName := buildBranchName(packageModel)
-	cmd := fmt.Sprintf(push_files, navigateFolderCMD, branchName)
+	cmd := fmt.Sprintf(push_files, navigateFolderCMD, ref)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s 		\n", out)
@@ -192,8 +184,10 @@ func buildRemoteName(packageModel *models.PackageModel) string {
 	return remoteURL
 }
 
-func buildTagName(packageModel *models.PackageModel) string {
-	return "master"
+func buildFolderName(packageModel *models.PackageModel) string {
+	author := *packageModel.Author
+	repo := *packageModel.Repo
+	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
 }
 
 // Exit Hook to clean up files
@@ -224,6 +218,9 @@ func checkError(err error, folderName string) {
 
 Package - skeswa / gophr @ 1.0
 
-push to len(author)+skeswa+len(repo)+gophr
+repo name len(author)+skeswa+len(repo)+gophr
 
+branch = ref
+
+remote url =
 */
