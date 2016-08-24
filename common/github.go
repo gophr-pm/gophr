@@ -14,6 +14,11 @@ import (
 	"github.com/skeswa/gophr/common/models"
 )
 
+var (
+	commits_until_parameter = "until"
+	commits_after_parameter = "after'"
+)
+
 type GitHubRequestService struct {
 	APIKeyChain *GitHubAPIKeyChain
 }
@@ -25,7 +30,9 @@ func NewGitHubRequestService() *GitHubRequestService {
 	return &newGitHubRequestService
 }
 
-func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(packageModel models.PackageModel) (map[string]interface{}, error) {
+func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(
+	packageModel models.PackageModel,
+) (map[string]interface{}, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
@@ -81,13 +88,41 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 	return bodyMap, nil
 }
 
-func (gitHubRequestService *GitHubRequestService) FetchCommitSHAByDateRangeForPackageModel(packageModel models.PackageModel, timestamp time.Time) (string, error) {
+func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
+	packageModel models.PackageModel,
+	timestamp time.Time,
+) (string, error) {
+	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commits_until_parameter)
+	if err == nil {
+		return commitSHA, nil
+	}
+
+	log.Printf("%s \n", err)
+	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commits_after_parameter)
+	if err == nil {
+		return commitSHA, nil
+	}
+
+	log.Printf("%s \n", err)
+	refs, err := FetchRefs(*packageModel.Author, *packageModel.Repo)
+	if err != nil {
+		return refs.MasterRefHash, nil
+	}
+
+	return "", err
+}
+
+func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
+	packageModel models.PackageModel,
+	timestamp time.Time,
+	timeSelector string,
+) (string, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
-	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(packageModel, *APIKeyModel, timestamp)
+	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(packageModel, *APIKeyModel, timestamp, timeSelector)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -107,18 +142,28 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitSHAByDateRangeForPa
 
 	commitSHA, err := parseGitHubCommitLookUpResponseBody(resp)
 	if err != nil {
-		// TODO if we can't find date need to do something here
 		return "", err
 	}
 
 	return commitSHA, nil
 }
 
-func buildGitHubRepoCommitsFromTimestampAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel, timestamp time.Time) string {
+func buildGitHubRepoCommitsFromTimestampAPIURL(
+	packageModel models.PackageModel,
+	APIKeyModel GitHubAPIKeyModel,
+	timestamp time.Time,
+	timeSelector string,
+) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
 
-	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?until=%s&access_token=%s", author, repo, strings.Replace(timestamp.String(), " ", "", -1), APIKeyModel.Key)
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits?%s=%s&access_token=%s",
+		author,
+		repo,
+		timeSelector,
+		strings.Replace(timestamp.String(), " ", "", -1),
+		APIKeyModel.Key,
+	)
 	log.Println("URL = ", url)
 	return url
 }
