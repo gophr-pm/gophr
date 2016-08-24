@@ -103,7 +103,7 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	}
 
 	if resp.StatusCode == 404 {
-		log.Printf("No Github repo exists in %s with the name %s \n", github_gophr_org_name, repoName)
+		log.Printf("No Github repo exists in %s org with the name %s \n", github_gophr_org_name, repoName)
 		return nil
 	}
 
