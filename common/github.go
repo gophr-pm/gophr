@@ -93,18 +93,17 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
-	repoName := buildNewGitHubRepoName(packageModel)
+	repoName := BuildNewGitHubRepoName(packageModel)
 	url := fmt.Sprintf("https://github.com/%s/%s", github_gophr_org_name, repoName)
 	resp, err := http.Get(url)
 
 	if err != nil {
-		log.Println("Error, a repo with that name already exists")
+		log.Println("Error occured during request")
 		return err
 	}
 
-	if resp.StatusCode != 404 {
-		log.Println("Error, a repo with that name already exists")
-		return errors.New("Error, a repo with that name already exists.")
+	if resp.StatusCode == 404 {
+		return errors.New(fmt.Sprintf("Error status code %d, a repo with that name already exists.", resp.StatusCode))
 	}
 
 	return nil
@@ -159,7 +158,7 @@ func buildNewGitHubRepoJSONBody(
 ) *bytes.Buffer {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	newGitHubRepoName := buildNewGitHubRepoName(packageModel)
+	newGitHubRepoName := BuildNewGitHubRepoName(packageModel)
 	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
 	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
 
@@ -169,7 +168,7 @@ func buildNewGitHubRepoJSONBody(
 	return JSONByteBuffer
 }
 
-func buildNewGitHubRepoName(packageModel models.PackageModel) string {
+func BuildNewGitHubRepoName(packageModel models.PackageModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
 	newGitHubRepoName := fmt.Sprintf("%s-%s", author, repo)
