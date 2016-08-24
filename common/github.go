@@ -113,6 +113,12 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
 	packageModel models.PackageModel,
 ) error {
+	err := gitHubRequestService.CheckGitHubRepoExists(packageModel)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	fmt.Printf("%+v \n", APIKeyModel)
