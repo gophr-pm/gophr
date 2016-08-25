@@ -47,11 +47,11 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	err = initializeRepoCMD(packageModel)
 	checkError(err, folderName)
 
-	log.Printf("Creating branch %s \n", buildGitHubBranch(packageModel))
+	log.Printf("Creating branch %s \n", buildGitHubBranch(ref))
 	err = createBranchCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Setting remote branch url %s \n", buildGitHubBranch(packageModel))
+	log.Printf("Setting remote branch url %s \n", buildGitHubBranch(ref))
 	err = setRemoteCMD(packageModel, ref)
 	checkError(err, folderName)
 
@@ -100,7 +100,7 @@ func initializeRepoCMD(packageModel *models.PackageModel) error {
 func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, buildGitHubBranch(packageModel))
+	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, buildGitHubBranch(ref))
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
@@ -172,14 +172,13 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 // Helper functions
 
 func buildRemoteURL(packageModel *models.PackageModel, ref string) string {
-	repoHash := buildGitHubBranch(packageModel)
-	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, repoHash)
+	repoName := BuildNewGitHubRepoName(packageModel)
+	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, repoName)
 	return remoteURL
 }
 
-func buildGitHubBranch(packageModel *models.PackageModel) string {
-	repoName := BuildNewGitHubRepoName(packageModel)
-	repoHash := repoName[:len(repoName)-1]
+func buildGitHubBranch(ref string) string {
+	repoHash := ref[:len(ref)-1]
 	return repoHash
 }
 
