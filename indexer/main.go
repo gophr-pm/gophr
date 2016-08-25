@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 
 	"github.com/skeswa/gophr/common"
@@ -13,14 +12,6 @@ func main() {
 	log.Println("Preparing to initialize DB connection")
 	_, session := common.Init()
 	defer session.Close()
-
-	repo := "cli"
-	stars := 0
-	exists := false
-	author := "urfave"
-	testPackageModel := models.PackageModel{Repo: &repo, Stars: &stars, Exists: &exists, Author: &author}
-	common.SubVersionPackageModel(&testPackageModel, "2c1fd1510c7526a9cb628fdaea7bd85f44412fa8")
-	os.Exit(3)
 
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
