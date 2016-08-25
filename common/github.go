@@ -16,10 +16,10 @@ import (
 )
 
 var (
-	github_base_api_url     = "https://api.github.com"
-	github_gophr_org_name   = "gophr-pm"
-	commits_until_parameter = "until"
-	commits_after_parameter = "after'"
+	gitHubBaseAPIURL          = "https://api.github.com"
+	gitHubGophrPackageOrgName = "gophr-packages"
+	commitsUntilParameter     = "until"
+	commitsAfterParameter     = "after'"
 )
 
 type GitHubRequestService struct {
@@ -70,7 +70,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", github_base_api_url, author, repo, APIKeyModel.Key)
+	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", gitHubBaseAPIURL, author, repo, APIKeyModel.Key)
 	return url
 }
 
@@ -95,7 +95,7 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
 	repoName := BuildNewGitHubRepoName(&packageModel)
-	url := fmt.Sprintf("https://github.com/%s/%s", github_gophr_org_name, repoName)
+	url := fmt.Sprintf("https://github.com/%s/%s", gitHubGophrPackageOrgName, repoName)
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -104,7 +104,7 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	}
 
 	if resp.StatusCode == 404 {
-		log.Printf("No Github repo exists in %s org with the name %s \n", github_gophr_org_name, repoName)
+		log.Printf("No Github repo exists in %s org with the name %s \n", gitHubGophrPackageOrgName, repoName)
 		return nil
 	}
 
@@ -148,8 +148,8 @@ func buildNewGitHubRepoAPIURL(
 	APIKeyModel *GitHubAPIKeyModel,
 ) string {
 	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
-		github_base_api_url,
-		github_gophr_org_name,
+		gitHubBaseAPIURL,
+		gitHubGophrPackageOrgName,
 		APIKeyModel.Key,
 	)
 	return url
@@ -180,13 +180,13 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
 	packageModel models.PackageModel,
 	timestamp time.Time,
 ) (string, error) {
-	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commits_until_parameter)
+	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commitsUntilParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
 	log.Printf("%s \n", err)
-	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commits_after_parameter)
+	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commitsAfterParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
@@ -246,7 +246,7 @@ func buildGitHubRepoCommitsFromTimestampAPIURL(
 	repo := *packageModel.Repo
 
 	url := fmt.Sprintf("%s/repos/%s/%s/commits?%s=%s&access_token=%s",
-		github_base_api_url,
+		gitHubBaseAPIURL,
 		author,
 		repo,
 		timeSelector,
