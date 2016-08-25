@@ -161,8 +161,7 @@ func commitFilesCMD(packageModel *models.PackageModel) error {
 
 func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	remoteURL := buildRemoteURL(packageModel, ref)
-	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, remoteURL)
+	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, buildGitHubBranch(ref))
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s 		\n", out)
