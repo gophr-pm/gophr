@@ -26,8 +26,22 @@ var (
 	pushFiles        = "%s && git push --set-upstream origin %s"
 )
 
-//  SubVersionPackageModel TODO (@Shikkic): Possibly add Channel as a param
+// SubVersionPackageModel creates a github repo for the packageModel on gophr-packages
+// versioned a the speicifed ref
 func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
+	// First check if this ref has already been versioned for this packageModel
+	log.Println("Checking if ref has been versioned before")
+	exists, err := CheckIfRefExists(*packageModel.Author, *packageModel.Repo, ref)
+	if exists == true && err == nil {
+		log.Println("That ref has already been versioned")
+		return
+	}
+
+	if err != nil {
+		log.Println("Error occured in checking if ref exists")
+		// TODO:(Shikkic) return err. refactor func to return error in general
+	}
+
 	// Set working folderName for package
 	folderName = BuildNewGitHubRepoName(packageModel)
 
@@ -40,7 +54,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 		*packageModel.Repo,
 		ref,
 	)
-	err := gitHubRequestService.CreateNewGitHubRepo(*packageModel)
+	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)
 	log.Printf("%s", err)
 
 	log.Printf("Initializing folder and initializing git repo for %s \n", folderName)
