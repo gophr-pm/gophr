@@ -333,6 +333,9 @@ func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 // CheckIfRefExists downloads and processes refs data from Github and checks
 // whether a given ref exists in the remote refs list.
 func CheckIfRefExists(author, repo string, ref string) (bool, error) {
+	ref = BuildGitHubBranch(ref)
+	repo = BuildNewGitHubRepoName(author, repo)
+	author = GitHubGophrPackageOrgName
 	githubRoot := fmt.Sprintf(
 		githubRootTemplate,
 		author,
