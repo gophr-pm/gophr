@@ -103,7 +103,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	err = commitFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Pushing files to branch %s \n", buildRemoteURL(packageModel, ref))
+	log.Printf("Pushing files to branch %s \n", BuildRemoteURL(packageModel, ref))
 	err = pushFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
@@ -132,7 +132,7 @@ func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	remoteURL := buildRemoteURL(packageModel, ref)
+	remoteURL := BuildRemoteURL(packageModel, ref)
 	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, remoteURL)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
@@ -194,17 +194,6 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 }
 
 // Helper functions
-
-func buildRemoteURL(packageModel *models.PackageModel, ref string) string {
-	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
-	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, repoName)
-	return remoteURL
-}
-
-func BuildGitHubBranch(ref string) string {
-	repoHash := ref[:len(ref)-1]
-	return repoHash
-}
 
 // Exit Hook to clean up files
 func cleanUpExitHook(folderName string) {

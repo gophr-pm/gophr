@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-var gitHubAPIBaseUrl = "https://api.github.com/"
-
+// GitHubAPIKeyModel represents a single Github API keys,
+// it's responsible for keeping track of API usage via that key
 type GitHubAPIKeyModel struct {
 	Key                string
 	RemainingUses      int
@@ -17,9 +17,10 @@ type GitHubAPIKeyModel struct {
 	RateLimitResetTime time.Time
 }
 
-func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(respHeader http.Header) {
-	remaingRequests := respHeader.Get("X-RateLimit-Remaining")
-	rateLimitResetTime := respHeader.Get("X-RateLimit-Reset")
+// TODO:(Shikkic) consider revising how we parse the values from header
+func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(header http.Header) {
+	remaingRequests := header.Get("X-RateLimit-Remaining")
+	rateLimitResetTime := header.Get("X-RateLimit-Reset")
 
 	remainingRequestsInt, _ := strconv.Atoi(remaingRequests)
 	rateLimitResetInt, _ := strconv.ParseInt(rateLimitResetTime, 0, 64)
@@ -33,14 +34,14 @@ func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(respHeader htt
 	log.Printf("Decrementing APIKeyModel usage to %d uses \n", remainingRequestsInt)
 }
 
-// TODO consider passing url endpoint to prime, or maybe a enum for more accuracy when pinging GH
+// TODO:(Shikkic) consider passing url endpoint to prime, or maybe an enum for more accuracy when pinging GH
 func (apiKey *GitHubAPIKeyModel) prime() {
-	githubTestURL := gitHubAPIBaseUrl + "repos/a/b" + "?access_token=" + apiKey.Key
-	log.Printf("Preparing to prime APIKeyModel with key %s and url %s \n", apiKey.Key, githubTestURL)
+	gitHubTestURL := fmt.Sprintf("%srepos/a/b?access_token=%s", GitHubBaseAPIURL, apiKey.Key)
+	log.Printf("Preparing to prime APIKeyModel with key %s and url %s \n", apiKey.Key, gitHubTestURL)
 
-	resp, err := http.Get(githubTestURL)
+	resp, err := http.Get(gitHubTestURL)
 	if err != nil {
-		log.Println("Could not prime APIKey, fatal error in github api request")
+		log.Println("Could not prime APIKey, fatal error in Github API request")
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()

@@ -15,21 +15,24 @@ import (
 	"github.com/skeswa/gophr/common/models"
 )
 
-// GitHubGophrPackageOrgName is the organization name for all versioned packages
+// GitHubGophrPackageOrgName is the  Github organization name for all versioned packages
 var (
 	GitHubGophrPackageOrgName = "gophr-packages"
+	GitHubBaseAPIURL          = "https://api.github.com"
 )
 
 var (
-	gitHubBaseAPIURL      = "https://api.github.com"
 	commitsUntilParameter = "until"
 	commitsAfterParameter = "after'"
 )
 
+// GitHubRequestService is the library responsible for managing all outbound
+// requests to GitHub
 type GitHubRequestService struct {
 	APIKeyChain *GitHubAPIKeyChain
 }
 
+// NewGitHubRequestService initialies a new GitHubRequestService and APIKeyChain
 func NewGitHubRequestService() *GitHubRequestService {
 	newGitHubRequestService := GitHubRequestService{}
 	newGitHubRequestService.APIKeyChain = NewGitHubAPIKeyChain()
@@ -37,7 +40,8 @@ func NewGitHubRequestService() *GitHubRequestService {
 	return &newGitHubRequestService
 }
 
-// TODO optimize this
+// FetchGitHubDataForPackageModel fetchs current repo data of a given packageModel
+// TODO optimize this with FFJSON models
 func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(
 	packageModel models.PackageModel,
 ) (map[string]interface{}, error) {
@@ -74,7 +78,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", gitHubBaseAPIURL, author, repo, APIKeyModel.Key)
+	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", GitHubBaseAPIURL, author, repo, APIKeyModel.Key)
 	return url
 }
 
@@ -94,7 +98,8 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 	return bodyMap, nil
 }
 
-// TODO Instead of pinging try downloading refs, might be more sustainable?
+// CheckGitHubRepoExists returns whether a repo exists
+// TODO(Shikkic): Instead of pinging try downloading refs, might be more sustainable?
 func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
@@ -112,9 +117,11 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 		return nil
 	}
 
-	return errors.New(fmt.Sprintf("Error status code %d, a repo with that name already exists.", resp.StatusCode))
+	return fmt.Errorf("Error status code %d, a repo with that name already exists.", resp.StatusCode)
 }
 
+// CreateNewGitHubRepo if repo doesn't already exist will create a new
+// repo on the GitHubGophrPackageOrgName repo
 func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
 	packageModel models.PackageModel,
 ) error {
@@ -152,7 +159,7 @@ func buildNewGitHubRepoAPIURL(
 	APIKeyModel *GitHubAPIKeyModel,
 ) string {
 	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
-		gitHubBaseAPIURL,
+		GitHubBaseAPIURL,
 		GitHubGophrPackageOrgName,
 		APIKeyModel.Key,
 	)
@@ -168,16 +175,19 @@ func buildNewGitHubRepoJSONBody(
 	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
 	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
 
-	JSONStruct := NewGitHubRepo{Name: newGitHubRepoName, Description: description, Homepage: homepage}
+	JSONStruct := NewGitHubRepoDTO{Name: newGitHubRepoName, Description: description, Homepage: homepage}
 	JSONByteBuffer := new(bytes.Buffer)
 	json.NewEncoder(JSONByteBuffer).Encode(JSONStruct)
 	return JSONByteBuffer
 }
 
+// BuildNewGitHubRepoName creates a new repo name hash uses for repo creation
+// and lookup. Eliminates collision between similiar usernames and packages
 func BuildNewGitHubRepoName(author string, repo string) string {
 	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
 }
 
+// FetchCommitSHA Fetches a commitSHA closest to a given timestamp
 func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
 	packageModel models.PackageModel,
 	timestamp time.Time,
@@ -248,7 +258,7 @@ func buildGitHubRepoCommitsFromTimestampAPIURL(
 	repo := *packageModel.Repo
 
 	url := fmt.Sprintf("%s/repos/%s/%s/commits?%s=%s&access_token=%s",
-		gitHubBaseAPIURL,
+		GitHubBaseAPIURL,
 		author,
 		repo,
 		timeSelector,
@@ -279,19 +289,21 @@ func parseGitHubCommitLookUpResponseBody(response *http.Response) (string, error
 
 // ==== Misc ====
 
-type NewGitHubRepo struct {
+// NewGitHubRepoDTO used as a DTO for building POST requests to Github
+// to create new repos
+type NewGitHubRepoDTO struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Homepage    string `json:"homepage"`
 }
 
-// TODO Optimize this
+// GitHubPackageModelDTO TODO Optimize this
 type GitHubPackageModelDTO struct {
 	Package      models.PackageModel
 	ResponseBody map[string]interface{}
 }
 
-// TODO Won't need this after implementing FFJSON
+// ParseStarCount TODO Won't need this after implementing FFJSON
 func ParseStarCount(responseBody map[string]interface{}) int {
 	starCount := responseBody["stargazers_count"]
 	if starCount == nil {
@@ -299,4 +311,17 @@ func ParseStarCount(responseBody map[string]interface{}) int {
 	}
 
 	return int(starCount.(float64))
+}
+
+// BuildGitHubBranch creates a new ref based on a hash of the old ref
+func BuildGitHubBranch(ref string) string {
+	repoHash := ref[:len(ref)-1]
+	return repoHash
+}
+
+// BuildRemoteURL creates a remote url for a packageModel based on it's ref
+func BuildRemoteURL(packageModel *models.PackageModel, ref string) string {
+	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, repoName)
+	return remoteURL
 }
