@@ -20,7 +20,7 @@ var (
 	createBranch     = "%s && git checkout -b %s"
 	setRemoteCommand = "%s && git remote add origin %s"
 	fetchRepoArchive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
-	unzipRepoArchive = "%s && unzip %s.zip && cd %s && mv * ../ && cd .. && rm %s.zip"
+	unzipRepoArchive = "%s && unzip %s.zip && cd %s && mv * ../ && cd .. && rm %s.zip && rm -rf %s"
 	addFiles         = "%s && git add . "
 	commitFiles      = "%s && git commit -m \" %s \""
 	pushFiles        = "%s && git push --set-upstream origin %s"
@@ -130,7 +130,8 @@ func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
 func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, *packageModel.Repo+"-"+ref, ref)
+	zipFolder := *packageModel.Repo + "-" + ref
+	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, zipFolder, ref, zipFolder)
 	log.Printf("%s UNZIP ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
