@@ -36,7 +36,7 @@ func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(header http.He
 
 // TODO:(Shikkic) consider passing url endpoint to prime, or maybe an enum for more accuracy when pinging GH
 func (apiKey *GitHubAPIKeyModel) prime() {
-	gitHubTestURL := fmt.Sprintf("%srepos/a/b?access_token=%s", GitHubBaseAPIURL, apiKey.Key)
+	gitHubTestURL := fmt.Sprintf("%s/repos/a/b?access_token=%s", GitHubBaseAPIURL, apiKey.Key)
 	log.Printf("Preparing to prime APIKeyModel with key %s and url %s \n", apiKey.Key, gitHubTestURL)
 
 	resp, err := http.Get(gitHubTestURL)

@@ -104,6 +104,7 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
 	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+	// TODO change this to fetch ref
 	url := fmt.Sprintf("https://github.com/%s/%s", GitHubGophrPackageOrgName, repoName)
 	resp, err := http.Get(url)
 
