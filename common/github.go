@@ -160,7 +160,7 @@ func buildNewGitHubRepoJSONBody(
 ) *bytes.Buffer {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	newGitHubRepoName := BuildNewGitHubRepoName(packageModel)
+	newGitHubRepoName := BuildNewGitHubRepoName(&packageModel)
 	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
 	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
 
@@ -170,11 +170,10 @@ func buildNewGitHubRepoJSONBody(
 	return JSONByteBuffer
 }
 
-func BuildNewGitHubRepoName(packageModel models.PackageModel) string {
+func BuildNewGitHubRepoName(packageModel *models.PackageModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	newGitHubRepoName := fmt.Sprintf("%s-%s", author, repo)
-	return newGitHubRepoName
+	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
 }
 
 func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(

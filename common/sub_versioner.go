@@ -29,7 +29,7 @@ var (
 //  SubVersionPackageModel TODO (@Shikkic): Possibly add Channel as a param
 func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	// Set working folderName for package
-	folderName = buildFolderName(packageModel)
+	folderName = BuildNewGitHubRepoName(packageModel)
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
@@ -51,7 +51,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	err = createBranchCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Setting remote branch name %s \n", buildRemoteName(packageModel))
+	log.Printf("Setting remote branch name %s \n", BuildNewGitHubRepoName(packageModel))
 	err = setRemoteCMD(packageModel, ref)
 	checkError(err, folderName)
 
@@ -109,7 +109,7 @@ func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, ref)
+	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, BuildNewGitHubRepoName(packageModel))
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
@@ -164,24 +164,10 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s 		\n", out)
-
 	return err
 }
 
 // Helper functions
-
-// TODO Fix this
-func buildRemoteName(packageModel *models.PackageModel) string {
-	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, *packageModel.Author+"-"+*packageModel.Repo)
-	log.Printf("Generating Remote URL %s \n", remoteURL)
-	return remoteURL
-}
-
-func buildFolderName(packageModel *models.PackageModel) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
-}
 
 // Exit Hook to clean up files
 func cleanUpExitHook(folderName string) {
