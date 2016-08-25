@@ -20,7 +20,7 @@ var (
 	createBranch     = "%s && git checkout -b %s"
 	setRemoteCommand = "%s && git remote add origin %s"
 	fetchRepoArchive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
-	unzipRepoArchive = "%s && unzip %s.zip && rm %s.zip"
+	unzipRepoArchive = "%s && unzip -j %s.zip && rm %s.zip"
 	addFiles         = "%s && git add . "
 	commitFiles      = "%s && git commit -m \" %s \""
 	pushFiles        = "%s && git push --set-upstream origin %s"
@@ -79,7 +79,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	checkError(err, folderName)
 
 	log.Println("Commiting repo data to branch")
-	err = commitFilesCMD(packageModel)
+	err = commitFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
 	log.Printf("Pushing files to branch %s \n", buildRemoteURL(packageModel, ref))
@@ -148,9 +148,9 @@ func addFilesCMD() error {
 }
 
 // TODO add version
-func commitFilesCMD(packageModel *models.PackageModel) error {
+func commitFilesCMD(packageModel *models.PackageModel, ref string) error {
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	commitMessage := fmt.Sprintf("Created Versin Repo of %s / %s @ %s", *packageModel.Author, *packageModel.Repo, "1.0")
+	commitMessage := fmt.Sprintf("Gophr versioned repo of %s / %s @ %s", *packageModel.Author, *packageModel.Repo, ref)
 	cmd := fmt.Sprintf(commitFiles, navigateFolderCMD, commitMessage)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
