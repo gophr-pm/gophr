@@ -11,26 +11,26 @@ import (
 )
 
 var (
-	folder_name                string
-	github_remote_origin       = "git@github.com:gophr-pm/%s.git"
-	navigate_to_package_folder = "cd /tmp/%s"
+	folderName              string
+	gitHubRemoteOrigin      = "git@github.com:gophr-pm/%s.git"
+	navigateToPackageFolder = "cd /tmp/%s"
 )
 
 var (
-	initialize_repo    = "cd /tmp && mkdir %s && cd %s && git init"
-	create_branch      = "%s && git checkout -b %s"
-	set_remote_command = "%s && git remote add origin %s"
-	fetch_repo_archive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
-	unzip_repo_archive = "%s && unzip %s.zip && rm %s.zip"
-	add_files          = "%s && git add . "
-	commit_files       = "%s && git commit -m \" %s \""
-	push_files         = "%s && git push --set-upstream origin %s"
+	initalizeRepo    = "cd /tmp && mkdir %s && cd %s && git init"
+	createBranch     = "%s && git checkout -b %s"
+	setRemoteCommand = "%s && git remote add origin %s"
+	fetchRepoArchive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
+	unzipRepoArchive = "%s && unzip %s.zip && rm %s.zip"
+	addFiles         = "%s && git add . "
+	commitFiles      = "%s && git commit -m \" %s \""
+	pushFiles        = "%s && git push --set-upstream origin %s"
 )
 
-// TODO (@Shikkic): Possibly add Channel as a param
+//  SubVersionPackageModel TODO (@Shikkic): Possibly add Channel as a param
 func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
-	// Set working folder_name for package
-	folder_name = buildFolderName(packageModel)
+	// Set working folderName for package
+	folderName = buildFolderName(packageModel)
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
@@ -44,17 +44,17 @@ func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 	err := gitHubRequestService.CreateNewGitHubRepo(packageModel)
 	log.Printf("%s", err)
 
-	log.Printf("Initializing folder and initializing git repo for %s \n", folder_name)
+	log.Printf("Initializing folder and initializing git repo for %s \n", folderName)
 	err = initializeRepoCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Printf("Creating branch %s \n", buildBranchName(&packageModel))
 	err = createBranchCMD(&packageModel, ref)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Printf("Setting remote branch name %s \n", buildRemoteName(&packageModel))
 	err = setRemoteCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Printf("Fetching github archive for %s/%s with tag %s \n",
 		*packageModel.Author,
@@ -62,7 +62,7 @@ func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 		ref,
 	)
 	err = fetchArchiveCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Printf("Fetching github archive for %s/%s with tag %s \n",
 		*packageModel.Author,
@@ -70,29 +70,29 @@ func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 		ref,
 	)
 	err = unzipArchiveCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	// TODO subverisoning
 	// Create array of all sub-dependencies
 
 	log.Println("Adding unarchived repo data to branch")
 	err = addFilesCMD()
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Println("Commiting repo data to branch")
 	err = commitFilesCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
 	log.Printf("Pushing files to branch %s \n", buildBranchName(&packageModel))
 	err = pushFilesCMD(&packageModel)
-	checkError(err, folder_name)
+	checkError(err, folderName)
 
-	cleanUpExitHook(folder_name)
+	cleanUpExitHook(folderName)
 }
 
 func initializeRepoCMD(packageModel *models.PackageModel) error {
 	log.Println("Initializing folder and repo commmand")
-	cmd := fmt.Sprintf(initialize_repo, folder_name, folder_name)
+	cmd := fmt.Sprintf(initalizeRepo, folderName, folderName)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
@@ -100,8 +100,8 @@ func initializeRepoCMD(packageModel *models.PackageModel) error {
 
 func createBranchCMD(packageModel *models.PackageModel, ref Refs) error {
 	log.Println("Initializing folder and repo commmand")
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	cmd := fmt.Sprintf(create_branch, navigateFolderCMD, ref)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
+	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, ref)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
@@ -109,17 +109,17 @@ func createBranchCMD(packageModel *models.PackageModel, ref Refs) error {
 
 func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	cmd := fmt.Sprintf(set_remote_command, navigateFolderCMD, ref)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
+	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, ref)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
 }
 func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
 
-	cmd := fmt.Sprintf(fetch_repo_archive, navigateFolderCMD, *packageModel.Author, *packageModel.Repo, ref)
+	cmd := fmt.Sprintf(fetchRepoArchive, navigateFolderCMD, *packageModel.Author, *packageModel.Repo, ref)
 	log.Printf("%s FETCH ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -129,8 +129,8 @@ func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
 
 func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	cmd := fmt.Sprintf(unzip_repo_archive, navigateFolderCMD, ref, ref)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
+	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, ref)
 	log.Printf("%s UNZIP ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -139,8 +139,8 @@ func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
 }
 
 func addFilesCMD() error {
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
-	cmd := fmt.Sprintf(add_files, navigateFolderCMD)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
+	cmd := fmt.Sprintf(addFiles, navigateFolderCMD)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 
@@ -149,9 +149,9 @@ func addFilesCMD() error {
 
 // TODO add version
 func commitFilesCMD(packageModel *models.PackageModel) error {
-	navigateFolderCMD := fmt.Sprintf(navigate_to_package_folder, folder_name)
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
 	commitMessage := fmt.Sprintf("Created Versin Repo of %s / %s @ %s", *packageModel.Author, *packageModel.Repo, "1.0")
-	cmd := fmt.Sprintf(commit_files, navigateFolderCMD, commitMessage)
+	cmd := fmt.Sprintf(commitFiles, navigateFolderCMD, commitMessage)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -160,8 +160,7 @@ func commitFilesCMD(packageModel *models.PackageModel) error {
 }
 
 func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
-	branchName := buildBranchName(packageModel)
-	cmd := fmt.Sprintf(push_files, navigateFolderCMD, ref)
+	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, ref)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s 		\n", out)
@@ -172,14 +171,8 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 // Helper functions
 
 // TODO Fix this
-func buildBranchName(packageModel *models.PackageModel) string {
-	log.Println("Generating Branch Name")
-	return "master"
-}
-
-// TODO Fix this
 func buildRemoteName(packageModel *models.PackageModel) string {
-	remoteURL := fmt.Sprintf(github_remote_origin, *packageModel.Author+"-"+*packageModel.Repo)
+	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, *packageModel.Author+"-"+*packageModel.Repo)
 	log.Printf("Generating Remote URL %s \n", remoteURL)
 	return remoteURL
 }
@@ -213,14 +206,3 @@ func checkError(err error, folderName string) {
 		log.Fatalf("Error occured %s \n", err)
 	}
 }
-
-/*
-
-Package - skeswa / gophr @ 1.0
-
-repo name len(author)+skeswa+len(repo)+gophr
-
-branch = ref
-
-remote url =
-*/
