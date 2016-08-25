@@ -109,7 +109,8 @@ func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, BuildNewGitHubRepoName(packageModel))
+	remoteURL := fmt.Sprintf(gitHubRemoteOrigin, BuildNewGitHubRepoName(packageModel))
+	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, remoteURL)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
 	return err
