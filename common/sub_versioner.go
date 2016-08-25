@@ -198,7 +198,8 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 // Exit Hook to clean up files
 func cleanUpExitHook(folderName string) {
 	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
-	if strings.ContainsAny(folderName, "/") == true {
+	// TODO:(Shikkic)
+	if strings.ContainsAny(folderName, "/") == false {
 		cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
 		out, err := exec.Command("sh", "-c", cmd).Output()
 		if err != nil {
