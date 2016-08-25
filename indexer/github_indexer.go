@@ -10,8 +10,10 @@ import (
 	"github.com/skeswa/gophr/common/models"
 )
 
-var requestTimeBuffer time.Duration = 50 * time.Millisecond
+var requestTimeBuffer = 50 * time.Millisecond
 
+// ReIndexPackageGitHubStats is a service dedicated to fetching Github repo metadata
+// for each package in our DB and updating metadata
 func ReIndexPackageGitHubStats(session *gocql.Session) {
 	log.Println("Reindexing packageModel github data")
 	packageModels, err := models.ScanAllPackageModels(session)
