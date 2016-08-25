@@ -20,7 +20,7 @@ var (
 	createBranch     = "%s && git checkout -b %s"
 	setRemoteCommand = "%s && git remote add origin %s"
 	fetchRepoArchive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
-	unzipRepoArchive = "%s && unzip -j %s.zip && rm %s.zip"
+	unzipRepoArchive = "%s && unzip %s.zip && mv * ../ && rm %s.zip"
 	addFiles         = "%s && git add . "
 	commitFiles      = "%s && git commit -m \" %s \""
 	pushFiles        = "%s && git push --set-upstream origin %s"
