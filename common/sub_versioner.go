@@ -11,7 +11,7 @@ import (
 
 var (
 	folderName              string
-	gitHubRemoteOrigin      = "git@github.com:gophr-pm/%s.git"
+	gitHubRemoteOrigin      = "git@github.com:gophr-packages/%s.git"
 	navigateToPackageFolder = "cd /tmp/%s"
 )
 
