@@ -8,11 +8,15 @@ import (
 	"github.com/skeswa/gophr/common/errors"
 )
 
+// GitHubAPIKeyChain is responsible for managing GitHubAPIKeymodels
+// and cycling through keys that hit their request limit
 type GitHubAPIKeyChain struct {
 	GitHubAPIKeys []GitHubAPIKeyModel
 	CurrentKey    GitHubAPIKeyModel
 }
 
+// NewGitHubAPIKeyChain intializes and returns a new GitHubAPIKeyChain
+// and instantiates all available keys in the db as APIKeyModels
 func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := GitHubAPIKeyChain{}
@@ -73,7 +77,7 @@ func (gitHubAPIKeyChain *GitHubAPIKeyChain) getAPIKeyModel() *GitHubAPIKeyModel 
 }
 
 func (gitHubAPIKeyChain *GitHubAPIKeyChain) shuffleKeys() {
-	newGitHubAPIKeys := make([]GitHubAPIKeyModel, 0)
+	var newGitHubAPIKeys = make([]GitHubAPIKeyModel, 0)
 	var firstAPIModelInArray GitHubAPIKeyModel
 
 	for index, APIKeyModel := range gitHubAPIKeyChain.GitHubAPIKeys {
