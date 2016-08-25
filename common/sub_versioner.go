@@ -130,7 +130,7 @@ func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
 func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Fetching and Unzipping Archive for tag")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, ref)
+	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, ref, *packageModel.Repo+ref)
 	log.Printf("%s UNZIP ARCHIVE COMMAND", cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
