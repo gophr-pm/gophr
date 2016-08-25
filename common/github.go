@@ -15,11 +15,15 @@ import (
 	"github.com/skeswa/gophr/common/models"
 )
 
+// GitHubGophrPackageOrgName is the organization name for all versioned packages
 var (
-	gitHubBaseAPIURL          = "https://api.github.com"
-	gitHubGophrPackageOrgName = "gophr-packages"
-	commitsUntilParameter     = "until"
-	commitsAfterParameter     = "after'"
+	GitHubGophrPackageOrgName = "gophr-packages"
+)
+
+var (
+	gitHubBaseAPIURL      = "https://api.github.com"
+	commitsUntilParameter = "until"
+	commitsAfterParameter = "after'"
 )
 
 type GitHubRequestService struct {
@@ -94,8 +98,8 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
-	repoName := BuildNewGitHubRepoName(&packageModel)
-	url := fmt.Sprintf("https://github.com/%s/%s", gitHubGophrPackageOrgName, repoName)
+	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+	url := fmt.Sprintf("https://github.com/%s/%s", GitHubGophrPackageOrgName, repoName)
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -104,7 +108,7 @@ func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	}
 
 	if resp.StatusCode == 404 {
-		log.Printf("No Github repo exists in %s org with the name %s \n", gitHubGophrPackageOrgName, repoName)
+		log.Printf("No Github repo exists in %s org with the name %s \n", GitHubGophrPackageOrgName, repoName)
 		return nil
 	}
 
@@ -149,7 +153,7 @@ func buildNewGitHubRepoAPIURL(
 ) string {
 	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
 		gitHubBaseAPIURL,
-		gitHubGophrPackageOrgName,
+		GitHubGophrPackageOrgName,
 		APIKeyModel.Key,
 	)
 	return url
@@ -160,7 +164,7 @@ func buildNewGitHubRepoJSONBody(
 ) *bytes.Buffer {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
-	newGitHubRepoName := BuildNewGitHubRepoName(&packageModel)
+	newGitHubRepoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
 	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
 	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
 
@@ -170,9 +174,7 @@ func buildNewGitHubRepoJSONBody(
 	return JSONByteBuffer
 }
 
-func BuildNewGitHubRepoName(packageModel *models.PackageModel) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
+func BuildNewGitHubRepoName(author string, repo string) string {
 	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
 }
 
