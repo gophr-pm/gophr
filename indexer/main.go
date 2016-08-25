@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	"sync"
 
 	"github.com/skeswa/gophr/common"
@@ -14,15 +13,6 @@ func main() {
 	_, session := common.Init()
 	defer session.Close()
 
-	repo := "cli"
-	stars := 0
-	exists := false
-	author := "urfave"
-	testPackageModel := models.PackageModel{Repo: &repo, Stars: &stars, Exists: &exists, Author: &author}
-	exists, _ = common.CheckIfRefExists(*testPackageModel.Author, *testPackageModel.Repo, "11c134509d89c2018675f369955218a180dc7428")
-	log.Println(exists)
-	common.SubVersionPackageModel(&testPackageModel, "05fe449c81eb7305a34e9253c321c960a1c5e057")
-	os.Exit(3)
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
 	if err != nil {
