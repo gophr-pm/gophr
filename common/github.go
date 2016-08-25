@@ -94,7 +94,7 @@ func parseGitHubRepoDataResponseBody(response *http.Response) (map[string]interf
 func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
-	repoName := BuildNewGitHubRepoName(packageModel)
+	repoName := BuildNewGitHubRepoName(&packageModel)
 	url := fmt.Sprintf("https://github.com/%s/%s", github_gophr_org_name, repoName)
 	resp, err := http.Get(url)
 
