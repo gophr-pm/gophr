@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/models"
 )
 
@@ -28,40 +27,32 @@ var (
 )
 
 //  SubVersionPackageModel TODO (@Shikkic): Possibly add Channel as a param
-func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
+func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	// Set working folderName for package
 	folderName = buildFolderName(packageModel)
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := common.NewGitHubRequestService()
+	gitHubRequestService := NewGitHubRequestService()
 
 	log.Printf("Creating new Github repo for %s/%s at %s",
 		*packageModel.Author,
 		*packageModel.Repo,
 		ref,
 	)
-	err := gitHubRequestService.CreateNewGitHubRepo(packageModel)
+	err := gitHubRequestService.CreateNewGitHubRepo(*packageModel)
 	log.Printf("%s", err)
 
 	log.Printf("Initializing folder and initializing git repo for %s \n", folderName)
-	err = initializeRepoCMD(&packageModel)
+	err = initializeRepoCMD(packageModel)
 	checkError(err, folderName)
 
-	log.Printf("Creating branch %s \n", buildBranchName(&packageModel))
-	err = createBranchCMD(&packageModel, ref)
+	log.Printf("Creating branch %s \n", ref)
+	err = createBranchCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Setting remote branch name %s \n", buildRemoteName(&packageModel))
-	err = setRemoteCMD(&packageModel)
-	checkError(err, folderName)
-
-	log.Printf("Fetching github archive for %s/%s with tag %s \n",
-		*packageModel.Author,
-		*packageModel.Repo,
-		ref,
-	)
-	err = fetchArchiveCMD(&packageModel)
+	log.Printf("Setting remote branch name %s \n", buildRemoteName(packageModel))
+	err = setRemoteCMD(packageModel, ref)
 	checkError(err, folderName)
 
 	log.Printf("Fetching github archive for %s/%s with tag %s \n",
@@ -69,7 +60,15 @@ func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 		*packageModel.Repo,
 		ref,
 	)
-	err = unzipArchiveCMD(&packageModel)
+	err = fetchArchiveCMD(packageModel, ref)
+	checkError(err, folderName)
+
+	log.Printf("Fetching github archive for %s/%s with tag %s \n",
+		*packageModel.Author,
+		*packageModel.Repo,
+		ref,
+	)
+	err = unzipArchiveCMD(packageModel, ref)
 	checkError(err, folderName)
 
 	// TODO subverisoning
@@ -80,11 +79,11 @@ func SubVersionPackageModel(packageModel models.PackageModel, ref string) {
 	checkError(err, folderName)
 
 	log.Println("Commiting repo data to branch")
-	err = commitFilesCMD(&packageModel)
+	err = commitFilesCMD(packageModel)
 	checkError(err, folderName)
 
-	log.Printf("Pushing files to branch %s \n", buildBranchName(&packageModel))
-	err = pushFilesCMD(&packageModel)
+	log.Printf("Pushing files to branch %s \n", ref)
+	err = pushFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
 	cleanUpExitHook(folderName)
@@ -98,7 +97,7 @@ func initializeRepoCMD(packageModel *models.PackageModel) error {
 	return err
 }
 
-func createBranchCMD(packageModel *models.PackageModel, ref Refs) error {
+func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
 	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, ref)
@@ -160,6 +159,7 @@ func commitFilesCMD(packageModel *models.PackageModel) error {
 }
 
 func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
+	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
 	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, ref)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
