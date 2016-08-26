@@ -9,7 +9,7 @@ func getConfig() *Config {
 	if _config == nil {
 		_config = &Config{
 			dev:    true,
-			domain: "gophr.dev",
+			domain: "gophr.dev:4000",
 		}
 	}
 
