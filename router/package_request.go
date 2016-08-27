@@ -171,14 +171,20 @@ func RespondToPackageRequest(
 				packageRequest.GithubTree,
 			)
 
-			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
-			res.Write([]byte(generateGoGetMetadata(
-				packageRequest.Author,
-				packageRequest.Repo,
+			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
+			common.SubVersionPackageModel(&packageModel, packageRequest.Selector)
+			author := common.GitHubGophrPackageOrgName
+			repo := common.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+			metaData := []byte(generateGoGetMetadata(
+				author,
+				repo,
 				packageRequest.Selector,
 				packageRequest.Subpath,
 				packageRequest.GithubTree,
-			)))
+			))
+
+			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
+			res.Write(metaData)
 		} else {
 			log.Printf(
 				"[%s] Responding with a permanent redirect to the gophr package webpage\n",

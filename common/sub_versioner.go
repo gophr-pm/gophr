@@ -29,6 +29,15 @@ var (
 // SubVersionPackageModel creates a github repo for the packageModel on gophr-packages
 // versioned a the speicifed ref
 func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
+	// If no ref is present or it's master we need the current Master SHA
+	if len(ref) == 0 || ref == "master" {
+		curretRef, err := FetchRefs(*packageModel.Author, *packageModel.Repo)
+		if err != nil || len(curretRef.MasterRefHash) == 0 {
+			// TODO: return error here
+			return
+		}
+		ref = curretRef.MasterRefHash
+	}
 	// First check if this ref has already been versioned for this packageModel
 	log.Println("Checking if ref has been versioned before")
 	exists, err := CheckIfRefExists(*packageModel.Author, *packageModel.Repo, ref)
@@ -38,9 +47,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	}
 
 	if err != nil {
-		log.Println("Error occured in checking if ref exists")
-		// TODO:(Shikkic) return err. refactor func to return error in general
-		return
+		log.Printf("Error occured in checking if ref exists %s", err)
 	}
 
 	log.Printf("%s/%s@%s has not been versioned yet",
@@ -199,7 +206,7 @@ func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 func cleanUpExitHook(folderName string) {
 	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
 	// TODO:(Shikkic)
-	if strings.HasPrefix(folderName, "/") == false {
+	if strings.HasPrefix(folderName, "/") == true {
 		cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
 		out, err := exec.Command("sh", "-c", cmd).Output()
 		if err != nil {
