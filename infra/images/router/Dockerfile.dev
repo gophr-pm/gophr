@@ -4,6 +4,19 @@ FROM golang:alpine
 RUN set -ex && apk add --update 'git' && apk add 'bash'
 RUN go get github.com/skeswa/sparkplug
 
+# TODO:(Shikkic) remove when we use git2go
+# Define global git author
+RUN git config --global user.name "Gophr PM"
+RUN git config --global user.email "gophr.pm@gmail.com"
+
+# Update WGET with certs and openssl
+RUN apk update && apk add ca-certificates && update-ca-certificates && apk add openssl
+
+# Install openssh
+RUN apk add openssh
+
+# TODO:(Shikkic) add ssh-key here
+
 # Set the environment variables
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
