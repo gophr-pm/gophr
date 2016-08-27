@@ -207,13 +207,13 @@ func cleanUpExitHook(folderName string) {
 	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
 	// TODO:(Shikkic)
 	if strings.HasPrefix(folderName, "/") == true {
-		//cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
-		//out, err := exec.Command("sh", "-c", cmd).Output()
-		/*if err != nil {
+		cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
+		out, err := exec.Command("sh", "-c", cmd).Output()
+		if err != nil {
 			log.Println("Could not properly engage exit hook")
 			log.Fatalln(err)
-		}*/
-		//log.Printf("Output: %s", out)
+		}
+		log.Printf("Output: %s", out)
 	} else {
 		log.Println("Cowardly refusing to initiate exit hook. Will not rm -rf folder names that contains any leading '/'")
 	}
