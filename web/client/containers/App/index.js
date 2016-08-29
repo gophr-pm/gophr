@@ -12,7 +12,6 @@ class App extends Component {
     const { todos, actions, children } = this.props
     return (
       <div className={style.normal}>
-        <Header addTodo={actions.addTodo} />
         <MainSection todos={todos} actions={actions} />
         {children}
       </div>
