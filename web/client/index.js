@@ -11,6 +11,7 @@ import configure from './store'
 const store = configure()
 const history = syncHistoryWithStore(browserHistory, store)
 
+/*
 ReactDOM.render(
   <Provider store={store}>
     <Router history={history}>
@@ -20,3 +21,4 @@ ReactDOM.render(
   </Provider>,
   document.getElementById('root')
 )
+*/
