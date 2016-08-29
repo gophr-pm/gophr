@@ -34,12 +34,12 @@ func (c *Config) String() string {
 	buffer.WriteString("\nPort:               ")
 	buffer.WriteString(strconv.Itoa(c.Port))
 
-	if len(c.DbAddress) < 1 {
+	if len(c.DbAddress) > 0 {
 		buffer.WriteString("\nDatabase address:   ")
 		buffer.WriteString(c.DbAddress)
 	}
 
-	if len(c.MigrationsPath) < 1 {
+	if len(c.MigrationsPath) > 0 {
 		buffer.WriteString("\nMigrations path:    ")
 		buffer.WriteString(c.MigrationsPath)
 	}

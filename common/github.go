@@ -190,22 +190,23 @@ func BuildNewGitHubRepoName(author string, repo string) string {
 
 // FetchCommitSHA Fetches a commitSHA closest to a given timestamp
 func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
-	packageModel models.PackageModel,
+	author string,
+	repo string,
 	timestamp time.Time,
 ) (string, error) {
-	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commitsUntilParameter)
+	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsUntilParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
 	log.Printf("%s \n", err)
-	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(packageModel, timestamp, commitsAfterParameter)
+	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsAfterParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
 	log.Printf("%s \n", err)
-	refs, err := FetchRefs(*packageModel.Author, *packageModel.Repo)
+	refs, err := FetchRefs(author, repo)
 	if err != nil {
 		return refs.MasterRefHash, nil
 	}
@@ -214,7 +215,8 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
 }
 
 func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
-	packageModel models.PackageModel,
+	author string,
+	repo string,
 	timestamp time.Time,
 	timeSelector string,
 ) (string, error) {
@@ -223,7 +225,7 @@ func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
 	fmt.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
-	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(packageModel, *APIKeyModel, timestamp, timeSelector)
+	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(author, repo, *APIKeyModel, timestamp, timeSelector)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -250,14 +252,12 @@ func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
 }
 
 func buildGitHubRepoCommitsFromTimestampAPIURL(
-	packageModel models.PackageModel,
+	author string,
+	repo string,
 	APIKeyModel GitHubAPIKeyModel,
 	timestamp time.Time,
 	timeSelector string,
 ) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-
 	url := fmt.Sprintf("%s/repos/%s/%s/commits?%s=%s&access_token=%s",
 		GitHubBaseAPIURL,
 		author,
