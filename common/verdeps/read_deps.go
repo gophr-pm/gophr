@@ -58,12 +58,15 @@ func readDeps(args readDepsArgs) {
 				}
 			}
 
-			// Set the import count before enqueing deps.
-			args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
+			// Provided that we have specs, ship them to the next stage.
+			if len(filteredSpecs) > 0 {
+				// Set the import count before enqueing deps.
+				args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
 
-			// Enqueue the deps.
-			for _, spec := range filteredSpecs {
-				args.outputChan <- spec
+				// Enqueue the deps.
+				for _, spec := range filteredSpecs {
+					args.outputChan <- spec
+				}
 			}
 		}
 

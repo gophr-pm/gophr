@@ -41,7 +41,9 @@ func reviseDeps(args reviseDepsArgs) {
 		// Decide whether its time to apply the revs.
 		if importCount == len(revs) {
 			// Apply the revisions now that we have all the appropriate revisions.
-			go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+			if len(revs) > 0 {
+				go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+			}
 			// Get rids of the revs from the map since we don't need them anymore.
 			delete(pathRevisionsMap, path)
 		} else {
@@ -60,8 +62,10 @@ func reviseDeps(args reviseDepsArgs) {
 	for path, revs = range pathRevisionsMap {
 		// Record how many imports we missed
 		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - len(revs))
-		// Apply the revisions that we have.
-		go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+		// Apply the revisions that we have (given we have any).
+		if len(revs) > 0 {
+			go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+		}
 		// Get rids of the revs from the map since we don't need them anymore.
 		delete(pathRevisionsMap, path)
 	}
