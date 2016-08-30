@@ -1,10 +1,11 @@
-package common
+package github
 
 import (
 	"log"
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/errors"
 )
 
@@ -21,7 +22,7 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := GitHubAPIKeyChain{}
 
-	_, session := Init()
+	_, session := common.Init()
 	defer session.Close()
 
 	gitHubAPIKeys, err := scanAllGitHubKey(session)

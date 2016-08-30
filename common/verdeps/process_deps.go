@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 )
 
 type processDepsArgs struct {
-	ghSvc              *common.GitHubRequestService
+	ghSvc              *github.GitHubRequestService
 	packageSHA         string
 	packagePath        string
 	packageRepo        string

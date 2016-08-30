@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 )
 
@@ -26,18 +26,18 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 	}
 
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := common.NewGitHubRequestService()
+	gitHubRequestService := github.NewGitHubRequestService()
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
-	packageChan := make(chan common.GitHubPackageModelDTO, 20)
+	packageChan := make(chan github.GitHubPackageModelDTO, 20)
 
 	log.Printf("Spinning up %d consumers", nbConcurrentInserts)
 	for i := 0; i < nbConcurrentInserts; i++ {
 		wg.Add(1)
 		go func() {
 			for gitHubPackageModelDTO := range packageChan {
-				packageStarCount := common.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
+				packageStarCount := github.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
 				log.Printf("Star count %d \n", packageStarCount)
 				indexTime := time.Now()
 				log.Printf("New index time %s \n", indexTime)
@@ -72,7 +72,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 			log.Println(err)
 		}
 
-		packageChan <- common.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
+		packageChan <- github.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
 		time.Sleep(requestTimeBuffer)
 	}
 

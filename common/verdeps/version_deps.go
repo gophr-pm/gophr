@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 )
 
@@ -19,7 +19,7 @@ type VersionDepsArgs struct {
 	// Model is the package model of the package.
 	Model *models.PackageModel
 	// GithubServcie is the service, with which, requests can be made of the Github API.
-	GithubService *common.GitHubRequestService
+	GithubService *github.GitHubRequestService
 }
 
 // VersionDeps version locks all of the Github-based Go dependencies referenced

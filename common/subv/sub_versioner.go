@@ -1,4 +1,4 @@
-package common
+package subv
 
 import (
 	"fmt"
@@ -6,7 +6,10 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
+	"github.com/skeswa/gophr/common/verdeps"
 )
 
 var (
@@ -31,7 +34,7 @@ var (
 func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	// If no ref is present or it's master we need the current Master SHA
 	if len(ref) == 0 || ref == "master" {
-		curretRef, err := FetchRefs(*packageModel.Author, *packageModel.Repo)
+		curretRef, err := common.FetchRefs(*packageModel.Author, *packageModel.Repo)
 		if err != nil || len(curretRef.MasterRefHash) == 0 {
 			// TODO: return error here
 			return
@@ -40,7 +43,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	}
 	// First check if this ref has already been versioned for this packageModel
 	log.Println("Checking if ref has been versioned before")
-	exists, err := CheckIfRefExists(*packageModel.Author, *packageModel.Repo, ref)
+	exists, err := github.CheckIfRefExists(*packageModel.Author, *packageModel.Repo, ref)
 	if exists == true && err == nil {
 		log.Println("That ref has already been versioned")
 		return
@@ -51,17 +54,17 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	}
 
 	log.Printf("%s/%s@%s has not been versioned yet",
-		GitHubGophrPackageOrgName,
-		BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
-		BuildGitHubBranch(ref),
+		github.GitHubGophrPackageOrgName,
+		github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
+		github.BuildGitHubBranch(ref),
 	)
 	// Set working folderName for package
-	folderName = BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+	folderName = github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
 
-	gitHubRequestService := NewGitHubRequestService()
+	gitHubRequestService := github.NewGitHubRequestService()
 
 	log.Printf("Creating new Github repo for %s/%s at %s",
 		*packageModel.Author,
@@ -75,11 +78,11 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	err = initializeRepoCMD(packageModel)
 	checkError(err, folderName)
 
-	log.Printf("Creating branch %s \n", BuildGitHubBranch(ref))
+	log.Printf("Creating branch %s \n", github.BuildGitHubBranch(ref))
 	err = createBranchCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Setting remote branch url %s \n", BuildGitHubBranch(ref))
+	log.Printf("Setting remote branch url %s \n", github.BuildGitHubBranch(ref))
 	err = setRemoteCMD(packageModel, ref)
 	checkError(err, folderName)
 
@@ -101,6 +104,26 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 
 	// TODO subverisoning
 	// Create array of all sub-dependencies
+	commitDate, err := gitHubRequestService.FetchCommitTimestamp(packageModel, ref)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	err = verdeps.VersionDeps( // VersionDepsArgs is the arguments struct for VersionDeps(...).
+		verdeps.VersionDepsArgs{
+			// SHA is the sha of the package being versioned.
+			SHA: ref,
+			// SHA is the path to the package source code to be versioned.
+			Path: fmt.Sprintf("/tmp/%s", folderName),
+			// Date is date that the version of the package with that matches SHA was created.
+			Date: commitDate,
+			// Model is the package model of the package.
+			Model: packageModel,
+			// GithubServcie is the service, with which, requests can be made of the Github API.
+			GithubService: gitHubRequestService,
+		})
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	log.Println("Adding unarchived repo data to branch")
 	err = addFilesCMD()
@@ -110,7 +133,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) {
 	err = commitFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
-	log.Printf("Pushing files to branch %s \n", BuildRemoteURL(packageModel, ref))
+	log.Printf("Pushing files to branch %s \n", github.BuildRemoteURL(packageModel, ref))
 	err = pushFilesCMD(packageModel, ref)
 	checkError(err, folderName)
 
@@ -129,7 +152,7 @@ func initializeRepoCMD(packageModel *models.PackageModel) error {
 func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, BuildGitHubBranch(ref))
+	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, github.BuildGitHubBranch(ref))
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s \n", out)
@@ -139,7 +162,7 @@ func createBranchCMD(packageModel *models.PackageModel, ref string) error {
 func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
 	log.Println("Initializing folder and repo commmand")
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	remoteURL := BuildRemoteURL(packageModel, ref)
+	remoteURL := github.BuildRemoteURL(packageModel, ref)
 	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, remoteURL)
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
@@ -193,7 +216,7 @@ func commitFilesCMD(packageModel *models.PackageModel, ref string) error {
 
 func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
 	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, BuildGitHubBranch(ref))
+	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, github.BuildGitHubBranch(ref))
 	log.Println(cmd)
 	out, err := exec.Command("sh", "-c", cmd).Output()
 	log.Printf("Output: %s 		\n", out)

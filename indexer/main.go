@@ -2,13 +2,22 @@ package main
 
 import (
 	"log"
+	"os"
 	"sync"
 
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/models"
+	"github.com/skeswa/gophr/common/subv"
 )
 
 func main() {
+	repo := "gophr"
+	stars := 0
+	exists := false
+	author := "skeswa"
+	testPackageModel := models.PackageModel{Repo: &repo, Stars: &stars, Exists: &exists, Author: &author}
+	subv.SubVersionPackageModel(&testPackageModel, "master")
+	os.Exit(3)
 	log.Println("Preparing to initialize DB connection")
 	_, session := common.Init()
 	defer session.Close()

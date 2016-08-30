@@ -1,4 +1,4 @@
-package common
+package github
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/pquerna/ffjson/ffjson"
+	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/dtos"
 	"github.com/skeswa/gophr/common/models"
 )
@@ -20,11 +21,40 @@ import (
 var (
 	GitHubGophrPackageOrgName = "gophr-packages"
 	GitHubBaseAPIURL          = "https://api.github.com"
+	githubRootTemplate        = "github.com/%s/%s"
+	httpClient                = &http.Client{Timeout: 10 * time.Second}
+	gitHubRemoteOrigin        = "git@github.com:gophr-packages/%s.git"
 )
 
 var (
 	commitsUntilParameter = "until"
 	commitsAfterParameter = "after'"
+)
+
+const (
+	refsHead                                  = "HEAD"
+	refsLineCap                               = "\n\x00"
+	refsSpaceChar                             = ' '
+	refsHeadPrefix                            = "refs/heads/"
+	refsLineFormat                            = "%04x%s"
+	refsHeadMaster                            = "refs/heads/master"
+	refsMasterLineFormat                      = "%s refs/heads/master\n"
+	refsSymRefAssignment                      = "symref="
+	refsOldRefAssignment                      = "oldref="
+	refsFetchURLTemplate                      = "https://%s.git/info/refs?service=git-upload-pack"
+	refsAugmentedHeadLineFormat               = "%s HEAD\n"
+	refsAugmentedSymrefHeadLineFormat         = "%s HEAD\x00symref=HEAD:%s\n"
+	refsAugmentedHeadLineWithCapsFormat       = "%s HEAD\x00%s\n"
+	refsAugmentedSymrefHeadLineWithCapsFormat = "%s HEAD\x00symref=HEAD:%s %s\n"
+)
+
+const (
+	errorRefsFetchNoSuchRepo       = "Could not find a Github repository at %s"
+	errorRefsFetchGithubError      = "Github responded with an error: %v"
+	errorRefsFetchGithubParseError = "Cannot read refs from Github: %v"
+	errorRefsFetchNetworkFailure   = "Could not reach Github at the moment; Please try again later"
+	errorRefsParseSizeFormat       = "Could not parse refs line size: %s"
+	errorRefsParseIncompleteRefs   = "Incomplete refs data received from GitHub"
 )
 
 // GitHubRequestService is the library responsible for managing all outbound
@@ -190,7 +220,7 @@ func BuildNewGitHubRepoName(author string, repo string) string {
 }
 
 func (gitHubRequestService *GitHubRequestService) FetchCommitTimestamp(
-	packageModel models.PackageModel,
+	packageModel *models.PackageModel,
 	commitSHA string,
 ) (time.Time, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
@@ -198,7 +228,7 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitTimestamp(
 	fmt.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
-	githubURL := buildGitHubCommitTimestampAPIURL(&packageModel, *APIKeyModel, commitSHA)
+	githubURL := buildGitHubCommitTimestampAPIURL(packageModel, *APIKeyModel, commitSHA)
 	log.Printf("Fetching commit timestamp for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -242,7 +272,7 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
 	}
 
 	log.Printf("%s \n", err)
-	refs, err := FetchRefs(author, repo)
+	refs, err := common.FetchRefs(author, repo)
 	if err != nil {
 		return refs.MasterRefHash, nil
 	}
@@ -359,6 +389,44 @@ func parseGitHubCommitTimestamp(response *http.Response) (string, error) {
 	}
 
 	return "", errors.New("No commit SHAs available for timestamp given")
+}
+
+// CheckIfRefExists downloads and processes refs data from Github and checks
+// whether a given ref exists in the remote refs list.
+func CheckIfRefExists(author, repo string, ref string) (bool, error) {
+	ref = BuildGitHubBranch(ref)
+	repo = BuildNewGitHubRepoName(author, repo)
+	author = GitHubGophrPackageOrgName
+	githubRoot := fmt.Sprintf(
+		githubRootTemplate,
+		author,
+		repo,
+	)
+
+	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
+	if err != nil {
+		return false, errors.New(errorRefsFetchNetworkFailure)
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode >= 400 && res.StatusCode < 500 {
+		return false, fmt.Errorf(errorRefsFetchNoSuchRepo, githubRoot)
+	} else if res.StatusCode >= 500 {
+		// FYI no reliable way to get test coverage here; this never happens
+		return false, fmt.Errorf(errorRefsFetchGithubError, res.Status)
+	}
+
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		// FYI no reliable way to get test coverage here; this never happens
+		return false, fmt.Errorf(errorRefsFetchGithubParseError, err)
+	}
+
+	refsString := string(data)
+	refExists := strings.Contains(refsString, ref)
+
+	return refExists, nil
 }
 
 // ==== Misc ====

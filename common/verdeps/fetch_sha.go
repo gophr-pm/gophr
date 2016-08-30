@@ -4,11 +4,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 )
 
 type fetchSHAArgs struct {
-	ghSvc              *common.GitHubRequestService
+	ghSvc              *github.GitHubRequestService
 	outputChan         chan *importPathSHA
 	importPath         string
 	packageSHA         string
