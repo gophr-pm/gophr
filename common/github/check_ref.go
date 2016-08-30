@@ -8,7 +8,15 @@ import (
 	"strings"
 )
 
-// whether a given ref exists in the remote refs list.
+const (
+	refsFetchURLTemplate           = "https://%s.git/info/refs?service=git-upload-pack"
+	errorRefsFetchNetworkFailure   = "Could not reach Github at the moment; Please try again later"
+	errorRefsFetchNoSuchRepo       = "Could not find a Github repository at %s"
+	errorRefsFetchGithubError      = "Github responded with an error: %v"
+	errorRefsFetchGithubParseError = "Cannot read refs from Github: %v"
+)
+
+// CheckIfRefExists checks whether a given ref exists in the remote refs list.
 func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 	ref = BuildGitHubBranch(ref)
 	repo = BuildNewGitHubRepoName(author, repo)
