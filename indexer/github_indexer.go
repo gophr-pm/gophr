@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/dtos"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 )
@@ -30,7 +31,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
-	packageChan := make(chan github.GitHubPackageModelDTO, 20)
+	packageChan := make(chan dtos.GitHubPackageModelDTO, 20)
 
 	log.Printf("Spinning up %d consumers", nbConcurrentInserts)
 	for i := 0; i < nbConcurrentInserts; i++ {
@@ -72,7 +73,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 			log.Println(err)
 		}
 
-		packageChan <- github.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
+		packageChan <- dtos.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
 		time.Sleep(requestTimeBuffer)
 	}
 
