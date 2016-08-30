@@ -23,17 +23,16 @@ var (
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 )
 
-// GitHubRequestService is the library responsible for managing all outbound
+// RequestService is the library responsible for managing all outbound
 // requests to GitHub
-// TODO:(Shikkic) Rename this to just RequestService
-type GitHubRequestService struct {
-	APIKeyChain *GitHubAPIKeyChain
+type RequestService struct {
+	APIKeyChain *APIKeyChain
 }
 
-// NewGitHubRequestService initialies a new GitHubRequestService and APIKeyChain
-func NewGitHubRequestService() *GitHubRequestService {
-	newGitHubRequestService := GitHubRequestService{}
-	newGitHubRequestService.APIKeyChain = NewGitHubAPIKeyChain()
+// NewRequestService initialies a new GitHubRequestService and APIKeyChain
+func NewRequestService() *RequestService {
+	newRequestService := RequestService{}
+	newRequestService.APIKeyChain = NewAPIKeyChain()
 
-	return &newGitHubRequestService
+	return &newRequestService
 }

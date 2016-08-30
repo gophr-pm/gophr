@@ -19,7 +19,7 @@ type VersionDepsArgs struct {
 	// Model is the package model of the package.
 	Model *models.PackageModel
 	// GithubServcie is the service, with which, requests can be made of the Github API.
-	GithubService *github.GitHubRequestService
+	GithubService *github.RequestService
 }
 
 // VersionDeps version locks all of the Github-based Go dependencies referenced

@@ -9,18 +9,18 @@ import (
 	"github.com/skeswa/gophr/common/errors"
 )
 
-// GitHubAPIKeyChain is responsible for managing GitHubAPIKeymodels
+// APIKeyChain is responsible for managing GitHubAPIKeymodels
 // and cycling through keys that hit their request limit
-type GitHubAPIKeyChain struct {
-	GitHubAPIKeys []GitHubAPIKeyModel
-	CurrentKey    GitHubAPIKeyModel
+type APIKeyChain struct {
+	GitHubAPIKeys []APIKeyModel
+	CurrentKey    APIKeyModel
 }
 
-// NewGitHubAPIKeyChain intializes and returns a new GitHubAPIKeyChain
+// NewAPIKeyChain intializes and returns a new GitHubAPIKeyChain
 // and instantiates all available keys in the db as APIKeyModels
-func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
+func NewAPIKeyChain() *APIKeyChain {
 	log.Println("Creating new github api keychain")
-	newGitHubAPIKeyChain := GitHubAPIKeyChain{}
+	newGitHubAPIKeyChain := APIKeyChain{}
 
 	_, session := common.Init()
 	defer session.Close()
@@ -39,12 +39,12 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 	return &newGitHubAPIKeyChain
 }
 
-func initializeGitHubAPIKeyModels(keys []string) []GitHubAPIKeyModel {
-	var gitHubAPIKeyModels = make([]GitHubAPIKeyModel, 0)
+func initializeGitHubAPIKeyModels(keys []string) []APIKeyModel {
+	var gitHubAPIKeyModels = make([]APIKeyModel, 0)
 
 	for _, key := range keys {
 		log.Println("KEY =", key)
-		gitHubAPIKeyModel := GitHubAPIKeyModel{
+		gitHubAPIKeyModel := APIKeyModel{
 			string(key),
 			5000,
 			5000,
@@ -60,7 +60,7 @@ func initializeGitHubAPIKeyModels(keys []string) []GitHubAPIKeyModel {
 	return gitHubAPIKeyModels
 }
 
-func (gitHubAPIKeyChain *GitHubAPIKeyChain) getAPIKeyModel() *GitHubAPIKeyModel {
+func (gitHubAPIKeyChain *APIKeyChain) getAPIKeyModel() *APIKeyModel {
 	if gitHubAPIKeyChain.CurrentKey.RemainingUses > 0 {
 		return &gitHubAPIKeyChain.CurrentKey
 	}
@@ -77,9 +77,9 @@ func (gitHubAPIKeyChain *GitHubAPIKeyChain) getAPIKeyModel() *GitHubAPIKeyModel 
 	return &gitHubAPIKeyChain.CurrentKey
 }
 
-func (gitHubAPIKeyChain *GitHubAPIKeyChain) shuffleKeys() {
-	var newGitHubAPIKeys = make([]GitHubAPIKeyModel, 0)
-	var firstAPIModelInArray GitHubAPIKeyModel
+func (gitHubAPIKeyChain *APIKeyChain) shuffleKeys() {
+	var newGitHubAPIKeys = make([]APIKeyModel, 0)
+	var firstAPIModelInArray APIKeyModel
 
 	for index, APIKeyModel := range gitHubAPIKeyChain.GitHubAPIKeys {
 		if index == 0 {
@@ -93,15 +93,15 @@ func (gitHubAPIKeyChain *GitHubAPIKeyChain) shuffleKeys() {
 	gitHubAPIKeyChain.GitHubAPIKeys = newGitHubAPIKeys
 }
 
-func (gitHubAPIKeyChain *GitHubAPIKeyChain) setCurrentKey() {
+func (gitHubAPIKeyChain *APIKeyChain) setCurrentKey() {
 	if len(gitHubAPIKeyChain.GitHubAPIKeys) == 0 {
-		gitHubAPIKeyChain.CurrentKey = GitHubAPIKeyModel{}
+		gitHubAPIKeyChain.CurrentKey = APIKeyModel{}
 	}
 
 	gitHubAPIKeyChain.CurrentKey = gitHubAPIKeyChain.GitHubAPIKeys[0]
 }
 
-func setRequestTimout(apiKeyModel GitHubAPIKeyModel) {
+func setRequestTimout(apiKeyModel APIKeyModel) {
 	timeNow := time.Now()
 	log.Printf("The current time is %s. \n", timeNow)
 	resetTime := apiKeyModel.RateLimitResetTime

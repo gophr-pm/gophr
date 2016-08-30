@@ -13,7 +13,7 @@ import (
 
 // FetchGitHubDataForPackageModel fetchs current repo data of a given packageModel
 // TODO optimize this with FFJSON models
-func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel(
+func (gitHubRequestService *RequestService) FetchGitHubDataForPackageModel(
 	packageModel models.PackageModel,
 ) (map[string]interface{}, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
@@ -46,7 +46,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 	return responseBodyMap, nil
 }
 
-func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel GitHubAPIKeyModel) string {
+func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel APIKeyModel) string {
 	author := *packageModel.Author
 	repo := *packageModel.Repo
 	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", GitHubBaseAPIURL, author, repo, APIKeyModel.Key)
