@@ -48,7 +48,7 @@ func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
 ) (string, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
 	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(author, repo, *APIKeyModel, timestamp, timeSelector)

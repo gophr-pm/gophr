@@ -30,20 +30,23 @@ func processDeps(args processDepsArgs) error {
 		accumulatedErrors  = newSyncedErrors()
 		revisionWaitGroup  = &sync.WaitGroup{}
 		pendingSHARequests = newSyncedInt()
+		syncedImportCounts = newSyncedImportCounts()
 	)
 
 	// Start reading the deps.
 	go readDeps(readDepsArgs{
-		outputChan:        importSpecChan,
-		packagePath:       args.packagePath,
-		accumulatedErrors: accumulatedErrors,
+		outputChan:         importSpecChan,
+		packagePath:        args.packagePath,
+		accumulatedErrors:  accumulatedErrors,
+		syncedImportCounts: syncedImportCounts,
 	})
 
 	// Revise dependencies in the go source files.
 	go reviseDeps(reviseDepsArgs{
-		inputChan:         revisionChan,
-		revisionWaitGroup: revisionWaitGroup,
-		accumulatedErrors: accumulatedErrors,
+		inputChan:          revisionChan,
+		revisionWaitGroup:  revisionWaitGroup,
+		accumulatedErrors:  accumulatedErrors,
+		syncedImportCounts: syncedImportCounts,
 	})
 
 	// Process incoming data from the channels.

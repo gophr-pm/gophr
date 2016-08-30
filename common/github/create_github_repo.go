@@ -25,7 +25,7 @@ func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
 
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
 	JSONBody := buildNewGitHubRepoJSONBody(packageModel)

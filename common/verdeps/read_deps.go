@@ -1,6 +1,7 @@
 package verdeps
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -10,12 +11,11 @@ import (
 )
 
 type readDepsArgs struct {
-	outputChan        chan *importSpec
-	packagePath       string
-	accumulatedErrors *syncedErrors
+	outputChan         chan *importSpec
+	packagePath        string
+	accumulatedErrors  *syncedErrors
+	syncedImportCounts *syncedImportCounts
 }
-
-// TODO(skeswa): instead of saving a file path, we need to calculate the position using the file set. https://golang.org/pkg/go/token/#Position
 
 func readDeps(args readDepsArgs) {
 	var (
@@ -45,11 +45,25 @@ func readDeps(args readDepsArgs) {
 				return err
 			}
 
+			// Filter the deps.
+			var filteredSpecs []*importSpec
 			for _, spec := range f.Imports {
 				// Only pursue a dependency if it has a github prefix.
 				if strings.HasPrefix(spec.Path.Value, githubPrefix) {
-					args.outputChan <- &importSpec{imports: spec, filePath: path}
+					filteredSpecs = append(filteredSpecs, &importSpec{
+						imports:  spec,
+						filePath: path,
+					})
+					fmt.Printf("\n<DEP FIND> [%s %d:%d]:\n\t%s\n\n", path, spec.Path.Pos(), spec.Path.End(), spec.Path.Value)
 				}
+			}
+
+			// Set the import count before enqueing deps.
+			args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
+
+			// Enqueue the deps.
+			for _, spec := range filteredSpecs {
+				args.outputChan <- spec
 			}
 		}
 

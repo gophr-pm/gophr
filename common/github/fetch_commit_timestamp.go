@@ -20,7 +20,7 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitTimestamp(
 ) (time.Time, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
 	githubURL := buildGitHubCommitTimestampAPIURL(packageModel, *APIKeyModel, commitSHA)

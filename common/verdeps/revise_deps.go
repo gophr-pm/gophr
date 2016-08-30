@@ -2,7 +2,9 @@ package verdeps
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"sort"
 	"sync"
 )
@@ -10,15 +12,18 @@ import (
 const charDoubleQuote = '"'
 
 type reviseDepsArgs struct {
-	inputChan         chan *revision
-	revisionWaitGroup *sync.WaitGroup
-	accumulatedErrors *syncedErrors
+	inputChan          chan *revision
+	revisionWaitGroup  *sync.WaitGroup
+	accumulatedErrors  *syncedErrors
+	syncedImportCounts *syncedImportCounts
 }
 
 func reviseDeps(args reviseDepsArgs) {
 	var (
-		lastPath       string
-		revisionBuffer []*revision
+		path             string
+		revs             []*revision
+		importCount      int
+		pathRevisionsMap = make(map[string][]*revision)
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
@@ -27,23 +32,44 @@ func reviseDeps(args reviseDepsArgs) {
 
 	// Process every revision that comes in from the revision channel.
 	for rev := range args.inputChan {
-		// If the last path is different from the current one, flush the buffer.
-		if len(lastPath) > 0 && rev.path != lastPath {
-			// Group all the revisions that apply to the same file.
-			go applyRevisions(lastPath, revisionBuffer, args.revisionWaitGroup, args.accumulatedErrors)
-			// Clear the buffer again.
-			revisionBuffer = nil
-		}
+		// Get the rev slice, and add this rev.
+		path = rev.path
+		revs = pathRevisionsMap[path]
+		revs = append(revs, rev)
+		importCount = args.syncedImportCounts.importCountOf(path)
 
-		// Adjust the last path to keep it accurate.
-		lastPath = rev.path
-		// Accumulate co-located revisions.
-		revisionBuffer = append(revisionBuffer, rev)
+		// Decide whether its time to apply the revs.
+		if importCount == len(revs) {
+			// Apply the revisions now that we have all the appropriate revisions.
+			go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+			// Get rids of the revs from the map since we don't need them anymore.
+			delete(pathRevisionsMap, path)
+		} else {
+			// Update the revs in the map - keep waiting for mroe revs.
+			pathRevisionsMap[path] = revs
+		}
 	}
 
-	// Take care of the remaining revisions.
-	go applyRevisions(lastPath, revisionBuffer, args.revisionWaitGroup, args.accumulatedErrors)
-	revisionBuffer = nil
+	var (
+		missedImports           = 0
+		filesWithMissingImports = len(pathRevisionsMap)
+	)
+
+	// Apply all remaining revisions, and log the files that don't have every
+	// import versioned.
+	for path, revs = range pathRevisionsMap {
+		// Record how many imports we missed
+		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - len(revs))
+		// Apply the revisions that we have.
+		go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+		// Get rids of the revs from the map since we don't need them anymore.
+		delete(pathRevisionsMap, path)
+	}
+
+	// Summarize what we missed in a log message.
+	if missedImports > 0 {
+		log.Printf("Missed %d imports in %d files.\n", missedImports, filesWithMissingImports)
+	}
 }
 
 // applyRevisions applies all the provided revisions to the appropriate files.
@@ -82,16 +108,22 @@ func applyRevisions(
 			continue
 		}
 
+		fmt.Printf("\n<PATH CHANGE> [%s %d:%d]:\n\t%s -> %s\n\n", rev.path, from, to, fileData[from:to], rev.gophrURL)
+
 		// Perform the file data changes.
-		fileData = embedByteSlice(fileData, rev.gophrURL, from, to)
+		/*
+			fileData = embedByteSlice(fileData, rev.gophrURL, from, to)
+		*/
 	}
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
-	if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
-		accumulatedErrors.add(err)
-		return
-	}
+	/*
+		if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
+			accumulatedErrors.add(err)
+			return
+		}
+	*/
 }
 
 // findImportPathBoundaries adjusts from and to to align perfectly with a

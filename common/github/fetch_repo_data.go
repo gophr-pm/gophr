@@ -18,7 +18,7 @@ func (gitHubRequestService *GitHubRequestService) FetchGitHubDataForPackageModel
 ) (map[string]interface{}, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	fmt.Printf("%+v \n", APIKeyModel)
+	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 	githubURL := buildGitHubRepoDataAPIURL(packageModel, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)

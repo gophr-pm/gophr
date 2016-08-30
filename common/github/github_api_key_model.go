@@ -54,5 +54,5 @@ func (apiKey *GitHubAPIKeyModel) reset() {
 }
 
 func (apiKey *GitHubAPIKeyModel) print() {
-	fmt.Printf("%+v", apiKey)
+	log.Printf("%+v", apiKey)
 }
