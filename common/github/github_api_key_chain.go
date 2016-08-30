@@ -27,7 +27,7 @@ func NewGitHubAPIKeyChain() *GitHubAPIKeyChain {
 
 	gitHubAPIKeys, err := scanAllGitHubKey(session)
 	if err != nil {
-		log.Println("Could not scan github keys, fatal error occured")
+		log.Println("Could not scan github keys, fatal error occurred")
 		log.Fatal(err)
 	}
 	log.Printf("Found %d keys %s \n", len(gitHubAPIKeys), gitHubAPIKeys)

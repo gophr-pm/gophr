@@ -47,7 +47,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				packageModel.Stars = &packageStarCount
 				err := models.InsertPackage(session, &packageModel)
 				if err != nil {
-					log.Println("Could not insert packageModel, error occured")
+					log.Println("Could not insert packageModel, error occurred")
 					log.Println(err)
 				}
 			}
@@ -69,7 +69,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				wg.Done()
 			}()
 		} else if err != nil {
-			log.Println("Package could not be successfully retrieved from Github. Error occured")
+			log.Println("Package could not be successfully retrieved from Github. Error occurred")
 			log.Println(err)
 		}
 
