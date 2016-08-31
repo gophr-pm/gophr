@@ -1,22 +1,39 @@
 FROM golang:alpine
 
-# Install sparkplug and dependencies
+# We need git for pulling dependencies and bash for debugging.
 RUN set -ex && apk add --update 'git' && apk add 'bash'
-RUN go get github.com/skeswa/sparkplug
+
+# Copy in requisite files.
+COPY ./api /go/src/github.com/skeswa/gophr/api
+COPY ./common /go/src/github.com/skeswa/gophr/common
+COPY ./infra /go/src/github.com/skeswa/gophr/infra
+
+# Build source and move things around.
+RUN cd /go/src/github.com/skeswa/gophr/api \
+    && go get -d -v \
+    && go build -o gophr-api-binary \
+    && chmod +x ./gophr-api-binary \
+    && mkdir /gophr \
+    && mv ./gophr-api-binary /gophr/gophr-api-binary \
+    && mv ../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
+    && cd /gophr \
+    && rm -rf /go
+
+# Since its no longer necessary, remove git.
+RUN set -ex && apk del git
 
 # Set the environment variables
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db"
 
-# Specify the exposed port
-EXPOSE 3000
+# Set the generated directory as the work directory.
+WORKDIR /gophr
 
-# Specify the volume mount point as current dir
-VOLUME ["/go/src/github.com/skeswa/gophr"]
-WORKDIR /go/src/github.com/skeswa/gophr
-
-# Wrap environment with sparkplug.
-CMD cd ./api \
-    && go get -d -v \
-    && ../infra/scripts/wait-for-it.sh -h db -p 9042 -t 0 -- sparkplug -p 3000
+# Wait for db:9042 with no timeout, then start the binary.
+CMD ./wait-for-it.sh \
+    -h db \
+    -p 9042 \
+    -t 0 \
+    -- \
+    ./gophr-api-binary
