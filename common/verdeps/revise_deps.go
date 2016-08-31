@@ -121,7 +121,7 @@ func applyRevisions(
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
-	if err = ioutil.WriteFile(path+"*", fileData, 0644); err != nil {
+	if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
 		accumulatedErrors.add(err)
 		return
 	}
