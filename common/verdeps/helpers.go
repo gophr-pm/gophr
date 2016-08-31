@@ -2,7 +2,7 @@ package verdeps
 
 import "bytes"
 
-func isSubPackage(depAuthor, depRepo, packageAuthor, packageRepo string) bool {
+func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
 }
 

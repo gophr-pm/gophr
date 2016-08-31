@@ -2,10 +2,8 @@ package verdeps
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"log"
-	"sort"
 	"sync"
 )
 
@@ -84,6 +82,7 @@ func applyRevisions(
 	accumulatedErrors *syncedErrors) {
 	var (
 		err      error
+		diffs    []bytesDiff
 		from, to int
 		fileData []byte
 	)
@@ -98,36 +97,34 @@ func applyRevisions(
 		return
 	}
 
-	// Sort the revs so that the last revs come first. If we do it in this order,
-	// then offsets don't have to be managed.
-	sort.Sort(sortableRevisions(revs))
-
-	// Iterate through each revision, applying changes from last index to first
-	// index.
+	// Create bytes diffs for each of the revisions.
 	for _, rev := range revs {
-		// Find the exact boundaries.
-		from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex)
-		if err != nil {
+		// Adjust from and to so that they fall on quote bytes.
+		if from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex); err != nil {
+			// Exit if the import path boundaries could not be adjusted.
 			accumulatedErrors.add(err)
-			continue
+			return
 		}
 
-		fmt.Printf("\n<PATH CHANGE> [%s %d:%d]:\n\t%s -> %s\n\n", rev.path, from, to, fileData[from:to], rev.gophrURL)
+		diffs = append(diffs, bytesDiff{
+			bytes:         rev.gophrURL,
+			exclusiveTo:   to,
+			inclusiveFrom: from,
+		})
+	}
 
-		// Perform the file data changes.
-		/*
-			fileData = embedByteSlice(fileData, rev.gophrURL, from, to)
-		*/
+	// Combine the diffs and the file data.
+	if fileData, err = composeBytesDiffs(fileData, diffs); err != nil {
+		accumulatedErrors.add(err)
+		return
 	}
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
-	/*
-		if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
-			accumulatedErrors.add(err)
-			return
-		}
-	*/
+	if err = ioutil.WriteFile(path+"*", fileData, 0644); err != nil {
+		accumulatedErrors.add(err)
+		return
+	}
 }
 
 // findImportPathBoundaries adjusts from and to to align perfectly with a
@@ -170,27 +167,4 @@ func findImportPathBoundaries(data []byte, from, to int) (int, int, error) {
 // isInBounds returns true if i is an index of data.
 func isInBounds(data []byte, i int) bool {
 	return i >= 0 && i < len(data)
-}
-
-// embedByteSlice replaces the bytes of outer from within the specifies indicies
-// with the bytes from inner.
-func embedByteSlice(outer, inner []byte, from, to int) []byte {
-	delta := len(inner) - (to - from)
-	if delta > 0 {
-		oldOuterLen := len(outer)
-		outerExtension := make([]byte, delta)
-		newOuter := append(outer, outerExtension...)
-		copy(newOuter[from+delta:oldOuterLen+delta], outer[from:oldOuterLen])
-		copy(newOuter[from:from+len(inner)], inner[:])
-		return newOuter
-	} else if delta < 0 {
-		newOuter := make([]byte, len(outer)+delta)
-		copy(newOuter[:from], outer[:from])
-		copy(newOuter[from:from+len(inner)], inner[:])
-		copy(newOuter[from+len(inner):], outer[to:])
-		return newOuter
-	} else {
-		copy(outer[from:to], inner[:])
-		return outer
-	}
 }
