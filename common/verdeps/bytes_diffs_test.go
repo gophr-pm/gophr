@@ -1,12 +1,13 @@
 package verdeps
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestByteDiffs(t *testing.T) {
+func TestByteDiffs__Basic(t *testing.T) {
 	a := []byte{1, 2, 3}
 	b := []byte{4, 5, 6, 7}
 	c := []byte{8}
@@ -104,6 +105,94 @@ func TestByteDiffs(t *testing.T) {
 	})
 	assert.Nil(t, err, "should be no error")
 	assert.True(t, bytesEqual(expectedOutput, actualOutput), "subsequence slice subs should work out of order")
+}
+
+const (
+	textInputStr1 = `package main
+
+import "github.com/a/b@x" // lkfdjs
+// sdfkl
+import (
+"fiॺॺॺॺne"
+"arॺe"
+"yॺॺou"
+"good?"
+
+
+
+_ "github.com/how/are/you@doing"
+"github.com/how/are/you@doing"
+"github.com/how/are/you@doing"
+)
+
+this is some stuff
+NOW ITS OVER
+`
+	textOutputStr1 = `package main
+
+import REPLACED // lkfdjs
+// sdfkl
+import (
+"fiॺॺॺॺne"
+"arॺe"
+"yॺॺou"
+"good?"
+
+
+
+_ REPLACED
+REPLACED
+REPLACED
+)
+
+this is some stuff
+NOW ITS OVER
+`
+	textReplacement         = "REPLACED"
+	textReplaceTarget1      = `"github.com/a/b@x"`
+	textReplaceTarget2      = `"github.com/how/are/you@doing"`
+	textReplaceTargetIndex1 = 21
+	textReplaceTargetIndex2 = 121
+)
+
+var (
+	target1StartIndex    = strings.Index(textInputStr1, textReplaceTarget1)
+	target1EndIndex      = target1StartIndex + len(textReplaceTarget1)
+	target2StartIndex    = strings.Index(textInputStr1, textReplaceTarget2)
+	target2EndIndex      = target2StartIndex + len(textReplaceTarget2)
+	target3StartIndex    = target2StartIndex + len(textReplaceTarget2) + 1
+	target3EndIndex      = target3StartIndex + len(textReplaceTarget2)
+	target4StartIndex    = target3StartIndex + len(textReplaceTarget2) + 1
+	target4EndIndex      = target4StartIndex + len(textReplaceTarget2)
+	textInputBytes1      = []byte(textInputStr1)
+	textReplacementBytes = []byte(textReplacement)
+)
+
+func TestByteDiffs__Text(t *testing.T) {
+	outputBytes, err := composeBytesDiffs(textInputBytes1, []bytesDiff{
+		{
+			bytes:         textReplacementBytes,
+			inclusiveFrom: target1StartIndex,
+			exclusiveTo:   target1EndIndex,
+		},
+		{
+			bytes:         textReplacementBytes,
+			inclusiveFrom: target2StartIndex,
+			exclusiveTo:   target2EndIndex,
+		},
+		{
+			bytes:         textReplacementBytes,
+			inclusiveFrom: target3StartIndex,
+			exclusiveTo:   target3EndIndex,
+		},
+		{
+			bytes:         textReplacementBytes,
+			inclusiveFrom: target4StartIndex,
+			exclusiveTo:   target4EndIndex,
+		},
+	})
+	assert.Nil(t, err, "should be no error")
+	assert.Equal(t, textOutputStr1, string(outputBytes[:]), "text replacement should work")
 }
 
 func bytesEqual(a, b []byte) bool {

@@ -68,7 +68,6 @@ func composeBytesDiffs(bytes []byte, diffs []bytesDiff) ([]byte, error) {
 	var (
 		i                  int
 		diff               bytesDiff
-		diffLen            int
 		diffsLen           int
 		bytesCursor        int
 		newBytesCursor     int
@@ -93,6 +92,10 @@ func composeBytesDiffs(bytes []byte, diffs []bytesDiff) ([]byte, error) {
 		newBytes    = make([]byte, newBytesLen)
 	)
 
+	// Start the cursors at the back.
+	bytesCursor = bytesLen
+	newBytesCursor = newBytesLen
+
 	// Apply all of the diffs in order.
 	for i, diff = range diffs {
 		// First, validate the diff.
@@ -100,24 +103,18 @@ func composeBytesDiffs(bytes []byte, diffs []bytesDiff) ([]byte, error) {
 			return nil, fmt.Errorf("A bytes diff was invalid: %v.", diff)
 		}
 
-		// If this is the first diff, then we have to copy the bytes in back of all
-		// of the diffs. This means the bytes at the _end_ of the slice (due to the
-		// sort direction).
-		if i == 0 {
-			// Calculate next cursors.
-			diffLen = bytesLen - diff.exclusiveTo
-			nextBytesCursor = bytesLen - diffLen
-			nextNewBytesCursor = newBytesLen - diffLen
-			// Check that we're in bounds.
-			if !cursorsInBounds(bytesLen, newBytesLen, nextBytesCursor, nextNewBytesCursor) {
-				return nil, fmt.Errorf("A byte diffs was out of bounds: %v.", diff)
-			}
-			// Perform the copy.
-			copy(newBytes[nextNewBytesCursor:], bytes[nextBytesCursor:])
-			// Advance the cursors.
-			bytesCursor = nextBytesCursor
-			newBytesCursor = nextNewBytesCursor
+		// Copy all the stuff in between the previous diff and this one.
+		nextBytesCursor = diff.exclusiveTo
+		nextNewBytesCursor = newBytesCursor - (bytesCursor - nextBytesCursor)
+		// Check that we're in bounds.
+		if !cursorsInBounds(bytesLen, newBytesLen, nextBytesCursor, nextNewBytesCursor) {
+			return nil, fmt.Errorf("A byte diffs was out of bounds: %v.", diff)
 		}
+		// Perform the copy.
+		copy(newBytes[nextNewBytesCursor:newBytesCursor], bytes[nextBytesCursor:bytesCursor])
+		// Advance the cursors.
+		bytesCursor = nextBytesCursor
+		newBytesCursor = nextNewBytesCursor
 
 		// Use the cursors to continue copying.
 		nextBytesCursor = bytesCursor - (diff.exclusiveTo - diff.inclusiveFrom)
