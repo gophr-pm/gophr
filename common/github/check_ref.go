@@ -35,7 +35,7 @@ func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode >= 400 && res.StatusCode < 500 {
-		return false, fmt.Errorf(errorRefsFetchNoSuchRepo, githubRoot)
+		return false, nil
 	} else if res.StatusCode >= 500 {
 		// FYI no reliable way to get test coverage here; this never happens
 		return false, fmt.Errorf(errorRefsFetchGithubError, res.Status)
