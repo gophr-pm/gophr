@@ -1,7 +1,6 @@
 package verdeps
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -54,7 +53,6 @@ func readDeps(args readDepsArgs) {
 						imports:  spec,
 						filePath: path,
 					})
-					fmt.Printf("\n<DEP FIND> [%s %d:%d]:\n\t%s\n\n", path, spec.Path.Pos(), spec.Path.End(), spec.Path.Value)
 				}
 			}
 
