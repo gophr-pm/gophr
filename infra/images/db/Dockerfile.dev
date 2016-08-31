@@ -8,11 +8,11 @@ ENV CASSANDRA_SERVICE db
 ENV CASSANDRA_LUCENE_PLUGIN_VERSION 3.7.1
 
 # copy requisite files
-COPY files/cassandra.list /etc/apt/sources.list.d/cassandra.list
-COPY files/run.sh /run.sh
-COPY files/cassandra.yaml /cassandra.yaml
-COPY files/logback.xml /logback.xml
-COPY files/kubernetes-cassandra.jar /kubernetes-cassandra.jar
+COPY infra/images/db/files/cassandra.list /etc/apt/sources.list.d/cassandra.list
+COPY infra/images/db/files/run.sh /run.sh
+COPY infra/images/db/files/cassandra.yaml /cassandra.yaml
+COPY infra/images/db/files/logback.xml /logback.xml
+COPY infra/images/db/files/kubernetes-cassandra.jar /kubernetes-cassandra.jar
 
 # explicitly set user/group IDs
 RUN groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra
@@ -72,7 +72,7 @@ RUN apt-get update \
 				/tmp/*
 
 # install the lucene plugin
-COPY files/cassandra-lucene-plugin-3.7.1/* /usr/share/cassandra/lib/
+COPY infra/images/db/files/cassandra-lucene-plugin-3.7.1/* /usr/share/cassandra/lib/
 
 # https://issues.apache.org/jira/browse/CASSANDRA-11661
 RUN sed -ri 's/^(JVM_PATCH_VERSION)=.*/\1=25/' /etc/cassandra/cassandra-env.sh
