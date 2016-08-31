@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/dtos"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 )
 
@@ -26,18 +27,18 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 	}
 
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := common.NewGitHubRequestService()
+	gitHubRequestService := github.NewRequestService()
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
-	packageChan := make(chan common.GitHubPackageModelDTO, 20)
+	packageChan := make(chan dtos.GitHubPackageModelDTO, 20)
 
 	log.Printf("Spinning up %d consumers", nbConcurrentInserts)
 	for i := 0; i < nbConcurrentInserts; i++ {
 		wg.Add(1)
 		go func() {
 			for gitHubPackageModelDTO := range packageChan {
-				packageStarCount := common.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
+				packageStarCount := github.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
 				log.Printf("Star count %d \n", packageStarCount)
 				indexTime := time.Now()
 				log.Printf("New index time %s \n", indexTime)
@@ -46,7 +47,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				packageModel.Stars = &packageStarCount
 				err := models.InsertPackage(session, &packageModel)
 				if err != nil {
-					log.Println("Could not insert packageModel, error occured")
+					log.Println("Could not insert packageModel, error occurred")
 					log.Println(err)
 				}
 			}
@@ -68,11 +69,11 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 				wg.Done()
 			}()
 		} else if err != nil {
-			log.Println("Package could not be successfully retrieved from Github. Error occured")
+			log.Println("Package could not be successfully retrieved from Github. Error occurred")
 			log.Println(err)
 		}
 
-		packageChan <- common.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
+		packageChan <- dtos.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
 		time.Sleep(requestTimeBuffer)
 	}
 
