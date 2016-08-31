@@ -10,7 +10,7 @@ import (
 
 // CheckGitHubRepoExists returns whether a repo exists
 // TODO(Shikkic): Instead of pinging try downloading refs, might be more sustainable?
-func (gitHubRequestService *GitHubRequestService) CheckGitHubRepoExists(
+func (gitHubRequestService *RequestService) CheckGitHubRepoExists(
 	packageModel models.PackageModel,
 ) error {
 	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)

@@ -9,8 +9,10 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/semver"
+	"github.com/skeswa/gophr/common/subv"
 )
 
 const (
@@ -172,9 +174,9 @@ func RespondToPackageRequest(
 			)
 
 			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
-			common.SubVersionPackageModel(&packageModel, packageRequest.Selector)
-			author := common.GitHubGophrPackageOrgName
-			repo := common.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+			subv.SubVersionPackageModel(&packageModel, packageRequest.Selector)
+			author := github.GitHubGophrPackageOrgName
+			repo := github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
 			metaData := []byte(generateGoGetMetadata(
 				author,
 				repo,

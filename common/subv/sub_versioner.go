@@ -69,7 +69,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 
 	// Instantiate New Github Request Service
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := github.NewGitHubRequestService()
+	gitHubRequestService := github.NewRequestService()
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	log.Printf("Creating new Github repo for %s/%s at %s",

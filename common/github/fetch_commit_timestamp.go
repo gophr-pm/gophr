@@ -14,7 +14,7 @@ import (
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API
-func (gitHubRequestService *GitHubRequestService) FetchCommitTimestamp(
+func (gitHubRequestService *RequestService) FetchCommitTimestamp(
 	packageModel *models.PackageModel,
 	commitSHA string,
 ) (time.Time, error) {
@@ -51,7 +51,7 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitTimestamp(
 
 func buildGitHubCommitTimestampAPIURL(
 	packageModel *models.PackageModel,
-	APIKeyModel GitHubAPIKeyModel,
+	APIKeyModel APIKeyModel,
 	commitSHA string,
 ) string {
 	author := *packageModel.Author

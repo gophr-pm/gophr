@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-// GitHubAPIKeyModel represents a single Github API keys,
+// APIKeyModel represents a single Github API keys,
 // it's responsible for keeping track of API usage via that key
-type GitHubAPIKeyModel struct {
+type APIKeyModel struct {
 	Key                string
 	RemainingUses      int
 	RequestsPerHour    int
@@ -18,7 +18,7 @@ type GitHubAPIKeyModel struct {
 }
 
 // TODO:(Shikkic) consider revising how we parse the values from header
-func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(header http.Header) {
+func (apiKey *APIKeyModel) incrementUsageFromResponseHeader(header http.Header) {
 	remaingRequests := header.Get("X-RateLimit-Remaining")
 	rateLimitResetTime := header.Get("X-RateLimit-Reset")
 
@@ -35,7 +35,7 @@ func (apiKey *GitHubAPIKeyModel) incrementUsageFromResponseHeader(header http.He
 }
 
 // TODO:(Shikkic) consider passing url endpoint to prime, or maybe an enum for more accuracy when pinging GH
-func (apiKey *GitHubAPIKeyModel) prime() {
+func (apiKey *APIKeyModel) prime() {
 	gitHubTestURL := fmt.Sprintf("%s/repos/a/b?access_token=%s", GitHubBaseAPIURL, apiKey.Key)
 	log.Printf("Preparing to prime APIKeyModel with key %s and url %s \n", apiKey.Key, gitHubTestURL)
 
@@ -49,10 +49,10 @@ func (apiKey *GitHubAPIKeyModel) prime() {
 	apiKey.incrementUsageFromResponseHeader(resp.Header)
 }
 
-func (apiKey *GitHubAPIKeyModel) reset() {
+func (apiKey *APIKeyModel) reset() {
 	apiKey.RemainingUses = 5000
 }
 
-func (apiKey *GitHubAPIKeyModel) print() {
+func (apiKey *APIKeyModel) print() {
 	log.Printf("%+v", apiKey)
 }

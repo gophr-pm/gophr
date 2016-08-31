@@ -14,7 +14,7 @@ import (
 
 // CreateNewGitHubRepo if repo doesn't already exist will create a new
 // repo on the GitHubGophrPackageOrgName repo
-func (gitHubRequestService *GitHubRequestService) CreateNewGitHubRepo(
+func (gitHubRequestService *RequestService) CreateNewGitHubRepo(
 	packageModel models.PackageModel,
 ) error {
 	err := gitHubRequestService.CheckGitHubRepoExists(packageModel)
@@ -63,7 +63,7 @@ func buildNewGitHubRepoJSONBody(
 
 func buildNewGitHubRepoAPIURL(
 	packageModel models.PackageModel,
-	APIKeyModel *GitHubAPIKeyModel,
+	APIKeyModel *APIKeyModel,
 ) string {
 	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
 		GitHubBaseAPIURL,

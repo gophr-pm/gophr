@@ -15,7 +15,7 @@ import (
 )
 
 // FetchCommitSHA Fetches a commitSHA closest to a given timestamp
-func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
+func (gitHubRequestService *RequestService) FetchCommitSHA(
 	author string,
 	repo string,
 	timestamp time.Time,
@@ -40,7 +40,7 @@ func (gitHubRequestService *GitHubRequestService) FetchCommitSHA(
 	return "", err
 }
 
-func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
+func (gitHubRequestService *RequestService) fetchCommitSHAByTimeSelector(
 	author string,
 	repo string,
 	timestamp time.Time,
@@ -80,7 +80,7 @@ func (gitHubRequestService *GitHubRequestService) fetchCommitSHAByTimeSelector(
 func buildGitHubRepoCommitsFromTimestampAPIURL(
 	author string,
 	repo string,
-	APIKeyModel GitHubAPIKeyModel,
+	APIKeyModel APIKeyModel,
 	timestamp time.Time,
 	timeSelector string,
 ) string {
