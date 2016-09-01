@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  namespace: gophr
+  name: api-rc
+spec:
+  replicas: 1
+  selector:
+    module: api
+  template:
+    metadata:
+      namespace: gophr
+      labels:
+        module: api
+    spec:
+      containers:
+      - name: api
+        image: gophr-api-dev:latest
+        ports:
+        - containerPort: 3000

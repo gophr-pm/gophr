@@ -1,0 +1,50 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  labels:
+    module: db
+  name: db-ds
+  namespace: gophr
+spec:
+  template:
+    metadata:
+      labels:
+        module: db
+      namespace: gophr
+    spec:
+      containers:
+        - command:
+            - /run.sh
+          env:
+            - name: MAX_HEAP_SIZE
+              value: 512M
+            - name: HEAP_NEWSIZE
+              value: 100M
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          image: gophr-db-dev:v1
+          name: db
+          ports:
+            - containerPort: 7000
+              name: intra-node
+            - containerPort: 7001
+              name: tls-intra-node
+            - containerPort: 7199
+              name: jmx
+            - containerPort: 9042
+              name: cql
+          resources:
+            requests:
+              cpu: 0.5
+          volumeMounts:
+            - mountPath: /cassandra_data
+              name: data
+      volumes:
+        - name: data
+          emptyDir: {}
