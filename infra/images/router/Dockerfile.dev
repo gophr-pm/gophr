@@ -36,9 +36,6 @@ ENV GOPHR_DB_ADDR="db"
 WORKDIR /gophr
 
 # Wait for db:9042 with no timeout, then start the binary.
-CMD ./wait-for-it.sh \
-    -h "$GOPHR_DB_ADDR" \
-    -p 9042 \
-    -t 0 \
+CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
     -- \
-    ./gophr-router-binary
+    ./gophr-router-binary --port "$PORT"

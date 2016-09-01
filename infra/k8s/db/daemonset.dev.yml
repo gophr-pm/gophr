@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
+  name: db-ds
   labels:
     module: db
-  name: db-ds
   namespace: gophr
 spec:
   template:
