@@ -11,7 +11,10 @@ const (
 	exitCodeStartFailed  = 100
 	exitCodeBuildFailed  = 101
 	exitCodeCycleFailed  = 102
-	exitCodeUpdateFailed = 103
+	exitCodeLogFailed    = 103
+	exitCodeSSHFailed    = 104
+	exitCodeStopFailed   = 105
+	exitCodeUpdateFailed = 106
 )
 
 func exit(
