@@ -16,25 +16,22 @@ const (
 	flagNameRepoPath   = "repo-path"
 	flagNameForeground = "foreground"
 
-	commandNameBuild   = "build"
-	commandDescBuild   = "Updates module images"
-	commandNameLog     = "log"
-	commandDescLog     = "Logs module's container output to stdout"
-	commandNameRestart = "restart"
-	commandDescRestart = "Restarts module containers"
-	commandNameSSH     = "ssh"
-	commandDescSSH     = "Starts a shell session within a module's container"
-	commandNameStart   = "start"
-	commandDescStart   = "Start module containers"
-	commandNameStop    = "stop"
-	commandDescStop    = "Stops module containers"
-	commandNameTest    = "test"
-	commandDescTest    = "Runs module tests"
+	commandNameBuild  = "build"
+	commandDescBuild  = "Updates module images"
+	commandNameCycle  = "cycle"
+	commandDescCycle  = "Re-creates a module in kubernetes"
+	commandNameLog    = "log"
+	commandDescLog    = "Logs module's container output to stdout"
+	commandNameSSH    = "ssh"
+	commandDescSSH    = "Starts a shell session within a module's container"
+	commandNameStop   = "stop"
+	commandDescStop   = "Stops module containers"
+	commandNameUpdate = "update"
+	commandDescUpdate = "Updates module kubernetes definition"
 )
 
 var (
-	moduleCommandArgsUsage           = fmt.Sprintf("[%s] [arguments...]", modulesToString(false))
-	moduleCommandArgsUsageWithoutAll = fmt.Sprintf("[%s] [arguments...]", modulesToString(true))
+	moduleCommandArgsUsage = fmt.Sprintf("[%s] [arguments...]", modulesToString())
 )
 
 func main() {
@@ -83,19 +80,19 @@ func main() {
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
+		// Cycle command.
+		{
+			Name:      commandNameCycle,
+			Usage:     commandDescCycle,
+			Action:    cycleCommand,
+			ArgsUsage: moduleCommandArgsUsage,
+		},
+
 		// Log command.
 		{
 			Name:      commandNameLog,
 			Usage:     commandDescLog,
 			Action:    logCommand,
-			ArgsUsage: moduleCommandArgsUsageWithoutAll,
-		},
-
-		// Restart command.
-		{
-			Name:      commandNameRestart,
-			Usage:     commandDescRestart,
-			Action:    restartCommand,
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
@@ -104,37 +101,14 @@ func main() {
 			Name:      commandNameSSH,
 			Usage:     commandDescSSH,
 			Action:    sshCommand,
-			ArgsUsage: moduleCommandArgsUsageWithoutAll,
-		},
-
-		// Start command.
-		{
-			Name:      commandNameStart,
-			Usage:     commandDescStart,
-			Action:    startCommand,
-			ArgsUsage: moduleCommandArgsUsage,
-
-			Flags: []cli.Flag{
-				cli.BoolFlag{
-					Name:  flagNameForeground + ",f",
-					Usage: "makes the container run in the foreground",
-				},
-			},
-		},
-
-		// Stop command.
-		{
-			Name:      commandNameStop,
-			Usage:     commandDescStop,
-			Action:    stopCommand,
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
-		// Test command.
+		// Update command.
 		{
-			Name:      commandNameTest,
-			Usage:     commandDescTest,
-			Action:    testCommand,
+			Name:      commandNameUpdate,
+			Usage:     commandDescUpdate,
+			Action:    updateCommand,
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 	}

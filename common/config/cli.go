@@ -12,35 +12,42 @@ const (
 	environmentDev  = "dev"
 	environmentProd = "prod"
 
-	envVarsEnvironment    = "GOPHR_ENV"
-	envVarsPort           = "GOPHR_PORT, PORT"
-	envVarsDbAddress      = "GOPHR_DB_ADDR"
-	envVarsMigrationsPath = "GOPHR_MIGRATIONS_PATH"
+	envVarsPort                 = "GOPHR_PORT, PORT"
+	envVarsDbAddress            = "GOPHR_DB_ADDR"
+	envVarsEnvironment          = "GOPHR_ENV"
+	envVarsMigrationsPath       = "GOPHR_MIGRATIONS_PATH"
+	envVarsConstructionZonePath = "GOPHR_CONSTRUCTION_ZONE_PATH"
 )
 
 // Config contains vital environment metadata used through out the backend.
 type Config struct {
-	IsDev          bool
-	Port           int
-	DbAddress      string
-	MigrationsPath string
+	IsDev                bool
+	Port                 int
+	DbAddress            string
+	MigrationsPath       string
+	ConstructionZonePath string
 }
 
 func (c *Config) String() string {
 	var buffer bytes.Buffer
 
-	buffer.WriteString("Is dev:             ")
+	buffer.WriteString("Is dev:                 ")
 	buffer.WriteString(strconv.FormatBool(c.IsDev))
-	buffer.WriteString("\nPort:               ")
+	buffer.WriteString("\nPort:                   ")
 	buffer.WriteString(strconv.Itoa(c.Port))
 
 	if len(c.DbAddress) > 0 {
-		buffer.WriteString("\nDatabase address:   ")
+		buffer.WriteString("\nDatabase address:       ")
 		buffer.WriteString(c.DbAddress)
 	}
 
 	if len(c.MigrationsPath) > 0 {
-		buffer.WriteString("\nMigrations path:    ")
+		buffer.WriteString("\nMigrations path:        ")
+		buffer.WriteString(c.MigrationsPath)
+	}
+
+	if len(c.ConstructionZonePath) > 0 {
+		buffer.WriteString("\nConstruction zone path: ")
 		buffer.WriteString(c.MigrationsPath)
 	}
 
@@ -50,10 +57,11 @@ func (c *Config) String() string {
 // GetConfig gets the configuration for the current execution environment.
 func GetConfig() *Config {
 	var (
-		environment    string
-		port           int
-		dbAddress      string
-		migrationsPath string
+		port                 int
+		dbAddress            string
+		environment          string
+		migrationsPath       string
+		constructionZonePath string
 
 		app            = cli.NewApp()
 		actionExecuted = false
@@ -91,6 +99,12 @@ func GetConfig() *Config {
 			EnvVar:      envVarsMigrationsPath,
 			Destination: &migrationsPath,
 		},
+		cli.StringFlag{
+			Name:        "construction-zone-path, c",
+			Usage:       "path to the construction zone",
+			EnvVar:      envVarsConstructionZonePath,
+			Destination: &constructionZonePath,
+		},
 	}
 
 	// Use the action to figure out whether the environment variables are accurate.
@@ -112,9 +126,10 @@ func GetConfig() *Config {
 	}
 
 	return &Config{
-		IsDev:          environment == environmentDev,
-		Port:           port,
-		DbAddress:      dbAddress,
-		MigrationsPath: migrationsPath,
+		IsDev:                environment == environmentDev,
+		Port:                 port,
+		DbAddress:            dbAddress,
+		MigrationsPath:       migrationsPath,
+		ConstructionZonePath: constructionZonePath,
 	}
 }

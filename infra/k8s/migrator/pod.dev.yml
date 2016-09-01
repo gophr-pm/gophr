@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: migrator
+  namespace: gophr
+  labels:
+    module: migrator
+spec:
+  containers:
+  - name: api
+    image: gophr-migrator-dev:v1
+  restartPolicy: Never

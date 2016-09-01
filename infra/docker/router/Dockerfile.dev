@@ -1,0 +1,45 @@
+FROM golang:alpine
+
+# We need git for pulling dependencies and bash for debugging.
+RUN set -ex && apk add --update 'git' && apk add 'bash'
+
+# TODO(Shikkic): add libgit and libssh installation to this docker file
+
+# Copy in requisite files.
+COPY ./infra /go/src/github.com/skeswa/gophr/infra
+COPY ./router /go/src/github.com/skeswa/gophr/router
+COPY ./common /go/src/github.com/skeswa/gophr/common
+
+# Build source and move things around.
+RUN cd /go/src/github.com/skeswa/gophr/router \
+    && echo -e "\nFetching dependencies...\n" \
+    && go get -d -v \
+    && echo -e "\nBuilding the binary...\n" \
+    && go build -v -o gophr-router-binary \
+    && chmod +x ./gophr-router-binary \
+    && echo -e "\nMoving things around...\n" \
+    && mkdir /gophr \
+    && mv ./gophr-router-binary /gophr/gophr-router-binary \
+    && mv ../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
+    && cd /gophr \
+    && rm -rf /go
+
+# Since its no longer necessary, remove git.
+RUN set -ex && apk del git
+
+# Set the environment variables
+ENV PORT="3000"
+ENV GOPHR_ENV="dev"
+ENV GOPHR_DB_ADDR="db"
+ENV GOPHR_CONSTRUCTION_ZONE_PATH="/construction-zone"
+
+# Create volume for construction zone.
+VOLUME ["/construction-zone"]
+
+# Set the generated directory as the work directory.
+WORKDIR /gophr
+
+# Wait for db:9042 with no timeout, then start the binary.
+CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
+    -- \
+    ./gophr-router-binary --port "$PORT"

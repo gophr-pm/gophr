@@ -1,0 +1,39 @@
+FROM golang:alpine
+
+# We need git for pulling dependencies and bash for debugging.
+RUN set -ex && apk add --update 'git' && apk add 'bash'
+
+# Copy in requisite files.
+COPY ./infra /go/src/github.com/skeswa/gophr/infra
+COPY ./common /go/src/github.com/skeswa/gophr/common
+COPY ./indexer /go/src/github.com/skeswa/gophr/indexer
+
+# Build source and move things around.
+RUN cd /go/src/github.com/skeswa/gophr/indexer \
+    && echo -e "\nFetching dependencies...\n" \
+    && go get -d -v \
+    && echo -e "\nBuilding the binary...\n" \
+    && go build -v -o gophr-indexer-binary \
+    && chmod +x ./gophr-indexer-binary \
+    && echo -e "\nMoving things around...\n" \
+    && mkdir /gophr \
+    && mv ./gophr-indexer-binary /gophr/gophr-indexer-binary \
+    && mv ../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
+    && cd /gophr \
+    && rm -rf /go
+
+# Since its no longer necessary, remove git.
+RUN set -ex && apk del git
+
+# Set the environment variables
+ENV PORT="3000"
+ENV GOPHR_ENV="dev"
+ENV GOPHR_DB_ADDR="db"
+
+# Set the generated directory as the work directory.
+WORKDIR /gophr
+
+# Wait for db:9042 with no timeout, then start the binary.
+CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
+    -- \
+    ./gophr-indexer-binary --port "$PORT"
