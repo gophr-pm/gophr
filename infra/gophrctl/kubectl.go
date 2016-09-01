@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 const (
@@ -55,6 +56,29 @@ func deleteInK8S(k8sConfigFilePath string) error {
 
 	stopSpinner(true)
 	return nil
+}
+
+func filterK8SPods(moduleName string) ([]string, error) {
+	output, err := exec.Command("kubectl", "--namespace="+k8sNamespace, "get", "pods", "--selector=module="+moduleName, "--output=jsonpath={.items..metadata.name}").CombinedOutput()
+	if err != nil {
+		return nil, newExecError(output, err)
+	}
+
+	return strings.Split(strings.Trim(string(output[:]), "\t\n "), " "), nil
+}
+
+func execK8SLogs(podName string, follow bool) {
+	// Find kubectl - panic if it ain't here.
+	binary, err := exec.LookPath("kubectl")
+	if err != nil {
+		panic(err)
+	}
+
+	if follow {
+		syscall.Exec(binary, []string{"kubectl", "--namespace=" + k8sNamespace, "logs", "-f", podName}, os.Environ())
+	} else {
+		syscall.Exec(binary, []string{"kubectl", "--namespace=" + k8sNamespace, "logs", podName}, os.Environ())
+	}
 }
 
 func abbreviateK8SPath(k8sPath string) string {
