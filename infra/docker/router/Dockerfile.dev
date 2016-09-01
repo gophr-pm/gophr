@@ -31,6 +31,10 @@ RUN set -ex && apk del git
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db"
+ENV GOPHR_CONSTRUCTION_ZONE_PATH="/construction-zone"
+
+# Create volume for construction zone.
+VOLUME ["/construction-zone"]
 
 # Set the generated directory as the work directory.
 WORKDIR /gophr

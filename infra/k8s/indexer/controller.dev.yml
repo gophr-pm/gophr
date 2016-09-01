@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: indexer-rc
+  labels:
+    module: indexer
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: indexer
+  template:
+    metadata:
+      labels:
+        module: indexer
+      namespace: gophr
+    spec:
+      containers:
+      - name: indexer
+        image: gophr-indexer-dev:v1
