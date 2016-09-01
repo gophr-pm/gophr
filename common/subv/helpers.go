@@ -22,20 +22,6 @@ func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string
 	return 0
 }
 
-// Exit Hook to clean up files
-func cleanUpExitHook(folderPath string) error {
-	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
-	err := deleteFolder(folderPath)
-	return err
-}
-
-// Check Error and Engage Exit Hook if fatal error occured
-func checkError(err error, folderPath string) {
-	if err != nil {
-		cleanUpExitHook(folderPath)
-	}
-}
-
 func deleteAchriveFile(archivePath string) error {
 	log.Println(archivePath)
 	if err := os.Remove(archivePath); err != nil {
