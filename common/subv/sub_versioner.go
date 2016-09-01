@@ -2,10 +2,13 @@ package subv
 
 import (
 	"fmt"
+	"io"
 	"log"
-	"os/exec"
-	"strings"
+	"net/http"
+	"os"
+	"time"
 
+	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
@@ -14,19 +17,12 @@ import (
 
 var (
 	folderName              string
+	folderPath              string
+	fileDir                 = "/tmp"
 	gitHubRemoteOrigin      = "git@github.com:gophr-packages/%s.git"
 	navigateToPackageFolder = "cd /tmp/%s"
-)
-
-var (
-	initalizeRepo    = "cd /tmp && mkdir %s && cd %s && git init"
-	createBranch     = "%s && git checkout -b %s"
-	setRemoteCommand = "%s && git remote add origin %s"
-	fetchRepoArchive = "%s && wget https://github.com/%s/%s/archive/%s.zip"
-	unzipRepoArchive = "%s && unzip %s.zip && cd %s && mv * ../ && cd .. && rm %s.zip && rm -rf %s"
-	addFiles         = "%s && git add . "
-	commitFiles      = "%s && git commit -m \" %s \""
-	pushFiles        = "%s && git push --set-upstream origin %s"
+	commitAuthor            = "gophrpm"
+	commitAuthorEmail       = "gophr.pm@gmail.com"
 )
 
 // SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
@@ -39,7 +35,7 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 		curretRef, err := common.FetchRefs(*packageModel.Author, *packageModel.Repo)
 		if err != nil || len(curretRef.MasterRefHash) == 0 {
 			return fmt.Errorf(
-				"Error could not retrieve master ref of %s/%s, or packageModel does not exist",
+				"Error could not retrieve master ref of %s/%s, or packageModel does not exist \n",
 				*packageModel.Author,
 				*packageModel.Repo,
 			)
@@ -64,65 +60,77 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 		github.BuildGitHubBranch(ref),
 	)
 
-	// Set working folderName for package
+	// Set working folderName and folderPath for package
 	folderName = github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+	folderPath = fmt.Sprintf("%s/%s", fileDir, folderName)
+
+	// Fetch ref archive
+	refZipURL := fmt.Sprintf("https://github.com/%s/%s/archive/%s.zip", *packageModel.Author, *packageModel.Repo, ref)
+	resp, err := http.Get(refZipURL)
+	if err != nil || resp.StatusCode == 404 {
+		// TODO:(Shikkic) Better error description here
+		return fmt.Errorf("Error 404, could not find ref archive for %s. %v \n", refZipURL, err)
+	}
+	defer resp.Body.Close()
+
+	// Write Archive to filepath
+	zipFilePath := fmt.Sprintf("%s/%s.zip", fileDir, ref)
+	out, err := os.Create(zipFilePath)
+	if err != nil {
+		if deletionErr := deleteAchriveFile(zipFilePath); deletionErr != nil {
+			return fmt.Errorf("Error, could not write ref archive to file system or delete archive. %v, %v \n", err, deletionErr)
+		}
+		return fmt.Errorf("Error, could not write ref archive to file system. %v \n", err)
+	}
+	defer out.Close()
+	io.Copy(out, resp.Body)
+
+	// Unzip files
+	if err = unzip(zipFilePath, fileDir); err != nil {
+		if deletionErr := deleteAchriveFile(zipFilePath); deletionErr != nil {
+			return fmt.Errorf("Error, could not unzip ref archive or delete it. %v, %v. \n", err, deletionErr)
+		}
+		return fmt.Errorf("Error, could not unzip ref archive. %v \n", err)
+	}
+
+	// Delete The Archive File
+	if deletionErr := deleteAchriveFile(zipFilePath); deletionErr != nil {
+		return deletionErr
+	}
+
+	// Move files around
+	targetFolder := fmt.Sprintf("%s/%s-%s", fileDir, *packageModel.Repo, ref)
+	newTargetFolder := fmt.Sprintf("%s/%s", fileDir, github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo))
+	if err = os.Rename(targetFolder, newTargetFolder); err != nil {
+		if deletionErr := deleteFolder(newTargetFolder); deletionErr != nil {
+			return fmt.Errorf("Error, could not rename archive folder to target folder or delete it. %v %v. \n", err, deletionErr)
+		}
+		return fmt.Errorf("Error, could not rename archive folder to target folder. %v \n", err)
+	}
+
+	// Git init
+	repo, err := git.InitRepository(newTargetFolder, false)
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not initialize new repository or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not initialize new repository. %v", err)
+	}
 
 	// Instantiate New Github Request Service
-	log.Println("Initializing gitHub component")
 	gitHubRequestService := github.NewRequestService()
 
 	// Prepare to Create a new Github repo for packageModel if DNE
-	log.Printf("Creating new Github repo for %s/%s at %s",
-		*packageModel.Author,
-		*packageModel.Repo,
-		ref,
-	)
 	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)
-	// TODO:(Shikkic) figure out
-	log.Printf("%s", err)
-
-	log.Printf("Initializing folder and initializing git repo for %s \n", folderName)
-	if err = initializeRepoCMD(packageModel); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in initializing the git repo. %s", err)
-	}
-
-	log.Printf("Creating branch %s \n", github.BuildGitHubBranch(ref))
-	if err = createBranchCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in creating git branch. %s", err)
-	}
-
-	log.Printf("Setting remote branch url %s \n", github.BuildGitHubBranch(ref))
-	if err = setRemoteCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in setting remote url. %s", err)
-	}
-
-	log.Printf("Fetching github archive for %s/%s with tag %s \n",
-		*packageModel.Author,
-		*packageModel.Repo,
-		ref,
-	)
-	if err = fetchArchiveCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in fetching ref archive. %s", err)
-	}
-
-	log.Printf("Fetching github archive for %s/%s with tag %s \n",
-		*packageModel.Author,
-		*packageModel.Repo,
-		ref,
-	)
-	if err = unzipArchiveCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in unziping ref archive. %s", err)
-	}
+	// TODO:(Shikkic) figure out error handling here
 
 	// Fetch the timestamp of the ref commit
 	commitDate, err := gitHubRequestService.FetchCommitTimestamp(packageModel, ref)
 	if err != nil {
-		return fmt.Errorf("Error occured in retrieving commit timestamp %s \n", err)
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error could not fetch commit timestamp or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error could not fetch commit timestamp %s \n", err)
 	}
 
 	// Version lock all of the Github dependencies in the packageModel
@@ -134,133 +142,156 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 			Model:         packageModel,
 			GithubService: gitHubRequestService,
 		}); err != nil {
-		return fmt.Errorf("Error occured in versioning deps %s \n", err)
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error could not version deps properly or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error could not version deps properly. %v \n", err)
 	}
 
-	log.Println("Adding unarchived repo data to branch")
-	if err = addFilesCMD(); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in git add. %s", err)
+	// Git add all
+	index, err := repo.Index()
+	if err = index.AddAll([]string{}, git.IndexAddDefault, nil); err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not add files to git repo or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not add files to git repo. %v \n", err)
 	}
 
-	log.Println("Commiting repo data to branch")
-	if err = commitFilesCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in commit repo data. %s", err)
+	// Write tree
+	treeID, err := index.WriteTreeTo(repo)
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not write tree or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not write tree. %v \n", err)
 	}
 
-	log.Printf("Pushing files to branch %s \n", github.BuildRemoteURL(packageModel, ref))
-	if err = pushFilesCMD(packageModel, ref); err != nil {
-		checkError(err, folderName)
-		return fmt.Errorf("Error occured in pushing files to branch. %s", err)
+	// Write the index
+	if err = index.Write(); err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not write index or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not write index. %v \n", err)
+	}
+	// TODO(Shikkic): is this necessary here?
+	tree, err := repo.LookupTree(treeID)
+
+	// Create commit Signature
+	sig := &git.Signature{
+		Name:  commitAuthor,
+		Email: commitAuthorEmail,
+		When:  time.Now(),
 	}
 
-	cleanUpExitHook(folderName)
+	// Create commit
+	// TODO(Shikkic): is commitID necessary here?
+	// We dont use it
+	commitID, err := repo.CreateCommit(
+		"HEAD",
+		sig,
+		sig,
+		fmt.Sprintf("Gophr versioned repo of %s/%s@%s",
+			*packageModel.Author,
+			*packageModel.Repo,
+			ref,
+		),
+		tree,
+	)
+	log.Println(commitID)
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not commit data or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not commit data. %v \n", err)
+	}
+
+	// Lookup Current Commit
+	// TODO(Shikkic): dont think this is necessary
+	head, err := repo.Head()
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not look up repo HEAD or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not look up repo HEAD. %v \n", err)
+	}
+	headCommit, err := repo.LookupCommit(head.Target())
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not get HEAD commit or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not get HEAD commit. %v \n", err)
+	}
+
+	// Creating branch
+	branchName := github.BuildGitHubBranch(ref)
+	branch, err := repo.CreateBranch(branchName, headCommit, false)
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not create branch or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not create branch. %v \n", err)
+	}
+
+	if err = branch.SetUpstream(branchName); err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not set upstream branch or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not set upstream branch. %v \n", err)
+	}
+
+	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", branchName), true, "headOne")
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not create symbolic ref or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not create symbolic ref. %v \n", err)
+	}
+
+	// Check out Branch
+	opts := &git.CheckoutOpts{
+		Strategy: git.CheckoutSafe | git.CheckoutRecreateMissing,
+	}
+	if err = repo.CheckoutHead(opts); err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not checkout branch or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not checkout branch. %v \n", err)
+	}
+
+	// Creating remote origin
+	remote, err := repo.Remotes.Create(
+		"origin",
+		fmt.Sprintf(
+			"https://github.com/gophr-packages/%s.git",
+			github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
+		),
+	)
+	if err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error, could not create remote origin or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not create remote origin. %v \n", err)
+	}
+
+	// Define push options
+	pushOptions := &git.PushOptions{
+		RemoteCallbacks: git.RemoteCallbacks{
+			CredentialsCallback:      credentialsCallback,
+			CertificateCheckCallback: certificateCheckCallback,
+		},
+	}
+
+	if err = remote.Push([]string{"refs/heads/" + branchName + ":refs/heads/" + branchName}, pushOptions); err != nil {
+		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+			return fmt.Errorf("Error,could not push to remote or delete repo folder. %v, %v \n", deletionErr, err)
+		}
+		return fmt.Errorf("Error, could not push to remote. %v \n", err)
+	}
+
+	// Delete work dir before returning
+	if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+		return fmt.Errorf("Error, could not delete repo folder and clean work dir. %v \n", deletionErr)
+	}
 
 	return nil
-}
-
-func initializeRepoCMD(packageModel *models.PackageModel) error {
-	log.Println("Initializing folder and repo commmand")
-	cmd := fmt.Sprintf(initalizeRepo, folderName, folderName)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-	return err
-}
-
-func createBranchCMD(packageModel *models.PackageModel, ref string) error {
-	log.Println("Initializing folder and repo commmand")
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(createBranch, navigateFolderCMD, github.BuildGitHubBranch(ref))
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-	return err
-}
-
-func setRemoteCMD(packageModel *models.PackageModel, ref string) error {
-	log.Println("Initializing folder and repo commmand")
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	remoteURL := github.BuildRemoteURL(packageModel, ref)
-	cmd := fmt.Sprintf(setRemoteCommand, navigateFolderCMD, remoteURL)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-	return err
-}
-func fetchArchiveCMD(packageModel *models.PackageModel, ref string) error {
-	log.Println("Fetching and Unzipping Archive for tag")
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(fetchRepoArchive, navigateFolderCMD, *packageModel.Author, *packageModel.Repo, ref)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-
-	return err
-}
-
-func unzipArchiveCMD(packageModel *models.PackageModel, ref string) error {
-	log.Println("Fetching and Unzipping Archive for tag")
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	zipFolder := *packageModel.Repo + "-" + ref
-	cmd := fmt.Sprintf(unzipRepoArchive, navigateFolderCMD, ref, zipFolder, ref, zipFolder)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-
-	return err
-}
-
-func addFilesCMD() error {
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(addFiles, navigateFolderCMD)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-	return err
-}
-
-func commitFilesCMD(packageModel *models.PackageModel, ref string) error {
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	commitMessage := fmt.Sprintf("Gophr versioned repo of %s/%s@%s", *packageModel.Author, *packageModel.Repo, ref)
-	cmd := fmt.Sprintf(commitFiles, navigateFolderCMD, commitMessage)
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s \n", out)
-	return err
-}
-
-func pushFilesCMD(packageModel *models.PackageModel, ref string) error {
-	navigateFolderCMD := fmt.Sprintf(navigateToPackageFolder, folderName)
-	cmd := fmt.Sprintf(pushFiles, navigateFolderCMD, github.BuildGitHubBranch(ref))
-	log.Println(cmd)
-	out, err := exec.Command("sh", "-c", cmd).Output()
-	log.Printf("Output: %s 		\n", out)
-	return err
-}
-
-// Helper functions
-
-// Exit Hook to clean up files
-func cleanUpExitHook(folderName string) {
-	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
-	if strings.HasPrefix(folderName, "/") == true {
-		cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
-		out, err := exec.Command("sh", "-c", cmd).Output()
-		if err != nil {
-			log.Println("Could not properly engage exit hook")
-			log.Fatalln(err)
-		}
-		log.Printf("Output: %s", out)
-	} else {
-		log.Println("Cowardly refusing to initiate exit hook. Will not rm -rf folder names that contains any leading '/'")
-	}
-}
-
-// Check Error and Engage Exit Hook if fatal error occured
-func checkError(err error, folderName string) {
-	if err != nil {
-		cleanUpExitHook(folderName)
-	}
 }
