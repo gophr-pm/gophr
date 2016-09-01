@@ -174,7 +174,10 @@ func RespondToPackageRequest(
 			)
 
 			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
-			subv.SubVersionPackageModel(&packageModel, packageRequest.Selector)
+			if err := subv.SubVersionPackageModel(&packageModel, packageRequest.GithubTree); err != nil {
+				log.Println(err)
+				return err
+			}
 			author := github.GitHubGophrPackageOrgName
 			repo := github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
 			metaData := []byte(generateGoGetMetadata(

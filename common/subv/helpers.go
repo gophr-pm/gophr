@@ -6,9 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	git "github.com/libgit2/git2go"
 )
@@ -25,26 +23,33 @@ func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string
 }
 
 // Exit Hook to clean up files
-func cleanUpExitHook(folderName string) {
+func cleanUpExitHook(folderPath string) error {
 	log.Printf("Exit hook initiated deleting folder %s \n", folderName)
-	if strings.HasPrefix(folderName, "/") == true {
-		cmd := fmt.Sprintf("cd /tmp && rm -rf %s", folderName)
-		out, err := exec.Command("sh", "-c", cmd).Output()
-		if err != nil {
-			log.Println("Could not properly engage exit hook")
-			log.Fatalln(err)
-		}
-		log.Printf("Output: %s", out)
-	} else {
-		log.Println("Cowardly refusing to initiate exit hook. Will not rm -rf folder names that contains any leading '/'")
-	}
+	err := deleteFolder(folderPath)
+	return err
 }
 
 // Check Error and Engage Exit Hook if fatal error occured
-func checkError(err error, folderName string) {
+func checkError(err error, folderPath string) {
 	if err != nil {
-		cleanUpExitHook(folderName)
+		cleanUpExitHook(folderPath)
 	}
+}
+
+func deleteAchriveFile(archivePath string) error {
+	log.Println(archivePath)
+	if err := os.Remove(archivePath); err != nil {
+		log.Println(err)
+		return fmt.Errorf("Error, could not delete ref archive file. %v", err)
+	}
+	return nil
+}
+
+func deleteFolder(folderPath string) error {
+	log.Println(folderPath)
+	err := os.RemoveAll(folderPath)
+	log.Println(err)
+	return err
 }
 
 func unzip(archive, target string) error {
