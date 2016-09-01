@@ -14,8 +14,8 @@ type KeyspaceQueryBuilder struct {
 	replicationFactor int
 }
 
-// CreateKeyspace starts constructing a keyspace creation query.
-func CreateKeyspace() *KeyspaceQueryBuilder {
+// CreateKeyspaceIfNotExists starts constructing a keyspace creation query.
+func CreateKeyspaceIfNotExists() *KeyspaceQueryBuilder {
 	return &KeyspaceQueryBuilder{}
 }
 

@@ -31,7 +31,8 @@ func OpenConnection(c *config.Config) (*gocql.Session, error) {
 
 	// Make sure that the keyspace exists.
 	log.Println("Asserting the existence of the keyspace.")
-	err = query.CreateKeyspace().
+	err = query.CreateKeyspaceIfNotExists().
+		// TODO(skeswa): replicate differently if not in dev.
 		WithReplication("SimpleStrategy", 3).
 		WithDurableWrites(true).
 		Create(session).
