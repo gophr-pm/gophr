@@ -8,9 +8,10 @@ import (
 )
 
 const (
-	exitCodeStartFailed = 100
-	exitCodeBuildFailed = 101
-	exitCodeCycleFailed = 102
+	exitCodeStartFailed  = 100
+	exitCodeBuildFailed  = 101
+	exitCodeCycleFailed  = 102
+	exitCodeUpdateFailed = 103
 )
 
 func exit(

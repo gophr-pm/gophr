@@ -7,7 +7,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
-func cycleCommand(c *cli.Context) error {
+func updateCommand(c *cli.Context) error {
 	var (
 		m          *module
 		err        error
@@ -28,25 +28,25 @@ func cycleCommand(c *cli.Context) error {
 	moduleName = c.Args().First()
 	if len(moduleName) == 0 {
 		// Means "all modules".
-		printInfo("Cycling all modules")
+		printInfo("Updating all modules")
 		if err = assertMinikubeRunning(); err != nil {
 			goto exitWithError
 		}
 		for _, m = range modules {
-			if err = cycleModule(m, gophrRoot, env); err != nil {
+			if err = updateModule(m, gophrRoot, env); err != nil {
 				goto exitWithError
 			}
 		}
-		printSuccess("All modules were cycled successfully")
+		printSuccess("All modules were updated successfully")
 	} else if m, exists = modules[moduleName]; exists {
-		printInfo(fmt.Sprintf("Cycling module \"%s\"", moduleName))
+		printInfo(fmt.Sprintf("Updating module \"%s\"", moduleName))
 		if err = assertMinikubeRunning(); err != nil {
 			goto exitWithError
 		}
-		if err = cycleModule(m, gophrRoot, env); err != nil {
+		if err = updateModule(m, gophrRoot, env); err != nil {
 			goto exitWithError
 		}
-		printSuccess(fmt.Sprintf("Module \"%s\" was cycled successfully", moduleName))
+		printSuccess(fmt.Sprintf("Module \"%s\" was updated successfully", moduleName))
 	} else {
 		err = newNoSuchModuleError(moduleName)
 		goto exitWithErrorAndHelp
@@ -54,33 +54,20 @@ func cycleCommand(c *cli.Context) error {
 
 	return nil
 exitWithError:
-	exit(exitCodeCycleFailed, nil, "", err)
+	exit(exitCodeUpdateFailed, nil, "", err)
 	return nil
 exitWithErrorAndHelp:
-	exit(exitCodeCycleFailed, c, "cycle", err)
+	exit(exitCodeUpdateFailed, c, "update", err)
 	return nil
 }
 
-func cycleModule(m *module, gophrRoot string, env environment) error {
-	// Destroy in reverse order.
-	for i := len(m.k8sfiles) - 1; i >= 0; i-- {
-		// Put together the absolute path.
-		k8sfile := m.k8sfiles[i]
-		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
-		// Only destroy if its already a thing.
-		if existsInK8S(k8sfilePath) {
-			if err := deleteInK8S(k8sfilePath); err != nil {
-				return err
-			}
-		}
-	}
-
-	// Create in order.
+func updateModule(m *module, gophrRoot string, env environment) error {
+	// Apply in order.
 	for _, k8sfile := range m.k8sfiles {
 		// Put together the absolute path.
 		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
 		// Perform the create command.
-		if err := createInK8S(k8sfilePath); err != nil {
+		if err := applyInK8S(k8sfilePath); err != nil {
 			return err
 		}
 	}

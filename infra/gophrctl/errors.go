@@ -12,7 +12,7 @@ func newExecError(output []byte, err error) *execError {
 }
 
 func (e *execError) Error() string {
-	return fmt.Sprintf("Command execution failed: %v.\nOutput:\n\n%s\n", e.err, string(e.output[:]))
+	return fmt.Sprintf("Command execution failed: %v.\n\n%s\n", e.err, string(e.output[:]))
 }
 
 func newNoSuchModuleError(nonExistentModuleName string) error {
