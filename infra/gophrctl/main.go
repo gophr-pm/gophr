@@ -33,8 +33,8 @@ const (
 )
 
 var (
-	moduleCommandArgsUsage           = fmt.Sprintf("[%s] [arguments...]", modulesToString(false))
-	moduleCommandArgsUsageWithoutAll = fmt.Sprintf("[%s] [arguments...]", modulesToString(true))
+	moduleCommandArgsUsage           = fmt.Sprintf("[%s] [arguments...]", modulesToString())
+	moduleCommandArgsUsageWithoutAll = fmt.Sprintf("[%s] [arguments...]", modulesToString())
 )
 
 func main() {

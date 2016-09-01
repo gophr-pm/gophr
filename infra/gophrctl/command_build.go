@@ -1,46 +1,77 @@
 package main
 
 import (
-	"os"
+	"fmt"
+	"path/filepath"
 
 	"gopkg.in/urfave/cli.v1"
 )
 
+const (
+	devDockerImageTag = "v1"
+)
+
 func buildCommand(c *cli.Context) error {
 	var (
-		err     error
-		env     environment
-		module  string
-		modules []string
+		m          *module
+		err        error
+		env        environment
+		exists     bool
+		gophrRoot  string
+		moduleName string
 	)
 
 	if env, err = readEnvironment(c); err != nil {
-		goto exit
+		goto exitWithError
 	}
 
-	if modules, err = getModules(c); err != nil {
-		goto exit
+	if gophrRoot, err = readGophrRoot(c); err != nil {
+		goto exitWithError
 	}
 
-	if module, err = readModule(c, modules); err != nil {
-		goto exit
-	}
-
-	if len(module) < 1 {
-		module = "all modules"
-	}
-
-	printInfo("Building " + module + ".")
-	startSpinner("Executing docker build...")
-	if err = doDockerComposeBuild(c.GlobalString(flagNameRepoPath), module, env == environmentDev); err != nil {
-		stopSpinner()
-		goto exit
+	moduleName = c.Args().First()
+	if len(moduleName) == 0 {
+		// Means "all modules".
+		printInfo("Building all modules")
+		if err = assertMinikubeRunning(); err != nil {
+			goto exitWithError
+		}
+		for _, m = range modules {
+			if err = buildModule(m, gophrRoot, env); err != nil {
+				goto exitWithError
+			}
+		}
+		printSuccess("All modules were built successfully")
+	} else if m, exists = modules[moduleName]; exists {
+		printInfo(fmt.Sprintf("Building module \"%s\"", moduleName))
+		if err = assertMinikubeRunning(); err != nil {
+			goto exitWithError
+		}
+		if err = buildModule(m, gophrRoot, env); err != nil {
+			goto exitWithError
+		}
+		printSuccess(fmt.Sprintf("Module \"%s\" was built successfully", moduleName))
+	} else {
+		err = newNoSuchModuleError(moduleName)
+		goto exitWithErrorAndHelp
 	}
 
 	return nil
+exitWithError:
+	exit(exitCodeBuildFailed, nil, "", err)
+	return nil
+exitWithErrorAndHelp:
+	exit(exitCodeBuildFailed, c, "build", err)
+	return nil
+}
 
-exit:
-	printError("Build failed.")
-	print(err)
-	os.Exit(exitCodeBuildFailed)
+func buildModule(m *module, gophrRoot string, env environment) error {
+	buildArgs := buildInMinikubeArgs{
+		imageTag:       devDockerImageTag, // TODO(skeswa): tag should depend on env.
+		imageName:      fmt.Sprintf("gophr-%s-%s", m.name, env),
+		contextPath:    filepath.Join(gophrRoot, m.buildContext),
+		dockerfilePath: filepath.Join(gophrRoot, fmt.Sprintf("%s.%s", m.dockerfile, env)),
+	}
+
+	return buildInMinikube(buildArgs)
 }
