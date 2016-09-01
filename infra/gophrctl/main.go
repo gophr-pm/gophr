@@ -16,20 +16,20 @@ const (
 	flagNameRepoPath   = "repo-path"
 	flagNameForeground = "foreground"
 
-	commandNameBuild   = "build"
-	commandDescBuild   = "Updates module images"
-	commandNameLog     = "log"
-	commandDescLog     = "Logs module's container output to stdout"
-	commandNameRestart = "restart"
-	commandDescRestart = "Restarts module containers"
-	commandNameSSH     = "ssh"
-	commandDescSSH     = "Starts a shell session within a module's container"
-	commandNameStart   = "start"
-	commandDescStart   = "Start module containers"
-	commandNameStop    = "stop"
-	commandDescStop    = "Stops module containers"
-	commandNameTest    = "test"
-	commandDescTest    = "Runs module tests"
+	commandNameBuild = "build"
+	commandDescBuild = "Updates module images"
+	commandNameCycle = "cycle"
+	commandDescCycle = "Re-creates a module in kubernetes"
+	commandNameLog   = "log"
+	commandDescLog   = "Logs module's container output to stdout"
+	commandNameSSH   = "ssh"
+	commandDescSSH   = "Starts a shell session within a module's container"
+	commandNameStart = "start"
+	commandDescStart = "Start module containers"
+	commandNameStop  = "stop"
+	commandDescStop  = "Stops module containers"
+	commandNameTest  = "test"
+	commandDescTest  = "Runs module tests"
 )
 
 var (
@@ -83,20 +83,20 @@ func main() {
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
+		// Cycle command.
+		{
+			Name:      commandNameCycle,
+			Usage:     commandDescCycle,
+			Action:    cycleCommand,
+			ArgsUsage: moduleCommandArgsUsage,
+		},
+
 		// Log command.
 		{
 			Name:      commandNameLog,
 			Usage:     commandDescLog,
 			Action:    logCommand,
 			ArgsUsage: moduleCommandArgsUsageWithoutAll,
-		},
-
-		// Restart command.
-		{
-			Name:      commandNameRestart,
-			Usage:     commandDescRestart,
-			Action:    restartCommand,
-			ArgsUsage: moduleCommandArgsUsage,
 		},
 
 		// SSH command.

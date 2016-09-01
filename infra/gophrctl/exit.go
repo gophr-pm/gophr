@@ -10,6 +10,7 @@ import (
 const (
 	exitCodeStartFailed = 100
 	exitCodeBuildFailed = 101
+	exitCodeCycleFailed = 102
 )
 
 func exit(

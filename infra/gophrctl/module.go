@@ -19,6 +19,15 @@ var modules = map[string]*module{
 		dockerfile:   "./infra/docker/api/Dockerfile",
 		buildContext: ".",
 	},
+	"db": &module{
+		name: "db",
+		k8sfiles: []string{
+			"./infra/k8s/db/service",
+			"./infra/k8s/db/daemonset",
+		},
+		dockerfile:   "./infra/docker/db/Dockerfile",
+		buildContext: ".",
+	},
 	"indexer": &module{
 		name: "indexer",
 		k8sfiles: []string{
