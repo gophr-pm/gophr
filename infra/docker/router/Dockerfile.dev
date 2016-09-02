@@ -55,7 +55,7 @@ RUN set -ex && apt-get -y remove git
 # Set the environment variables
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
-ENV GOPHR_DB_ADDR="db"
+ENV GOPHR_DB_ADDR="db-svc"
 ENV GOPHR_CONSTRUCTION_ZONE_PATH="/construction-zone"
 
 # Create volume for construction zone.

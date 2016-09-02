@@ -48,7 +48,7 @@ func (c *Config) String() string {
 
 	if len(c.ConstructionZonePath) > 0 {
 		buffer.WriteString("\nConstruction zone path: ")
-		buffer.WriteString(c.MigrationsPath)
+		buffer.WriteString(c.ConstructionZonePath)
 	}
 
 	return buffer.String()

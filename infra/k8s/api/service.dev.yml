@@ -6,7 +6,10 @@ metadata:
     module: api
   namespace: gophr
 spec:
+  type: NodePort
   ports:
-    - port: 3000
+    - name: http
+      port: 3000
+      nodePort: 30100
   selector:
     module: api

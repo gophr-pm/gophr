@@ -6,7 +6,10 @@ metadata:
     module: router
   namespace: gophr
 spec:
+  type: NodePort
   ports:
-    - port: 3000
+    - name: http
+      port: 3000
+      nodePort: 30200
   selector:
     module: router

@@ -6,7 +6,10 @@ metadata:
     module: db
   namespace: gophr
 spec:
+  type: NodePort
   ports:
-    - port: 9042
+    - name: cql
+      port: 9042
+      nodePort: 30900
   selector:
     module: db
