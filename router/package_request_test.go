@@ -186,6 +186,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 		// TODO(skeswa): mock the database session.
 		err := RespondToPackageRequest(
 			nil,
+			nil,
 			NewRequestContext(nil),
 			req,
 			res,

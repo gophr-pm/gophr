@@ -23,6 +23,6 @@ spec:
         volumeMounts:
           - mountPath: /construction-zone
             name: construction-zone
-    volumes:
-      - name: construction-zone
-        emptyDir: {}
+      volumes:
+        - name: construction-zone
+          emptyDir: {}

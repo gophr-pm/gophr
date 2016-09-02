@@ -42,7 +42,7 @@ func (err InvalidPackageRequestError) Error() string {
 	return fmt.Sprintf(
 		`Failed to parse and process request with URL "%s": %v`,
 		err.RequestURL,
-		err.Causes,
+		err.Causes(),
 	)
 }
 

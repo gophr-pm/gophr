@@ -9,6 +9,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/semver"
@@ -104,6 +105,7 @@ type PackageRequest struct {
 // correctly formatted request for package-related data, and either responds
 // appropriately or returns an error indicating what went wrong.
 func RespondToPackageRequest(
+	config *config.Config,
 	session *gocql.Session,
 	context RequestContext,
 	req *http.Request,
@@ -173,15 +175,24 @@ func RespondToPackageRequest(
 				packageRequest.GithubTree,
 			)
 
-			// Check if sub-versioning is necessary.
-			if !models.IsPackageArchived(session, packageRequest.Author, packageRequest.Repo, packageRequest.GithubTree) {
+			// Only run the sub-versioning if its completely necessary.
+			if !models.IsPackageArchived(
+				session,
+				packageRequest.Author,
+				packageRequest.Repo,
+				packageRequest.GithubTree) {
+				// Create a model with the author and repo that we already have.
 				packageModel := &models.PackageModel{
 					Author: &packageRequest.Author,
 					Repo:   &packageRequest.Repo,
 				}
 
-				if err := subv.SubVersionPackageModel(session, packageModel, packageRequest.GithubTree); err != nil {
-					log.Println(err)
+				if err := subv.SubVersionPackageModel(
+					session,
+					packageModel,
+					packageRequest.GithubTree,
+					config.ConstructionZonePath); err != nil {
+					log.Println("Sub-versioning failed:", err)
 					return err
 				}
 			}
