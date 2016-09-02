@@ -293,5 +293,13 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 		return fmt.Errorf("Error, could not delete repo folder and clean work dir. %v \n", deletionErr)
 	}
 
+	// Record that this package has been archived.
+	go models.RecordPackageArchival(
+		session,
+		packageModel.Author,
+		packageModel.Repo,
+		ref,
+	)
+
 	return nil
 }

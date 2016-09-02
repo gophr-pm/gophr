@@ -13,9 +13,8 @@ const (
 )
 
 func existsInK8S(k8sConfigFilePath string) bool {
-	output, err := exec.Command("kubectl", "--namespace="+k8sNamespace, "describe", "-f", k8sConfigFilePath).CombinedOutput()
+	_, err := exec.Command("kubectl", "--namespace="+k8sNamespace, "describe", "-f", k8sConfigFilePath).CombinedOutput()
 	if err != nil {
-		fmt.Println("FAIL", string(output[:]), err)
 		return false
 	}
 
