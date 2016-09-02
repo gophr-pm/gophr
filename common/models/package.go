@@ -159,6 +159,7 @@ func NewPackageModelFromBulkSelect(
 	}, nil
 }
 
+// TODO(Shikkic): Fix func name and attribute naming scheme
 func NewPackageModelTest(
 	author string,
 	repo string,

@@ -175,20 +175,39 @@ func RespondToPackageRequest(
 				packageRequest.GithubTree,
 			)
 
-			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
-			if err := subv.SubVersionPackageModel(&packageModel, packageRequest.GithubTree, config.ConstructionZonePath); err != nil {
-				log.Println(err)
-				return err
+			// Only run the sub-versioning if its completely necessary.
+			if !models.IsPackageArchived(
+				session,
+				packageRequest.Author,
+				packageRequest.Repo,
+				packageRequest.GithubTree) {
+				// Create a model with the author and repo that we already have.
+				packageModel := &models.PackageModel{
+					Author: &packageRequest.Author,
+					Repo:   &packageRequest.Repo,
+				}
+
+				if err := subv.SubVersionPackageModel(
+					session,
+					packageModel,
+					packageRequest.GithubTree,
+					config.ConstructionZonePath); err != nil {
+					log.Println("Sub-versioning failed:", err)
+					return err
+				}
 			}
-			author := github.GitHubGophrPackageOrgName
-			repo := github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
-			metaData := []byte(generateGoGetMetadata(
-				author,
-				repo,
-				packageRequest.Selector,
-				packageRequest.Subpath,
-				packageRequest.GithubTree,
-			))
+
+			var (
+				repo     = github.BuildNewGitHubRepoName(packageRequest.Author, packageRequest.Repo)
+				author   = github.GitHubGophrPackageOrgName
+				metaData = []byte(generateGoGetMetadata(
+					author,
+					repo,
+					packageRequest.Selector,
+					packageRequest.Subpath,
+					packageRequest.GithubTree,
+				))
+			)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			res.Write(metaData)
