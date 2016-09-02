@@ -16,18 +16,16 @@ import (
 )
 
 var (
-	folderName              string
-	folderPath              string
-	fileDir                 = "/tmp"
-	gitHubRemoteOrigin      = "git@github.com:gophr-packages/%s.git"
-	navigateToPackageFolder = "cd /tmp/%s"
-	commitAuthor            = "gophrpm"
-	commitAuthorEmail       = "gophr.pm@gmail.com"
+	folderName         string
+	folderPath         string
+	gitHubRemoteOrigin = "git@github.com:gophr-packages/%s.git"
+	commitAuthor       = "gophrpm"
+	commitAuthorEmail  = "gophr.pm@gmail.com"
 )
 
 // SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
 // versioned a the speicifed ref
-func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error {
+func SubVersionPackageModel(packageModel *models.PackageModel, ref string, fileDir string) error {
 	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	// If the given ref is empty or refers to 'master' then we need to grab the current master SHA
 	if len(ref) == 0 || ref == "master" {
