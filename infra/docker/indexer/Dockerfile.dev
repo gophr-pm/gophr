@@ -33,7 +33,5 @@ ENV GOPHR_DB_ADDR="db"
 # Set the generated directory as the work directory.
 WORKDIR /gophr
 
-# Wait for db:9042 with no timeout, then start the binary.
-CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
-    -- \
-    ./gophr-indexer-binary --port "$PORT"
+COPY ./infra/docker/indexer/scripts/root /var/spool/cron/crontabs/root
+CMD crond -l 2 -f
