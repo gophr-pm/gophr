@@ -173,20 +173,30 @@ func RespondToPackageRequest(
 				packageRequest.GithubTree,
 			)
 
-			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
-			if err := subv.SubVersionPackageModel(&packageModel, packageRequest.GithubTree); err != nil {
-				log.Println(err)
-				return err
+			// Check if sub-versioning is necessary.
+			if !models.IsPackageArchived(session, packageRequest.Author, packageRequest.Repo, packageRequest.GithubTree) {
+				packageModel := &models.PackageModel{
+					Author: &packageRequest.Author,
+					Repo:   &packageRequest.Repo,
+				}
+
+				if err := subv.SubVersionPackageModel(session, packageModel, packageRequest.GithubTree); err != nil {
+					log.Println(err)
+					return err
+				}
 			}
-			author := github.GitHubGophrPackageOrgName
-			repo := github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
-			metaData := []byte(generateGoGetMetadata(
-				author,
-				repo,
-				packageRequest.Selector,
-				packageRequest.Subpath,
-				packageRequest.GithubTree,
-			))
+
+			var (
+				repo     = github.BuildNewGitHubRepoName(packageRequest.Author, packageRequest.Repo)
+				author   = github.GitHubGophrPackageOrgName
+				metaData = []byte(generateGoGetMetadata(
+					author,
+					repo,
+					packageRequest.Selector,
+					packageRequest.Subpath,
+					packageRequest.GithubTree,
+				))
+			)
 
 			res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 			res.Write(metaData)

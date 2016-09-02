@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gocql/gocql"
 	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/github"
@@ -27,7 +28,7 @@ var (
 
 // SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
 // versioned a the speicifed ref
-func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error {
+func SubVersionPackageModel(session *gocql.Session, packageModel *models.PackageModel, ref string) error {
 	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	// If the given ref is empty or refers to 'master' then we need to grab the current master SHA
 	if len(ref) == 0 || ref == "master" {
@@ -296,8 +297,8 @@ func SubVersionPackageModel(packageModel *models.PackageModel, ref string) error
 	// Record that this package has been archived.
 	go models.RecordPackageArchival(
 		session,
-		packageModel.Author,
-		packageModel.Repo,
+		*(packageModel.Author),
+		*(packageModel.Repo),
 		ref,
 	)
 
