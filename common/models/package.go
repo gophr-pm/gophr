@@ -159,6 +159,7 @@ func NewPackageModelFromBulkSelect(
 	}, nil
 }
 
+// TODO(Shikkic): get your shit together.
 func NewPackageModelTest(
 	author string,
 	repo string,
