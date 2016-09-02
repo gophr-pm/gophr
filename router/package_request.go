@@ -9,6 +9,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/semver"
@@ -104,6 +105,7 @@ type PackageRequest struct {
 // correctly formatted request for package-related data, and either responds
 // appropriately or returns an error indicating what went wrong.
 func RespondToPackageRequest(
+	config *config.Config,
 	session *gocql.Session,
 	context RequestContext,
 	req *http.Request,
@@ -174,7 +176,7 @@ func RespondToPackageRequest(
 			)
 
 			packageModel := models.PackageModel{Author: &packageRequest.Author, Repo: &packageRequest.Repo}
-			if err := subv.SubVersionPackageModel(&packageModel, packageRequest.GithubTree); err != nil {
+			if err := subv.SubVersionPackageModel(&packageModel, packageRequest.GithubTree, config.ConstructionZonePath); err != nil {
 				log.Println(err)
 				return err
 			}

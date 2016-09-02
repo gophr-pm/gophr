@@ -44,7 +44,7 @@ func RequestHandler(
 				r.URL.Path,
 			)
 
-			err := RespondToPackageRequest(session, context, r, w)
+			err := RespondToPackageRequest(conf, session, context, r, w)
 			if err != nil {
 				errors.RespondWithError(w, err)
 			}
