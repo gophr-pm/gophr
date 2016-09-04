@@ -61,6 +61,16 @@ func execK8SLogs(podName string, follow bool) {
 	}
 }
 
+func execK8SBash(podName string) {
+	// Find kubectl - panic if it ain't here.
+	binary, err := exec.LookPath(kubectl)
+	if err != nil {
+		panic(err)
+	}
+
+	syscall.Exec(binary, []string{kubectl, k8sNamespaceFlag, "exec", podName, "-i", "-t", "/bin/bash"}, os.Environ())
+}
+
 func deleteInK8S(k8sConfigFilePath string) error {
 	startSpinner(fmt.Sprintf("Deleting \"%s\" in kubernetes", abbreviateK8SPath(k8sConfigFilePath)))
 	output, err := exec.Command(kubectl, k8sNamespaceFlag, "delete", "-f", k8sConfigFilePath).CombinedOutput()
