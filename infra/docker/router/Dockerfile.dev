@@ -56,6 +56,7 @@ RUN set -ex && apt-get -y remove git
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db-svc"
+ENV GOPHR_SECRETS_PATH="/secrets"
 ENV GOPHR_CONSTRUCTION_ZONE_PATH="/construction-zone"
 
 VOLUME ["/construction-zone", "/secrets"]
