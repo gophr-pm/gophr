@@ -17,6 +17,7 @@ const (
 )
 
 func secretsNewKeyCommand(c *cli.Context) error {
+	printInfo("Creating a new key")
 	keyFilePath := c.Args().First()
 	if len(keyFilePath) < 1 {
 		exit(exitCodeNewKeyFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
@@ -53,6 +54,7 @@ func secretsRecordCommand(c *cli.Context) error {
 		secretFileName string
 	)
 
+	printInfo("Recording a new secret")
 	if gophrRoot, err = readGophrRoot(c); err != nil {
 		exit(exitCodeRecordSecretFailed, nil, "", err)
 	}
