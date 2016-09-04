@@ -36,3 +36,8 @@ func NewRequestService() *RequestService {
 
 	return &newRequestService
 }
+
+// TODO:(Shikkic) Create Param Struct
+type RequestServiceParams struct {
+	Indexer bool
+}

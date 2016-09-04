@@ -28,7 +28,7 @@ RUN set -ex && apk del git
 # Set the environment variables
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
-ENV GOPHR_DB_ADDR="db"
+ENV GOPHR_DB_ADDR="db-svc"
 
 # Set the generated directory as the work directory.
 WORKDIR /gophr
