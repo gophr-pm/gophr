@@ -10,7 +10,7 @@ import (
 
 func main() {
 	log.Println("Preparing to initialize DB connection")
-	_, session := common.Init()
+	conf, session := common.Init()
 	defer session.Close()
 
 	log.Println("Fetching godoc metadata")
@@ -65,5 +65,5 @@ func main() {
 	}
 
 	log.Println("Finished inserting packages into database")
-	ReIndexPackageGitHubStats(session)
+	ReIndexPackageGitHubStats(conf, session)
 }

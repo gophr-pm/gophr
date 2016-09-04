@@ -11,6 +11,7 @@ import (
 	"github.com/gocql/gocql"
 	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/verdeps"
@@ -26,7 +27,13 @@ var (
 
 // SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
 // versioned a the speicifed ref.
-func SubVersionPackageModel(session *gocql.Session, packageModel *models.PackageModel, ref string, fileDir string) error {
+func SubVersionPackageModel(
+	conf *config.Config,
+	session *gocql.Session,
+	packageModel *models.PackageModel,
+	ref string,
+	fileDir string) error {
+
 	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	// If the given ref is empty or refers to 'master' then we need to grab the current master SHA
 	if len(ref) == 0 || ref == "master" {
@@ -117,7 +124,7 @@ func SubVersionPackageModel(session *gocql.Session, packageModel *models.Package
 	}
 
 	// Instantiate New Github Request Service
-	gitHubRequestService := github.NewRequestService()
+	gitHubRequestService := github.NewRequestService(conf, session)
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)

@@ -188,6 +188,7 @@ func RespondToPackageRequest(
 				}
 
 				if err := subv.SubVersionPackageModel(
+					config,
 					session,
 					packageModel,
 					packageRequest.GithubTree,
