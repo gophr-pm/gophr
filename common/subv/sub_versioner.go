@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -68,7 +69,7 @@ func SubVersionPackageModel(
 
 	// Set working folderName and folderPath for package
 	folderName = github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
-	folderPath = fmt.Sprintf("%s/%s", fileDir, folderName)
+	folderPath = filepath.Join(fileDir, folderName)
 
 	// Fetch ref archive
 	refZipURL := fmt.Sprintf("https://github.com/%s/%s/archive/%s.zip", *packageModel.Author, *packageModel.Repo, ref)
@@ -143,7 +144,7 @@ func SubVersionPackageModel(
 	if err = verdeps.VersionDeps(
 		verdeps.VersionDepsArgs{
 			SHA:           ref,
-			Path:          fmt.Sprintf("/tmp/%s", folderName),
+			Path:          folderPath,
 			Date:          commitDate,
 			Model:         packageModel,
 			GithubService: gitHubRequestService,

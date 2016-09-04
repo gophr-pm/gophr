@@ -2,6 +2,7 @@ package github
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"path/filepath"
@@ -101,6 +102,8 @@ func (gitHubAPIKeyChain *APIKeyChain) shuffleKeys() {
 	gitHubAPIKeyChain.GitHubAPIKeys = newGitHubAPIKeys
 }
 
+// TODO(skeswa): this breaks when there are no keys in the database. @Shikkic,
+// investigate this.
 func (gitHubAPIKeyChain *APIKeyChain) setCurrentKey() {
 	if len(gitHubAPIKeyChain.GitHubAPIKeys) == 0 {
 		gitHubAPIKeyChain.CurrentKey = APIKeyModel{}
@@ -142,40 +145,64 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session) ([]string, er
 	// If there are no keys in the database, and this is in the dev environment,
 	// then add the ones from the secret file (if it exists).
 	if conf.IsDev && len(gitHubAPIKeys) < 1 && len(conf.SecretsPath) > 0 {
-		log.Println("There were no keys in the database. Since this is the " +
-			"dev environment, attempting to load from the github keys secret.")
-		filePath := filepath.Join(conf.SecretsPath, devAPIKeysSecretFileName)
-
-		// Fail silently all the way through.
-		if apiKeysJSON, err := ioutil.ReadFile(filePath); err == nil {
-			log.Println("Loaded the data from the keys secret file successfully. Now unmarshalling json.")
-			// Create the struct for unmarshalling.
-			type apiKey struct {
-				Key                string `json:"key"`
-				HasAdminPrivileges string `json:"hasAdminPrivileges"`
-			}
-
-			// Create the slice for unmarshalling.
-			keys := []apiKey{}
-			if err = json.Unmarshal(apiKeysJSON, &keys); err == nil && len(keys) > 0 {
-				log.Println("Unmarshalled the keys successfuly. Now inserting into the database.")
-				// Create an insert query.
-				q := query.InsertInto(tableNameGithubAPIKey)
-				for _, key := range keys {
-					q.Value(columnNameGithubAPIKeyKey, key.Key)
-				}
-
-				// Execute said query.
-				if err = q.Create(session).Exec(); err == nil {
-					log.Println("Inserted keys into the database successfully. Returning the keys in string form.")
-					// If the keys were inserted okay, then return them in string form.
-					for _, key := range keys {
-						gitHubAPIKeys = append(gitHubAPIKeys, key.Key)
-					}
-				}
-			}
+		gitHubAPIKeys, err = readGithubKeysFromSecret(conf, session)
+		if err != nil {
+			log.Printf("Failed to read keys from secret: %v.", err)
 		}
 	}
 
 	return gitHubAPIKeys, nil
+}
+
+func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]string, error) {
+	log.Println("There were no keys in the database. Since this is the " +
+		"dev environment, attempting to load from the github keys secret.")
+	filePath := filepath.Join(conf.SecretsPath, devAPIKeysSecretFileName)
+
+	var (
+		err         error
+		apiKeysJSON []byte
+	)
+
+	// Read the secret data.
+	if apiKeysJSON, err = ioutil.ReadFile(filePath); err != nil {
+		return nil, err
+	}
+
+	log.Println("Loaded the data from the keys secret file successfully. Now unmarshalling json.")
+
+	// Create the struct for unmarshalling.
+	type apiKey struct {
+		Key                string `json:"key"`
+		HasAdminPrivileges bool   `json:"hasAdminPrivileges"`
+	}
+
+	// Create the slice for unmarshalling.
+	keys := []apiKey{}
+	if err = json.Unmarshal(apiKeysJSON, &keys); err != nil {
+		return nil, err
+	} else if len(keys) < 1 {
+		return nil, fmt.Errorf("There were no keys in the secret!")
+	}
+
+	log.Println("Unmarshalled keys from the secret successfully. Now inserting into the database.")
+
+	// Execute the insert queries.
+	for _, key := range keys {
+		if err = query.InsertInto(tableNameGithubAPIKey).
+			Value(columnNameGithubAPIKeyKey, key.Key).
+			Create(session).
+			Exec(); err != nil {
+			return nil, err
+		}
+	}
+
+	log.Println("Inserted keys into the database successfully. Returning the keys in string form.")
+
+	var keyStrings []string
+	for _, key := range keys {
+		keyStrings = append(keyStrings, key.Key)
+	}
+
+	return keyStrings, nil
 }
