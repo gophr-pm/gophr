@@ -1,4 +1,3 @@
 # TODO(Shikkic): remove first cron only for testing
 # min   hour    day     month   weekday command
-1       *       *       *       *       ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 -- ./gophr-indexer-binary --port "$PORT"
-0       3       *       *       *	      ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 -- ./gophr-indexer-binary --port "$PORT"
+0       3       *       *       *       /gophr/wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 -- /gophr/gophr-indexer-binary --port "$PORT"
