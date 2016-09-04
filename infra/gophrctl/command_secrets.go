@@ -8,9 +8,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/urfave/cli.v1"
+)
+
+const (
+	secretsDir = "./infra/k8s/secrets"
 )
 
 func secretsNewKeyCommand(c *cli.Context) error {
@@ -77,15 +80,9 @@ func secretsRecordCommand(c *cli.Context) error {
 		exit(exitCodeRecordSecretFailed, nil, "", err)
 	}
 
-	splitter := strings.LastIndex(secretFilePath, string(os.PathSeparator))
-	if splitter == -1 {
-		secretFileName = secretFilePath
-	} else {
-		secretFileName = secretFilePath[splitter+1:]
-	}
-
 	// Concat the the output path together.
-	outputFilePath := filepath.Join(gophrRoot, "./infra/k8s/secrets", secretFileName)
+	_, secretFileName = filepath.Split(secretFilePath)
+	outputFilePath := filepath.Join(gophrRoot, secretsDir, secretFileName)
 
 	// Write the decrypted secret to the tmp file.
 	if err = ioutil.WriteFile(
@@ -96,5 +93,69 @@ func secretsRecordCommand(c *cli.Context) error {
 	}
 
 	printSuccess(fmt.Sprintf("New secret recorded at \"%s\".", outputFilePath))
+	return nil
+}
+
+func secretsCycleCommand(c *cli.Context) error {
+	var (
+		err                  error
+		gophrRoot            string
+		keyFilePath          string
+		secretFilePath       string
+		decryptedSecretPath  string
+		decryptedSecretPaths []string
+	)
+
+	printInfo("Cycling all recorded secrets")
+	if gophrRoot, err = readGophrRoot(c); err != nil {
+		exit(exitCodeCycleSecretsFailed, nil, "", err)
+	}
+
+	keyFilePath = c.String(flagNameKeyPath)
+	if len(keyFilePath) < 1 {
+		exit(exitCodeCycleSecretsFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
+	}
+	keyFilePath, err = filepath.Abs(keyFilePath)
+	if err != nil {
+		exit(exitCodeCycleSecretsFailed, nil, "", err)
+	}
+
+	if err = assertMinikubeRunning(); err != nil {
+		exit(exitCodeCycleSecretsFailed, nil, "", err)
+	}
+
+	secretFiles, err := ioutil.ReadDir(filepath.Join(gophrRoot, secretsDir))
+	if err != nil {
+		exit(exitCodeCycleSecretsFailed, nil, "", err)
+	}
+
+	for _, secretFile := range secretFiles {
+		secretFilePath = filepath.Join(gophrRoot, secretsDir, secretFile.Name())
+		if decryptedSecretPath, err = generateDecryptedSecret(secretFilePath, keyFilePath); err != nil {
+			exit(exitCodeCycleSecretsFailed, nil, "", err)
+		} else {
+			decryptedSecretPaths = append(decryptedSecretPaths, decryptedSecretPath)
+		}
+	}
+
+	if secretExistsInK8S() {
+		if err = deleteSecretsInK8S(); err != nil {
+			exit(exitCodeCycleSecretsFailed, nil, "", err)
+		}
+	}
+	if err = createSecretsInK8S(decryptedSecretPaths); err != nil {
+		exit(exitCodeCycleSecretsFailed, nil, "", err)
+	}
+
+	// Delete all of the generated secret files.
+	startSpinner("Cleaning up generated files")
+	for _, decryptedSecretPath := range decryptedSecretPaths {
+		if err = os.Remove(decryptedSecretPath); err != nil {
+			exit(exitCodeCycleSecretsFailed, nil, "", err)
+		}
+	}
+	stopSpinner(true)
+
+	printSuccess("Secrets cycled successfully")
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"io/ioutil"
+	"path/filepath"
 )
 
 func splitKeyFileData(data []byte) (key []byte, nonce []byte) {
@@ -78,16 +79,19 @@ func generateDecryptedSecret(secretFilePath string, keyFilePath string) (string,
 		return "", err
 	}
 	// Create a tmp file for the decrypted secret.
-	tmpFile, err := ioutil.TempFile("", "")
+	tmpDir, err := ioutil.TempDir("", "")
 	if err != nil {
 		return "", err
 	}
+	// Preserve the secret file name.
+	_, secretFileName := filepath.Split(secretFilePath)
+	outputFilePath := filepath.Join(tmpDir, secretFileName)
 	// Write the decrypted secret to the tmp file.
-	_, err = tmpFile.Write(decryptedSecret)
+	err = ioutil.WriteFile(outputFilePath, decryptedSecret, 0644)
 	if err != nil {
 		return "", err
 	}
 
 	// Return the path to the tmp file.
-	return tmpFile.Name(), nil
+	return outputFilePath, nil
 }

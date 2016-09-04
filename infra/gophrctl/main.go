@@ -138,16 +138,16 @@ func main() {
 					},
 				},
 				{
-					Name:  "test",
-					Usage: "Test",
-					Action: func(c *cli.Context) error {
-						fmt.Println(generateDecryptedSecret(
-							"/Users/skeswa/dev/go/src/github.com/skeswa/gophr/infra/k8s/secrets/cert.dev.crt",
-							"/Users/skeswa/dev/sandbox/gophr-key",
-						))
-						return nil
+					Name:   "cycle",
+					Usage:  "Cycles all recorded secrets",
+					Action: secretsCycleCommand,
+
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  flagNameKeyPath + ", k",
+							Usage: "path to the key file",
+						},
 					},
-					ArgsUsage: "[new key filepath]",
 				},
 			},
 		},
