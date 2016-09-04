@@ -21,8 +21,13 @@ spec:
         ports:
         - containerPort: 3000
         volumeMounts:
-          - mountPath: /construction-zone
-            name: construction-zone
+        - mountPath: /construction-zone
+          name: construction-zone
+        - mountPath: /secrets
+          name: secrets
       volumes:
-        - name: construction-zone
-          emptyDir: {}
+      - name: construction-zone
+        emptyDir: {}
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

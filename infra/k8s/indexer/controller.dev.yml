@@ -18,3 +18,10 @@ spec:
       containers:
       - name: indexer
         image: gophr-indexer-dev:v1
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+        - name: secrets
+          secret:
+            secretName: gophr-secrets

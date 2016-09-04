@@ -1,28 +1,15 @@
 package main
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/briandowns/spinner"
-)
-
-var (
-	loadingSpinner = spinner.New(spinner.CharSets[11], 100*time.Millisecond)
-)
+import "fmt"
 
 func startSpinner(message string) {
-	loadingSpinner.Color("green")
-	loadingSpinner.Suffix = " " + message
-	loadingSpinner.Start()
+	fmt.Print(message + "...")
 }
 
 func stopSpinner(operationSuccessful bool) {
 	if operationSuccessful {
-		loadingSpinner.FinalMSG = "done."
+		fmt.Println(" done.")
 	} else {
-		loadingSpinner.FinalMSG = "failed."
+		fmt.Println(" failed.")
 	}
-	loadingSpinner.Stop()
-	fmt.Println()
 }

@@ -20,3 +20,10 @@ spec:
         image: gophr-api-dev:v1
         ports:
         - containerPort: 3000
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

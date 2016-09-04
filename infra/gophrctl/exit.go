@@ -8,13 +8,16 @@ import (
 )
 
 const (
-	exitCodeStartFailed  = 100
-	exitCodeBuildFailed  = 101
-	exitCodeCycleFailed  = 102
-	exitCodeLogFailed    = 103
-	exitCodeSSHFailed    = 104
-	exitCodeStopFailed   = 105
-	exitCodeUpdateFailed = 106
+	exitCodeStartFailed        = 100
+	exitCodeBuildFailed        = 101
+	exitCodeCycleFailed        = 102
+	exitCodeLogFailed          = 103
+	exitCodeSSHFailed          = 104
+	exitCodeStopFailed         = 105
+	exitCodeUpdateFailed       = 106
+	exitCodeNewKeyFailed       = 107
+	exitCodeRecordSecretFailed = 108
+	exitCodeCycleSecretsFailed = 109
 )
 
 func exit(

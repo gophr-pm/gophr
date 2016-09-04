@@ -30,6 +30,8 @@ ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db"
 
+VOLUME ["/secrets"]
+
 # Set the generated directory as the work directory.
 WORKDIR /gophr
 

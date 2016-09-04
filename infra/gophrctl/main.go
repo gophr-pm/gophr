@@ -13,6 +13,7 @@ const (
 	envTypeDev = "dev"
 
 	flagNameEnv        = "env"
+	flagNameKeyPath    = "key"
 	flagNameRepoPath   = "repo-path"
 	flagNameForeground = "foreground"
 
@@ -110,6 +111,45 @@ func main() {
 			Usage:     commandDescUpdate,
 			Action:    updateCommand,
 			ArgsUsage: moduleCommandArgsUsage,
+		},
+
+		// Secrets command.
+		{
+			Name:  "secrets",
+			Usage: "Deals with confidential data",
+			Subcommands: []cli.Command{
+				{
+					Name:      "new-key",
+					Usage:     "Creates a new key",
+					Action:    secretsNewKeyCommand,
+					ArgsUsage: "[new key filepath]",
+				},
+				{
+					Name:      "record",
+					Usage:     "Records a new secret",
+					Action:    secretsRecordCommand,
+					ArgsUsage: "[flags...][secret filepath]",
+
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  flagNameKeyPath + ", k",
+							Usage: "path to the key file",
+						},
+					},
+				},
+				{
+					Name:   "cycle",
+					Usage:  "Cycles all recorded secrets",
+					Action: secretsCycleCommand,
+
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  flagNameKeyPath + ", k",
+							Usage: "path to the key file",
+						},
+					},
+				},
+			},
 		},
 	}
 

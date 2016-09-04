@@ -26,7 +26,7 @@ func isMinikubeRunning() (bool, error) {
 }
 
 func startMinikube() error {
-	startSpinner("Starting minikube...")
+	startSpinner("Starting minikube")
 
 	output, err := exec.Command("minikube", "start").CombinedOutput()
 	if err != nil {
@@ -84,7 +84,7 @@ type buildInMinikubeArgs struct {
 
 func buildInMinikube(args buildInMinikubeArgs) error {
 	imageIdentifier := args.imageName + ":" + args.imageTag
-	startSpinner("Building " + imageIdentifier + "...")
+	startSpinner("Building " + imageIdentifier)
 
 	dockerEnv, err := getMinikubeDockerEnv()
 	if err != nil {
