@@ -27,7 +27,6 @@ func RecordPackageArchival(
 		Value(columnNamePackageArchivesAuthor, author).
 		Value(columnNamePackageArchivesRepo, repo).
 		Value(columnNamePackageArchivesRef, ref).
-		Value(columnNamePackageArchivesAuthor, author).
 		Create(session)
 
 	// Execute the first update query. Exit if it fails.

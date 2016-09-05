@@ -21,9 +21,9 @@ import (
 var (
 	folderName         string
 	folderPath         string
-	gitHubRemoteOrigin = "git@github.com:gophr-packages/%s.git"
 	commitAuthor       = "gophrpm"
 	commitAuthorEmail  = "gophr.pm@gmail.com"
+	gitHubRemoteOrigin = "git@github.com:gophr-packages/%s.git"
 )
 
 // SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
@@ -31,12 +31,12 @@ var (
 func SubVersionPackageModel(
 	conf *config.Config,
 	session *gocql.Session,
+	credentials *config.Credentials,
 	packageModel *models.PackageModel,
 	ref string,
 	fileDir string) error {
-
-	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	// If the given ref is empty or refers to 'master' then we need to grab the current master SHA
+	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	if len(ref) == 0 || ref == "master" {
 		log.Println("Ref is empty or is 'master', fetching current master SHA")
 		curretRef, err := common.FetchRefs(*packageModel.Author, *packageModel.Repo)
@@ -55,6 +55,14 @@ func SubVersionPackageModel(
 	exists, err := github.CheckIfRefExists(*packageModel.Author, *packageModel.Repo, ref)
 	if exists == true && err == nil {
 		log.Println("That ref has already been versioned")
+		// Since we wouldn't have gotten this far if this were already recorded,
+		// make sure that we record it now.
+		go recordPackageArchival(
+			session,
+			*packageModel.Author,
+			*packageModel.Repo,
+			ref)
+
 		return nil
 	}
 	if err != nil {
@@ -204,7 +212,7 @@ func SubVersionPackageModel(
 		),
 		tree,
 	)
-	log.Println(commitID)
+	log.Println("Created commit", commitID)
 	if err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error, could not commit data or delete repo folder. %v, %v \n", deletionErr, err)
@@ -230,6 +238,7 @@ func SubVersionPackageModel(
 	}
 
 	// Creating branch
+	log.Println("Building the github branch")
 	branchName := github.BuildGitHubBranch(ref)
 	branch, err := repo.CreateBranch(branchName, headCommit, false)
 	if err != nil {
@@ -239,6 +248,7 @@ func SubVersionPackageModel(
 		return fmt.Errorf("Error, could not create branch. %v \n", err)
 	}
 
+	log.Println("Setting the upstream")
 	if err = branch.SetUpstream(branchName); err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error, could not set upstream branch or delete repo folder. %v, %v \n", deletionErr, err)
@@ -283,11 +293,21 @@ func SubVersionPackageModel(
 	// Define push options
 	pushOptions := &git.PushOptions{
 		RemoteCallbacks: git.RemoteCallbacks{
-			CredentialsCallback:      credentialsCallback,
+			// TODO(skeswa): optimize out this closure.
+			CredentialsCallback: func(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
+				// TODO figure out how to get ssh working
+				//ret, cred := git.NewCredSshKey("git", "/Users/shikkic/.ssh/id_rsa.pub", "/Users/shikkic/.ssh/id_rsa", "")
+				ret, cred := git.NewCredUserpassPlaintext(
+					credentials.GithubPush.User,
+					credentials.GithubPush.Pass)
+
+				return git.ErrorCode(ret), &cred
+			},
 			CertificateCheckCallback: certificateCheckCallback,
 		},
 	}
 
+	log.Println("Doing the push")
 	if err = remote.Push([]string{"refs/heads/" + branchName + ":refs/heads/" + branchName}, pushOptions); err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error,could not push to remote or delete repo folder. %v, %v \n", deletionErr, err)
@@ -296,17 +316,33 @@ func SubVersionPackageModel(
 	}
 
 	// Delete work dir before returning
+	log.Println("Deleting the folder")
 	if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 		return fmt.Errorf("Error, could not delete repo folder and clean work dir. %v \n", deletionErr)
 	}
 
 	// Record that this package has been archived.
-	go models.RecordPackageArchival(
+	go recordPackageArchival(
 		session,
 		*(packageModel.Author),
 		*(packageModel.Repo),
-		ref,
-	)
+		ref)
 
 	return nil
+}
+
+func recordPackageArchival(
+	session *gocql.Session,
+	author string,
+	repo string,
+	ref string) {
+	// Use the package archive model to record this in the database.
+	if err := models.RecordPackageArchival(
+		session,
+		author,
+		repo,
+		ref,
+	); err != nil {
+		log.Println("Failed to record package archival:", err)
+	}
 }

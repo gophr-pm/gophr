@@ -11,13 +11,6 @@ import (
 	git "github.com/libgit2/git2go"
 )
 
-func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
-	// TODO figure out how to get ssh working
-	//ret, cred := git.NewCredSshKey("git", "/Users/shikkic/.ssh/id_rsa.pub", "/Users/shikkic/.ssh/id_rsa", "")
-	ret, cred := git.NewCredUserpassPlaintext("gophrpm", "PASSWORD_HERE")
-	return git.ErrorCode(ret), &cred
-}
-
 func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string) git.ErrorCode {
 	return 0
 }

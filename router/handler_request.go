@@ -23,7 +23,7 @@ var (
 func RequestHandler(
 	conf *config.Config,
 	session *gocql.Session,
-) func(http.ResponseWriter, *http.Request) {
+	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		context := NewRequestContext(nil)
 
@@ -44,7 +44,7 @@ func RequestHandler(
 				r.URL.Path,
 			)
 
-			err := RespondToPackageRequest(conf, session, context, r, w)
+			err := RespondToPackageRequest(conf, session, creds, context, r, w)
 			if err != nil {
 				errors.RespondWithError(w, err)
 			}
