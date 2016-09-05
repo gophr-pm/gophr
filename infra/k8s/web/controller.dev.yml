@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: web-rc
+  labels:
+    module: web
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: web
+  template:
+    metadata:
+      labels:
+        module: web
+      namespace: gophr
+    spec:
+      containers:
+      - name: web
+        image: gophr-web-dev:v1
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

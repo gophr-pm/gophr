@@ -53,6 +53,15 @@ var modules = map[string]*module{
 		dockerfile:   "./infra/docker/router/Dockerfile",
 		buildContext: ".",
 	},
+	"web": &module{
+		name: "web",
+		k8sfiles: []string{
+			"./infra/k8s/web/service",
+			"./infra/k8s/web/controller",
+		},
+		dockerfile:   "./infra/docker/web/Dockerfile",
+		buildContext: ".",
+	},
 }
 
 func modulesToString() string {
