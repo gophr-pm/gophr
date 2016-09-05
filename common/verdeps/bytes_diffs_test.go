@@ -197,27 +197,22 @@ func TestByteDiffs__Text(t *testing.T) {
 
 func bytesEqual(a, b []byte) bool {
 	if a == nil && b == nil {
-		// fmt.Printf("%v equals %v.\n", a, b)
 		return true
 	}
 
 	if a == nil || b == nil {
-		// fmt.Printf("%v does not equal %v.\n", a, b)
 		return false
 	}
 
 	if len(a) != len(b) {
-		// fmt.Printf("%v does not equal %v.\n", a, b)
 		return false
 	}
 
 	for i := range a {
 		if a[i] != b[i] {
-			// fmt.Printf("%v does not equal %v.\n", a, b)
 			return false
 		}
 	}
 
-	// fmt.Printf("%v equals %v.\n", a, b)
 	return true
 }

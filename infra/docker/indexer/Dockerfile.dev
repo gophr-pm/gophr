@@ -29,6 +29,7 @@ RUN set -ex && apk del git
 ENV PORT="3000"
 ENV GOPHR_ENV="dev"
 ENV GOPHR_DB_ADDR="db-svc"
+ENV GOPHR_SECRETS_PATH="/secrets"
 
 VOLUME ["/secrets"]
 

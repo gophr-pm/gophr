@@ -26,8 +26,7 @@ func fetchSHA(args fetchSHAArgs) {
 		author string
 	)
 
-	// Signal that the sha fetching is in progress.
-	args.pendingSHARequests.increment()
+	// Make sure that the pending requests are decremented when this exits.
 	defer args.pendingSHARequests.decrement()
 
 	// Parse out the author and the repo.

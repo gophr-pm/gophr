@@ -3,6 +3,9 @@ package github
 import (
 	"net/http"
 	"time"
+
+	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/config"
 )
 
 // GitHubGophrPackageOrgName is the  Github organization name for all versioned packages
@@ -30,14 +33,14 @@ type RequestService struct {
 }
 
 // NewRequestService initialies a new GitHubRequestService and APIKeyChain
-func NewRequestService() *RequestService {
+func NewRequestService(conf *config.Config, session *gocql.Session) *RequestService {
 	newRequestService := RequestService{}
-	newRequestService.APIKeyChain = NewAPIKeyChain()
+	newRequestService.APIKeyChain = NewAPIKeyChain(conf, session)
 
 	return &newRequestService
 }
 
-// TODO:(Shikkic) Create Param Struct
+// TODO:(Shikkic) Create Param Struct and add comments.
 type RequestServiceParams struct {
 	Indexer bool
 }

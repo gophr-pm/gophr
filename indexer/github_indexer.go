@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/dtos"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
@@ -15,7 +16,7 @@ var requestTimeBuffer = 50 * time.Millisecond
 
 // ReIndexPackageGitHubStats is a service dedicated to fetching Github repo metadata
 // for each package in our DB and updating metadata
-func ReIndexPackageGitHubStats(session *gocql.Session) {
+func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 	log.Println("Reindexing packageModel github data")
 	packageModels, err := models.ScanAllPackageModels(session)
 	numPackageModels := len(packageModels)
@@ -27,7 +28,7 @@ func ReIndexPackageGitHubStats(session *gocql.Session) {
 	}
 
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := github.NewRequestService()
+	gitHubRequestService := github.NewRequestService(conf, session)
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20

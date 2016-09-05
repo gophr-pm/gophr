@@ -107,6 +107,7 @@ type PackageRequest struct {
 func RespondToPackageRequest(
 	config *config.Config,
 	session *gocql.Session,
+	creds *config.Credentials,
 	context RequestContext,
 	req *http.Request,
 	res http.ResponseWriter,
@@ -172,8 +173,7 @@ func RespondToPackageRequest(
 				context,
 				packageRequest.Author,
 				packageRequest.Repo,
-				packageRequest.GithubTree,
-			)
+				packageRequest.GithubTree)
 
 			// Only run the sub-versioning if its completely necessary.
 			if !models.IsPackageArchived(
@@ -181,6 +181,7 @@ func RespondToPackageRequest(
 				packageRequest.Author,
 				packageRequest.Repo,
 				packageRequest.GithubTree) {
+				log.Printf("Package %s/%s@%s has not been archived.\n", packageRequest.Author, packageRequest.Repo, packageRequest.GithubTree)
 				// Create a model with the author and repo that we already have.
 				packageModel := &models.PackageModel{
 					Author: &packageRequest.Author,
@@ -188,19 +189,23 @@ func RespondToPackageRequest(
 				}
 
 				if err := subv.SubVersionPackageModel(
+					config,
 					session,
+					creds,
 					packageModel,
 					packageRequest.GithubTree,
 					config.ConstructionZonePath); err != nil {
 					log.Println("Sub-versioning failed:", err)
 					return err
 				}
+				log.Println("Finished sub versioning")
 			}
 
 			var (
 				repo     = github.BuildNewGitHubRepoName(packageRequest.Author, packageRequest.Repo)
 				author   = github.GitHubGophrPackageOrgName
 				metaData = []byte(generateGoGetMetadata(
+					config,
 					author,
 					repo,
 					packageRequest.Selector,
@@ -492,6 +497,7 @@ func processPackageVersionRequest(
 // expects to receive from unknown repository domains before its starts pulling
 // down source code.
 func generateGoGetMetadata(
+	conf *config.Config,
 	user string,
 	repo string,
 	selector string,
@@ -499,22 +505,23 @@ func generateGoGetMetadata(
 	githubTree string,
 ) string {
 	var (
-		buffer bytes.Buffer
-
-		config     = getConfig()
+		buffer     bytes.Buffer
+		domain     string
 		protocol   string
 		gophrRoot  string
 		gophrPath  string
 		githubRoot string
 	)
 
-	if config.dev {
+	if conf.IsDev {
+		domain = "gophr.dev"
 		protocol = "http"
 	} else {
+		domain = "gophr.pm"
 		protocol = "https"
 	}
 
-	buffer.WriteString(config.domain)
+	buffer.WriteString(domain)
 	buffer.WriteByte('/')
 	buffer.WriteString(user)
 	buffer.WriteByte('/')
@@ -561,8 +568,7 @@ func recordDownload(
 	context RequestContext,
 	author string,
 	repo string,
-	selector string,
-) {
+	selector string) {
 	err := models.RecordDailyDownload(
 		session,
 		author,

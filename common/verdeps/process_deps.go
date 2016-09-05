@@ -101,6 +101,10 @@ func processDeps(args processDepsArgs) error {
 				// If we don't presently have the sha, then we have to go out and get it.
 				if specs, exists := waitingSpecs[importPathHash]; !exists {
 					waitingSpecs[importPathHash] = newSpecWaitingList(spec)
+					// Signal that a request is about to begin synchronously to prevent
+					// race conditions.
+					pendingSHARequests.increment()
+					// Start the request itself.
 					go fetchSHA(fetchSHAArgs{
 						ghSvc:              args.ghSvc,
 						outputChan:         importPathSHAChan,

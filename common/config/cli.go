@@ -15,6 +15,7 @@ const (
 	envVarsPort                 = "GOPHR_PORT, PORT"
 	envVarsDbAddress            = "GOPHR_DB_ADDR"
 	envVarsEnvironment          = "GOPHR_ENV"
+	envVarsSecretsPath          = "GOPHR_SECRETS_PATH"
 	envVarsMigrationsPath       = "GOPHR_MIGRATIONS_PATH"
 	envVarsConstructionZonePath = "GOPHR_CONSTRUCTION_ZONE_PATH"
 )
@@ -24,6 +25,7 @@ type Config struct {
 	IsDev                bool
 	Port                 int
 	DbAddress            string
+	SecretsPath          string
 	MigrationsPath       string
 	ConstructionZonePath string
 }
@@ -35,6 +37,11 @@ func (c *Config) String() string {
 	buffer.WriteString(strconv.FormatBool(c.IsDev))
 	buffer.WriteString("\nPort:                   ")
 	buffer.WriteString(strconv.Itoa(c.Port))
+
+	if len(c.SecretsPath) > 0 {
+		buffer.WriteString("\nSecrets path:           ")
+		buffer.WriteString(c.SecretsPath)
+	}
 
 	if len(c.DbAddress) > 0 {
 		buffer.WriteString("\nDatabase address:       ")
@@ -59,6 +66,7 @@ func GetConfig() *Config {
 	var (
 		port                 int
 		dbAddress            string
+		secretsPath          string
 		environment          string
 		migrationsPath       string
 		constructionZonePath string
@@ -87,6 +95,12 @@ func GetConfig() *Config {
 			Destination: &port,
 		},
 		cli.StringFlag{
+			Name:        "secrets-path, s",
+			Usage:       "path to the secret files",
+			EnvVar:      envVarsSecretsPath,
+			Destination: &secretsPath,
+		},
+		cli.StringFlag{
 			Name:        "db-address, d",
 			Value:       "127.0.0.1",
 			Usage:       "address of the database",
@@ -107,7 +121,7 @@ func GetConfig() *Config {
 		},
 	}
 
-	// Use the action to figure out whether the environment variables are accurate.
+	// Use the action to figure out whether the environment variables are valid.
 	app.Action = func(c *cli.Context) error {
 		if environment != environmentDev && environment != environmentProd {
 			return cli.NewExitError("invalid environment", 1)
@@ -129,6 +143,7 @@ func GetConfig() *Config {
 		IsDev:                environment == environmentDev,
 		Port:                 port,
 		DbAddress:            dbAddress,
+		SecretsPath:          secretsPath,
 		MigrationsPath:       migrationsPath,
 		ConstructionZonePath: constructionZonePath,
 	}

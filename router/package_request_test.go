@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/skeswa/gophr/common/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -149,7 +150,7 @@ var (
 
 func TestGenerateGoGetMetadata(t *testing.T) {
 	getConfig().dev = true
-	str := generateGoGetMetadata("skeswa", "gophr", "", "", "")
+	str := generateGoGetMetadata(&config.Config{}, "skeswa", "gophr", "", "", "")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr git http://gophr.dev/skeswa/gophr"><meta name="go-source" content="gophr.dev/skeswa/gophr _ https://github.com/skeswa/gophr/tree/master{/dir} https://github.com/skeswa/gophr/blob/master{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr</body></html>`,
@@ -158,7 +159,7 @@ func TestGenerateGoGetMetadata(t *testing.T) {
 	)
 
 	getConfig().dev = false
-	str = generateGoGetMetadata("skeswa", "gophr", "1.x", "/test", "")
+	str = generateGoGetMetadata(&config.Config{}, "skeswa", "gophr", "1.x", "/test", "")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr@1.x git https://gophr.dev/skeswa/gophr@1.x"><meta name="go-source" content="gophr.dev/skeswa/gophr@1.x _ https://github.com/skeswa/gophr/tree/master{/dir} https://github.com/skeswa/gophr/blob/master{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr@1.x/test</body></html>`,
@@ -167,7 +168,7 @@ func TestGenerateGoGetMetadata(t *testing.T) {
 	)
 
 	getConfig().dev = true
-	str = generateGoGetMetadata("skeswa", "gophr", "1.x", "", "somelabel")
+	str = generateGoGetMetadata(&config.Config{}, "skeswa", "gophr", "1.x", "", "somelabel")
 	assert.Equal(
 		t,
 		`<html><head><meta name="go-import" content="gophr.dev/skeswa/gophr@1.x git http://gophr.dev/skeswa/gophr@1.x"><meta name="go-source" content="gophr.dev/skeswa/gophr@1.x _ https://github.com/skeswa/gophr/tree/somelabel{/dir} https://github.com/skeswa/gophr/blob/somelabel{/dir}/{file}#L{line}"></head><body>go get gophr.dev/skeswa/gophr@1.x</body></html>`,
@@ -185,6 +186,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 
 		// TODO(skeswa): mock the database session.
 		err := RespondToPackageRequest(
+			nil,
 			nil,
 			nil,
 			NewRequestContext(nil),
