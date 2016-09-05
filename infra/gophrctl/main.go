@@ -15,6 +15,7 @@ const (
 	flagNameEnv        = "env"
 	flagNameKeyPath    = "key"
 	flagNameRepoPath   = "repo-path"
+	flagNameIncludeDB  = "include-db"
 	flagNameForeground = "foreground"
 
 	commandNameBuild  = "build"
@@ -79,6 +80,13 @@ func main() {
 			Usage:     commandDescBuild,
 			Action:    buildCommand,
 			ArgsUsage: moduleCommandArgsUsage,
+
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  flagNameIncludeDB,
+					Usage: "includes the db in \"all\"",
+				},
+			},
 		},
 
 		// Cycle command.
@@ -87,6 +95,13 @@ func main() {
 			Usage:     commandDescCycle,
 			Action:    cycleCommand,
 			ArgsUsage: moduleCommandArgsUsage,
+
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  flagNameIncludeDB,
+					Usage: "includes the db in \"all\"",
+				},
+			},
 		},
 
 		// Log command.
@@ -111,6 +126,13 @@ func main() {
 			Usage:     commandDescUpdate,
 			Action:    updateCommand,
 			ArgsUsage: moduleCommandArgsUsage,
+
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  flagNameIncludeDB,
+					Usage: "includes the db in \"all\"",
+				},
+			},
 		},
 
 		// Secrets command.

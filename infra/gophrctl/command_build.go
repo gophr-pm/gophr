@@ -37,6 +37,11 @@ func buildCommand(c *cli.Context) error {
 			goto exitWithError
 		}
 		for _, m = range modules {
+			// Check for db inclusion.
+			if m.name == "db" && !c.Bool(flagNameIncludeDB) {
+				continue
+			}
+
 			if err = buildModule(m, gophrRoot, env); err != nil {
 				goto exitWithError
 			}
