@@ -132,7 +132,7 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 
 	iter := query.Select(columnNameGithubAPIKeyKey).
 		From(tableNameGithubAPIKey).
-		//Where(query.Column(columnNameIndexer).Equals(indexer)).
+		Where(query.Column(columnNameIndexer).Equals(indexer)).
 		Create(session).
 		Iter()
 
@@ -177,6 +177,7 @@ func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]st
 	type apiKey struct {
 		Key                string `json:"key"`
 		HasAdminPrivileges bool   `json:"hasAdminPrivileges"`
+		ForIndexer         string `json:"ForIndexer"`
 	}
 
 	// Create the slice for unmarshalling.
@@ -193,6 +194,7 @@ func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]st
 	for _, key := range keys {
 		if err = query.InsertInto(tableNameGithubAPIKey).
 			Value(columnNameGithubAPIKeyKey, key.Key).
+			Value(columnNameIndexer, key.ForIndexer).
 			Create(session).
 			Exec(); err != nil {
 			return nil, err
