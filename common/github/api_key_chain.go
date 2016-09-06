@@ -19,7 +19,7 @@ const (
 	tableNameGithubAPIKey     = "github_api_key"
 	devAPIKeysSecretFileName  = "github-api-keys.dev.json"
 	columnNameGithubAPIKeyKey = "key"
-	columnNameIndexer         = "indexer"
+	columnNameIndexer         = "for_indexer"
 )
 
 // APIKeyChain is responsible for managing GitHubAPIKeymodels
