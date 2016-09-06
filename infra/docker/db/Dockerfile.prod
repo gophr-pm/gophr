@@ -1,0 +1,91 @@
+FROM debian:jessie-backports
+
+# set environment variables
+ENV GOSU_VERSION 1.7
+ENV CASSANDRA_VERSION 3.7
+ENV CASSANDRA_SERVICE db-svc
+ENV CASSANDRA_CLUSTER_NAME gophr-cassandra-cluster
+ENV CASSANDRA_LUCENE_PLUGIN_VERSION 3.7.1
+
+# copy requisite files
+COPY infra/docker/db/files/cassandra.list /etc/apt/sources.list.d/cassandra.list
+COPY infra/docker/db/files/run.sh /run.sh
+COPY infra/docker/db/files/cassandra.yaml /cassandra.yaml
+COPY infra/docker/db/files/logback.xml /logback.xml
+COPY infra/docker/db/files/kubernetes-cassandra.jar /kubernetes-cassandra.jar
+
+# explicitly set user/group IDs
+RUN groupadd -r cassandra --gid=999 && useradd -r -g cassandra --uid=999 cassandra
+
+# grab gosu for easy step-down from root
+RUN set -x \
+		\
+		&& echo -e "\n\nInstalling gosu...\n\n" \
+		\
+		&& apt-get update \
+		&& apt-get install -y --no-install-recommends ca-certificates wget \
+		&& rm -rf /var/lib/apt/lists/* \
+		&& wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture)" \
+		&& wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$(dpkg --print-architecture).asc" \
+		&& export GNUPGHOME="$(mktemp -d)" \
+		&& gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 \
+		&& gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu \
+		&& rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc \
+		&& chmod +x /usr/local/bin/gosu \
+		&& gosu nobody true \
+		&& apt-get purge -y --auto-remove ca-certificates wget
+
+# install cassandra
+RUN apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 514A2AD631A57A16DD0047EC749D6EEC0353B12C
+RUN echo 'deb http://www.apache.org/dist/cassandra/debian 37x main' >> /etc/apt/sources.list.d/cassandra.list
+RUN apt-get update \
+		\
+		&& echo -e "\n\nInstalling cassandra...\n\n" \
+		\
+		&& apt-get install -y procps cassandra="$CASSANDRA_VERSION" openjdk-8-jre-headless \
+		&& rm -rf /var/lib/apt/lists/* \
+		\
+		&& echo -e "\n\nAdjusting for kubernetes support...\n\n" \
+		\
+		&& chmod a+rx /run.sh  \
+		&& mkdir -p /cassandra_data/data \
+		&& mv /logback.xml /etc/cassandra/ \
+		&& mv /cassandra.yaml /etc/cassandra/ \
+		&& chown -R cassandra: /etc/cassandra /cassandra_data /run.sh /kubernetes-cassandra.jar \
+		&& chmod o+w -R /etc/cassandra /cassandra_data \
+		&& rm -rf \
+				doc \
+				man \
+				info \
+				locale \
+				/var/lib/apt/lists/* \
+				/var/log/* \
+				/var/cache/debconf/* \
+				common-licenses \
+				~/.bashrc \
+				/etc/systemd \
+				/lib/lsb \
+				/lib/udev \
+				/usr/share/doc/ \
+				/usr/share/doc-base/ \
+				/usr/share/man/ \
+				/tmp/*
+
+# install the lucene plugin
+COPY infra/docker/db/files/cassandra-lucene-plugin-3.7.1/* /usr/share/cassandra/lib/
+
+# https://issues.apache.org/jira/browse/CASSANDRA-11661
+RUN sed -ri 's/^(JVM_PATCH_VERSION)=.*/\1=25/' /etc/cassandra/cassandra-env.sh
+
+VOLUME ["/cassandra_data/data"]
+
+# 7000: intra-node communication
+# 7001: TLS intra-node communication
+# 7199: JMX
+# 9042: CQL
+# 9160: thrift service not included cause it is going away
+EXPOSE 7000 7001 7199 9042
+
+USER cassandra
+
+CMD /run.sh

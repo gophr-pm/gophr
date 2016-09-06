@@ -6,6 +6,7 @@ type module struct {
 	name         string
 	k8sfiles     []string
 	dockerfile   string
+	versionfile  string
 	buildContext string
 }
 
@@ -17,6 +18,7 @@ var modules = map[string]*module{
 			"./infra/k8s/api/controller",
 		},
 		dockerfile:   "./infra/docker/api/Dockerfile",
+		versionfile:  "./infra/docker/api/Versionfile.prod",
 		buildContext: ".",
 	},
 	"db": &module{
@@ -26,6 +28,7 @@ var modules = map[string]*module{
 			"./infra/k8s/db/daemonset",
 		},
 		dockerfile:   "./infra/docker/db/Dockerfile",
+		versionfile:  "./infra/docker/db/Versionfile.prod",
 		buildContext: ".",
 	},
 	"indexer": &module{
@@ -34,6 +37,7 @@ var modules = map[string]*module{
 			"./infra/k8s/indexer/controller",
 		},
 		dockerfile:   "./infra/docker/indexer/Dockerfile",
+		versionfile:  "./infra/docker/indexer/Versionfile.prod",
 		buildContext: ".",
 	},
 	"migrator": &module{
@@ -42,6 +46,7 @@ var modules = map[string]*module{
 			"./infra/k8s/migrator/pod",
 		},
 		dockerfile:   "./infra/docker/migrator/Dockerfile",
+		versionfile:  "./infra/docker/migrator/Versionfile.prod",
 		buildContext: ".",
 	},
 	"router": &module{
@@ -51,6 +56,7 @@ var modules = map[string]*module{
 			"./infra/k8s/router/controller",
 		},
 		dockerfile:   "./infra/docker/router/Dockerfile",
+		versionfile:  "./infra/docker/router/Versionfile.dev",
 		buildContext: ".",
 	},
 	"web": &module{
@@ -60,6 +66,7 @@ var modules = map[string]*module{
 			"./infra/k8s/web/controller",
 		},
 		dockerfile:   "./infra/docker/web/Dockerfile",
+		versionfile:  "./infra/docker/web/Versionfile.dev",
 		buildContext: ".",
 	},
 }
