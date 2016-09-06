@@ -138,7 +138,7 @@ func promptImageVersionBump(versionFilePath string) (imageVersion, error) {
 			printError("Invalid bump level chosen. Try again.")
 		} else {
 			if level == 0 {
-				printSuccess("Version was left unbumped")
+				printSuccess("Version was left unbumped\n")
 				return version, nil
 			} else if level == 1 {
 				bumpedVersion = bumpImageVersion(version, imageVersionMajorPart)

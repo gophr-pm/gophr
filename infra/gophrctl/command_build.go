@@ -84,8 +84,9 @@ func buildModule(m *module, gophrRoot string, env environment) error {
 
 	if env == environmentProd {
 		var (
-			err     error
-			version imageVersion
+			err       error
+			version   imageVersion
+			imageName = "gophr-" + m.name
 		)
 
 		if version, err = promptImageVersionBump(filepath.Join(gophrRoot, m.versionfile)); err != nil {
@@ -95,10 +96,15 @@ func buildModule(m *module, gophrRoot string, env environment) error {
 		if err = localDockerBuild(localDockerBuildArgs{
 			latest:         true,
 			imageTag:       version.String(),
-			imageName:      "gophr-" + m.name,
+			dockerhub:      true,
+			imageName:      imageName,
 			contextPath:    filepath.Join(gophrRoot, m.buildContext),
 			dockerfilePath: filepath.Join(gophrRoot, fmt.Sprintf("%s.%s", m.dockerfile, env)),
 		}); err != nil {
+			return err
+		}
+
+		if err = localDockerPush(imageName, version.String()); err != nil {
 			return err
 		}
 	}
