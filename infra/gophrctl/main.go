@@ -12,7 +12,7 @@ const (
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
-	flagNameEnv        = "env"
+	flagNameProd       = "prod"
 	flagNameKeyPath    = "key"
 	flagNameRepoPath   = "repo-path"
 	flagNameIncludeDB  = "include-db"
@@ -60,9 +60,8 @@ func main() {
 
 	// After that, set the global flags for gophrctl.
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
-			Name:  flagNameEnv,
-			Value: envTypeDev,
+		cli.BoolFlag{
+			Name:  flagNameProd,
 			Usage: "gophr execution environment",
 		},
 		cli.StringFlag{

@@ -10,14 +10,10 @@ func sshCommand(c *cli.Context) error {
 	var (
 		m          *module
 		err        error
-		env        environment
+		env        = readEnvironment(c)
 		exists     bool
 		moduleName string
 	)
-
-	if env, err = readEnvironment(c); err != nil {
-		goto exitWithError
-	}
 
 	moduleName = c.Args().First()
 	if m, exists = modules[moduleName]; exists {

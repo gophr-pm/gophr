@@ -7,9 +7,10 @@ import (
 )
 
 var (
-	red   = color.New(color.FgRed)
-	blue  = color.New(color.FgBlue)
-	green = color.New(color.FgGreen)
+	red    = color.New(color.FgRed)
+	blue   = color.New(color.FgBlue)
+	green  = color.New(color.FgGreen)
+	yellow = color.New(color.FgYellow)
 )
 
 func print(args ...interface{}) {
