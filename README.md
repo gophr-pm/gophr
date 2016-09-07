@@ -1,64 +1,55 @@
 
-# gophr
+# Gophr - go package management
 [![Go Report Card](https://goreportcard.com/badge/github.com/skeswa/gophr)](https://goreportcard.com/report/github.com/skeswa/gophr)
 [![GoDoc](https://godoc.org/github.com/skeswa/gophr/common?status.svg)](https://godoc.org/github.com/skeswa/gophr/common)
 <a href="https://zenhub.com"><img src="https://raw.githubusercontent.com/ZenHubIO/support/master/zenhub-badge.png"></a>
 
-An end-to-end package management solution for Go.
+An end-to-end package management solution for Go. **No manifest or lock file and a fully versioned dependency graph.** Simply place the url in your import path and it's automatically fully versioned.
 
-## Setting up the dev environment
-Firstly, make sure you have `docker` (and `docker-machine`) installed. You should be able to run this command:
-```sh
-$ docker && docker-machine || echo "Not properly installed"
-```
-If not, resources on docker setup can be found here:
-- [Mac OSX](https://docs.docker.com/engine/installation/mac/)
-- [Ubuntu](https://docs.docker.com/engine/installation/linux/ubuntulinux/)
-- [Windows](https://docs.docker.com/engine/installation/windows/)
-- [Other](https://docs.docker.com/engine/installation/)
+`
+gophr.pm/author/repo@(semver or SHA)
+`
 
-Then, since the `gophrctl` tool needs to be installed for the environment to function, run the following script:
-```sh
-$ cd $GOPHR_REPO/infra/bin/setup/ && ./install
-```
-Next, the dev environment needs initialization. So, run the following:
-```sh
-$ gophrctl init
-```
-Afterwards, you can run the following for information on how to use `gophrctl`:
-```sh
-$ gophrctl --help
-```
-## Running the dev server
-Before the server can start, the dev docker images needs to be built. So, run the following (keep in mind that it will take a while):
-```sh
-$ gophrctl build
-```
-After the images are built, you can run:
-```sh
-$ gophrctl up
-```
-This starts every component of the dev server. Lastly, in order to compile the web application, run:
-```sh
-$ gophrctrl web
-```
-At this point, you should be able to open https://gophr.dev/ in your favorite browser.
-
-## Running the indexer
-
-We've already created a new default db keyspace `gophr` with a table named `packages`in our cassandra db via our dockerfile. Now we need to load data in to work with. The indexer pulls go package metadata from various sources and compiles them into packageDTOs and inserts them into the DB.
-
-Navigate to the `indexer` folder:
-```sh
-$ cd $GOPHR_REPO/indexer
+#### Native go dependency management
+`go get` can only retrieve the current master branch. If you ever need to re-download your dependency it could be totally different each time.
+```go
+  import (
+      // Un-versioned github link
+      "github.com/a/b"
+  )
 ```
 
-Build the indexer binary:
-```sh
-$ go build && ./indexer
+#### Gophr dependency management and versioning
+Gophr allows you to version lock your dependencies by semver or SHA.
+```go
+  import (
+      // Version current master branch
+      "gophr.pm/a/b"
+      // Version by semver
+      "gophr.pm/a/b@1.0"
+      // Version by semver logic
+      "gophr.pm/a/b@>=1.0.0"
+      "gophr.pm/a/b@<1.3.2"
+      // Version by SHA
+      "gophr.pm/a/b@24638c6d1aaa1a39c14c704918e354fd3949b93c"
+  )
 ```
 
-## Using Gophr-cli
+### The problem with native Go dependency management
+Go has **no** ability to version a specific SHA or tag for a repo. Anytime you pull down an import it grabs the current master branch. This not only bad practice but it could potentially silently break your code without you ever knowing why.
 
-Now that you've completely setup your `gophr dev environment` and have loaded data via the `indexer` you're ready to use the [Gophr-cli](https://github.com/Shikkic/gophr-cli) tool that integrates with the Gophr dev environment.
+### There are plenty of Go versioning tools. What makes Gophr special?
 
+Gophr doesn't require you to install _any_ tooling to use. Simply place the versioned url `gophr.pm/author/repo@(semver or SHA)` in your import path and you're done.
+
+We give you the power of semver to reference tags and create logical operations just like in ruby and npm.
+
+```go
+"gophr.pm/a/b@>=1.0.4"
+"gophr.pm/a/b@<1.0.0"
+```
+
+We also **fully** version the entire dependency graph. Meaning, we version lock every sub-dependency as well, so it's a perfectly preserved, everytime. Something **no one else** does.
+
+#### Contributing
+- [Setting up dev environment](example.com)
