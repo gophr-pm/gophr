@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/valid-song-142700/([a-zA-Z0-9\-:\.]+)`)
+	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
 )
 
 func readK8SProdContext(c *cli.Context) (string, error) {
