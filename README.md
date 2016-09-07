@@ -28,7 +28,7 @@ Gophr allows you to version lock your dependencies by semver or SHA.
       // Version by semver
       "gophr.pm/a/b@1.0"
       // Version by semver logic
-      "gophr.pm/a/b@>=1.0.0"
+      "gophr.pm/a/b@>1.0.0"
       "gophr.pm/a/b@<1.3.2"
       // Version by SHA
       "gophr.pm/a/b@24638c6d1aaa1a39c14c704918e354fd3949b93c"
@@ -42,10 +42,10 @@ Go has **no** ability to version a specific SHA or tag for a repo. Anytime you p
 
 Gophr doesn't require you to install _any_ tooling to use. Simply place the versioned url `gophr.pm/author/repo@(semver or SHA)` in your import path and you're done.
 
-We give you the power of semver to reference tags and create logical operations just like in ruby and npm.
+We give you the power of semver to reference tags and create logical equivalence operations just like in `gem` and `npm`.
 
 ```go
-"gophr.pm/a/b@>=1.0.4"
+"gophr.pm/a/b@>1.0.4"
 "gophr.pm/a/b@<1.0.0"
 ```
 
