@@ -49,7 +49,7 @@ We give you the power of semver to reference tags and create logical operations 
 "gophr.pm/a/b@<1.0.0"
 ```
 
-We also **fully** version the entire dependency graph. Meaning, we version lock every sub-dependency as well, so it's a perfectly preserved, everytime. Something **no one else** does.
+We also **fully** version the entire dependency graph. Meaning, we version lock every sub-dependency as well, so it's perfectly preserved, everytime. Something **no one else** does.
 
 #### Contributing
 - [Setting up dev environment](example.com)
