@@ -133,7 +133,13 @@ func SubVersionPackageModel(
 	}
 
 	// Instantiate New Github Request Service
-	gitHubRequestService := github.NewRequestService(conf, session)
+	gitHubRequestService := github.NewRequestService(
+		github.RequestServiceParams{
+			ForIndexer: false,
+			Conf:       conf,
+			Session:    session,
+		},
+	)
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)

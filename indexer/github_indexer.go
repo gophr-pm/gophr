@@ -28,7 +28,13 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 	}
 
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := github.NewRequestService(conf, session)
+	gitHubRequestService := github.NewRequestService(
+		github.RequestServiceParams{
+			ForIndexer: true,
+			Conf:       conf,
+			Session:    session,
+		},
+	)
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
