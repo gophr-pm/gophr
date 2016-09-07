@@ -37,7 +37,7 @@ func updateCommand(c *cli.Context) error {
 				continue
 			}
 
-			if err = updateModule(m, gophrRoot, env); err != nil {
+			if err = updateModule(c, m, gophrRoot, env); err != nil {
 				goto exitWithError
 			}
 		}
@@ -50,7 +50,7 @@ func updateCommand(c *cli.Context) error {
 			}
 		}
 
-		if err = updateModule(m, gophrRoot, env); err != nil {
+		if err = updateModule(c, m, gophrRoot, env); err != nil {
 			goto exitWithError
 		}
 		printSuccess(fmt.Sprintf("Module \"%s\" was updated successfully", moduleName))
@@ -68,7 +68,26 @@ exitWithErrorAndHelp:
 	return nil
 }
 
-func updateModule(m *module, gophrRoot string, env environment) error {
+func updateModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
+	if env == environmentProd {
+		var (
+			err               error
+			k8sProdContext    string
+			oldK8SProdContext string
+		)
+
+		// Read the production context before continuing.
+		if k8sProdContext, err = readK8SProdContext(c); err != nil {
+			return err
+		}
+
+		// Switch to the production context then switch back afterwards.
+		if oldK8SProdContext, err = switchK8SContext(k8sProdContext); err != nil {
+			return err
+		}
+		defer switchK8SContext(oldK8SProdContext)
+	}
+
 	// Apply in order.
 	for _, k8sfile := range m.k8sfiles {
 		// Put together the absolute path.

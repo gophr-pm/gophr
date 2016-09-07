@@ -12,11 +12,16 @@ const (
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
-	flagNameProd       = "prod"
-	flagNameKeyPath    = "key"
-	flagNameRepoPath   = "repo-path"
-	flagNameIncludeDB  = "include-db"
-	flagNameForeground = "foreground"
+	envVarKeyPath        = "GOPHR_KEYFILE_PATH"
+	envVarK8SProdContext = "GOPHR_K8S_CONTEXT"
+
+	flagNameProd           = "prod"
+	flagNameKeyPath        = "key"
+	flagNameRepoPath       = "repo-path"
+	flagNameIncludeDB      = "include-db"
+	flagNameForeground     = "foreground"
+	flagNameK8SProdContext = "k8s-context"
+	flagNameDeleteServices = "delete-services"
 
 	commandNameBuild  = "build"
 	commandDescBuild  = "Updates module images"
@@ -69,6 +74,11 @@ func main() {
 			Value: defaultRepoPath,
 			Usage: "path to the gophr repository",
 		},
+		cli.StringFlag{
+			Name:   flagNameK8SProdContext + ",c",
+			Usage:  "the kubernetes production context",
+			EnvVar: envVarK8SProdContext,
+		},
 	}
 
 	// Next, reference every command capable to gophrctl.
@@ -99,6 +109,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
 					Usage: "includes the db in \"all\"",
+				},
+				cli.BoolFlag{
+					Name:  flagNameDeleteServices,
+					Usage: "deletes services as well",
 				},
 			},
 		},
@@ -153,8 +167,9 @@ func main() {
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:  flagNameKeyPath + ", k",
-							Usage: "path to the key file",
+							Name:   flagNameKeyPath + ", k",
+							Usage:  "path to the key file",
+							EnvVar: envVarKeyPath,
 						},
 					},
 				},
@@ -165,8 +180,9 @@ func main() {
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:  flagNameKeyPath + ", k",
-							Usage: "path to the key file",
+							Name:   flagNameKeyPath + ", k",
+							Usage:  "path to the key file",
+							EnvVar: envVarKeyPath,
 						},
 					},
 				},

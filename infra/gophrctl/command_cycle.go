@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -37,7 +38,7 @@ func cycleCommand(c *cli.Context) error {
 				continue
 			}
 
-			if err = cycleModule(m, gophrRoot, env); err != nil {
+			if err = cycleModule(c, m, gophrRoot, env); err != nil {
 				goto exitWithError
 			}
 		}
@@ -50,7 +51,7 @@ func cycleCommand(c *cli.Context) error {
 			}
 		}
 
-		if err = cycleModule(m, gophrRoot, env); err != nil {
+		if err = cycleModule(c, m, gophrRoot, env); err != nil {
 			goto exitWithError
 		}
 		printSuccess(fmt.Sprintf("Module \"%s\" was cycled successfully", moduleName))
@@ -68,9 +69,36 @@ exitWithErrorAndHelp:
 	return nil
 }
 
-func cycleModule(m *module, gophrRoot string, env environment) error {
+func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
+	if env == environmentProd {
+		var (
+			err               error
+			k8sProdContext    string
+			oldK8SProdContext string
+		)
+
+		// Read the production context before continuing.
+		if k8sProdContext, err = readK8SProdContext(c); err != nil {
+			return err
+		}
+
+		// Switch to the production context then switch back afterwards.
+		if oldK8SProdContext, err = switchK8SContext(k8sProdContext); err != nil {
+			return err
+		}
+		defer switchK8SContext(oldK8SProdContext)
+	}
+
+	// Memorize whether services should be deleted.
+	shouldDeleteServices := c.Bool(flagNameDeleteServices)
+
 	// Destroy in reverse order.
 	for i := len(m.k8sfiles) - 1; i >= 0; i-- {
+		// Only delete services if that flag says so.
+		if strings.HasSuffix(m.k8sfiles[i], "service") && !shouldDeleteServices {
+			continue
+		}
+
 		// Put together the absolute path.
 		k8sfile := m.k8sfiles[i]
 		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))

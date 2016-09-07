@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
+
+	"gopkg.in/urfave/cli.v1"
 )
 
 const (
@@ -13,6 +16,34 @@ const (
 	k8sSecretsName   = "gophr-secrets"
 	k8sNamespaceFlag = "--namespace=gophr"
 )
+
+func readK8SProdContext(c *cli.Context) (string, error) {
+	context := c.GlobalString(flagNameK8SProdContext)
+	if len(context) < 1 {
+		return context, errors.New("The kubernetes production context must be specified for this command to function.")
+	}
+
+	return context, nil
+}
+
+func switchK8SContext(newK8SContext string) (string, error) {
+	// First, get the current context.
+	output, err := exec.Command(kubectl, "config", "current-context").CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	// Save the old context, so that we can return it later.
+	oldK8SContext := strings.TrimSpace(string(output[:]))
+
+	// Switch to the new context.
+	_, err = exec.Command(kubectl, "config", "use-context", newK8SContext).CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	return oldK8SContext, nil
+}
 
 func existsInK8S(k8sConfigFilePath string) bool {
 	_, err := exec.Command(kubectl, k8sNamespaceFlag, "describe", "-f", k8sConfigFilePath).CombinedOutput()
