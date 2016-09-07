@@ -51,5 +51,11 @@ We give you the power of semver to reference tags and create logical equivalence
 
 We also **fully** version the entire dependency graph. Meaning, we version lock every sub-dependency as well, so it's perfectly preserved, everytime. Something **no one else** does.
 
-#### Contributing
-- [Setting up dev environment](example.com)
+#### Gophr Resources
+- [Home](https://github.com/skeswa/gophr/wiki)
+- [Gophr CLI](https://github.com/skeswa/gophr/wiki/Gophr-CLI)
+- [Gophr Web](https://github.com/skeswa/gophr/wiki/Gophr-Web)
+- [How do I contribute?](https://github.com/skeswa/gophr/wiki/How-do-I-contribute%3F)
+- [How does Gophr work?](https://github.com/skeswa/gophr/wiki/How-does-Gophr-work%3F)
+- [Our Microservices](https://github.com/skeswa/gophr/wiki/Our-Microservices)
+- [Setting up dev environment](https://github.com/skeswa/gophr/wiki/Setting-up-dev-environment)
