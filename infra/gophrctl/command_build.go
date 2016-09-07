@@ -12,91 +12,99 @@ const (
 )
 
 func buildCommand(c *cli.Context) error {
-	var (
-		m          *module
-		err        error
-		env        = readEnvironment(c)
-		exists     bool
-		gophrRoot  string
-		moduleName string
-	)
+	if err := runInK8S(c, func() error {
+		var (
+			env = readEnvironment(c)
 
-	if gophrRoot, err = readGophrRoot(c); err != nil {
-		goto exitWithError
+			m          *module
+			err        error
+			exists     bool
+			gophrRoot  string
+			moduleName string
+		)
+
+		if gophrRoot, err = readGophrRoot(c); err != nil {
+			return err
+		}
+
+		moduleName = c.Args().First()
+		if len(moduleName) == 0 {
+			// Means "all modules".
+			printInfo("Building all modules")
+			if env == environmentDev {
+				if err = assertMinikubeRunning(); err != nil {
+					return err
+				}
+			}
+
+			for _, m = range modules {
+				// Check for db inclusion.
+				if m.name == "db" && !c.Bool(flagNameIncludeDB) {
+					continue
+				}
+
+				if err = buildModule(c, m, gophrRoot, env); err != nil {
+					return err
+				}
+			}
+			printSuccess("All modules were built successfully")
+		} else if m, exists = modules[moduleName]; exists {
+			printInfo(fmt.Sprintf("Building module \"%s\"", moduleName))
+			if env == environmentDev {
+				if err = assertMinikubeRunning(); err != nil {
+					return err
+				}
+			}
+
+			if err = buildModule(c, m, gophrRoot, env); err != nil {
+				return err
+			}
+			printSuccess(fmt.Sprintf("Module \"%s\" was built successfully", moduleName))
+		} else {
+			err = newNoSuchModuleError(moduleName)
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		exit(exitCodeBuildFailed, nil, "", err)
 	}
 
-	moduleName = c.Args().First()
-	if len(moduleName) == 0 {
-		// Means "all modules".
-		printInfo("Building all modules")
-		if env == environmentDev {
-			if err = assertMinikubeRunning(); err != nil {
-				goto exitWithError
-			}
-		}
-
-		for _, m = range modules {
-			// Check for db inclusion.
-			if m.name == "db" && !c.Bool(flagNameIncludeDB) {
-				continue
-			}
-
-			if err = buildModule(m, gophrRoot, env); err != nil {
-				goto exitWithError
-			}
-		}
-		printSuccess("All modules were built successfully")
-	} else if m, exists = modules[moduleName]; exists {
-		printInfo(fmt.Sprintf("Building module \"%s\"", moduleName))
-		if env == environmentDev {
-			if err = assertMinikubeRunning(); err != nil {
-				goto exitWithError
-			}
-		}
-
-		if err = buildModule(m, gophrRoot, env); err != nil {
-			goto exitWithError
-		}
-		printSuccess(fmt.Sprintf("Module \"%s\" was built successfully", moduleName))
-	} else {
-		err = newNoSuchModuleError(moduleName)
-		goto exitWithErrorAndHelp
-	}
-
-	return nil
-exitWithError:
-	exit(exitCodeBuildFailed, nil, "", err)
-	return nil
-exitWithErrorAndHelp:
-	exit(exitCodeBuildFailed, c, "build", err)
 	return nil
 }
 
-func buildModule(m *module, gophrRoot string, env environment) error {
-	if env == environmentDev {
+func buildModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
+	switch env {
+	case environmentDev:
 		return buildInMinikube(buildInMinikubeArgs{
 			imageTag:       devDockerImageTag,
 			imageName:      fmt.Sprintf("gophr-%s-%s", m.name, env),
 			contextPath:    filepath.Join(gophrRoot, m.buildContext),
 			dockerfilePath: filepath.Join(gophrRoot, fmt.Sprintf("%s.%s", m.dockerfile, env)),
 		})
-	}
-
-	if env == environmentProd {
+	case environmentProd:
 		var (
 			err       error
+			gpi       string
 			version   imageVersion
 			imageName = "gophr-" + m.name
 		)
 
+		// Get the google project id for the push.
+		if gpi, err = readGPI(c); err != nil {
+			return err
+		}
+
+		// Bump the version in the versionfile.
 		if version, err = promptImageVersionBump(filepath.Join(gophrRoot, m.versionfile)); err != nil {
 			return err
 		}
 
-		if err = localDockerBuild(localDockerBuildArgs{
+		// Build the prod docker image outside of minikube, so as not to crowd it.
+		if err = dockerBuild(dockerBuildArgs{
+			gpi:            gpi,
 			latest:         true,
 			imageTag:       version.String(),
-			dockerhub:      true,
 			imageName:      imageName,
 			contextPath:    filepath.Join(gophrRoot, m.buildContext),
 			dockerfilePath: filepath.Join(gophrRoot, fmt.Sprintf("%s.%s", m.dockerfile, env)),
@@ -104,9 +112,25 @@ func buildModule(m *module, gophrRoot string, env environment) error {
 			return err
 		}
 
-		if err = localDockerPush(imageName, version.String()); err != nil {
+		// Push the newly built image to gcr.
+		if err = dockerPush(gpi, imageName, version.String()); err != nil {
 			return err
 		}
+
+		// Update the kubernetes configuration files.
+		startSpinner("Updating kubernetes configuration")
+		for _, k8sfile := range m.k8sfiles {
+			var (
+				newImageURL = fmt.Sprintf("gcr.io/%s/%s:%s", gpi, imageName, version.String())
+				k8sfilePath = filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
+			)
+
+			if err = updateProdK8SFileImage(newImageURL, k8sfilePath); err != nil {
+				stopSpinner(false)
+				return err
+			}
+		}
+		stopSpinner(true)
 	}
 
 	return nil

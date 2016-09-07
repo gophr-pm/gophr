@@ -12,9 +12,11 @@ const (
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
+	envVarGPI            = "GOPHR_GOOGLE_PROJECT_ID"
 	envVarKeyPath        = "GOPHR_KEYFILE_PATH"
 	envVarK8SProdContext = "GOPHR_K8S_CONTEXT"
 
+	flagNameGPI            = "gpi"
 	flagNameProd           = "prod"
 	flagNameKeyPath        = "key"
 	flagNameRepoPath       = "repo-path"
@@ -94,6 +96,11 @@ func main() {
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
 					Usage: "includes the db in \"all\"",
+				},
+				cli.StringFlag{
+					Name:   flagNameGPI + ",g",
+					Usage:  "gophr's google project id",
+					EnvVar: envVarGPI,
 				},
 			},
 		},

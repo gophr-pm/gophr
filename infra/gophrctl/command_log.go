@@ -7,37 +7,37 @@ import (
 )
 
 func logCommand(c *cli.Context) error {
-	var (
-		m          *module
-		err        error
-		env        = readEnvironment(c)
-		exists     bool
-		moduleName string
-	)
+	if err := runInK8S(c, func() error {
+		var (
+			m          *module
+			err        error
+			env        = readEnvironment(c)
+			exists     bool
+			moduleName string
+		)
 
-	moduleName = c.Args().First()
-	if m, exists = modules[moduleName]; exists {
-		if err = assertMinikubeRunning(); err != nil {
-			goto exitWithError
+		moduleName = c.Args().First()
+		if m, exists = modules[moduleName]; exists {
+			if err = assertMinikubeRunning(); err != nil {
+				return err
+			}
+			if err = logModule(c, m, moduleName, env); err != nil {
+				return err
+			}
+		} else {
+			err = newNoSuchModuleError(moduleName)
+			return err
 		}
-		if err = logModule(m, moduleName, env); err != nil {
-			goto exitWithError
-		}
-	} else {
-		err = newNoSuchModuleError(moduleName)
-		goto exitWithErrorAndHelp
+
+		return nil
+	}); err != nil {
+		exit(exitCodeLogFailed, nil, "", err)
 	}
 
 	return nil
-exitWithError:
-	exit(exitCodeLogFailed, nil, "", err)
-	return nil
-exitWithErrorAndHelp:
-	exit(exitCodeLogFailed, c, "log", err)
-	return nil
 }
 
-func logModule(m *module, moduleName string, env environment) error {
+func logModule(c *cli.Context, m *module, moduleName string, env environment) error {
 	var (
 		err      error
 		podNames []string
@@ -49,6 +49,8 @@ func logModule(m *module, moduleName string, env environment) error {
 
 	// Only use the first pod that comes up - if there even is one.
 	if len(podNames) > 0 {
+		// TODO(skeswa): switch this to a process fork instead of a process
+		// replacement.
 		// TODO(skeswa): refine this to include the follow flag and also allow the
 		// user to choose which pod.
 		execK8SLogs(podNames[0], true)
@@ -56,6 +58,5 @@ func logModule(m *module, moduleName string, env environment) error {
 	}
 
 	// TODO(skeswa): refine and standardize this error.
-	exit(exitCodeLogFailed, nil, "", fmt.Errorf("Could not find any pods matching module \"%s\"", moduleName))
-	return nil
+	return fmt.Errorf("Could not find any pods matching module \"%s\"", moduleName)
 }

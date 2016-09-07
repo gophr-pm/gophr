@@ -99,65 +99,74 @@ func secretsRecordCommand(c *cli.Context) error {
 }
 
 func secretsCycleCommand(c *cli.Context) error {
-	var (
-		err                  error
-		gophrRoot            string
-		keyFilePath          string
-		secretFilePath       string
-		decryptedSecretPath  string
-		decryptedSecretPaths []string
-	)
+	if err := runInK8S(c, func() error {
+		var (
+			err                  error
+			env                  = readEnvironment(c)
+			gophrRoot            string
+			keyFilePath          string
+			secretFilePath       string
+			decryptedSecretPath  string
+			decryptedSecretPaths []string
+		)
 
-	printInfo("Cycling all recorded secrets")
-	if gophrRoot, err = readGophrRoot(c); err != nil {
-		exit(exitCodeCycleSecretsFailed, nil, "", err)
-	}
-
-	keyFilePath = c.String(flagNameKeyPath)
-	if len(keyFilePath) < 1 {
-		exit(exitCodeCycleSecretsFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
-	}
-	keyFilePath, err = filepath.Abs(keyFilePath)
-	if err != nil {
-		exit(exitCodeCycleSecretsFailed, nil, "", err)
-	}
-
-	if err = assertMinikubeRunning(); err != nil {
-		exit(exitCodeCycleSecretsFailed, nil, "", err)
-	}
-
-	secretFiles, err := ioutil.ReadDir(filepath.Join(gophrRoot, secretsDir))
-	if err != nil {
-		exit(exitCodeCycleSecretsFailed, nil, "", err)
-	}
-
-	for _, secretFile := range secretFiles {
-		secretFilePath = filepath.Join(gophrRoot, secretsDir, secretFile.Name())
-		if decryptedSecretPath, err = generateDecryptedSecret(secretFilePath, keyFilePath); err != nil {
+		printInfo("Cycling all recorded secrets")
+		if gophrRoot, err = readGophrRoot(c); err != nil {
 			exit(exitCodeCycleSecretsFailed, nil, "", err)
-		} else {
+		}
+
+		keyFilePath = c.String(flagNameKeyPath)
+		if len(keyFilePath) < 1 {
+			exit(exitCodeCycleSecretsFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
+		}
+		keyFilePath, err = filepath.Abs(keyFilePath)
+		if err != nil {
+			exit(exitCodeCycleSecretsFailed, nil, "", err)
+		}
+
+		if env == environmentDev {
+			if err = assertMinikubeRunning(); err != nil {
+				return err
+			}
+		}
+
+		secretFiles, err := ioutil.ReadDir(filepath.Join(gophrRoot, secretsDir))
+		if err != nil {
+			return err
+		}
+
+		for _, secretFile := range secretFiles {
+			secretFilePath = filepath.Join(gophrRoot, secretsDir, secretFile.Name())
+			if decryptedSecretPath, err = generateDecryptedSecret(secretFilePath, keyFilePath); err != nil {
+				return err
+			}
+
 			decryptedSecretPaths = append(decryptedSecretPaths, decryptedSecretPath)
 		}
-	}
 
-	if secretExistsInK8S() {
-		if err = deleteSecretsInK8S(); err != nil {
-			exit(exitCodeCycleSecretsFailed, nil, "", err)
+		if secretExistsInK8S() {
+			if err = deleteSecretsInK8S(); err != nil {
+				return err
+			}
 		}
-	}
-	if err = createSecretsInK8S(decryptedSecretPaths); err != nil {
+		if err = createSecretsInK8S(decryptedSecretPaths); err != nil {
+			return err
+		}
+
+		// Delete all of the generated secret files.
+		startSpinner("Cleaning up generated files")
+		for _, decryptedSecretPath := range decryptedSecretPaths {
+			if err = os.Remove(decryptedSecretPath); err != nil {
+				return err
+			}
+		}
+		stopSpinner(true)
+
+		printSuccess("Secrets cycled successfully")
+		return nil
+	}); err != nil {
 		exit(exitCodeCycleSecretsFailed, nil, "", err)
 	}
 
-	// Delete all of the generated secret files.
-	startSpinner("Cleaning up generated files")
-	for _, decryptedSecretPath := range decryptedSecretPaths {
-		if err = os.Remove(decryptedSecretPath); err != nil {
-			exit(exitCodeCycleSecretsFailed, nil, "", err)
-		}
-	}
-	stopSpinner(true)
-
-	printSuccess("Secrets cycled successfully")
 	return nil
 }

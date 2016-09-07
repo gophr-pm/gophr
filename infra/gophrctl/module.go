@@ -26,6 +26,7 @@ var modules = map[string]*module{
 		k8sfiles: []string{
 			"./infra/k8s/db/service",
 			"./infra/k8s/db/daemonset",
+			"./infra/k8s/db/storage",
 		},
 		dockerfile:   "./infra/docker/db/Dockerfile",
 		versionfile:  "./infra/docker/db/Versionfile.prod",

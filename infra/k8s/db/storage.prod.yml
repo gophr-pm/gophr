@@ -1,0 +1,8 @@
+kind: StorageClass
+apiVersion: extensions/v1beta1
+metadata:
+  name: db-storage
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-standard
+  zone: us-central1-b

@@ -3,8 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"syscall"
 
@@ -13,8 +15,13 @@ import (
 
 const (
 	kubectl          = "kubectl"
+	k8sDevContext    = "minikube"
 	k8sSecretsName   = "gophr-secrets"
 	k8sNamespaceFlag = "--namespace=gophr"
+)
+
+var (
+	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/valid-song-142700/([a-zA-Z0-9\-:\.]+)`)
 )
 
 func readK8SProdContext(c *cli.Context) (string, error) {
@@ -26,23 +33,78 @@ func readK8SProdContext(c *cli.Context) (string, error) {
 	return context, nil
 }
 
-func switchK8SContext(newK8SContext string) (string, error) {
+// Returns the old kubernetes context, whether the context needs to be switched
+// back, and the error.
+func switchK8SContext(newK8SContext string) (string, bool, error) {
+	startSpinner(fmt.Sprintf("Switching to the \"%s\" kubernetes context", newK8SContext))
+
 	// First, get the current context.
 	output, err := exec.Command(kubectl, "config", "current-context").CombinedOutput()
 	if err != nil {
-		return "", err
+		stopSpinner(false)
+		return "", false, err
 	}
 
 	// Save the old context, so that we can return it later.
 	oldK8SContext := strings.TrimSpace(string(output[:]))
 
+	// If the k8s context is already switched, then return.
+	if newK8SContext == oldK8SContext {
+		return oldK8SContext, false, nil
+	}
+
 	// Switch to the new context.
 	_, err = exec.Command(kubectl, "config", "use-context", newK8SContext).CombinedOutput()
 	if err != nil {
-		return "", err
+		stopSpinner(false)
+		return "", false, err
 	}
 
-	return oldK8SContext, nil
+	stopSpinner(true)
+	return oldK8SContext, true, nil
+}
+
+func runInK8S(c *cli.Context, fn func() error) error {
+	var (
+		err                      error
+		oldK8SContext            string
+		mustSwitchK8SContextBack bool
+
+		env        = readEnvironment(c)
+		k8sContext = k8sDevContext
+	)
+
+	// If the environment is prod, change the kubernetes context accordingly.
+	if env == environmentProd {
+		// Read the production context before continuing.
+		if k8sContext, err = readK8SProdContext(c); err != nil {
+			return err
+		}
+	}
+
+	// Switch the kubernetes context before continuing.
+	if oldK8SContext, mustSwitchK8SContextBack, err = switchK8SContext(k8sContext); err != nil {
+		return err
+	}
+
+	// Execute fn now that the context has been switched.
+	if err = fn(); err != nil {
+		// Before returning with an error, return the context back to where it was.
+		if mustSwitchK8SContextBack {
+			if _, _, switchErr := switchK8SContext(oldK8SContext); switchErr != nil {
+				printError("Failed to reset the kubernetes context:", switchErr)
+			}
+		}
+
+		return err
+	}
+
+	// Switch the context back, error out if there was a problem switching.
+	if _, _, err := switchK8SContext(oldK8SContext); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func existsInK8S(k8sConfigFilePath string) bool {
@@ -171,5 +233,19 @@ func deleteSecretsInK8S() error {
 	}
 
 	stopSpinner(true)
+	return nil
+}
+
+func updateProdK8SFileImage(newImageURL, k8sfilePath string) error {
+	versionfileData, err := ioutil.ReadFile(k8sfilePath)
+	if err != nil {
+		return err
+	}
+
+	updatedVersionfileData := prodK8SImageURLRegex.ReplaceAll(versionfileData, []byte(newImageURL))
+	if err = ioutil.WriteFile(k8sfilePath, updatedVersionfileData, 0644); err != nil {
+		return err
+	}
+
 	return nil
 }

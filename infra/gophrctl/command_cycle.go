@@ -9,99 +9,91 @@ import (
 )
 
 func cycleCommand(c *cli.Context) error {
-	var (
-		m          *module
-		err        error
-		env        = readEnvironment(c)
-		exists     bool
-		gophrRoot  string
-		moduleName string
-	)
+	if err := runInK8S(c, func() error {
+		var (
+			env = readEnvironment(c)
 
-	if gophrRoot, err = readGophrRoot(c); err != nil {
-		goto exitWithError
-	}
+			m          *module
+			err        error
+			exists     bool
+			gophrRoot  string
+			moduleName string
+		)
 
-	moduleName = c.Args().First()
-	if len(moduleName) == 0 {
-		// Means "all modules".
-		printInfo("Cycling all modules")
-		if env == environmentDev {
-			if err = assertMinikubeRunning(); err != nil {
-				goto exitWithError
-			}
+		// First, let's get ourselves oriented.
+		if gophrRoot, err = readGophrRoot(c); err != nil {
+			return err
 		}
 
-		for _, m = range modules {
-			// Check for db inclusion.
-			if m.name == "db" && !c.Bool(flagNameIncludeDB) {
-				continue
+		moduleName = c.Args().First()
+		if len(moduleName) == 0 {
+			// Means "all modules".
+			printInfo("Cycling all modules")
+			if env == environmentDev {
+				if err = assertMinikubeRunning(); err != nil {
+					return err
+				}
+			}
+
+			for _, m = range modules {
+				// Check for db inclusion.
+				if m.name == "db" && !c.Bool(flagNameIncludeDB) {
+					continue
+				}
+
+				if err = cycleModule(c, m, gophrRoot, env); err != nil {
+					return err
+				}
+			}
+			printSuccess("All modules were cycled successfully")
+		} else if m, exists = modules[moduleName]; exists {
+			printInfo(fmt.Sprintf("Cycling module \"%s\"", moduleName))
+			if env == environmentDev {
+				if err = assertMinikubeRunning(); err != nil {
+					return err
+				}
 			}
 
 			if err = cycleModule(c, m, gophrRoot, env); err != nil {
-				goto exitWithError
+				return err
 			}
-		}
-		printSuccess("All modules were cycled successfully")
-	} else if m, exists = modules[moduleName]; exists {
-		printInfo(fmt.Sprintf("Cycling module \"%s\"", moduleName))
-		if env == environmentDev {
-			if err = assertMinikubeRunning(); err != nil {
-				goto exitWithError
-			}
+			printSuccess(fmt.Sprintf("Module \"%s\" was cycled successfully", moduleName))
+		} else {
+			err = newNoSuchModuleError(moduleName)
+			return err
 		}
 
-		if err = cycleModule(c, m, gophrRoot, env); err != nil {
-			goto exitWithError
-		}
-		printSuccess(fmt.Sprintf("Module \"%s\" was cycled successfully", moduleName))
-	} else {
-		err = newNoSuchModuleError(moduleName)
-		goto exitWithErrorAndHelp
+		return nil
+	}); err != nil {
+		exit(exitCodeCycleFailed, nil, "", err)
 	}
 
-	return nil
-exitWithError:
-	exit(exitCodeCycleFailed, nil, "", err)
-	return nil
-exitWithErrorAndHelp:
-	exit(exitCodeCycleFailed, c, "cycle", err)
 	return nil
 }
 
 func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
-	if env == environmentProd {
-		var (
-			err               error
-			k8sProdContext    string
-			oldK8SProdContext string
-		)
-
-		// Read the production context before continuing.
-		if k8sProdContext, err = readK8SProdContext(c); err != nil {
-			return err
-		}
-
-		// Switch to the production context then switch back afterwards.
-		if oldK8SProdContext, err = switchK8SContext(k8sProdContext); err != nil {
-			return err
-		}
-		defer switchK8SContext(oldK8SProdContext)
-	}
-
 	// Memorize whether services should be deleted.
 	shouldDeleteServices := c.Bool(flagNameDeleteServices)
 
-	// Destroy in reverse order.
-	for i := len(m.k8sfiles) - 1; i >= 0; i-- {
+	// Filter the k8sfiles.
+	var k8sfiles []string
+	for _, k8sfile := range m.k8sfiles {
 		// Only delete services if that flag says so.
-		if strings.HasSuffix(m.k8sfiles[i], "service") && !shouldDeleteServices {
+		if strings.HasSuffix(k8sfile, "service") && !shouldDeleteServices {
+			continue
+		}
+		// Ignore storage.
+		if strings.HasSuffix(k8sfile, "storage") {
 			continue
 		}
 
+		k8sfiles = append(k8sfiles, k8sfile)
+	}
+
+	// Destroy in reverse order.
+	for i := len(k8sfiles) - 1; i >= 0; i-- {
 		// Put together the absolute path.
-		k8sfile := m.k8sfiles[i]
-		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
+		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfiles[i], env))
 		// Only destroy if its already a thing.
 		if existsInK8S(k8sfilePath) {
 			if err := deleteInK8S(k8sfilePath); err != nil {
@@ -111,7 +103,7 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	}
 
 	// Create in order.
-	for _, k8sfile := range m.k8sfiles {
+	for _, k8sfile := range k8sfiles {
 		// Put together the absolute path.
 		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
 		// Perform the create command.

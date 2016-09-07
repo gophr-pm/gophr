@@ -2,11 +2,11 @@ package main
 
 import "os/exec"
 
-type localDockerBuildArgs struct {
+type dockerBuildArgs struct {
+	gpi            string
 	latest         bool
 	imageTag       string
 	imageName      string
-	dockerhub      bool
 	contextPath    string
 	dockerfilePath string
 }
@@ -15,7 +15,7 @@ const (
 	dockerHubUser = "gophr"
 )
 
-func localDockerBuild(args localDockerBuildArgs) error {
+func dockerBuild(args dockerBuildArgs) error {
 	imageIdentifier := args.imageName + ":" + args.imageTag
 	startSpinner("Building " + imageIdentifier)
 
@@ -31,8 +31,8 @@ func localDockerBuild(args localDockerBuildArgs) error {
 	if args.latest {
 		cmdArgs = append(cmdArgs, "-t", args.imageName+":latest")
 	}
-	if args.dockerhub {
-		cmdArgs = append(cmdArgs, "-t", dockerHubUser+"/"+imageIdentifier)
+	if len(args.gpi) > 0 {
+		cmdArgs = append(cmdArgs, "-t", "gcr.io/"+args.gpi+"/"+imageIdentifier)
 	}
 
 	cmdArgs = append(cmdArgs, ".")
@@ -49,11 +49,12 @@ func localDockerBuild(args localDockerBuildArgs) error {
 	return nil
 }
 
-func localDockerPush(imageName, imageTag string) error {
+func dockerPush(gpi, imageName, imageTag string) error {
 	imageIdentifier := imageName + ":" + imageTag
-	startSpinner("Pushing " + imageIdentifier)
+	cloudImagePath := "gcr.io/" + gpi + "/" + imageIdentifier
+	startSpinner("Pushing " + imageIdentifier + " to " + cloudImagePath)
 
-	output, err := exec.Command("docker", "push", dockerHubUser+"/"+imageIdentifier).CombinedOutput()
+	output, err := exec.Command("gcloud", "docker", "push", cloudImagePath).CombinedOutput()
 	if err != nil {
 		stopSpinner(false)
 		return newExecError(output, err)
