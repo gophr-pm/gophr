@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: gcr.io/valid-song-142700/gophr-api:1.0.0
+        image: gcr.io/valid-song-142700/gophr-api:1.0.4
         ports:
         - containerPort: 3000
         volumeMounts:

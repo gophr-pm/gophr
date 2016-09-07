@@ -12,6 +12,10 @@ const (
 )
 
 func buildCommand(c *cli.Context) error {
+	if len(c.Args().First()) == 0 {
+		printInfo("Building all modules")
+	}
+
 	if err := runInK8S(c, func() error {
 		var (
 			env = readEnvironment(c)
@@ -30,7 +34,6 @@ func buildCommand(c *cli.Context) error {
 		moduleName = c.Args().First()
 		if len(moduleName) == 0 {
 			// Means "all modules".
-			printInfo("Building all modules")
 			if env == environmentDev {
 				if err = assertMinikubeRunning(); err != nil {
 					return err

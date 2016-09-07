@@ -35,13 +35,10 @@ func readK8SProdContext(c *cli.Context) (string, error) {
 
 // Returns the old kubernetes context, whether the context needs to be switched
 // back, and the error.
-func switchK8SContext(newK8SContext string) (string, bool, error) {
-	startSpinner(fmt.Sprintf("Switching to the \"%s\" kubernetes context", newK8SContext))
-
+func switchK8SContext(newK8SContext string, switchingBack bool) (string, bool, error) {
 	// First, get the current context.
 	output, err := exec.Command(kubectl, "config", "current-context").CombinedOutput()
 	if err != nil {
-		stopSpinner(false)
 		return "", false, err
 	}
 
@@ -51,6 +48,13 @@ func switchK8SContext(newK8SContext string) (string, bool, error) {
 	// If the k8s context is already switched, then return.
 	if newK8SContext == oldK8SContext {
 		return oldK8SContext, false, nil
+	}
+
+	// Only say something if the context is changing.
+	if switchingBack {
+		startSpinner(fmt.Sprintf("Switching back to the \"%s\" kubernetes context", newK8SContext))
+	} else {
+		startSpinner(fmt.Sprintf("Switching to the \"%s\" kubernetes context", newK8SContext))
 	}
 
 	// Switch to the new context.
@@ -83,15 +87,18 @@ func runInK8S(c *cli.Context, fn func() error) error {
 	}
 
 	// Switch the kubernetes context before continuing.
-	if oldK8SContext, mustSwitchK8SContextBack, err = switchK8SContext(k8sContext); err != nil {
+	if oldK8SContext, mustSwitchK8SContextBack, err = switchK8SContext(k8sContext, false); err != nil {
 		return err
+	} else if mustSwitchK8SContextBack {
+		// If a message was printed, add a new line for padding.
+		fmt.Println()
 	}
 
 	// Execute fn now that the context has been switched.
 	if err = fn(); err != nil {
 		// Before returning with an error, return the context back to where it was.
 		if mustSwitchK8SContextBack {
-			if _, _, switchErr := switchK8SContext(oldK8SContext); switchErr != nil {
+			if _, _, switchErr := switchK8SContext(oldK8SContext, true); switchErr != nil {
 				printError("Failed to reset the kubernetes context:", switchErr)
 			}
 		}
@@ -100,8 +107,11 @@ func runInK8S(c *cli.Context, fn func() error) error {
 	}
 
 	// Switch the context back, error out if there was a problem switching.
-	if _, _, err := switchK8SContext(oldK8SContext); err != nil {
-		return err
+	if mustSwitchK8SContextBack {
+		fmt.Println()
+		if _, _, err := switchK8SContext(oldK8SContext, true); err != nil {
+			return err
+		}
 	}
 
 	return nil
