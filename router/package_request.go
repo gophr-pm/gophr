@@ -96,6 +96,7 @@ type PackageRequest struct {
 	Repo       string
 	Author     string
 	Subpath    string
+	RefHash    string
 	RefsData   []byte
 	Selector   string
 	GithubTree string
@@ -193,7 +194,7 @@ func RespondToPackageRequest(
 					session,
 					creds,
 					packageModel,
-					packageRequest.GithubTree,
+					packageRequest.RefHash,
 					config.ConstructionZonePath); err != nil {
 					log.Println("Sub-versioning failed:", err)
 					return err
@@ -332,7 +333,6 @@ func processBarePackageRequest(
 		Author:     packageAuthor,
 		Subpath:    packageSubpath,
 		RefsData:   packageRefsData,
-		Selector:   "",
 		GithubTree: masterGitRefLabel,
 	}, nil
 }
@@ -366,6 +366,8 @@ func processPackageVersionRequest(
 		semverSelector        semver.SemverSelector
 		packageRefsData       []byte
 		matchedCandidate      semver.SemverCandidate
+		masterGitRefHash      string
+		matchedCandidateHash  string
 		matchedCandidateLabel string
 	)
 
@@ -400,11 +402,14 @@ func processPackageVersionRequest(
 			context.RequestID,
 		)
 
+		// Get and process all of the refs for this package.
 		refs, err := common.FetchRefs(packageAuthor, packageRepo)
-
 		if err != nil {
 			return PackageRequest{}, err
 		}
+
+		// Cache the master ref has for use in the event that there are no matched candidates.
+		masterGitRefHash = refs.MasterRefHash
 
 		if semverSelectorExists &&
 			refs.Candidates != nil &&
@@ -455,6 +460,7 @@ func processPackageVersionRequest(
 				matchedCandidate.GitRefName,
 				matchedCandidate.GitRefHash,
 			)
+			matchedCandidateHash = matchedCandidate.GitRefHash
 			matchedCandidateLabel = matchedCandidate.GitRefLabel
 		} else {
 			if !semverSelectorExists {
@@ -480,12 +486,14 @@ func processPackageVersionRequest(
 
 	// If there is no label as of yet, just default to master
 	if len(matchedCandidateLabel) < 1 {
+		matchedCandidateHash = masterGitRefHash
 		matchedCandidateLabel = masterGitRefLabel
 	}
 
 	return PackageRequest{
 		Repo:       packageRepo,
 		Author:     packageAuthor,
+		RefHash:    matchedCandidateHash,
 		Subpath:    packageSubpath,
 		RefsData:   packageRefsData,
 		Selector:   semverSelector.String(),
