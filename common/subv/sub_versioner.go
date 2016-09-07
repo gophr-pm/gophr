@@ -66,7 +66,7 @@ func SubVersionPackageModel(
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("Error occured in checking if ref exists. %s", err)
+		return fmt.Errorf("Error occurred in checking if ref exists. %s", err)
 	}
 
 	log.Printf("%s/%s@%s has not been versioned yet",

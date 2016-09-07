@@ -83,5 +83,5 @@ func parseGitHubCommitLookUpResponseBody(response *http.Response) (time.Time, er
 		return commitLookUpDTO.Commit.Committer.Date, nil
 	}
 
-	return time.Time{}, errors.New("No commit timestamp avilable for given SHA")
+	return time.Time{}, errors.New("No commit timestamp available for given SHA")
 }

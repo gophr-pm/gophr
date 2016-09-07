@@ -19,7 +19,7 @@ func (gitHubRequestService *RequestService) CheckGitHubRepoExists(
 	resp, err := http.Get(url)
 
 	if err != nil {
-		log.Println("Error occured during request")
+		log.Println("Error occurred during request")
 		return err
 	}
 
