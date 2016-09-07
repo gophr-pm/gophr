@@ -75,7 +75,7 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 		for i := 0; i < len(godocMetadataList); i++ {
 			log.Printf("Waiting for %d out of %d of godocMetadataList length \n", i+1, len(godocMetadataList))
 			packageModel := <-packageModelChan
-			log.Println("Recieved one package from packageModelChan")
+			log.Println("Received one package from packageModelChan")
 			if packageModel != nil {
 				packageModels = append(packageModels, packageModel)
 				log.Println("Appending package to packageModels slice")

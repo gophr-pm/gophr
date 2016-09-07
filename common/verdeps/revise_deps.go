@@ -45,7 +45,7 @@ func reviseDeps(args reviseDepsArgs) {
 			// Get rids of the revs from the map since we don't need them anymore.
 			delete(pathRevisionsMap, path)
 		} else {
-			// Update the revs in the map - keep waiting for mroe revs.
+			// Update the revs in the map - keep waiting for more revs.
 			pathRevisionsMap[path] = revs
 		}
 	}
