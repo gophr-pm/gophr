@@ -1,6 +1,5 @@
 package github
 
-// CheckIfRefExists downloads and processes refs data from Github and checks
 import (
 	"errors"
 	"fmt"
