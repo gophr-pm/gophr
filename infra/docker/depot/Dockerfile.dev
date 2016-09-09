@@ -19,7 +19,6 @@ RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC64107
 		automake \
 		libtool \
 		libfcgi-dev \
-		apache2-utils \
 		git-core \
 		gitweb
 
@@ -32,9 +31,15 @@ RUN git clone https://github.com/gnosek/fcgiwrap.git \
 		&& make install \
 		&& cp fcgiwrap /usr/bin
 
+# Symlink gitweb.cgi
+RUN mkdir -p /var/www/git \
+		&& ln -s /usr/lib/cgi-bin/gitweb.cgi /var/www/git/gitweb.cgi \
+		&& chmod ugo+x /var/www/git/gitweb.cgi
+
 # Copy in gitweb and nginx configurations
 COPY ./infra/docker/depot/files/nginx/gitweb.conf /etc/gitweb.conf
 COPY ./infra/docker/depot/files/nginx/git.conf /etc/nginx/conf.d/git.conf
+# TODO REMOVE THIS
 COPY ./infra/docker/depot/files/nginx/htpasswd /etc/nginx/
 
 # Copy in spawn-fcgi scripts
@@ -48,10 +53,7 @@ RUN chmod +x /etc/init.d/spawn-fcgi
 # Copy entrypoint script
 COPY ./infra/docker/depot/files/start.sh /start.sh
 
-RUN mkdir -p /var/www/git \
-	&& ln -s /usr/lib/cgi-bin/gitweb.cgi /var/www/git/gitweb.cgi \
-	&& chmod ugo+x /var/www/git/gitweb.cgi
-
+# VOLUME ["/repos"]
 VOLUME ["/secrets"]
 
 EXPOSE 80 443
