@@ -19,7 +19,9 @@ RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC64107
 		automake \
 		libtool \
 		libfcgi-dev \
-		apache2-utils
+		apache2-utils \
+		git-core \
+		gitweb
 
 # Build and install fcgiwrap
 RUN git clone https://github.com/gnosek/fcgiwrap.git \
@@ -31,20 +33,27 @@ RUN git clone https://github.com/gnosek/fcgiwrap.git \
 		&& cp fcgiwrap /usr/bin
 
 # Copy in gitweb and nginx configurations
-COPY ./files/nginx/gitweb.conf /etc/gitweb.conf
-COPY ./files/nginx/git.conf /etc/nginx/conf.d/git.conf
-COPY ./files/nginx/htpasswd /etc/nginx/
+COPY ./infra/docker/depot/files/nginx/gitweb.conf /etc/gitweb.conf
+COPY ./infra/docker/depot/files/nginx/git.conf /etc/nginx/conf.d/git.conf
+COPY ./infra/docker/depot/files/nginx/htpasswd /etc/nginx/
 
 # Copy in spawn-fcgi scripts
-COPY ./files/bin/spawn-fcgi /usr/bin/spawn-fcgi
+COPY ./infra/docker/depot/files/bin/spawn-fcgi /usr/bin/spawn-fcgi
 RUN chmod +x /usr/bin/spawn-fcgi
 
 # Copy in spawn-fcgi scripts
-COPY ./files/init.d/spawn-fcgi /etc/init.d/spawn-fcgi
+COPY ./infra/docker/depot/files/init.d/spawn-fcgi /etc/init.d/spawn-fcgi
 RUN chmod +x /etc/init.d/spawn-fcgi
 
-COPY ./files/hosts /etc/hosts
+# Copy entrypoint script
+COPY ./infra/docker/depot/files/start.sh /start.sh
 
-CMD service nginx start
+RUN mkdir -p /var/www/git \
+	&& ln -s /usr/lib/cgi-bin/gitweb.cgi /var/www/git/gitweb.cgi \
+	&& chmod ugo+x /var/www/git/gitweb.cgi
+
+VOLUME ["/secrets"]
 
 EXPOSE 80 443
+
+ENTRYPOINT /start.sh
