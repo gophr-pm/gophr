@@ -1,8 +1,11 @@
+# This does not yet exist in 1.3. Waiting until the next version for k8s comes
+# out on GCE.
 kind: StorageClass
 apiVersion: extensions/v1beta1
 metadata:
   name: db-storage
+  namespace: gophr
 provisioner: kubernetes.io/gce-pd
 parameters:
-  type: pd-standard
+  type: pd-standard-ssd
   zone: us-central1-b

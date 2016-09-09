@@ -16,14 +16,14 @@ const (
 	envVarKeyPath        = "GOPHR_KEYFILE_PATH"
 	envVarK8SProdContext = "GOPHR_K8S_CONTEXT"
 
-	flagNameGPI            = "gpi"
-	flagNameProd           = "prod"
-	flagNameKeyPath        = "key"
-	flagNameRepoPath       = "repo-path"
-	flagNameIncludeDB      = "include-db"
-	flagNameForeground     = "foreground"
-	flagNameK8SProdContext = "k8s-context"
-	flagNameDeleteServices = "delete-services"
+	flagNameGPI              = "gpi"
+	flagNameProd             = "prod"
+	flagNameKeyPath          = "key"
+	flagNameRepoPath         = "repo-path"
+	flagNameIncludeDB        = "include-db"
+	flagNameForeground       = "foreground"
+	flagNameK8SProdContext   = "k8s-context"
+	flagNameDeletePersistent = "delete-persistent"
 
 	commandNameBuild  = "build"
 	commandDescBuild  = "Updates module images"
@@ -118,8 +118,8 @@ func main() {
 					Usage: "includes the db in \"all\"",
 				},
 				cli.BoolFlag{
-					Name:  flagNameDeleteServices,
-					Usage: "deletes services as well",
+					Name:  flagNameDeletePersistent,
+					Usage: "deletes persistent components as well (e.g. services)",
 				},
 			},
 		},

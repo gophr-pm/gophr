@@ -69,8 +69,19 @@ func updateCommand(c *cli.Context) error {
 }
 
 func updateModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
-	// Apply in order.
+	// Filter the k8sfiles.
+	var k8sfiles []string
 	for _, k8sfile := range m.k8sfiles {
+		// Ignore production components.
+		if env == environmentDev && isProdK8SResource(k8sfile) {
+			continue
+		}
+
+		k8sfiles = append(k8sfiles, k8sfile)
+	}
+
+	// Apply in order.
+	for _, k8sfile := range k8sfiles {
 		// Put together the absolute path.
 		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
 		// Perform the create command.

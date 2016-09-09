@@ -6,6 +6,8 @@ metadata:
     module: db
   namespace: gophr
 spec:
+  # *.db-svc.gophr.svc.cluster.local
+  clusterIP: None
   ports:
     - name: cql
       port: 9042

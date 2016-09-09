@@ -15,6 +15,7 @@ import (
 
 const (
 	kubectl          = "kubectl"
+	k8sNamespace     = "gophr"
 	k8sDevContext    = "minikube"
 	k8sSecretsName   = "gophr-secrets"
 	k8sNamespaceFlag = "--namespace=gophr"
@@ -23,6 +24,18 @@ const (
 var (
 	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
 )
+
+func isProdK8SResource(k8sfile string) bool {
+	return strings.HasSuffix(k8sfile, "storage") ||
+		strings.HasSuffix(k8sfile, "claim")
+}
+
+func isPersistentK8SResource(k8sfile string) bool {
+	return strings.HasSuffix(k8sfile, "service") ||
+		strings.HasSuffix(k8sfile, "claim") ||
+		strings.HasSuffix(k8sfile, "volume") ||
+		strings.HasSuffix(k8sfile, "storage")
+}
 
 func readK8SProdContext(c *cli.Context) (string, error) {
 	context := c.GlobalString(flagNameK8SProdContext)
@@ -94,6 +107,11 @@ func runInK8S(c *cli.Context, fn func() error) error {
 		fmt.Println()
 	}
 
+	// Make sure we have a namespace before doing anything else.
+	if err = assertNamespaceInK8S(); err != nil {
+		return err
+	}
+
 	// Execute fn now that the context has been switched.
 	if err = fn(); err != nil {
 		// Before returning with an error, return the context back to where it was.
@@ -124,6 +142,32 @@ func existsInK8S(k8sConfigFilePath string) bool {
 	}
 
 	return true
+}
+
+func assertNamespaceInK8S() error {
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "namespaces", "--output=jsonpath={.items..metadata.name}").CombinedOutput()
+	if err != nil {
+		return err
+	}
+
+	// Loop through all the namespaces, and look for our namespace.
+	namespaces := strings.Split(strings.TrimSpace(string(output[:])), " ")
+	for _, namespace := range namespaces {
+		if k8sNamespace == strings.TrimSpace(namespace) {
+			return nil
+		}
+	}
+
+	// If we're here then the namespace does not exist. Time to create it.
+	startSpinner("Creating namespace in kubernetes")
+	output, err = exec.Command(kubectl, k8sNamespaceFlag, "create", "namespace", k8sNamespace).CombinedOutput()
+	if err != nil {
+		stopSpinner(false)
+		return err
+	}
+
+	stopSpinner(true)
+	return nil
 }
 
 func applyInK8S(k8sConfigFilePath string) error {

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -73,17 +72,13 @@ func cycleCommand(c *cli.Context) error {
 
 func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
 	// Memorize whether services should be deleted.
-	shouldDeleteServices := c.Bool(flagNameDeleteServices)
+	shouldDeletePersistent := c.Bool(flagNameDeletePersistent)
 
 	// Filter the k8sfiles.
 	var k8sfiles []string
 	for _, k8sfile := range m.k8sfiles {
-		// Only delete services if that flag says so.
-		if strings.HasSuffix(k8sfile, "service") && !shouldDeleteServices {
-			continue
-		}
-		// Ignore storage.
-		if strings.HasSuffix(k8sfile, "storage") {
+		// Ignore production components.
+		if env == environmentDev && isProdK8SResource(k8sfile) {
 			continue
 		}
 
@@ -92,8 +87,15 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 
 	// Destroy in reverse order.
 	for i := len(k8sfiles) - 1; i >= 0; i-- {
+		k8sfile := k8sfiles[i]
+
+		// Only delete services if that flag says so.
+		if !shouldDeletePersistent && isPersistentK8SResource(k8sfile) {
+			continue
+		}
+
 		// Put together the absolute path.
-		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfiles[i], env))
+		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
 		// Only destroy if its already a thing.
 		if existsInK8S(k8sfilePath) {
 			if err := deleteInK8S(k8sfilePath); err != nil {
@@ -107,8 +109,10 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 		// Put together the absolute path.
 		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
 		// Perform the create command.
-		if err := createInK8S(k8sfilePath); err != nil {
-			return err
+		if !existsInK8S(k8sfilePath) {
+			if err := createInK8S(k8sfilePath); err != nil {
+				return err
+			}
 		}
 	}
 

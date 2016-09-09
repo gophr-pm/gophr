@@ -25,8 +25,7 @@ var modules = map[string]*module{
 		name: "db",
 		k8sfiles: []string{
 			"./infra/k8s/db/service",
-			"./infra/k8s/db/daemonset",
-			"./infra/k8s/db/storage",
+			"./infra/k8s/db/petset",
 		},
 		dockerfile:   "./infra/docker/db/Dockerfile",
 		versionfile:  "./infra/docker/db/Versionfile.prod",
@@ -57,7 +56,7 @@ var modules = map[string]*module{
 			"./infra/k8s/router/controller",
 		},
 		dockerfile:   "./infra/docker/router/Dockerfile",
-		versionfile:  "./infra/docker/router/Versionfile.dev",
+		versionfile:  "./infra/docker/router/Versionfile.prod",
 		buildContext: ".",
 	},
 	"web": &module{
@@ -67,7 +66,7 @@ var modules = map[string]*module{
 			"./infra/k8s/web/controller",
 		},
 		dockerfile:   "./infra/docker/web/Dockerfile",
-		versionfile:  "./infra/docker/web/Versionfile.dev",
+		versionfile:  "./infra/docker/web/Versionfile.prod",
 		buildContext: ".",
 	},
 }
