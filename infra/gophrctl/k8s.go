@@ -27,13 +27,16 @@ var (
 
 func isProdK8SResource(k8sfile string) bool {
 	return strings.HasSuffix(k8sfile, "storage") ||
-		strings.HasSuffix(k8sfile, "claim")
+		strings.HasSuffix(k8sfile, "claim") ||
+		strings.HasSuffix(k8sfile, "volume") ||
+		strings.HasSuffix(k8sfile, "volumes")
 }
 
 func isPersistentK8SResource(k8sfile string) bool {
 	return strings.HasSuffix(k8sfile, "service") ||
 		strings.HasSuffix(k8sfile, "claim") ||
 		strings.HasSuffix(k8sfile, "volume") ||
+		strings.HasSuffix(k8sfile, "volumes") ||
 		strings.HasSuffix(k8sfile, "storage")
 }
 
@@ -112,6 +115,18 @@ func runInK8S(c *cli.Context, fn func() error) error {
 		return err
 	}
 
+	// Make sure that the necessary volumes exist.
+	if env == environmentProd {
+		if err = assertProdVolumes(); err != nil {
+			return err
+		}
+	}
+
+	// Check if the secrets are here. If not, scream & shout.
+	if !secretsExistInK8S() {
+		return errors.New("The gophr secrets have not been installed yet. Use `gophrctl secrets cycle` to correct that.")
+	}
+
 	// Execute fn now that the context has been switched.
 	if err = fn(); err != nil {
 		// Before returning with an error, return the context back to where it was.
@@ -138,6 +153,14 @@ func runInK8S(c *cli.Context, fn func() error) error {
 func existsInK8S(k8sConfigFilePath string) bool {
 	_, err := exec.Command(kubectl, k8sNamespaceFlag, "describe", "-f", k8sConfigFilePath).CombinedOutput()
 	if err != nil {
+		return false
+	}
+
+	return true
+}
+
+func secretsExistInK8S() bool {
+	if _, err := exec.Command(kubectl, k8sNamespaceFlag, "describe", "secret", "gophr-secrets").CombinedOutput(); err != nil {
 		return false
 	}
 
