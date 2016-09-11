@@ -28,7 +28,13 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 	}
 
 	log.Println("Initializing gitHub component")
-	gitHubRequestService := github.NewRequestService(conf, session)
+	gitHubRequestService := github.NewRequestService(
+		github.RequestServiceParams{
+			ForIndexer: true,
+			Conf:       conf,
+			Session:    session,
+		},
+	)
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
@@ -48,7 +54,7 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 				packageModel.Stars = &packageStarCount
 				err := models.InsertPackage(session, &packageModel)
 				if err != nil {
-					log.Println("Could not insert packageModel, error occurred")
+					log.Println("Could not insert packageModel, error occured")
 					log.Println(err)
 				}
 			}
@@ -70,7 +76,7 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 				wg.Done()
 			}()
 		} else if err != nil {
-			log.Println("Package could not be successfully retrieved from Github. Error occurred")
+			log.Println("Package could not be successfully retrieved from Github. Error occured")
 			log.Println(err)
 		}
 

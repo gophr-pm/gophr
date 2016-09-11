@@ -30,7 +30,7 @@ func BuildRemoteURL(packageModel *models.PackageModel, ref string) string {
 }
 
 // BuildNewGitHubRepoName creates a new repo name hash uses for repo creation
-// and lookup. Eliminates collision between similiar usernames and packages
+// and lookup. Eliminates collision between similar usernames and packages
 func BuildNewGitHubRepoName(author string, repo string) string {
 	return fmt.Sprintf("%d%s%d%s", len(author), author, len(repo), repo)
 }

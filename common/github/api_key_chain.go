@@ -20,6 +20,7 @@ const (
 	devAPIKeysSecretFileName  = "github-api-keys.dev.json"
 	prodAPIKeysSecretFileName = "github-api-keys.prod.json"
 	columnNameGithubAPIKeyKey = "key"
+	columnNameIndexer         = "for_indexer"
 )
 
 // APIKeyChain is responsible for managing GitHubAPIKeymodels
@@ -31,11 +32,11 @@ type APIKeyChain struct {
 
 // NewAPIKeyChain intializes and returns a new GitHubAPIKeyChain
 // and instantiates all available keys in the db as APIKeyModels
-func NewAPIKeyChain(conf *config.Config, session *gocql.Session) *APIKeyChain {
+func NewAPIKeyChain(params RequestServiceParams) *APIKeyChain {
 	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := APIKeyChain{}
 
-	gitHubAPIKeys, err := scanAllGitHubKey(conf, session)
+	gitHubAPIKeys, err := scanAllGitHubKey(params.Conf, params.Session, params.ForIndexer)
 	if err != nil {
 		log.Println("Could not scan github keys, fatal error occurred")
 		log.Fatal(err)
@@ -123,20 +124,29 @@ func setRequestTimout(apiKeyModel APIKeyModel) {
 	time.Sleep(sleepTime)
 }
 
-func scanAllGitHubKey(conf *config.Config, session *gocql.Session) ([]string, error) {
+func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool) ([]string, error) {
 	var (
 		err           error
 		gitHubAPIKey  string
+		forIndexer    bool
 		gitHubAPIKeys []string
 	)
 
-	iter := query.Select(columnNameGithubAPIKeyKey).
+	iter := query.Select(columnNameGithubAPIKeyKey, columnNameIndexer).
 		From(tableNameGithubAPIKey).
 		Create(session).
 		Iter()
 
-	for iter.Scan(&gitHubAPIKey) {
-		gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
+	for iter.Scan(&gitHubAPIKey, &forIndexer) {
+		if indexer {
+			if forIndexer == true {
+				gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
+			}
+		} else {
+			if forIndexer != true {
+				gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
+			}
+		}
 	}
 
 	if err = iter.Close(); err != nil {
@@ -181,6 +191,7 @@ func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]st
 	type apiKey struct {
 		Key                string `json:"key"`
 		HasAdminPrivileges bool   `json:"hasAdminPrivileges"`
+		ForIndexer         bool   `json:"forIndexer"`
 	}
 
 	// Create the slice for unmarshalling.
@@ -197,6 +208,7 @@ func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]st
 	for _, key := range keys {
 		if err = query.InsertInto(tableNameGithubAPIKey).
 			Value(columnNameGithubAPIKeyKey, key.Key).
+			Value(columnNameIndexer, key.ForIndexer).
 			Create(session).
 			Exec(); err != nil {
 			return nil, err

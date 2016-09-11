@@ -35,7 +35,7 @@ func (gitHubRequestService *RequestService) CreateNewGitHubRepo(
 	defer req.Body.Close()
 
 	if err != nil {
-		log.Printf("Error occured whilecreating new github repo %s \n", err)
+		log.Printf("Error occurred whilecreating new github repo %s \n", err)
 		return err
 	}
 	if req.StatusCode != 201 {

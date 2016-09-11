@@ -66,7 +66,7 @@ func SubVersionPackageModel(
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("Error occured in checking if ref exists. %s", err)
+		return fmt.Errorf("Error occurred in checking if ref exists. %s", err)
 	}
 
 	log.Printf("%s/%s@%s has not been versioned yet",
@@ -133,7 +133,13 @@ func SubVersionPackageModel(
 	}
 
 	// Instantiate New Github Request Service
-	gitHubRequestService := github.NewRequestService(conf, session)
+	gitHubRequestService := github.NewRequestService(
+		github.RequestServiceParams{
+			ForIndexer: false,
+			Conf:       conf,
+			Session:    session,
+		},
+	)
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)

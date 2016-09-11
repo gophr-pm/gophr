@@ -9,10 +9,13 @@ import (
 )
 
 // GitHubGophrPackageOrgName is the  Github organization name for all versioned packages
-// GitHubBaseAPIURL is the base Github API
 const (
 	GitHubGophrPackageOrgName = "gophr-packages"
-	GitHubBaseAPIURL          = "https://api.github.com"
+)
+
+// GitHubBaseAPIURL is the base Github API
+const (
+	GitHubBaseAPIURL = "https://api.github.com"
 )
 
 const (
@@ -33,14 +36,17 @@ type RequestService struct {
 }
 
 // NewRequestService initialies a new GitHubRequestService and APIKeyChain
-func NewRequestService(conf *config.Config, session *gocql.Session) *RequestService {
+func NewRequestService(params RequestServiceParams) *RequestService {
 	newRequestService := RequestService{}
-	newRequestService.APIKeyChain = NewAPIKeyChain(conf, session)
+	newRequestService.APIKeyChain = NewAPIKeyChain(params)
 
 	return &newRequestService
 }
 
-// TODO:(Shikkic) Create Param Struct and add comments.
+// RequestServiceParams passes import Kubernetes configuration and secrets.
+// Also can dictate whether request service is being used by indexer.
 type RequestServiceParams struct {
-	Indexer bool
+	ForIndexer bool
+	Conf       *config.Config
+	Session    *gocql.Session
 }
