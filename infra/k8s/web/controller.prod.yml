@@ -6,7 +6,7 @@ metadata:
     module: web
   namespace: gophr
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     module: web
   template:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: gcr.io/valid-song-142700/gophr-web:1.0.1
+        image: gcr.io/valid-song-142700/gophr-web:1.1.2
         ports:
         - containerPort: 80
         - containerPort: 443

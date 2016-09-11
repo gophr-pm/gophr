@@ -31,6 +31,8 @@ RUN cd /web \
 	&& cd /etc/nginx/ \
 	&& rm -rf /web
 
+RUN chmod +x /start.sh
+
 VOLUME ["/secrets"]
 
 EXPOSE 80 443

@@ -6,7 +6,7 @@ metadata:
     module: api
   namespace: gophr
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     module: api
   template:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: api
-        image: gcr.io/valid-song-142700/gophr-api:1.0.4
+        image: gcr.io/valid-song-142700/gophr-api:1.0.5
         ports:
         - containerPort: 3000
         volumeMounts:

@@ -18,8 +18,10 @@ type gCloudVolume struct {
 }
 
 func createGCloudVolumesIfNotExist(vols ...gCloudVolume) error {
+	startSpinner("Checking if production volumes exist")
 	output, err := exec.Command(gcloud, "compute", "disks", "list").CombinedOutput()
 	if err != nil {
+		stopSpinner(false)
 		return err
 	}
 
@@ -34,6 +36,7 @@ func createGCloudVolumesIfNotExist(vols ...gCloudVolume) error {
 			nonExistentVols = append(nonExistentVols, vol)
 		}
 	}
+	stopSpinner(true)
 
 	// Create the volumes that don't exist yet.
 	if len(nonExistentVols) > 0 {

@@ -6,7 +6,7 @@ metadata:
     module: router
   namespace: gophr
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     module: router
   template:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: router
-        image: gcr.io/valid-song-142700/gophr-router:1.0.1
+        image: gcr.io/valid-song-142700/gophr-router:1.0.2
         ports:
         - containerPort: 3000
         volumeMounts:
