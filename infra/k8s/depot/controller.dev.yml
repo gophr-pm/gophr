@@ -20,6 +20,7 @@ spec:
         image: gophr-depot-dev:v1
         ports:
         - containerPort: 80
+        - containerPort: 3000
         volumeMounts:
         - mountPath: /secrets
           name: secrets
