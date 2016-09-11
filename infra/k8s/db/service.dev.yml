@@ -10,6 +10,6 @@ spec:
   ports:
     - name: cql
       port: 9042
-      nodePort: 30900
+      nodePort: 30942
   selector:
     module: db

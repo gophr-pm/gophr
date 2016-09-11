@@ -12,11 +12,18 @@ const (
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
-	flagNameProd       = "prod"
-	flagNameKeyPath    = "key"
-	flagNameRepoPath   = "repo-path"
-	flagNameIncludeDB  = "include-db"
-	flagNameForeground = "foreground"
+	envVarGPI            = "GOPHR_GOOGLE_PROJECT_ID"
+	envVarKeyPath        = "GOPHR_KEYFILE_PATH"
+	envVarK8SProdContext = "GOPHR_K8S_CONTEXT"
+
+	flagNameGPI              = "gpi"
+	flagNameProd             = "prod"
+	flagNameKeyPath          = "key"
+	flagNameRepoPath         = "repo-path"
+	flagNameIncludeDB        = "include-db"
+	flagNameForeground       = "foreground"
+	flagNameK8SProdContext   = "k8s-context"
+	flagNameDeletePersistent = "delete-persistent"
 
 	commandNameBuild  = "build"
 	commandDescBuild  = "Updates module images"
@@ -69,6 +76,11 @@ func main() {
 			Value: defaultRepoPath,
 			Usage: "path to the gophr repository",
 		},
+		cli.StringFlag{
+			Name:   flagNameK8SProdContext + ",c",
+			Usage:  "the kubernetes production context",
+			EnvVar: envVarK8SProdContext,
+		},
 	}
 
 	// Next, reference every command capable to gophrctl.
@@ -85,6 +97,11 @@ func main() {
 					Name:  flagNameIncludeDB,
 					Usage: "includes the db in \"all\"",
 				},
+				cli.StringFlag{
+					Name:   flagNameGPI + ",g",
+					Usage:  "gophr's google project id",
+					EnvVar: envVarGPI,
+				},
 			},
 		},
 
@@ -99,6 +116,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
 					Usage: "includes the db in \"all\"",
+				},
+				cli.BoolFlag{
+					Name:  flagNameDeletePersistent,
+					Usage: "deletes persistent components as well (e.g. services)",
 				},
 			},
 		},
@@ -153,8 +174,9 @@ func main() {
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:  flagNameKeyPath + ", k",
-							Usage: "path to the key file",
+							Name:   flagNameKeyPath + ", k",
+							Usage:  "path to the key file",
+							EnvVar: envVarKeyPath,
 						},
 					},
 				},
@@ -165,8 +187,9 @@ func main() {
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:  flagNameKeyPath + ", k",
-							Usage: "path to the key file",
+							Name:   flagNameKeyPath + ", k",
+							Usage:  "path to the key file",
+							EnvVar: envVarKeyPath,
 						},
 					},
 				},

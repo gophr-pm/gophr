@@ -18,6 +18,7 @@ import (
 const (
 	tableNameGithubAPIKey     = "github_api_key"
 	devAPIKeysSecretFileName  = "github-api-keys.dev.json"
+	prodAPIKeysSecretFileName = "github-api-keys.prod.json"
 	columnNameGithubAPIKeyKey = "key"
 	columnNameIndexer         = "for_indexer"
 )
@@ -152,9 +153,9 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 		return nil, errors.NewQueryScanError(nil, err)
 	}
 
-	// If there are no keys in the database, and this is in the dev environment,
-	// then add the ones from the secret file (if it exists).
-	if conf.IsDev && len(gitHubAPIKeys) < 1 && len(conf.SecretsPath) > 0 {
+	// If there are no keys in the database, then add the ones from the secret
+	// file (if it exists).
+	if len(gitHubAPIKeys) < 1 && len(conf.SecretsPath) > 0 {
 		gitHubAPIKeys, err = readGithubKeysFromSecret(conf, session)
 		if err != nil {
 			log.Printf("Failed to read keys from secret: %v.", err)
@@ -165,9 +166,14 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 }
 
 func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]string, error) {
-	log.Println("There were no keys in the database. Since this is the " +
-		"dev environment, attempting to load from the github keys secret.")
-	filePath := filepath.Join(conf.SecretsPath, devAPIKeysSecretFileName)
+	log.Println("There were no keys in the database. Attempting to load from the github keys secret.")
+
+	var filePath string
+	if conf.IsDev {
+		filePath = filepath.Join(conf.SecretsPath, devAPIKeysSecretFileName)
+	} else {
+		filePath = filepath.Join(conf.SecretsPath, prodAPIKeysSecretFileName)
+	}
 
 	var (
 		err         error
