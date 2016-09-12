@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: depot-rc
+  labels:
+    module: depot
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: depot
+  template:
+    metadata:
+      labels:
+        module: depot
+      namespace: gophr
+    spec:
+      containers:
+      - name: depot
+        image: gophr-depot-dev:v1
+        ports:
+        - containerPort: 80
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets
