@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: router-rc
+  labels:
+    module: router
+  namespace: gophr
+spec:
+  replicas: 3
+  selector:
+    module: router
+  template:
+    metadata:
+      labels:
+        module: router
+      namespace: gophr
+    spec:
+      containers:
+      - name: router
+        image: gcr.io/valid-song-142700/gophr-router:1.0.2
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /construction-zone
+          name: construction-zone
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: construction-zone
+        emptyDir: {}
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

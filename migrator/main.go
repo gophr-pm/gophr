@@ -22,7 +22,7 @@ func main() {
 
 	// Execute the migrations.
 	log.Println("Executing pending database migrations.")
-	err := db.Migrate(config.DbAddress, config.MigrationsPath)
+	err := db.Migrate(config.IsDev, config.DbAddress, config.MigrationsPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
