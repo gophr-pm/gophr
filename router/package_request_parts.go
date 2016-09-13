@@ -31,6 +31,7 @@ var (
 	))
 )
 
+// packageRequestParts represents the piecewise breakdown of a package request.
 type packageRequestParts struct {
 	url            string
 	repo           string
@@ -41,14 +42,18 @@ type packageRequestParts struct {
 	semverSelector semver.SemverSelector
 }
 
+// hasSHASelector returns true if this parts struct has a sha selector.
 func (parts *packageRequestParts) hasSHASelector() bool {
 	return len(parts.shaSelector) > 0
 }
 
+// hasSemverSelector returns true if this parts struct has a semver selector.
 func (parts *packageRequestParts) hasSemverSelector() bool {
 	return parts.semverSelector.MajorVersion.Type != semver.SemverSegmentTypeUnspecified
 }
 
+// String returns a string representation of this struct. This function returns
+// a JSON-like representation of this struct.
 func (parts *packageRequestParts) String() string {
 	var b bytes.Buffer
 	b.WriteString("{ ")
@@ -85,6 +90,9 @@ func (parts *packageRequestParts) String() string {
 	return b.String()
 }
 
+// readPackageRequestParts reads an http request in the format of a package
+// request, and breaks down the URL of the request into parts. Lastly, the parts
+// are composed into a parts struct and returned.
 func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 	var (
 		i      = 0
