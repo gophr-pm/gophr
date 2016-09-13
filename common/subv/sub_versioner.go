@@ -285,7 +285,8 @@ func SubVersionPackageModel(
 	remote, err := repo.Remotes.Create(
 		"origin",
 		fmt.Sprintf(
-			"https://github.com/gophr-packages/%s.git",
+			"https://%s/%s.git",
+			os.Getenv("DEPOT_SVC_SERVICE_HOST"),
 			github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
 		),
 	)
