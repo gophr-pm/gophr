@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gocql/gocql"
@@ -25,28 +24,20 @@ func RequestHandler(
 	session *gocql.Session,
 	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		context := NewRequestContext(nil)
-
-		log.Printf("[%s] New request received: %s\n", context.RequestID, r.URL.Path)
-
 		if r.URL.Path == healthCheckRoute {
-			log.Printf(
-				"[%s] Handling request for \"%s\" as a health check\n",
-				context.RequestID,
-				r.URL.Path,
-			)
-
 			w.Write(statusCheckResponse)
 		} else {
-			log.Printf(
-				"[%s] Handling request for \"%s\" as a package request\n",
-				context.RequestID,
-				r.URL.Path,
-			)
-
-			err := RespondToPackageRequest(conf, session, creds, context, r, w)
+			// Create a new package request.
+			pr, err := newPackageRequest(r)
 			if err != nil {
 				errors.RespondWithError(w, err)
+				return
+			}
+
+			// Use the package request to respond.
+			if err = pr.respond(w, conf, creds, session); err != nil {
+				errors.RespondWithError(w, err)
+				return
 			}
 		}
 	}

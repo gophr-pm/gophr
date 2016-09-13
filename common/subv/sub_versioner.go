@@ -33,8 +33,11 @@ func SubVersionPackageModel(
 	session *gocql.Session,
 	credentials *config.Credentials,
 	packageModel *models.PackageModel,
-	ref string,
-	fileDir string) error {
+	ref string) error {
+	// First, figure out where to put the files needed in the sub-versioning
+	// process.
+	fileDir := conf.ConstructionZonePath
+
 	// If the given ref is empty or refers to 'master' then we need to grab the current master SHA
 	log.Printf("Preparing to sub-version %s/%s@%s \n", *packageModel.Author, *packageModel.Repo, ref)
 	if len(ref) == 0 || ref == "master" {
