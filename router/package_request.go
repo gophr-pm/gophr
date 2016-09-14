@@ -9,8 +9,6 @@ import (
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
-	"github.com/skeswa/gophr/common/models"
-	"github.com/skeswa/gophr/common/subv"
 )
 
 const (
@@ -26,6 +24,9 @@ const (
 	contentTypeGitUploadPack    = "application/x-git-upload-pack-advertisement"
 	githubUploadPackURLTemplate = "https://github.com/%s/%s/git-upload-pack"
 )
+
+// TODO(skeswa): IMPORTANT! When we merge in depot, go-gets will no longer
+// require ref fetches for some go-gets.
 
 // PackageRequest is stuct that standardizes the output of all the scenarios
 // through which a package may be requested. PackageRequest is essentially a
@@ -73,18 +74,25 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		// Set the default matched sha.
 		matchedSHA = refs.MasterRefHash
 
-		// If there are no candidates, return in failure.
-		if refs.Candidates == nil || len(refs.Candidates) < 1 {
-			return nil, NewNoSuchPackageVersionError(
-				parts.author,
-				parts.repo,
-				parts.semverSelector.String())
-		}
-
 		// Figure out what the best candidate is.
 		if parts.hasSemverSelector() {
+			// If there are no candidates, return in failure.
+			if refs.Candidates == nil || len(refs.Candidates) < 1 {
+				return nil, NewNoSuchPackageVersionError(
+					parts.author,
+					parts.repo,
+					parts.semverSelector.String())
+			}
+
 			// Find the best candidate.
 			bestCandidate := refs.Candidates.Best(parts.semverSelector)
+			if bestCandidate == nil {
+				return nil, NewNoSuchPackageVersionError(
+					parts.author,
+					parts.repo,
+					parts.semverSelector.String())
+			}
+
 			// Re-serialize the refs data with said candidate.
 			matchedSHA = bestCandidate.GitRefHash
 			matchedSHALabel = bestCandidate.String()
@@ -119,10 +127,11 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 // respondToPackageRequestArgs is the arguments struct for
 // packageRequest#respond.
 type respondToPackageRequestArgs struct {
+	db                    *gocql.Session
 	res                   http.ResponseWriter
 	conf                  *config.Config
 	creds                 *config.Credentials
-	session               *gocql.Session
+	versionPackage        packageVersioner
 	isPackageArchived     packageArchivalChecker
 	recordPackageArchival packageArchivalRecorder
 	recordPackageDownload packageDownloadRecorder
@@ -155,7 +164,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		// Without blocking, count go-get surveying this package for installation as
 		// a download in the database.
 		go args.recordPackageDownload(packageDownloadRecorderArgs{
-			db:     args.session,
+			db:     args.db,
 			sha:    pr.matchedSHA,
 			repo:   pr.parts.repo,
 			author: pr.parts.author,
@@ -165,7 +174,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalArgs{
-			db:     args.session,
+			db:     args.db,
 			sha:    pr.matchedSHA,
 			repo:   pr.parts.repo,
 			author: pr.parts.author,
@@ -186,15 +195,16 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				pr.matchedSHA)
 
 			// Perform sub-versioning.
-			if err := subv.SubVersionPackageModel(
-				args.conf,
-				args.session,
-				args.creds,
-				// TODO(skeswa): refactor to be less cumbersome (possibly using an args
-				// struct).
-				&models.PackageModel{Author: &pr.parts.author, Repo: &pr.parts.repo},
-				pr.matchedSHA,
-				args.recordPackageArchival); err != nil {
+			if err := args.versionPackage(packageVersionerArgs{
+				db:                    args.db,
+				sha:                   pr.matchedSHA,
+				repo:                  pr.parts.repo,
+				conf:                  args.conf,
+				creds:                 args.creds,
+				author:                pr.parts.author,
+				constructionZonePath:  args.conf.ConstructionZonePath,
+				recordPackageArchival: args.recordPackageArchival,
+			}); err != nil {
 				// Report the sub-versioning failure to the logs.
 				log.Printf(
 					"Sub-versioning failed for package %s/%s@%s: %v\n",
@@ -209,13 +219,15 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 		// Compile the go-get metadata accordingly.
 		var (
-			repo     = github.BuildNewGitHubRepoName(pr.parts.author, pr.parts.repo)
-			author   = github.GitHubGophrPackageOrgName
-			domain   = pr.req.URL.Host
+			adaptedRepo = github.BuildNewGitHubRepoName(pr.parts.author, pr.parts.repo)
+			// TODO(skeswa): refactor for depot.
+			adaptedAuthor     = "gophr-packages"
+			adaptedBranchName = github.BuildGitHubBranch(pr.matchedSHA)
+
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
-				gophrURL:        generateGophrURL(domain, author, repo, pr.matchedSHA),
-				treeURLTemplate: generateGithubTreeURLTemplate(author, repo, pr.matchedSHA),
-				blobURLTemplate: generateGithubBlobURLTemplate(author, repo, pr.matchedSHA),
+				gophrURL:        pr.req.URL.Host + pr.req.URL.Path,
+				treeURLTemplate: generateGithubTreeURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
+				blobURLTemplate: generateGithubBlobURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
 			}))
 		)
 

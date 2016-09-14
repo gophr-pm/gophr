@@ -5,19 +5,20 @@ import (
 	"time"
 
 	"github.com/skeswa/gophr/common/github"
-	"github.com/skeswa/gophr/common/models"
 )
 
 // VersionDepsArgs is the arguments struct for VersionDeps(...).
 type VersionDepsArgs struct {
 	// SHA is the sha of the package being versioned.
 	SHA string
+	// Repo is the repo of the package being versioned.
+	Repo string
 	// SHA is the path to the package source code to be versioned.
 	Path string
 	// Date is date that the version of the package with that matches SHA was created.
 	Date time.Time
-	// Model is the package model of the package.
-	Model *models.PackageModel
+	// Author is the author of the package being versioned.
+	Author string
 	// GithubServcie is the service, with which, requests can be made of the Github API.
 	GithubService *github.RequestService
 }
@@ -30,11 +31,9 @@ func VersionDeps(args VersionDepsArgs) error {
 		return errors.New("Invalid SHA.")
 	} else if len(args.Path) < 1 {
 		return errors.New("Invalid Path.")
-	} else if args.Model == nil {
-		return errors.New("Invalid Model.")
-	} else if args.Model.Repo == nil || len(*args.Model.Repo) < 1 {
+	} else if len(args.Repo) < 1 {
 		return errors.New("Invalid Model.Repo.")
-	} else if args.Model.Author == nil || len(*args.Model.Author) < 1 {
+	} else if len(args.Author) < 1 {
 		return errors.New("Invalid Model.Author.")
 	} else if args.GithubService == nil {
 		return errors.New("Invalid GithubService.")
@@ -44,8 +43,8 @@ func VersionDeps(args VersionDepsArgs) error {
 		ghSvc:              args.GithubService,
 		packageSHA:         args.SHA,
 		packagePath:        args.Path,
-		packageRepo:        *args.Model.Repo,
-		packageAuthor:      *args.Model.Author,
+		packageRepo:        args.Repo,
+		packageAuthor:      args.Author,
 		packageVersionDate: args.Date,
 	})
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/config"
 )
 
 // refsDownloader is responsible for downloading the git refs for a package.
@@ -41,3 +42,17 @@ type packageArchivalRecorder func(args packageArchivalArgs)
 // archived or not. Returns true if the package has been archived, and false
 // otherwise.
 type packageArchivalChecker func(args packageArchivalArgs) (bool, error)
+
+// packageVersionerArgs is the arguments struct for packageVersioners.
+type packageVersionerArgs struct {
+	db                    *gocql.Session
+	sha                   string
+	repo                  string
+	conf                  *config.Config
+	creds                 *config.Credentials
+	author                string
+	constructionZonePath  string
+	recordPackageArchival packageArchivalRecorder
+}
+
+type packageVersioner func(args packageVersionerArgs) error

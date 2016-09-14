@@ -35,13 +35,14 @@ var (
 
 // packageRequestParts represents the piecewise breakdown of a package request.
 type packageRequestParts struct {
-	url            string
-	repo           string
-	author         string
-	subpath        string
-	selector       string
-	shaSelector    string
-	semverSelector semver.SemverSelector
+	url                   string
+	repo                  string
+	author                string
+	subpath               string
+	selector              string
+	shaSelector           string
+	semverSelector        semver.SemverSelector
+	semverSelectorDefined bool
 }
 
 // hasSHASelector returns true if this parts struct has a sha selector.
@@ -51,7 +52,7 @@ func (parts *packageRequestParts) hasSHASelector() bool {
 
 // hasSemverSelector returns true if this parts struct has a semver selector.
 func (parts *packageRequestParts) hasSemverSelector() bool {
-	return parts.semverSelector.MajorVersion.Type != semver.SemverSegmentTypeUnspecified
+	return parts.semverSelectorDefined
 }
 
 // String returns a string representation of this struct. This function returns
@@ -108,9 +109,10 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		subpathStartIndex  = -1
 		selectorStartIndex = -1
 
-		selector       string
-		shaSelector    string
-		semverSelector semver.SemverSelector
+		selector              string
+		shaSelector           string
+		semverSelector        semver.SemverSelector
+		semverSelectorDefined bool
 	)
 
 	// Exit if the the url is empty or just a slash or doesn't start with a slash.
@@ -187,6 +189,9 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 			if semverSelector, err = readSemverSelector(selector); err != nil {
 				return nil, NewInvalidPackageVersionRequestURLError(url, err)
 			}
+
+			// If we got here, the semver selector exists.
+			semverSelectorDefined = true
 		} else {
 			shaSelector = selector
 		}
@@ -194,12 +199,13 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		// If we're out of url bytes then there is no subpath.
 		if i == urlLen {
 			return &packageRequestParts{
-				url:            url,
-				repo:           url[repoStartIndex:repoEndIndex],
-				author:         url[authorStartIndex:authorEndIndex],
-				selector:       selector,
-				shaSelector:    shaSelector,
-				semverSelector: semverSelector,
+				url:                   url,
+				repo:                  url[repoStartIndex:repoEndIndex],
+				author:                url[authorStartIndex:authorEndIndex],
+				selector:              selector,
+				shaSelector:           shaSelector,
+				semverSelector:        semverSelector,
+				semverSelectorDefined: semverSelectorDefined,
 			}, nil
 		}
 
@@ -214,13 +220,14 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 
 	// If there are still unexplored bytes, there is a subpath as well.
 	return &packageRequestParts{
-		url:            url,
-		repo:           url[repoStartIndex:repoEndIndex],
-		author:         url[authorStartIndex:authorEndIndex],
-		subpath:        url[subpathStartIndex:urlLen],
-		selector:       selector,
-		shaSelector:    shaSelector,
-		semverSelector: semverSelector,
+		url:                   url,
+		repo:                  url[repoStartIndex:repoEndIndex],
+		author:                url[authorStartIndex:authorEndIndex],
+		subpath:               url[subpathStartIndex:urlLen],
+		selector:              selector,
+		shaSelector:           shaSelector,
+		semverSelector:        semverSelector,
+		semverSelectorDefined: semverSelectorDefined,
 	}, nil
 }
 

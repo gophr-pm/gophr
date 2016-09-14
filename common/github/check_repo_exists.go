@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-
-	"github.com/skeswa/gophr/common/models"
 )
 
 // CheckGitHubRepoExists returns whether a repo exists
 // TODO(Shikkic): Instead of pinging try downloading refs, might be more sustainable?
-func (gitHubRequestService *RequestService) CheckGitHubRepoExists(
-	packageModel models.PackageModel,
-) error {
-	repoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+func (gitHubRequestService *RequestService) CheckGitHubRepoExists(author, repo string) error {
+	repoName := BuildNewGitHubRepoName(author, repo)
 	// TODO change this to fetch ref
 	url := fmt.Sprintf("https://github.com/%s/%s", GitHubGophrPackageOrgName, repoName)
 	resp, err := http.Get(url)

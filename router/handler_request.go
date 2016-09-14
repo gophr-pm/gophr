@@ -49,10 +49,11 @@ func RequestHandler(
 
 		// Use the package request to respond.
 		if err = pr.respond(respondToPackageRequestArgs{
+			db:                    session,
 			res:                   w,
 			conf:                  conf,
 			creds:                 creds,
-			session:               session,
+			versionPackage:        versionAndArchivePackage,
 			isPackageArchived:     isPackageArchived,
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
