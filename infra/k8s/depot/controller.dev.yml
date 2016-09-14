@@ -1,26 +1,26 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: web-rc
+  name: depot-rc
   labels:
-    module: web
+    module: depot
   namespace: gophr
 spec:
-  replicas: 3
+  replicas: 1
   selector:
-    module: web
+    module: depot
   template:
     metadata:
       labels:
-        module: web
+        module: depot
       namespace: gophr
     spec:
       containers:
-      - name: web
-        image: gcr.io/valid-song-142700/gophr-web:1.2.0
+      - name: depot
+        image: gophr-depot-dev:v1
         ports:
         - containerPort: 80
-        - containerPort: 443
+        - containerPort: 3000
         volumeMounts:
         - mountPath: /secrets
           name: secrets
