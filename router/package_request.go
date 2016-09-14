@@ -109,7 +109,7 @@ type packageRequest struct {
 // processPackageVersionRequest is a sub-function of RespondToPackageRequest
 // that parses and simplifies the information in a package version request into
 // an instance of PackageRequest.
-func newPackageRequest(req *http.Request) (*packageRequest, error) {
+func newPackageRequest(req *http.Request, rd refsDownloader) (*packageRequest, error) {
 	// Read the parts of the package request.
 	parts, err := readPackageRequestParts(req)
 	if err != nil {
@@ -119,13 +119,14 @@ func newPackageRequest(req *http.Request) (*packageRequest, error) {
 	var (
 		refs            common.Refs
 		matchedSHA      string
+		matchedSHALabel string
 		packageRefsData []byte
 	)
 
 	// Only go out to fetch refs if they're going to get used.
 	if isGoGetRequest(req) || isInfoRefsRequest(parts) {
 		// Get and process all of the refs for this package.
-		if refs, err = common.FetchRefs(parts.author, parts.repo); err != nil {
+		if refs, err = rd.downloadRefs(parts.author, parts.repo); err != nil {
 			return nil, err
 		}
 
@@ -146,6 +147,7 @@ func newPackageRequest(req *http.Request) (*packageRequest, error) {
 			bestCandidate := refs.Candidates.Best(parts.semverSelector)
 			// Re-serialize the refs data with said candidate.
 			matchedSHA = bestCandidate.GitRefHash
+			matchedSHALabel = bestCandidate.GitRefLabel
 			packageRefsData = refs.Reserialize(
 				bestCandidate.GitRefName,
 				bestCandidate.GitRefHash)
