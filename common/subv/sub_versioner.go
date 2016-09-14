@@ -142,7 +142,8 @@ func SubVersionPackageModel(
 	)
 
 	// Prepare to Create a new Github repo for packageModel if DNE
-	err = gitHubRequestService.CreateNewGitHubRepo(*packageModel)
+	log.Println("Create new repo")
+	err = gitHubRequestService.CreateNewRepo(*packageModel)
 	// TODO:(Shikkic) figure out error handling here
 
 	// Fetch the timestamp of the ref commit
