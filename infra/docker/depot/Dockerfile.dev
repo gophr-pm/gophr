@@ -57,8 +57,7 @@ COPY ./infra/docker/depot/files/start.sh /start.sh
 # Copy gitconfig
 COPY ./infra/docker/depot/files/git/gitconfig /etc/gitconfig
 
-# VOLUME ["/repos"]
-VOLUME ["/secrets"]
+VOLUME ["/secrets", "/repos"]
 
 EXPOSE 80 3000
 
