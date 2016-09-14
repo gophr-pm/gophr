@@ -10,8 +10,8 @@ echo "Replacing \"{{ROUTER_ADDR}}\" in /etc/nginx/nginx.conf with $ROUTER_SVC_SE
 sed -i "s/{{ROUTER_ADDR}}/${ROUTER_SVC_SERVICE_HOST}/g;" /etc/nginx/nginx.conf
 
 # TODO(skeswa): put the real prod cert here when we have it.
-echo "Replacing \"{{GOPHR_CERT_SECRET}}\" in /etc/nginx/nginx.conf with SELF-SIGNED cert.prod.crt..."
-sed -i "s/{{GOPHR_CERT_SECRET}}/cert.ss.prod.crt/g;" /etc/nginx/nginx.conf
+echo "Replacing \"{{GOPHR_CERT_SECRET}}\" in /etc/nginx/nginx.conf with cert.prod.crt..."
+sed -i "s/{{GOPHR_CERT_SECRET}}/cert.prod.crt/g;" /etc/nginx/nginx.conf
 
 echo "Replacing \"{{GOPHR_KEY_SECRET}}\" in /etc/nginx/nginx.conf with cert.prod.key..."
 sed -i "s/{{GOPHR_KEY_SECRET}}/cert.prod.key/g;" /etc/nginx/nginx.conf
