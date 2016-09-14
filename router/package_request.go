@@ -4,31 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/models"
-	"github.com/skeswa/gophr/common/semver"
 	"github.com/skeswa/gophr/common/subv"
-)
-
-const (
-	packageRequestRegexIndexAuthor      = 1
-	packageRequestRegexIndexRepo        = 2
-	barePackageRequestRegexIndexSubpath = 3
-	packageRefRequestRegexIndexRef      = 3
-	packageRefRequestRegexIndexSubpath  = 4
-	semverPrefixIndex                   = 3
-	semverMajorVersionIndex             = 4
-	semverMinorVersionIndex             = 5
-	semverPatchVersionIndex             = 6
-	semverPrereleaseLabelIndex          = 7
-	semverPrereleaseVersionIndex        = 8
-	semverSuffixIndex                   = 9
-	subpathIndex                        = 10
 )
 
 const (
@@ -61,57 +43,29 @@ const (
 	masterRefName                   = "refs/heads/master"
 )
 
-var (
-	versionSelectorRegexStr = fmt.Sprintf(
-		versionSelectorRegexTemplate,
-		semver.SemverSelectorTildeChar,
-		semver.SemverSelectorCaratChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorLessThanChar,
-		semver.SemverSelectorGreaterThanChar,
-	)
-	packageRefRequestRegexStr = fmt.Sprintf(
-		packageRequestRegexTemplate,
-		userRepoRegexStr,
-		refSelectorRegexStr,
-		subPathRegexStr,
-	)
-	barePackageRequestRegexStr = fmt.Sprintf(
-		barePackageRequestRegexTemplate,
-		userRepoRegexStr,
-		subPathRegexStr,
-	)
-	packageVersionRequestRegexStr = fmt.Sprintf(
-		packageRequestRegexTemplate,
-		userRepoRegexStr,
-		versionSelectorRegexStr,
-		subPathRegexStr,
-	)
-
-	packageRefRequestRegex     = regexp.MustCompile(packageRefRequestRegexStr)
-	barePackageRequestRegex    = regexp.MustCompile(barePackageRequestRegexStr)
-	packageVersionRequestRegex = regexp.MustCompile(packageVersionRequestRegexStr)
-)
-
 // PackageRequest is stuct that standardizes the output of all the scenarios
 // through which a package may be requested. PackageRequest is essentially a
 // helper struct to move data between the sub-functions of
 // RespondToPackageRequest and RespondToPackageRequest itself.
 type packageRequest struct {
-	req        *http.Request
-	parts      *packageRequestParts
-	refsData   []byte
-	matchedSHA string
+	req             *http.Request
+	parts           *packageRequestParts
+	refsData        []byte
+	matchedSHA      string
+	matchedSHALabel string
 }
 
-// processPackageVersionRequest is a sub-function of RespondToPackageRequest
-// that parses and simplifies the information in a package version request into
-// an instance of PackageRequest.
-func newPackageRequest(req *http.Request, rd refsDownloader) (*packageRequest, error) {
+// newPackageRequestArgs is the arguments struct for newPackageRequest.
+type newPackageRequestArgs struct {
+	req        *http.Request
+	downloader refsDownloader
+}
+
+// newPackageRequest parses and simplifies the information in a package version
+// request in order to make serializing a response easier.
+func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 	// Read the parts of the package request.
-	parts, err := readPackageRequestParts(req)
+	parts, err := readPackageRequestParts(args.req)
 	if err != nil {
 		return nil, err
 	}
@@ -124,9 +78,11 @@ func newPackageRequest(req *http.Request, rd refsDownloader) (*packageRequest, e
 	)
 
 	// Only go out to fetch refs if they're going to get used.
-	if isGoGetRequest(req) || isInfoRefsRequest(parts) {
+	if isGoGetRequest(args.req) || isInfoRefsRequest(parts) {
 		// Get and process all of the refs for this package.
-		if refs, err = rd.downloadRefs(parts.author, parts.repo); err != nil {
+		if refs, err = args.downloader.downloadRefs(
+			parts.author,
+			parts.repo); err != nil {
 			return nil, err
 		}
 
@@ -168,51 +124,60 @@ func newPackageRequest(req *http.Request, rd refsDownloader) (*packageRequest, e
 	}
 
 	return &packageRequest{
-		req:        req,
-		parts:      parts,
-		refsData:   packageRefsData,
-		matchedSHA: matchedSHA,
+		req:             args.req,
+		parts:           parts,
+		refsData:        packageRefsData,
+		matchedSHA:      matchedSHA,
+		matchedSHALabel: matchedSHALabel,
 	}, nil
 }
 
-func (pr *packageRequest) respond(
-	res http.ResponseWriter,
-	conf *config.Config,
-	creds *config.Credentials,
-	session *gocql.Session) error {
+// respondToPackageRequestArgs is the arguments struct for
+// packageRequest#respond.
+type respondToPackageRequestArgs struct {
+	res     http.ResponseWriter
+	conf    *config.Config
+	creds   *config.Credentials
+	session *gocql.Session
+}
+
+// respond crafts an appropriate response for a package request, serializes the
+// aforesaid response and sends it back to the original client.
+func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 	// Take care of the cases that deoend inf variations in the subpath.
 	switch pr.parts.subpath {
 	case gitUploadPackSubPath:
 		// Send a 301 stipulating the repository can be found on github.
-		res.Header().Set(
+		args.res.Header().Set(
 			httpLocationHeader,
 			fmt.Sprintf(
 				githubUploadPackURLTemplate,
 				pr.parts.author,
 				pr.parts.repo))
-		res.WriteHeader(http.StatusMovedPermanently)
+		args.res.WriteHeader(http.StatusMovedPermanently)
 		return nil
 	case gitRefsInfoSubPath:
 		// Return the adjusted refs data when refs info is requested.
-		res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
-		res.Write(pr.refsData)
+		args.res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
+		args.res.Write(pr.refsData)
 		return nil
 	}
 
-	// This means that go-get was responsible for this request.
+	// This means that go-get is requesting package/repository metadata.
 	if isGoGetRequest(pr.req) {
-		// Without blocking, record this event as a download in the database.
+		// Without blocking, count go-get surveying this package for installation as
+		// a download in the database.
 		go recordDownload(
-			session,
+			args.session,
 			pr.parts.author,
 			pr.parts.repo,
 			// TODO(skeswa): record version label as well.
-			// pr.parts.shaSelector,
+			// pr.matchedSHALabel,
 			pr.matchedSHA)
 
 		// Only run the sub-versioning if its completely necessary.
 		if !models.IsPackageArchived(
-			session,
+			args.session,
 			pr.parts.author,
 			pr.parts.repo,
 			pr.matchedSHA) {
@@ -225,9 +190,9 @@ func (pr *packageRequest) respond(
 
 			// Perform sub-versioning.
 			if err := subv.SubVersionPackageModel(
-				conf,
-				session,
-				creds,
+				args.conf,
+				args.session,
+				args.creds,
 				&models.PackageModel{Author: &pr.parts.author, Repo: &pr.parts.repo},
 				pr.matchedSHA); err != nil {
 				// Report the sub-versioning failure to the logs.
@@ -244,7 +209,7 @@ func (pr *packageRequest) respond(
 
 		// Change the domain depending on whether this is dev or not.
 		var domain string
-		if conf.IsDev {
+		if args.conf.IsDev {
 			domain = gophrDomainDev
 		} else {
 			domain = gophrDomainProd
@@ -262,21 +227,21 @@ func (pr *packageRequest) respond(
 		)
 
 		// Return the go-get metadata.
-		res.Header().Set(httpContentTypeHeader, contentTypeHTML)
-		res.Write(metaData)
+		args.res.Header().Set(httpContentTypeHeader, contentTypeHTML)
+		args.res.Write(metaData)
 		return nil
 	}
 
 	// If none of the other cases matched, then redirect to the package page.
-	res.Header().Set(
+	// TODO(skeswa): make this redirect specific to the version of the package.
+	args.res.Header().Set(
 		httpLocationHeader,
 		fmt.Sprintf(
 			packagePageURLTemplate,
 			pr.req.URL.Host,
 			pr.parts.author,
 			pr.parts.repo))
-
-	res.WriteHeader(http.StatusMovedPermanently)
+	args.res.WriteHeader(http.StatusMovedPermanently)
 	return nil
 }
 

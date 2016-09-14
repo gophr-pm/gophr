@@ -19,6 +19,8 @@ const (
 )
 
 var (
+	// semverSelectorRegex is the regular expression used to parse semver package
+	// version selectors.
 	semverSelectorRegex = regexp.MustCompile(fmt.Sprintf(
 		semverSelectorRegexTemplate,
 		semver.SemverSelectorTildeChar,
