@@ -16,31 +16,15 @@ import (
 const (
 	formKeyGoGet                = "go-get"
 	formValueGoGet              = "1"
-	gophrDomainDev              = "gophr.dev"
-	gophrDomainProd             = "gophr.prod"
 	contentTypeHTML             = "text/html"
-	subPathRegexStr             = `((?:\/[a-zA-Z0-9][-.a-zA-Z0-9]*)*)`
-	userRepoRegexStr            = `^\/([a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\/([a-zA-Z0-9\.\-_]+)`
-	masterGitRefLabel           = "master"
-	someFakeGitTagRef           = "refs/tags/thisisnotathinginanyrepo"
+	someFakeGitTagRef           = "refs/tags/thisisnotathinginanyrepowehopenothatitmatters"
 	gitRefsInfoSubPath          = "/info/refs"
 	httpLocationHeader          = "Location"
-	refSelectorRegexStr         = "([a-fA-F0-9]{40})"
 	gitUploadPackSubPath        = "/git-upload-pack"
 	httpContentTypeHeader       = "Content-Type"
 	packagePageURLTemplate      = "https://%s/#/packages/%s/%s"
 	contentTypeGitUploadPack    = "application/x-git-upload-pack-advertisement"
 	githubUploadPackURLTemplate = "https://github.com/%s/%s/git-upload-pack"
-	// packageRequestRegexTemplate:
-	// "/author/repo@semver" or ""/author/repo@semver/subpath"
-	packageRequestRegexTemplate = `%s(?:@%s)%s$`
-	// versionSelectorRegexTemplate:
-	//
-	versionSelectorRegexTemplate = `([\%c\%c]?)([0-9]+)(?:\.([0-9]+|%c))?(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([\%c\%c]?)`
-	// barePackageRequestRegexTemplate:
-	// "/author/repo" or ""/author/repo/subpath"
-	barePackageRequestRegexTemplate = `%s%s$`
-	masterRefName                   = "refs/heads/master"
 )
 
 // PackageRequest is stuct that standardizes the output of all the scenarios
@@ -57,8 +41,8 @@ type packageRequest struct {
 
 // newPackageRequestArgs is the arguments struct for newPackageRequest.
 type newPackageRequestArgs struct {
-	req        *http.Request
-	downloader refsDownloader
+	req          *http.Request
+	downloadRefs refsDownloader
 }
 
 // newPackageRequest parses and simplifies the information in a package version
@@ -80,7 +64,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 	// Only go out to fetch refs if they're going to get used.
 	if isGoGetRequest(args.req) || isInfoRefsRequest(parts) {
 		// Get and process all of the refs for this package.
-		if refs, err = args.downloader.downloadRefs(
+		if refs, err = args.downloadRefs(
 			parts.author,
 			parts.repo); err != nil {
 			return nil, err
@@ -103,7 +87,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 			bestCandidate := refs.Candidates.Best(parts.semverSelector)
 			// Re-serialize the refs data with said candidate.
 			matchedSHA = bestCandidate.GitRefHash
-			matchedSHALabel = bestCandidate.GitRefLabel
+			matchedSHALabel = bestCandidate.String()
 			packageRefsData = refs.Reserialize(
 				bestCandidate.GitRefName,
 				bestCandidate.GitRefHash)
@@ -135,10 +119,13 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 // respondToPackageRequestArgs is the arguments struct for
 // packageRequest#respond.
 type respondToPackageRequestArgs struct {
-	res     http.ResponseWriter
-	conf    *config.Config
-	creds   *config.Credentials
-	session *gocql.Session
+	res                   http.ResponseWriter
+	conf                  *config.Config
+	creds                 *config.Credentials
+	session               *gocql.Session
+	isPackageArchived     packageArchivalChecker
+	recordPackageArchival packageArchivalRecorder
+	recordPackageDownload packageDownloadRecorder
 }
 
 // respond crafts an appropriate response for a package request, serializes the
@@ -167,20 +154,30 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 	if isGoGetRequest(pr.req) {
 		// Without blocking, count go-get surveying this package for installation as
 		// a download in the database.
-		go recordDownload(
-			args.session,
-			pr.parts.author,
-			pr.parts.repo,
-			// TODO(skeswa): record version label as well.
-			// pr.matchedSHALabel,
-			pr.matchedSHA)
+		go args.recordPackageDownload(packageDownloadRecorderArgs{
+			db:     args.session,
+			sha:    pr.matchedSHA,
+			repo:   pr.parts.repo,
+			author: pr.parts.author,
+			// It is ok for the matched sha label to be left blank.
+			version: pr.matchedSHALabel,
+		})
 
-		// Only run the sub-versioning if its completely necessary.
-		if !models.IsPackageArchived(
-			args.session,
-			pr.parts.author,
-			pr.parts.repo,
-			pr.matchedSHA) {
+		// Check whether this package has already been archived.
+		packageArchived, err := args.isPackageArchived(packageArchivalArgs{
+			db:     args.session,
+			sha:    pr.matchedSHA,
+			repo:   pr.parts.repo,
+			author: pr.parts.author,
+		})
+		// If we cannot check whether a package has been archived, return
+		// unsuccessfully.
+		if err != nil {
+			return err
+		}
+
+		// Only run the sub-versioning for this package if we haven't before.
+		if !packageArchived {
 			// Indicate in the logs that the package was archived.
 			log.Printf(
 				"Package %s/%s@%s has not yet been archived.\n",
@@ -193,11 +190,14 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				args.conf,
 				args.session,
 				args.creds,
+				// TODO(skeswa): refactor to be less cumbersome (possibly using an args
+				// struct).
 				&models.PackageModel{Author: &pr.parts.author, Repo: &pr.parts.repo},
-				pr.matchedSHA); err != nil {
+				pr.matchedSHA,
+				args.recordPackageArchival); err != nil {
 				// Report the sub-versioning failure to the logs.
 				log.Printf(
-					"sub-versioning failed for package %s/%s@%s: %v\n",
+					"Sub-versioning failed for package %s/%s@%s: %v\n",
 					pr.parts.author,
 					pr.parts.repo,
 					pr.matchedSHA,
@@ -207,18 +207,11 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Change the domain depending on whether this is dev or not.
-		var domain string
-		if args.conf.IsDev {
-			domain = gophrDomainDev
-		} else {
-			domain = gophrDomainProd
-		}
-
 		// Compile the go-get metadata accordingly.
 		var (
 			repo     = github.BuildNewGitHubRepoName(pr.parts.author, pr.parts.repo)
 			author   = github.GitHubGophrPackageOrgName
+			domain   = pr.req.URL.Host
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
 				gophrURL:        generateGophrURL(domain, author, repo, pr.matchedSHA),
 				treeURLTemplate: generateGithubTreeURLTemplate(author, repo, pr.matchedSHA),
@@ -254,28 +247,4 @@ func isGoGetRequest(req *http.Request) bool {
 // is a git refs info request.
 func isInfoRefsRequest(parts *packageRequestParts) bool {
 	return parts.subpath == gitRefsInfoSubPath
-}
-
-// recordDownload is a helper function that records the download of a specific
-// package.
-func recordDownload(
-	session *gocql.Session,
-	author string,
-	repo string,
-	selector string) {
-	if err := models.RecordDailyDownload(
-		session,
-		author,
-		repo,
-		selector); err != nil {
-		// Instead of bubbling this error, just commit it to the logs. That way this
-		// failure is allowed to remain low impact.
-		log.Printf(
-			"Failed to record download for package %s/%s@%s: %v\n",
-			author,
-			repo,
-			selector,
-			err,
-		)
-	}
 }

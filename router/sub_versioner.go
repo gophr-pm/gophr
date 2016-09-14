@@ -26,9 +26,9 @@ var (
 	gitHubRemoteOrigin = "git@github.com:gophr-packages/%s.git"
 )
 
-// SubVersionPackageModel creates a github repo for the packageModel on github.com/gophr/gophr-packages
-// versioned a the speicifed ref.
-func SubVersionPackageModel(
+// subVersionPackageModel creates a github repo for the packageModel on
+// github.com/gophr/gophr-packages versioned a the speicifed ref.
+func subVersionPackageModel(
 	conf *config.Config,
 	session *gocql.Session,
 	credentials *config.Credentials,

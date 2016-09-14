@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/errors"
 )
@@ -23,11 +24,6 @@ func RequestHandler(
 	conf *config.Config,
 	session *gocql.Session,
 	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
-	// Create other useful closure variables here.
-	var (
-		rd defaultRefsDownloader
-	)
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
@@ -44,8 +40,8 @@ func RequestHandler(
 
 		// Create a new package request.
 		if pr, err = newPackageRequest(newPackageRequestArgs{
-			req:        r,
-			downloader: rd,
+			req:          r,
+			downloadRefs: common.FetchRefs,
 		}); err != nil {
 			errors.RespondWithError(w, err)
 			return
@@ -53,10 +49,13 @@ func RequestHandler(
 
 		// Use the package request to respond.
 		if err = pr.respond(respondToPackageRequestArgs{
-			res:     w,
-			conf:    conf,
-			creds:   creds,
-			session: session,
+			res:                   w,
+			conf:                  conf,
+			creds:                 creds,
+			session:               session,
+			isPackageArchived:     isPackageArchived,
+			recordPackageDownload: recordPackageDownload,
+			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
 			errors.RespondWithError(w, err)
 			return

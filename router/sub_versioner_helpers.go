@@ -1,4 +1,4 @@
-package subv
+package main
 
 import (
 	"archive/zip"
