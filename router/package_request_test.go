@@ -380,7 +380,19 @@ go get besthost.ever/a/s/n
 </html>
 `, w.Body.String())
 
-	// TODO one more test for if none of the other cases got matched.
+	w = httptest.NewRecorder()
+	err = (&packageRequest{
+		req: fakeHTTPRequest("besthost.ever", "/a/s/n", false),
+		parts: &packageRequestParts{
+			repo:   "re",
+			author: "auth",
+		},
+	}).respond(respondToPackageRequestArgs{
+		res: w,
+	})
+	assert.Nil(t, err)
+	assert.Equal(t, 301, w.Code)
+	assert.Equal(t, "https://besthost.ever/#/packages/auth/re", w.Header().Get("Location"))
 }
 
 // package main
