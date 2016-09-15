@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	refsFetchURLTemplate           = "https://%s.git/info/refs?service=git-upload-pack"
+	refsFetchURLTemplate           = "http://depot-svc:3000/%s.git/info/refs?service=git-upload-pack"
 	errorRefsFetchNetworkFailure   = "Could not reach Github at the moment; Please try again later"
 	errorRefsFetchNoSuchRepo       = "Could not find a Github repository at %s"
 	errorRefsFetchGithubError      = "Github responded with an error: %v"
@@ -18,15 +18,9 @@ const (
 // CheckIfRefExists checks whether a given ref exists in the remote refs list.
 func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 	ref = BuildGitHubBranch(ref)
-	repo = BuildNewGitHubRepoName(author, repo)
-	author = GitHubGophrPackageOrgName
-	githubRoot := fmt.Sprintf(
-		githubRootTemplate,
-		author,
-		repo,
-	)
+	repoName := BuildNewGitHubRepoName(author, repo)
 
-	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, githubRoot))
+	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, repoName))
 	if err != nil {
 		return false, errors.New(errorRefsFetchNetworkFailure)
 	}

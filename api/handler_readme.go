@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/skeswa/gophr/common/errors"
@@ -66,7 +65,6 @@ func ReadmeHandler() func(http.ResponseWriter, *http.Request) {
 			errors.RespondWithError(w, err)
 			return
 		}
-		log.Println(body)
 
 		if len(body) > 0 {
 			w.WriteHeader(http.StatusOK)
