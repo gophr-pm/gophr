@@ -217,7 +217,18 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Compile the go-get metadata accordingly.
+		// Resolve the domain of the request.
+		var domain string
+		if len(pr.req.Host) > 0 {
+			domain = pr.req.Host
+		} else if len(pr.req.URL.Host) > 0 {
+			domain = pr.req.URL.Host
+		} else {
+			// This is a last resort.
+			domain = "gophr.pm"
+		}
+
+		// Compile the go-get metadata accordingly.)
 		var (
 			adaptedRepo = github.BuildNewGitHubRepoName(pr.parts.author, pr.parts.repo)
 			// TODO(skeswa): refactor for depot.
@@ -225,7 +236,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			adaptedBranchName = github.BuildGitHubBranch(pr.matchedSHA)
 
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
-				gophrURL:        pr.req.URL.Host + pr.req.URL.Path,
+				gophrURL:        domain + pr.req.URL.Path,
 				treeURLTemplate: generateGithubTreeURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
 				blobURLTemplate: generateGithubBlobURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
 			}))
