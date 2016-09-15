@@ -231,43 +231,6 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		return fmt.Errorf("Error, could not commit data. %v \n", err)
 	}
 
-	// Lookup Current Commit
-	// TODO(Shikkic): dont think this is necessary
-	/*
-		head, err := repo.Head()
-		if err != nil {
-			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-				return fmt.Errorf("Error, could not look up repo HEAD or delete repo folder. %v, %v \n", deletionErr, err)
-			}
-			return fmt.Errorf("Error, could not look up repo HEAD. %v \n", err)
-		}
-		headCommit, err := repo.LookupCommit(head.Target())
-		if err != nil {
-			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-				return fmt.Errorf("Error, could not get HEAD commit or delete repo folder. %v, %v \n", deletionErr, err)
-			}
-			return fmt.Errorf("Error, could not get HEAD commit. %v \n", err)
-		}*/
-
-	// Creating branch
-	log.Println("Building the github branch")
-	/*
-			branch, err := repo.CreateBranch(branchName, headCommit, false)
-			if err != nil {
-				if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-					return fmt.Errorf("Error, could not create branch or delete repo folder. %v, %v \n", deletionErr, err)
-				}
-				return fmt.Errorf("Error, could not create branch. %v \n", err)
-			}
-
-		log.Println("Setting the upstream")
-		if err = branch.SetUpstream(branchName); err != nil {
-			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-				return fmt.Errorf("Error, could not set upstream branch or delete repo folder. %v, %v \n", deletionErr, err)
-			}
-			return fmt.Errorf("Error, could not set upstream branch. %v \n", err)
-		}*/
-
 	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", masterBranchName), true, "headOne")
 	if err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
