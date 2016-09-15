@@ -264,6 +264,11 @@ func filterK8SPods(moduleName string) ([]string, error) {
 		return nil, newExecError(output, err)
 	}
 
+	podList := K8SPodList{}
+	if err = json.Unmarshal(output, &podList); err != nil {
+		return nil, newExecError(output, errors.New("Could not serialize pods"))
+	}
+
 	return strings.Split(strings.Trim(string(output[:]), "\t\n "), " "), nil
 }
 
