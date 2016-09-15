@@ -15,11 +15,11 @@ import (
 
 // CreateNewRepo if repo doesn't already exist will create a new
 // repo on the GitHubGophrPackageOrgName repo
-func (gitHubRequestService *RequestService) CreateNewRepo(author string, repo string) error {
+func (gitHubRequestService *RequestService) CreateNewRepo(author string, repo string, ref string) error {
 	log.Println("Creating New Repo")
 	folderName := fmt.Sprintf(
 		"%s.git",
-		BuildNewGitHubRepoName(author, repo),
+		BuildNewGitHubRepoName2(author, repo, ref),
 	)
 	log.Printf("Folder name %s \n", folderName)
 	if err := checkIfFolderExists(folderName); err == nil {

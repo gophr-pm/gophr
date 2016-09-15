@@ -16,6 +16,7 @@ const (
 )
 
 // CheckIfRefExists checks whether a given ref exists in the remote refs list.
+// TODO delete
 func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 	ref = BuildGitHubBranch(ref)
 	repoName := BuildNewGitHubRepoName(author, repo)

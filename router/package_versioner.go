@@ -11,6 +11,7 @@ import (
 
 	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/verdeps"
 )
@@ -21,8 +22,10 @@ var (
 	// TODO(skeswa): this needs to be configurable.
 	commitAuthor = "gophrpm"
 	// TODO(skeswa): this needs to be configurable.
-	commitAuthorEmail  = "gophr.pm@gmail.com"
+	commitAuthorEmail = "gophr.pm@gmail.com"
+	// TODO:(shikkic): remove this
 	gitHubRemoteOrigin = "git@github.com:gophr-packages/%s.git"
+	masterBranchName   = "master"
 )
 
 // versionAndArchivePackage creates a github repo for the packageModel on
@@ -45,7 +48,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// First check if this args.sha has already been versioned for this packageModel
 	log.Printf("Checking if args.sha %s has been versioned before \n", args.sha)
-	exists, err := github.CheckIfRefExists(args.author, args.repo, args.sha)
+	exists, err := depot.CheckIfRefExists(args.author, args.repo, args.sha)
 	if exists == true && err == nil {
 		log.Println("That args.sha has already been versioned")
 		// Since we wouldn't have gotten this far if this were already recorded,
@@ -70,7 +73,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	)
 
 	// Set working folderName and folderPath for package
-	folderName = github.BuildNewGitHubRepoName(args.author, args.repo)
+	folderName = depot.BuildHashedRepoName(args.author, args.repo, args.sha)
 	folderPath = filepath.Join(args.constructionZonePath, folderName)
 
 	// Fetch args.sha archive
@@ -116,7 +119,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	newTargetFolder := fmt.Sprintf(
 		"%s/%s",
 		args.constructionZonePath,
-		github.BuildNewGitHubRepoName(args.author, args.repo))
+		depot.BuildHashedRepoName(args.author, args.repo, args.sha))
 	if err = os.Rename(targetFolder, newTargetFolder); err != nil {
 		if deletionErr := deleteFolder(newTargetFolder); deletionErr != nil {
 			return fmt.Errorf("Error, could not rename archive folder to target folder or delete it. %v %v. \n", err, deletionErr)
@@ -144,7 +147,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	log.Println("Create new repo")
-	err = gitHubRequestService.CreateNewRepo(args.author, args.repo)
+	err = depot.CreateNewRepo(args.author, args.repo, args.sha)
 
 	// Fetch the timestamp of the args.sha commit
 	commitDate, err := gitHubRequestService.FetchCommitTimestamp(args.author, args.repo, args.sha)
@@ -230,41 +233,42 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// Lookup Current Commit
 	// TODO(Shikkic): dont think this is necessary
-	head, err := repo.Head()
-	if err != nil {
-		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-			return fmt.Errorf("Error, could not look up repo HEAD or delete repo folder. %v, %v \n", deletionErr, err)
+	/*
+		head, err := repo.Head()
+		if err != nil {
+			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+				return fmt.Errorf("Error, could not look up repo HEAD or delete repo folder. %v, %v \n", deletionErr, err)
+			}
+			return fmt.Errorf("Error, could not look up repo HEAD. %v \n", err)
 		}
-		return fmt.Errorf("Error, could not look up repo HEAD. %v \n", err)
-	}
-	headCommit, err := repo.LookupCommit(head.Target())
-	if err != nil {
-		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-			return fmt.Errorf("Error, could not get HEAD commit or delete repo folder. %v, %v \n", deletionErr, err)
-		}
-		return fmt.Errorf("Error, could not get HEAD commit. %v \n", err)
-	}
+		headCommit, err := repo.LookupCommit(head.Target())
+		if err != nil {
+			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+				return fmt.Errorf("Error, could not get HEAD commit or delete repo folder. %v, %v \n", deletionErr, err)
+			}
+			return fmt.Errorf("Error, could not get HEAD commit. %v \n", err)
+		}*/
 
 	// Creating branch
 	log.Println("Building the github branch")
-	branchName := github.BuildGitHubBranch(args.sha)
-	branch, err := repo.CreateBranch(branchName, headCommit, false)
-	if err != nil {
-		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-			return fmt.Errorf("Error, could not create branch or delete repo folder. %v, %v \n", deletionErr, err)
-		}
-		return fmt.Errorf("Error, could not create branch. %v \n", err)
-	}
+	/*
+			branch, err := repo.CreateBranch(branchName, headCommit, false)
+			if err != nil {
+				if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+					return fmt.Errorf("Error, could not create branch or delete repo folder. %v, %v \n", deletionErr, err)
+				}
+				return fmt.Errorf("Error, could not create branch. %v \n", err)
+			}
 
-	log.Println("Setting the upstream")
-	if err = branch.SetUpstream(branchName); err != nil {
-		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-			return fmt.Errorf("Error, could not set upstream branch or delete repo folder. %v, %v \n", deletionErr, err)
-		}
-		return fmt.Errorf("Error, could not set upstream branch. %v \n", err)
-	}
+		log.Println("Setting the upstream")
+		if err = branch.SetUpstream(branchName); err != nil {
+			if deletionErr := deleteFolder(folderPath); deletionErr != nil {
+				return fmt.Errorf("Error, could not set upstream branch or delete repo folder. %v, %v \n", deletionErr, err)
+			}
+			return fmt.Errorf("Error, could not set upstream branch. %v \n", err)
+		}*/
 
-	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", branchName), true, "headOne")
+	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", masterBranchName), true, "headOne")
 	if err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error, could not create symbolic ref or delete repo folder. %v, %v \n", deletionErr, err)
@@ -290,7 +294,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 			"http://%s:%s/%s.git",
 			"depot-svc",
 			"3000",
-			github.BuildNewGitHubRepoName(args.author, args.repo),
+			depot.BuildHashedRepoName(args.author, args.repo, args.sha),
 		),
 	)
 	if err != nil {
@@ -317,8 +321,8 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		},
 	}
 
-	log.Println("Doing the push")
-	if err = remote.Push([]string{"refs/heads/" + branchName + ":refs/heads/" + branchName}, pushOptions); err != nil {
+	log.Println("Pushing")
+	if err = remote.Push([]string{"refs/heads/" + masterBranchName + ":refs/heads/" + masterBranchName}, pushOptions); err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error,could not push to remote or delete repo folder. %v, %v \n", deletionErr, err)
 		}
