@@ -144,7 +144,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// Prepare to Create a new Github repo for packageModel if DNE
 	log.Println("Create new repo")
-	err = gitHubRequestService.CreateNewRepo(*packageModel)
+	err = gitHubRequestService.CreateNewRepo(args.author, args.repo)
 
 	// Fetch the timestamp of the args.sha commit
 	commitDate, err := gitHubRequestService.FetchCommitTimestamp(args.author, args.repo, args.sha)
@@ -264,10 +264,10 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		return fmt.Errorf("Error, could not set upstream branch. %v \n", err)
 	}
 
-	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("args.shas/heads/%s", branchName), true, "headOne")
+	_, err = repo.References.CreateSymbolic("HEAD", fmt.Sprintf("refs/heads/%s", branchName), true, "headOne")
 	if err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
-			return fmt.Errorf("Error, could not create symbolic args.sha or delete repo folder. %v, %v \n", deletionErr, err)
+			return fmt.Errorf("Error, could not create symbolic ref or delete repo folder. %v, %v \n", deletionErr, err)
 		}
 		return fmt.Errorf("Error, could not create symbolic args.sha. %v \n", err)
 	}
@@ -290,7 +290,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 			"http://%s:%s/%s.git",
 			"depot-svc",
 			"3000",
-			github.BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
+			github.BuildNewGitHubRepoName(args.author, args.repo),
 		),
 	)
 	if err != nil {
@@ -318,7 +318,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	}
 
 	log.Println("Doing the push")
-	if err = remote.Push([]string{"args.shas/heads/" + branchName + ":args.shas/heads/" + branchName}, pushOptions); err != nil {
+	if err = remote.Push([]string{"refs/heads/" + branchName + ":refs/heads/" + branchName}, pushOptions); err != nil {
 		if deletionErr := deleteFolder(folderPath); deletionErr != nil {
 			return fmt.Errorf("Error,could not push to remote or delete repo folder. %v, %v \n", deletionErr, err)
 		}
