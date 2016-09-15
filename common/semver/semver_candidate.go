@@ -211,3 +211,35 @@ func (list SemverCandidateList) Highest() *SemverCandidate {
 
 	return &list[listLength-1]
 }
+
+// Best returns the best version available in the candidate list according to
+// the specified selector.
+func (list SemverCandidateList) Best(selector SemverSelector) *SemverCandidate {
+	var (
+		matches    = list.Match(selector)
+		matchesLen = len(matches)
+	)
+
+	if matchesLen == 0 {
+		// If there are no options, return no options.
+		return nil
+	} else if matchesLen == 1 {
+		// Hmm, I wonder which *one* is the best :P.
+		return &matches[0]
+	} else {
+		var (
+			selectorHasLessThan  = selector.Suffix == SemverSelectorSuffixLessThan
+			selectorHasWildcards = selector.MinorVersion.Type == SemverSegmentTypeWildcard ||
+				selector.PatchVersion.Type == SemverSegmentTypeWildcard ||
+				selector.PrereleaseVersion.Type == SemverSegmentTypeWildcard
+		)
+
+		// Get the most recent version available (adjusting what variation is
+		// possible).
+		if selectorHasWildcards || selectorHasLessThan {
+			return matches.Highest()
+		}
+
+		return matches.Lowest()
+	}
+}

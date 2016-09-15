@@ -44,7 +44,7 @@ func IsPackageArchived(
 	author string,
 	repo string,
 	ref string,
-) bool {
+) (bool, error) {
 	var (
 		err   error
 		count int
@@ -57,8 +57,8 @@ func IsPackageArchived(
 		And(query.Column(columnNamePackageArchivesRef).Equals(ref)).
 		Create(session).
 		Scan(&count); err != nil {
-		return false
+		return false, err
 	}
 
-	return count > 0
+	return count > 0, nil
 }

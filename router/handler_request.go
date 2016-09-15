@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gocql/gocql"
+	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/errors"
 )
@@ -25,29 +25,41 @@ func RequestHandler(
 	session *gocql.Session,
 	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		context := NewRequestContext(nil)
-
-		log.Printf("[%s] New request received: %s\n", context.RequestID, r.URL.Path)
-
+		// Make sure that this isn't a simple health check before getting more
+		// complicated.
 		if r.URL.Path == healthCheckRoute {
-			log.Printf(
-				"[%s] Handling request for \"%s\" as a health check\n",
-				context.RequestID,
-				r.URL.Path,
-			)
-
 			w.Write(statusCheckResponse)
-		} else {
-			log.Printf(
-				"[%s] Handling request for \"%s\" as a package request\n",
-				context.RequestID,
-				r.URL.Path,
-			)
+			return
+		}
 
-			err := RespondToPackageRequest(conf, session, creds, context, r, w)
-			if err != nil {
-				errors.RespondWithError(w, err)
-			}
+		// First, create the necessary variables.
+		var (
+			pr  *packageRequest
+			err error
+		)
+
+		// Create a new package request.
+		if pr, err = newPackageRequest(newPackageRequestArgs{
+			req:          r,
+			downloadRefs: common.FetchRefs,
+		}); err != nil {
+			errors.RespondWithError(w, err)
+			return
+		}
+
+		// Use the package request to respond.
+		if err = pr.respond(respondToPackageRequestArgs{
+			db:                    session,
+			res:                   w,
+			conf:                  conf,
+			creds:                 creds,
+			versionPackage:        versionAndArchivePackage,
+			isPackageArchived:     isPackageArchived,
+			recordPackageDownload: recordPackageDownload,
+			recordPackageArchival: recordPackageArchival,
+		}); err != nil {
+			errors.RespondWithError(w, err)
+			return
 		}
 	}
 }

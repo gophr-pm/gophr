@@ -56,10 +56,8 @@ func checkIfFolderExists(folderName string) error {
 
 // CreateNewGitHubRepo if repo doesn't already exist will create a new
 // repo on the GitHubGophrPackageOrgName repo
-func (gitHubRequestService *RequestService) CreateNewGitHubRepo(
-	packageModel models.PackageModel,
-) error {
-	err := gitHubRequestService.CheckGitHubRepoExists(packageModel)
+func (gitHubRequestService *RequestService) CreateNewGitHubRepo(author, repo string) error {
+	err := gitHubRequestService.CheckGitHubRepoExists(author, repo)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -70,8 +68,8 @@ func (gitHubRequestService *RequestService) CreateNewGitHubRepo(
 	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
-	JSONBody := buildNewGitHubRepoJSONBody(packageModel)
-	gitHubURL := buildNewGitHubRepoAPIURL(packageModel, APIKeyModel)
+	JSONBody := buildNewGitHubRepoJSONBody(author, repo)
+	gitHubURL := buildNewGitHubRepoAPIURL(author, repo, APIKeyModel)
 
 	req, err := http.Post(gitHubURL, "application/json", JSONBody)
 	defer req.Body.Close()
@@ -88,12 +86,8 @@ func (gitHubRequestService *RequestService) CreateNewGitHubRepo(
 	return nil
 }
 
-func buildNewGitHubRepoJSONBody(
-	packageModel models.PackageModel,
-) *bytes.Buffer {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-	newGitHubRepoName := BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo)
+func buildNewGitHubRepoJSONBody(author, repo string) *bytes.Buffer {
+	newGitHubRepoName := BuildNewGitHubRepoName(author, repo)
 	description := fmt.Sprintf("Auto generated and versioned go package for %s/%s", author, repo)
 	homepage := fmt.Sprintf("https://github.com/%s/%s", author, repo)
 
@@ -104,9 +98,9 @@ func buildNewGitHubRepoJSONBody(
 }
 
 func buildNewGitHubRepoAPIURL(
-	packageModel models.PackageModel,
-	APIKeyModel *APIKeyModel,
-) string {
+	author string,
+	repo string,
+	APIKeyModel *APIKeyModel) string {
 	url := fmt.Sprintf("%s/orgs/%s/repos?access_token=%s",
 		GitHubBaseAPIURL,
 		GitHubGophrPackageOrgName,
