@@ -74,28 +74,32 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	// Memorize whether services should be deleted.
 	shouldDeletePersistent := c.Bool(flagNameDeletePersistent)
 
-	// Filter the k8sfiles.
-	var k8sfiles []string
-	for _, k8sfile := range m.k8sfiles {
-		// Ignore production components.
-		if env == environmentDev && isProdK8SResource(k8sfile) {
-			continue
+	// Make sure that volumes exist first.
+	if env == environmentProd && len(m.prodVolumes) > 0 {
+		if err := createGCloudVolumesIfNotExist(m.prodVolumes...); err != nil {
+			return err
 		}
+	}
 
-		k8sfiles = append(k8sfiles, k8sfile)
+	// Use the environment to toggle the unfiltered list.
+	var k8sfiles []string
+	if env == environmentProd {
+		k8sfiles = m.prodK8SFiles
+	} else {
+		k8sfiles = m.devK8SFiles
 	}
 
 	// Destroy in reverse order.
 	for i := len(k8sfiles) - 1; i >= 0; i-- {
 		k8sfile := k8sfiles[i]
 
-		// Only delete services if that flag says so.
+		// Only delete persistent resources if that flag says so.
 		if !shouldDeletePersistent && isPersistentK8SResource(k8sfile) {
 			continue
 		}
 
 		// Put together the absolute path.
-		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
+		k8sfilePath := filepath.Join(gophrRoot, k8sfile)
 		// Only destroy if its already a thing.
 		if existsInK8S(k8sfilePath) {
 			if err := deleteInK8S(k8sfilePath); err != nil {
@@ -107,7 +111,7 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	// Create in order.
 	for _, k8sfile := range k8sfiles {
 		// Put together the absolute path.
-		k8sfilePath := filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
+		k8sfilePath := filepath.Join(gophrRoot, k8sfile)
 		// Perform the create command.
 		if !existsInK8S(k8sfilePath) {
 			if err := createInK8S(k8sfilePath); err != nil {

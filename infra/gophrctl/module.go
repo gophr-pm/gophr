@@ -2,20 +2,31 @@ package main
 
 import "bytes"
 
+const (
+	gophrVolumePrefix = "gophr-volume-"
+	dbVolumeCapacity  = 120 // In gb.
+)
+
 type module struct {
 	name         string
-	k8sfiles     []string
 	dockerfile   string
+	prodVolumes  []gCloudVolume
 	versionfile  string
+	devK8SFiles  []string
+	prodK8SFiles []string
 	buildContext string
 }
 
 var modules = map[string]*module{
 	"api": &module{
 		name: "api",
-		k8sfiles: []string{
-			"./infra/k8s/api/service",
-			"./infra/k8s/api/controller",
+		devK8SFiles: []string{
+			"./infra/k8s/api/service.dev.yml",
+			"./infra/k8s/api/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/api/service.prod.yml",
+			"./infra/k8s/api/controller.prod.yml",
 		},
 		dockerfile:   "./infra/docker/api/Dockerfile",
 		versionfile:  "./infra/docker/api/Versionfile.prod",
@@ -23,18 +34,42 @@ var modules = map[string]*module{
 	},
 	"db": &module{
 		name: "db",
-		k8sfiles: []string{
-			"./infra/k8s/db/service",
-			"./infra/k8s/db/controllers",
+		devK8SFiles: []string{
+			"./infra/k8s/db/service.dev.yml",
+			"./infra/k8s/db/controllers.dev.yml",
 		},
-		dockerfile:   "./infra/docker/db/Dockerfile",
+		prodK8SFiles: []string{
+			"./infra/k8s/db/service.prod.yml",
+			"./infra/k8s/db/controllers.prod.yml",
+		},
+		dockerfile: "./infra/docker/db/Dockerfile",
+		prodVolumes: []gCloudVolume{
+			gCloudVolume{
+				name: gophrVolumePrefix + "db-a",
+				gigs: dbVolumeCapacity,
+				ssd:  true,
+			},
+			gCloudVolume{
+				name: gophrVolumePrefix + "db-b",
+				gigs: dbVolumeCapacity,
+				ssd:  true,
+			},
+			gCloudVolume{
+				name: gophrVolumePrefix + "db-c",
+				gigs: dbVolumeCapacity,
+				ssd:  true,
+			},
+		},
 		versionfile:  "./infra/docker/db/Versionfile.prod",
 		buildContext: ".",
 	},
 	"indexer": &module{
 		name: "indexer",
-		k8sfiles: []string{
-			"./infra/k8s/indexer/controller",
+		devK8SFiles: []string{
+			"./infra/k8s/indexer/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/indexer/controller.prod.yml",
 		},
 		dockerfile:   "./infra/docker/indexer/Dockerfile",
 		versionfile:  "./infra/docker/indexer/Versionfile.prod",
@@ -42,8 +77,11 @@ var modules = map[string]*module{
 	},
 	"migrator": &module{
 		name: "migrator",
-		k8sfiles: []string{
-			"./infra/k8s/migrator/pod",
+		devK8SFiles: []string{
+			"./infra/k8s/migrator/pod.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/migrator/pod.prod.yml",
 		},
 		dockerfile:   "./infra/docker/migrator/Dockerfile",
 		versionfile:  "./infra/docker/migrator/Versionfile.prod",
@@ -51,9 +89,13 @@ var modules = map[string]*module{
 	},
 	"router": &module{
 		name: "router",
-		k8sfiles: []string{
-			"./infra/k8s/router/service",
-			"./infra/k8s/router/controller",
+		devK8SFiles: []string{
+			"./infra/k8s/router/service.dev.yml",
+			"./infra/k8s/router/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/router/service.prod.yml",
+			"./infra/k8s/router/controller.prod.yml",
 		},
 		dockerfile:   "./infra/docker/router/Dockerfile",
 		versionfile:  "./infra/docker/router/Versionfile.prod",
@@ -61,9 +103,13 @@ var modules = map[string]*module{
 	},
 	"web": &module{
 		name: "web",
-		k8sfiles: []string{
-			"./infra/k8s/web/service",
-			"./infra/k8s/web/controller",
+		devK8SFiles: []string{
+			"./infra/k8s/web/service.dev.yml",
+			"./infra/k8s/web/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/web/service.prod.yml",
+			"./infra/k8s/web/controller.prod.yml",
 		},
 		dockerfile:   "./infra/docker/web/Dockerfile",
 		versionfile:  "./infra/docker/web/Versionfile.prod",
@@ -71,9 +117,13 @@ var modules = map[string]*module{
 	},
 	"depot": &module{
 		name: "depot",
-		k8sfiles: []string{
-			"./infra/k8s/depot/service",
-			"./infra/k8s/depot/controller",
+		devK8SFiles: []string{
+			"./infra/k8s/depot/service.dev.yml",
+			"./infra/k8s/depot/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/depot/service.prod.yml",
+			"./infra/k8s/depot/controller.prod.yml",
 		},
 		dockerfile:   "./infra/docker/depot/Dockerfile",
 		versionfile:  "./infra/docker/depot/Versionfile.dev",

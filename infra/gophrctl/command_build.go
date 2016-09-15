@@ -122,10 +122,10 @@ func buildModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 
 		// Update the kubernetes configuration files.
 		startSpinner("Updating kubernetes configuration")
-		for _, k8sfile := range m.k8sfiles {
+		for _, k8sfile := range m.prodK8SFiles {
 			var (
 				newImageURL = fmt.Sprintf("gcr.io/%s/%s:%s", gpi, imageName, version.String())
-				k8sfilePath = filepath.Join(gophrRoot, fmt.Sprintf("%s.%s.yml", k8sfile, env))
+				k8sfilePath = filepath.Join(gophrRoot, k8sfile)
 			)
 
 			if err = updateProdK8SFileImage(newImageURL, k8sfilePath); err != nil {

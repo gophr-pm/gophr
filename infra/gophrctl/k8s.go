@@ -21,23 +21,34 @@ const (
 	k8sNamespaceFlag = "--namespace=gophr"
 )
 
+// K8SPod is a kubernetes pod.
+type K8SPod struct {
+	Status   K8SPodStatus   `json:"status"`
+	Metadata K8SPodMetadata `json:"metadata"`
+}
+
+// K8SPodList is a list of kubernetes pods.
+type K8SPodList struct {
+	Pods []K8SPod `json:"items"`
+}
+
+// K8SPodStatus is the status of a kubernetes pod.
+type K8SPodStatus struct {
+	Phase string `json:"phase"`
+}
+
+// K8SPodMetadata is the metadata of a kubernetes pod.
+type K8SPodMetadata struct {
+	Name string `json:"name"`
+}
+
 var (
+	serviceK8SFileRegex  = regexp.MustCompile(`service\.[a-z]+\.yml$`)
 	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
 )
 
-func isProdK8SResource(k8sfile string) bool {
-	return strings.HasSuffix(k8sfile, "storage") ||
-		strings.HasSuffix(k8sfile, "claim") ||
-		strings.HasSuffix(k8sfile, "volume") ||
-		strings.HasSuffix(k8sfile, "volumes")
-}
-
 func isPersistentK8SResource(k8sfile string) bool {
-	return strings.HasSuffix(k8sfile, "service") ||
-		strings.HasSuffix(k8sfile, "claim") ||
-		strings.HasSuffix(k8sfile, "volume") ||
-		strings.HasSuffix(k8sfile, "volumes") ||
-		strings.HasSuffix(k8sfile, "storage")
+	return serviceK8SFileRegex.MatchString(k8sfile)
 }
 
 func readK8SProdContext(c *cli.Context) (string, error) {
@@ -113,13 +124,6 @@ func runInK8S(c *cli.Context, fn func() error) error {
 	// Make sure we have a namespace before doing anything else.
 	if err = assertNamespaceInK8S(); err != nil {
 		return err
-	}
-
-	// Make sure that the necessary volumes exist.
-	if env == environmentProd {
-		if err = assertProdVolumes(); err != nil {
-			return err
-		}
 	}
 
 	// Check if the secrets are here. If not, scream & shout.
@@ -255,7 +259,7 @@ func deleteInK8S(k8sConfigFilePath string) error {
 }
 
 func filterK8SPods(moduleName string) ([]string, error) {
-	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=jsonpath={.items..metadata.name}").CombinedOutput()
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
 	if err != nil {
 		return nil, newExecError(output, err)
 	}
