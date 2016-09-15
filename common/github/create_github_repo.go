@@ -11,16 +11,15 @@ import (
 
 	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common/dtos"
-	"github.com/skeswa/gophr/common/models"
 )
 
 // CreateNewRepo if repo doesn't already exist will create a new
 // repo on the GitHubGophrPackageOrgName repo
-func (gitHubRequestService *RequestService) CreateNewRepo(packageModel models.PackageModel) error {
+func (gitHubRequestService *RequestService) CreateNewRepo(author string, repo string) error {
 	log.Println("Creating New Repo")
 	folderName := fmt.Sprintf(
 		"%s.git",
-		BuildNewGitHubRepoName(*packageModel.Author, *packageModel.Repo),
+		BuildNewGitHubRepoName(author, repo),
 	)
 	log.Printf("Folder name %s \n", folderName)
 	if err := checkIfFolderExists(folderName); err == nil {
