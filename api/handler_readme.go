@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/errors"
 )
 
@@ -13,15 +14,14 @@ const (
 	queryStringRefTextKey  = "hb"
 )
 
-var (
-	repoName string
-	ref      string
-)
-
 // ReadmeHandler creates an HTTP request handler that responds to fuzzy package
 // searches.
 func ReadmeHandler() func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var (
+			repoName string
+			ref      string
+		)
 
 		// Get URL Query Params
 		qs := r.URL.Query()
@@ -49,12 +49,15 @@ func ReadmeHandler() func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		url := fmt.Sprintf("http://depot-svc:3000/?p=%s;a=blob_plain;f=README.md;hb=%s", repoName, ref)
+		// Request the README from depot gitweb
+		url := fmt.Sprintf("http://%s/?p=%s;a=blob_plain;f=README.md;hb=%s", depot.DepotInternalServiceAddress, repoName, ref)
 		resp, err := http.Get(url)
 		if err != nil {
 			errors.RespondWithError(w, err)
 			return
 		}
+
+		// If no README was found return 404
 		if resp.StatusCode == 404 {
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte{})

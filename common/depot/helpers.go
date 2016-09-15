@@ -1,17 +1,19 @@
 package depot
 
-import (
-	"fmt"
-	"net/http"
-	"time"
+import "fmt"
+
+// DepotServiceAddress is the address for which all public requests will be resolved
+const (
+	DepotPublicServiceAddress = "depot-svc"
+)
+
+// DepotPrivateServiceAddress is the address for which all internal requests will be resolved
+const (
+	DepotInternalServiceAddress = "depot-svc:3000"
 )
 
 const (
 	depotReposPath = "/repos"
-)
-
-var (
-	httpClient = &http.Client{Timeout: 10 * time.Second}
 )
 
 // BuildHashedRepoName creates a new repo name hash uses for repo creation

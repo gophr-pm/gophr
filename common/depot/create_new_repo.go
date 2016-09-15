@@ -15,28 +15,30 @@ const (
 // CreateNewRepo if repo doesn't already exist will create a new
 // repo in depot
 func CreateNewRepo(author string, repo string, ref string) error {
-	log.Println("Creating New Repo")
-	folderName := fmt.Sprintf(
-		"%s.git",
-		BuildHashedRepoName(author, repo, ref),
-	)
+	log.Printf("Creating New Repo on depot %s/%s@%s \n", author, repo, ref)
+	folderName := fmt.Sprintf("%s.git", BuildHashedRepoName(author, repo, ref))
+
+	// First check if repo folder exists on depot volume
 	if err := checkIfRepoFolderExists(folderName); err == nil {
 		return nil
 	}
 
+	// Create repo folder on depot volume
 	err := os.Mkdir(
 		fmt.Sprintf("%s/%s", depotReposPath, folderName),
 		filePerm,
 	)
 
-	// TODO(Shikkic): If we can't make the repo folder bail, that means someone else is already versioning
+	// Check to make sure we properly created folder
 	if err != nil {
-		if checkIfRepoFolderExists(folderName); err != nil {
-			return fmt.Errorf("Error, could not create folder or verify that it currently exists. %v", err)
+		// If we couldn't make the folder, and the foler exists now return error. Someone else is
+		// Already versioning this package
+		if checkFolderErr := checkIfRepoFolderExists(folderName); checkFolderErr == nil {
+			return fmt.Errorf("Error, folder already exists, package is in process of being versioned already. %v %v", checkFolderErr, err)
 		}
 	}
 
-	// Git init bare
+	// Initialize the new bare git repository
 	_, err = git.InitRepository(fmt.Sprintf("%s/%s", depotReposPath, folderName), true)
 	if err != nil {
 		return fmt.Errorf("Error, could not initialize new repository. %v", err)

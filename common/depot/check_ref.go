@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
+	"time"
 )
 
 const (
-	refsFetchURLTemplate          = "http://depot-svc:3000/%s.git/info/refs?service=git-upload-pack"
+	refsFetchURLTemplate          = "http://%s/%s.git/info/refs?service=git-upload-pack"
 	errorRefsFetchNetworkFailure  = "Could not reach depot at the moment; Please try again later"
 	errorRefsFetchNoSuchRepo      = "Could not find a depot repository at %s"
 	errorRefsFetchDepotError      = "Depot responded with an error: %v"
@@ -18,7 +20,9 @@ const (
 // CheckIfRefExists checks whether a given ref exists in the remote refs list.
 func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 	repoName := BuildHashedRepoName(author, repo, ref)
-	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, repoName))
+
+	httpClient := &http.Client{Timeout: 10 * time.Second}
+	res, err := httpClient.Get(fmt.Sprintf(refsFetchURLTemplate, DepotInternalServiceAddress, repoName))
 	if err != nil {
 		return false, errors.New(errorRefsFetchNetworkFailure)
 	}
