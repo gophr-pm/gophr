@@ -29,6 +29,7 @@ func CreateNewRepo(author string, repo string, ref string) error {
 		filePerm,
 	)
 
+	// TODO(Shikkic): If we can't make the repo folder bail, that means someone else is already versioning
 	if err != nil {
 		if checkIfRepoFolderExists(folderName); err != nil {
 			return fmt.Errorf("Error, could not create folder or verify that it currently exists. %v", err)

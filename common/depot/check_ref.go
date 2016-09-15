@@ -8,11 +8,11 @@ import (
 )
 
 const (
-	refsFetchURLTemplate           = "http://depot-svc:3000/%s.git/info/refs?service=git-upload-pack"
-	errorRefsFetchNetworkFailure   = "Could not reach Github at the moment; Please try again later"
-	errorRefsFetchNoSuchRepo       = "Could not find a Github repository at %s"
-	errorRefsFetchGithubError      = "Github responded with an error: %v"
-	errorRefsFetchGithubParseError = "Cannot read refs from Github: %v"
+	refsFetchURLTemplate          = "http://depot-svc:3000/%s.git/info/refs?service=git-upload-pack"
+	errorRefsFetchNetworkFailure  = "Could not reach depot at the moment; Please try again later"
+	errorRefsFetchNoSuchRepo      = "Could not find a depot repository at %s"
+	errorRefsFetchDepotError      = "Depot responded with an error: %v"
+	errorRefsFetchDepotParseError = "Cannot read refs from depot: %v"
 )
 
 // CheckIfRefExists checks whether a given ref exists in the remote refs list.
@@ -29,13 +29,13 @@ func CheckIfRefExists(author, repo string, ref string) (bool, error) {
 		return false, nil
 	} else if res.StatusCode >= 500 {
 		// FYI no reliable way to get test coverage here; this never happens
-		return false, fmt.Errorf(errorRefsFetchGithubError, res.Status)
+		return false, fmt.Errorf(errorRefsFetchDepotError, res.Status)
 	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		// FYI no reliable way to get test coverage here; this never happens
-		return false, fmt.Errorf(errorRefsFetchGithubParseError, err)
+		return false, fmt.Errorf(errorRefsFetchDepotParseError, err)
 	}
 
 	refsString := string(data)
