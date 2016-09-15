@@ -272,7 +272,7 @@ func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 	buf.Write(data[:indexHeadLineStart])
 
 	// Extract the original capabilities.
-	caps := ""
+	capabilities := ""
 	indexNullByte := strings.Index(
 		dataStr[indexHeadLineStart:indexHeadLineEnd],
 		"\x00",
@@ -280,7 +280,7 @@ func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 
 	// IF we found a zero byte, replace the symref with an oldref
 	if indexNullByte > 0 {
-		caps = strings.Replace(
+		capabilities = strings.Replace(
 			dataStr[indexHeadLineStart+indexNullByte+1:indexHeadLineEnd-1],
 			refsSymRefAssignment,
 			refsOldRefAssignment,
@@ -292,7 +292,7 @@ func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 	// capability.
 	var line string
 	if strings.HasPrefix(versionRefName, refsHeadPrefix) {
-		if caps == "" {
+		if len(capabilities) == 0 {
 			line = fmt.Sprintf(
 				refsAugmentedSymrefHeadLineFormat,
 				versionRefHash,
@@ -303,14 +303,14 @@ func (refsData Refs) Reserialize(versionRefName, versionRefHash string) []byte {
 				refsAugmentedSymrefHeadLineWithCapsFormat,
 				versionRefHash,
 				versionRefName,
-				caps,
+				capabilities,
 			)
 		}
 	} else {
-		if caps == "" {
+		if len(capabilities) == 0 {
 			line = fmt.Sprintf(refsAugmentedHeadLineFormat, versionRefHash)
 		} else {
-			line = fmt.Sprintf(refsAugmentedHeadLineWithCapsFormat, versionRefHash, caps)
+			line = fmt.Sprintf(refsAugmentedHeadLineWithCapsFormat, versionRefHash, capabilities)
 		}
 	}
 	fmt.Fprintf(&buf, "%04x%s", 4+len(line), line)

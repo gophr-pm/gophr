@@ -10,20 +10,18 @@ import (
 )
 
 func main() {
-	// Initialize the router.
-	conf, session := common.Init()
-
-	// Read the credentials.
+	// Get the config, sesh and creds.
+	conf, db := common.Init()
 	creds, err := config.ReadCredentials(conf)
 	if err != nil {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
 	// Ensure that the session is closed eventually.
-	defer session.Close()
+	defer db.Close()
 
 	// Start serving.
-	http.HandleFunc(wildcardHandlerPattern, RequestHandler(conf, session, creds))
+	http.HandleFunc(wildcardHandlerPattern, RequestHandler(conf, db, creds))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

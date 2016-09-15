@@ -10,20 +10,19 @@ import (
 
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/skeswa/gophr/common/dtos"
-	"github.com/skeswa/gophr/common/models"
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API
 func (gitHubRequestService *RequestService) FetchCommitTimestamp(
-	packageModel *models.PackageModel,
-	commitSHA string,
-) (time.Time, error) {
+	author string,
+	repo string,
+	sha string) (time.Time, error) {
 	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
-	githubURL := buildGitHubCommitTimestampAPIURL(packageModel, *APIKeyModel, commitSHA)
+	githubURL := buildGitHubCommitTimestampAPIURL(*APIKeyModel, author, repo, sha)
 	log.Printf("Fetching commit timestamp for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -50,21 +49,17 @@ func (gitHubRequestService *RequestService) FetchCommitTimestamp(
 }
 
 func buildGitHubCommitTimestampAPIURL(
-	packageModel *models.PackageModel,
 	APIKeyModel APIKeyModel,
-	commitSHA string,
-) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-
-	url := fmt.Sprintf("%s/repos/%s/%s/commits/%s?&access_token=%s",
+	author string,
+	repo string,
+	sha string) string {
+	return fmt.Sprintf("%s/repos/%s/%s/commits/%s?&access_token=%s",
 		GitHubBaseAPIURL,
 		author,
 		repo,
-		commitSHA,
+		sha,
 		APIKeyModel.Key,
 	)
-	return url
 }
 
 func parseGitHubCommitLookUpResponseBody(response *http.Response) (time.Time, error) {
