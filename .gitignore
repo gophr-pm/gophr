@@ -100,3 +100,4 @@ jspm_packages
 
 # Sparkplug generated binaries
 .sparkplug-bin
+migrator/migrator
