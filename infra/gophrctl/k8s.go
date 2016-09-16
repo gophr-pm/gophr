@@ -259,6 +259,15 @@ func deleteInK8S(k8sConfigFilePath string) error {
 	return nil
 }
 
+func getPodsInK8S() (string, error) {
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods").CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	return string(output[:]), nil
+}
+
 func filterK8SPods(moduleName string) ([]string, error) {
 	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
 	if err != nil {

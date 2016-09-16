@@ -25,18 +25,22 @@ const (
 	flagNameK8SProdContext   = "k8s-context"
 	flagNameDeletePersistent = "delete-persistent"
 
-	commandNameBuild  = "build"
-	commandDescBuild  = "Updates module images"
-	commandNameCycle  = "cycle"
-	commandDescCycle  = "Re-creates a module in kubernetes"
-	commandNameLog    = "log"
-	commandDescLog    = "Logs module's container output to stdout"
-	commandNameSSH    = "ssh"
-	commandDescSSH    = "Starts a shell session within a module's container"
-	commandNameStop   = "stop"
-	commandDescStop   = "Stops module containers"
-	commandNameUpdate = "update"
-	commandDescUpdate = "Updates module kubernetes definition"
+	commandNameBuild   = "build"
+	commandDescBuild   = "Updates module images"
+	commandNameCycle   = "cycle"
+	commandDescCycle   = "Re-creates a module in kubernetes"
+	commandNameLog     = "log"
+	commandDescLog     = "Logs module's container output to stdout"
+	commandNamePods    = "pods"
+	commandDescPods    = "Lists all pods in kubernetes"
+	commandNameSecrets = "secrets"
+	commandDescSecrets = "Deals with private data"
+	commandNameSSH     = "ssh"
+	commandDescSSH     = "Starts a shell session within a module's container"
+	commandNameStop    = "stop"
+	commandDescStop    = "Stops module containers"
+	commandNameUpdate  = "update"
+	commandDescUpdate  = "Updates module kubernetes definition"
 )
 
 var (
@@ -132,6 +136,13 @@ func main() {
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
+		// Pods command.
+		{
+			Name:   commandNamePods,
+			Usage:  commandDescPods,
+			Action: podsCommand,
+		},
+
 		// SSH command.
 		{
 			Name:      commandNameSSH,
@@ -157,8 +168,8 @@ func main() {
 
 		// Secrets command.
 		{
-			Name:  "secrets",
-			Usage: "Deals with confidential data",
+			Name:  commandNameSecrets,
+			Usage: commandDescSecrets,
 			Subcommands: []cli.Command{
 				{
 					Name:      "new-key",
