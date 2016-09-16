@@ -18,10 +18,13 @@ func sshCommand(c *cli.Context) error {
 
 		moduleName = c.Args().First()
 		if m, exists = modules[moduleName]; exists {
-			if err = assertMinikubeRunning(); err != nil {
-				return err
+			if env == environmentDev {
+				if err := assertMinikubeRunning(); err != nil {
+					return err
+				}
 			}
-			if err = sshModule(m, moduleName, env); err != nil {
+
+			if err := sshModule(m, moduleName, env); err != nil {
 				return err
 			}
 		} else {
@@ -43,20 +46,30 @@ func sshModule(m *module, moduleName string, env environment) error {
 		podNames []string
 	)
 
+	// Get the running module pods.
 	if podNames, err = filterK8SPods(moduleName); err != nil {
 		return err
 	}
 
-	// Only use the first pod that comes up - if there even is one.
-	if len(podNames) > 0 {
+	if len(podNames) <= 0 {
+		// TODO(skeswa): refine and standardize this error.
+		return fmt.Errorf("Could not find any pods matching module \"%s\"", moduleName)
+	} else if len(podNames) == 1 {
 		// TODO(skeswa): switch this to a process fork instead of a process
 		// replacement.
-		// TODO(skeswa): refine this to include the follow flag and also allow the
-		// user to choose which pod.
 		execK8SBash(podNames[0])
 		return nil
+	} else {
+		// There are multiple pods to choose from - offer some options.
+		podIndex := promptChoice(promptChoiceArgs{
+			prompt:             "In which pod should bash be executed?",
+			choice:             "Pod",
+			options:            podNames,
+			defaultOptionIndex: 0,
+		})
+		// TODO(skeswa): switch this to a process fork instead of a process
+		// replacement.
+		execK8SBash(podNames[podIndex])
+		return nil
 	}
-
-	// TODO(skeswa): refine and standardize this error.
-	return fmt.Errorf("Could not find any pods matching module \"%s\"", moduleName)
 }
