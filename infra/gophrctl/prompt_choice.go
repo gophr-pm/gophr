@@ -34,7 +34,7 @@ func promptChoice(args promptChoiceArgs) int {
 		if len(text) == 0 {
 			return args.defaultOptionIndex
 		} else if answer, err := strconv.Atoi(text); err != nil || answer < 1 || answer > len(args.options) {
-			printError(fmt.Sprintf("\"%s\" is not a valid choice. Please try again.\n\n", text))
+			printError(fmt.Sprintf("\"%s\" is not a valid choice. Please try again.\n", text))
 		} else {
 			return answer - 1
 		}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -266,10 +267,17 @@ func filterK8SPods(moduleName string) ([]string, error) {
 
 	podList := K8SPodList{}
 	if err = json.Unmarshal(output, &podList); err != nil {
-		return nil, newExecError(output, errors.New("Could not serialize pods"))
+		return nil, newExecError(output, errors.New("Could not read pod metadata"))
 	}
 
-	return strings.Split(strings.Trim(string(output[:]), "\t\n "), " "), nil
+	var runningPodNames []string
+	for _, pod := range podList.Pods {
+		if pod.Status.Phase == "Running" {
+			runningPodNames = append(runningPodNames, pod.Metadata.Name)
+		}
+	}
+
+	return runningPodNames, nil
 }
 
 func abbreviateK8SPath(k8sPath string) string {
