@@ -35,7 +35,7 @@ func BlobHandler() func(http.ResponseWriter, *http.Request) {
 
 		// Request the filepath from depot gitweb.
 		hashedRepoName := depot.BuildHashedRepoName(args.author, args.repo, args.sha)
-		depotBlobURL := fmt.Sprintf("http://%s/?p=%s;a=blob_plain;f=%s;hb=refs/heads/master", depot.DepotInternalServiceAddress, hashedRepoName, args.path)
+		depotBlobURL := fmt.Sprintf("http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master", depot.DepotInternalServiceAddress, hashedRepoName, args.path)
 		depotBlobResp, err := http.Get(depotBlobURL)
 		if err != nil {
 			errors.RespondWithError(w, err)
