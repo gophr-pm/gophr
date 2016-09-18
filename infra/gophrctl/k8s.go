@@ -128,7 +128,7 @@ func runInK8S(c *cli.Context, fn func() error) error {
 	}
 
 	// Check if the secrets are here. If not, scream & shout.
-	if !secretsExistInK8S() {
+	if c.Command.FullName() != "secrets cycle" && !secretsExistInK8S() {
 		return errors.New("The gophr secrets have not been installed yet. Use `gophrctl secrets cycle` to correct that.")
 	}
 
