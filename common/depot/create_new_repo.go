@@ -14,9 +14,9 @@ const (
 
 // CreateNewRepo if repo doesn't already exist will create a new
 // repo in depot
-func CreateNewRepo(author string, repo string, ref string) error {
-	log.Printf("Creating New Repo on depot %s/%s@%s \n", author, repo, ref)
-	folderName := fmt.Sprintf("%s.git", BuildHashedRepoName(author, repo, ref))
+func CreateNewRepo(author string, repo string, sha string) error {
+	log.Printf("Creating New Repo on depot %s/%s@%s \n", author, repo, sha)
+	folderName := fmt.Sprintf("%s.git", BuildHashedRepoName(author, repo, sha))
 
 	// First check if repo folder exists on depot volume
 	if err := checkIfRepoFolderExists(folderName); err == nil {
