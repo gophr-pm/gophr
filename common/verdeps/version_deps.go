@@ -2,7 +2,7 @@ package verdeps
 
 import (
 	"errors"
-	"time"
+	"fmt"
 
 	"github.com/skeswa/gophr/common/github"
 )
@@ -15,8 +15,6 @@ type VersionDepsArgs struct {
 	Repo string
 	// SHA is the path to the package source code to be versioned.
 	Path string
-	// Date is date that the version of the package with that matches SHA was created.
-	Date time.Time
 	// Author is the author of the package being versioned.
 	Author string
 	// GithubServcie is the service, with which, requests can be made of the Github API.
@@ -39,12 +37,22 @@ func VersionDeps(args VersionDepsArgs) error {
 		return errors.New("Invalid GithubService.")
 	}
 
+	// Fetch the timestamp of the commit SHA.
+	commitDate, err := args.GithubService.FetchCommitTimestamp(
+		args.Author,
+		args.Repo,
+		args.SHA,
+	)
+	if err != nil {
+		return fmt.Errorf("Could not fetch commit timestamp: %v.", err)
+	}
+
 	return processDeps(processDepsArgs{
 		ghSvc:              args.GithubService,
 		packageSHA:         args.SHA,
 		packagePath:        args.Path,
 		packageRepo:        args.Repo,
 		packageAuthor:      args.Author,
-		packageVersionDate: args.Date,
+		packageVersionDate: commitDate,
 	})
 }
