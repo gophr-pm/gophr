@@ -8,7 +8,6 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/github"
 )
 
 const (
@@ -174,10 +173,11 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalArgs{
-			db:     args.db,
-			sha:    pr.matchedSHA,
-			repo:   pr.parts.repo,
-			author: pr.parts.author,
+			db:                    args.db,
+			sha:                   pr.matchedSHA,
+			repo:                  pr.parts.repo,
+			author:                pr.parts.author,
+			recordPackageArchival: args.recordPackageArchival,
 		})
 		// If we cannot check whether a package has been archived, return
 		// unsuccessfully.
@@ -202,6 +202,8 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				conf:                  args.conf,
 				creds:                 args.creds,
 				author:                pr.parts.author,
+				pushToDepot:           pushToDepot,
+				downloadPackage:       downloadPackage,
 				constructionZonePath:  args.conf.ConstructionZonePath,
 				recordPackageArchival: args.recordPackageArchival,
 			}); err != nil {
@@ -230,15 +232,10 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 		// Compile the go-get metadata accordingly.)
 		var (
-			adaptedRepo = github.BuildNewGitHubRepoName(pr.parts.author, pr.parts.repo)
-			// TODO(skeswa): refactor for depot.
-			adaptedAuthor     = "gophr-packages"
-			adaptedBranchName = github.BuildGitHubBranch(pr.matchedSHA)
-
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
 				gophrURL:        domain + pr.req.URL.Path,
-				treeURLTemplate: generateGithubTreeURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
-				blobURLTemplate: generateGithubBlobURLTemplate(adaptedAuthor, adaptedRepo, adaptedBranchName),
+				treeURLTemplate: generateGithubTreeURLTemplate(pr.parts.author, pr.parts.repo, pr.matchedSHA),
+				blobURLTemplate: generateDepotBlobURLTemplate(domain, pr.parts.author, pr.parts.repo, pr.matchedSHA),
 			}))
 		)
 

@@ -18,7 +18,7 @@ go get %s
 </html>
 `
 	githubTreeURLTemplate = "https://github.com/%s/%s/tree/%s{/dir}"
-	githubBlobURLTemplate = "https://github.com/%s/%s/blob/%s{/dir}/{file}#L{line}"
+	depotBlobURLTemplate  = "https://%s/blob/%s/%s/%s{/dir}/{file}#L{line}"
 )
 
 type generateGoGetMetadataArgs struct {
@@ -54,13 +54,13 @@ func generateGithubTreeURLTemplate(author, repo, ref string) string {
 	return fmt.Sprintf(githubTreeURLTemplate, author, repo, ref)
 }
 
-// generateGithubBlobURLTemplate generates a github blob url.
-func generateGithubBlobURLTemplate(author, repo, ref string) string {
+// generateDepotBlobURLTemplate generates a depot blob url.
+func generateDepotBlobURLTemplate(domain, author, repo, ref string) string {
 	if len(ref) < 1 {
 		ref = "master"
 	}
 
-	return fmt.Sprintf(githubBlobURLTemplate, author, repo, ref)
+	return fmt.Sprintf(depotBlobURLTemplate, domain, author, repo, ref)
 }
 
 // generateGoGetMetadata generates metadata in the format that go-get likes it.
