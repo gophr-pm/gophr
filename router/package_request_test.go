@@ -14,6 +14,7 @@ import (
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/semver"
+	"github.com/skeswa/gophr/common/verdeps"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -291,16 +292,19 @@ func TestRespondToPackageRequest(t *testing.T) {
 		actualRPDArgs)
 	assert.Equal(
 		t,
-		packageVersionerArgs{
+		fmt.Sprintf("%v", packageVersionerArgs{
 			db:                   nil,
 			sha:                  "thisshouldbeashathisshouldbeashathisshou",
 			repo:                 "myrepo",
 			conf:                 conf,
 			creds:                creds,
 			author:               "myauthor",
+			pushToDepot:          pushToDepot,
+			versionDeps:          verdeps.VersionDeps,
+			downloadPackage:      downloadPackage,
 			constructionZonePath: "/a/b/c",
-		},
-		actualPVAArgs)
+		}),
+		fmt.Sprintf("%v", actualPVAArgs))
 
 	wg3 := sync.WaitGroup{}
 	wg3.Add(1)
@@ -354,16 +358,19 @@ func TestRespondToPackageRequest(t *testing.T) {
 		actualRPDArgs)
 	assert.Equal(
 		t,
-		packageVersionerArgs{
+		fmt.Sprintf("%v", packageVersionerArgs{
 			db:                   nil,
 			sha:                  "thisshouldbeashathisshouldbeashathisshou",
 			repo:                 "myrepo",
 			conf:                 conf,
 			creds:                creds,
 			author:               "myauthor",
+			pushToDepot:          pushToDepot,
+			versionDeps:          verdeps.VersionDeps,
+			downloadPackage:      downloadPackage,
 			constructionZonePath: "/a/b/c",
-		},
-		actualPVAArgs)
+		}),
+		fmt.Sprintf("%v", actualPVAArgs))
 	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, "text/html", w.Header().Get("Content-Type"))
 	assert.Equal(
@@ -372,7 +379,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 <html>
 <head>
 <meta name="go-import" content="besthost.ever/a/s/n git https://besthost.ever/a/s/n">
-<meta name="go-source" content="besthost.ever/a/s/n _ https://github.com/gophr-packages/8myauthor6myrepo/tree/thisshouldbeashathisshouldbeashathissho{/dir} https://github.com/gophr-packages/8myauthor6myrepo/blob/thisshouldbeashathisshouldbeashathissho{/dir}/{file}#L{line}">
+<meta name="go-source" content="besthost.ever/a/s/n _ https://github.com/myauthor/myrepo/tree/thisshouldbeashathisshouldbeashathisshou{/dir} https://besthost.ever/blob/myauthor/myrepo/thisshouldbeashathisshouldbeashathisshou{/dir}/{file}#L{line}">
 </head>
 <body>
 go get besthost.ever/a/s/n

@@ -4,6 +4,8 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/verdeps"
 )
 
 // refsDownloader is responsible for downloading the git refs for a package.
@@ -53,8 +55,10 @@ type packageVersionerArgs struct {
 	creds                 *config.Credentials
 	author                string
 	pushToDepot           packagePusher
+	versionDeps           depsVersioner
 	downloadPackage       packageDownloader
 	constructionZonePath  string
+	githubRequestService  github.RequestService
 	recordPackageArchival packageArchivalRecorder
 }
 
@@ -90,3 +94,6 @@ type packagePusherArgs struct {
 
 // packagePusher is responbile for pushing package to depot.
 type packagePusher func(args packagePusherArgs) error
+
+// depsVersioner is responsible for versioning the dependencies in a package.
+type depsVersioner func(args verdeps.VersionDepsArgs) error

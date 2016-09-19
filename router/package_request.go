@@ -8,6 +8,8 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/verdeps"
 )
 
 const (
@@ -130,6 +132,7 @@ type respondToPackageRequestArgs struct {
 	res                   http.ResponseWriter
 	conf                  *config.Config
 	creds                 *config.Credentials
+	ghSvc                 github.RequestService
 	versionPackage        packageVersioner
 	isPackageArchived     packageArchivalChecker
 	recordPackageArchival packageArchivalRecorder
@@ -203,6 +206,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				creds:                 args.creds,
 				author:                pr.parts.author,
 				pushToDepot:           pushToDepot,
+				versionDeps:           verdeps.VersionDeps,
 				downloadPackage:       downloadPackage,
 				constructionZonePath:  args.conf.ConstructionZonePath,
 				recordPackageArchival: args.recordPackageArchival,

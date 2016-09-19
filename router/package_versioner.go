@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/skeswa/gophr/common/depot"
-	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
@@ -14,6 +13,7 @@ import (
 func versionAndArchivePackage(args packageVersionerArgs) error {
 	log.Printf("Preparing to sub-version %s/%s@%s \n", args.author, args.repo, args.sha)
 
+	// Create a new repository in the depot before pushing to it.
 	if err := depot.CreateNewRepo(
 		args.author,
 		args.repo,
@@ -22,10 +22,11 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		return err
 	}
 
+	// Download the package in the construction zone.
 	downloadPaths, err := downloadPackage(packageDownloaderArgs{
-		author:               args.author,
-		repo:                 args.repo,
 		sha:                  args.sha,
+		repo:                 args.repo,
+		author:               args.author,
 		constructionZonePath: args.constructionZonePath,
 	})
 	if err != nil {
@@ -35,25 +36,14 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	// Perform clean-up after function exits.
 	defer deleteFolder(downloadPaths.workDirPath)
 
-	// Instantiate New Github Request Service.
-	// TODO intialize in handler.
-	gitHubRequestService := github.NewRequestService(
-		github.RequestServiceParams{
-			ForIndexer: false,
-			Conf:       args.conf,
-			Session:    args.db,
-		},
-	)
-
 	// Version lock all of the Github dependencies in the packageModel.
-	if err = verdeps.VersionDeps(
-		verdeps.VersionDepsArgs{
-			SHA:           args.sha,
-			Repo:          args.repo,
-			Path:          downloadPaths.archiveDirPath,
-			Author:        args.author,
-			GithubService: gitHubRequestService,
-		}); err != nil {
+	if err = args.versionDeps(verdeps.VersionDepsArgs{
+		SHA:           args.sha,
+		Repo:          args.repo,
+		Path:          downloadPaths.archiveDirPath,
+		Author:        args.author,
+		GithubService: args.githubRequestService,
+	}); err != nil {
 		return fmt.Errorf("Could not version deps properly: %v.", err)
 	}
 

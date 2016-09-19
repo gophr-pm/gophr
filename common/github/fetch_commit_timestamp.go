@@ -13,11 +13,11 @@ import (
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API
-func (gitHubRequestService *RequestService) FetchCommitTimestamp(
+func (svc *requestService) FetchCommitTimestamp(
 	author string,
 	repo string,
 	sha string) (time.Time, error) {
-	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)

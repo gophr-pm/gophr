@@ -12,7 +12,7 @@ import (
 )
 
 type processDepsArgs struct {
-	ghSvc              *github.RequestService
+	ghSvc              github.RequestService
 	packageSHA         string
 	packagePath        string
 	packageRepo        string

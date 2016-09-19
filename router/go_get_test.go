@@ -29,7 +29,7 @@ func TestGenerateGoGetMetadata(t *testing.T) {
 <meta name="go-source" content=" _  ">
 </head>
 <body>
-go get
+go get 
 </body>
 </html>
 `, generateGoGetMetadata(generateGoGetMetadataArgs{}))

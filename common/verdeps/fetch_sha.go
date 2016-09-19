@@ -8,7 +8,7 @@ import (
 )
 
 type fetchSHAArgs struct {
-	ghSvc              *github.RequestService
+	ghSvc              github.RequestService
 	outputChan         chan *importPathSHA
 	importPath         string
 	packageSHA         string

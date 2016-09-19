@@ -15,18 +15,18 @@ import (
 )
 
 // FetchCommitSHA Fetches a commitSHA closest to a given timestamp
-func (gitHubRequestService *RequestService) FetchCommitSHA(
+func (svc *requestService) FetchCommitSHA(
 	author string,
 	repo string,
 	timestamp time.Time,
 ) (string, error) {
-	commitSHA, err := gitHubRequestService.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsUntilParameter)
+	commitSHA, err := svc.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsUntilParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
 	log.Printf("%s \n", err)
-	commitSHA, err = gitHubRequestService.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsAfterParameter)
+	commitSHA, err = svc.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsAfterParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
@@ -40,13 +40,13 @@ func (gitHubRequestService *RequestService) FetchCommitSHA(
 	return "", err
 }
 
-func (gitHubRequestService *RequestService) fetchCommitSHAByTimeSelector(
+func (svc *requestService) fetchCommitSHAByTimeSelector(
 	author string,
 	repo string,
 	timestamp time.Time,
 	timeSelector string,
 ) (string, error) {
-	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)

@@ -18,7 +18,7 @@ type VersionDepsArgs struct {
 	// Author is the author of the package being versioned.
 	Author string
 	// GithubServcie is the service, with which, requests can be made of the Github API.
-	GithubService *github.RequestService
+	GithubService github.RequestService
 }
 
 // VersionDeps version locks all of the Github-based Go dependencies referenced

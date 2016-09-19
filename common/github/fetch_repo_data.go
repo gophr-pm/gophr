@@ -13,10 +13,10 @@ import (
 
 // FetchGitHubDataForPackageModel fetchs current repo data of a given packageModel
 // TODO optimize this with FFJSON models
-func (gitHubRequestService *RequestService) FetchGitHubDataForPackageModel(
+func (svc *requestService) FetchGitHubDataForPackageModel(
 	packageModel models.PackageModel,
 ) (map[string]interface{}, error) {
-	APIKeyModel := gitHubRequestService.APIKeyChain.getAPIKeyModel()
+	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
 	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
