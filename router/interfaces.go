@@ -97,3 +97,5 @@ type packagePusher func(args packagePusherArgs) error
 
 // depsVersioner is responsible for versioning the dependencies in a package.
 type depsVersioner func(args verdeps.VersionDepsArgs) error
+
+type depotRepoCreator func(author, rpeo, sha string) error

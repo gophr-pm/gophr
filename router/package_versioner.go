@@ -23,7 +23,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	}
 
 	// Download the package in the construction zone.
-	downloadPaths, err := downloadPackage(packageDownloaderArgs{
+	downloadPaths, err := args.downloadPackage(packageDownloaderArgs{
 		sha:                  args.sha,
 		repo:                 args.repo,
 		author:               args.author,
