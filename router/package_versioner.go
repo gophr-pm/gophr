@@ -3,24 +3,24 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
-	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/verdeps"
+)
+
+const (
+	// archiveExistenceCheckDelayMS is the time gap between existence check
+	// attempts.
+	archiveExistenceCheckDelayMS = 500
+	// archiveExistenceCheckAttemptsLimit sets the cap on how many times an archive
+	// existence check is attempted before the an error is recorded.
+	archiveExistenceCheckAttemptsLimit = 3
 )
 
 // versionAndArchivePackage creates a github repo for the packageModel on
 // github.com/gophr/gophr-packages versioned a the specified args.sha.
 func versionAndArchivePackage(args packageVersionerArgs) error {
 	log.Printf("Preparing to sub-version %s/%s@%s \n", args.author, args.repo, args.sha)
-
-	// Create a new repository in the depot before pushing to it.
-	if err := depot.CreateNewRepo(
-		args.author,
-		args.repo,
-		args.sha,
-	); err != nil {
-		return err
-	}
 
 	// Download the package in the construction zone.
 	downloadPaths, err := args.downloadPackage(packageDownloaderArgs{
@@ -47,6 +47,48 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		return fmt.Errorf("Could not version deps properly: %v.", err)
 	}
 
+	// Create a new repository in the depot before pushing to it.
+	if repoIsNew, repoCreationErr := args.createDepotRepo(
+		args.author,
+		args.repo,
+		args.sha,
+	); repoCreationErr != nil {
+		return repoCreationErr
+	} else if !repoIsNew {
+		// If the repo is not new, that means this package is already being
+		// versioned, or has already been versioned. So, we must wait for this
+		// package to be archived.
+		for attempts := 0; attempts < archiveExistenceCheckAttemptsLimit; attempts = attempts + 1 {
+			// Enforce a time delay between attempts so as to allow for archival to
+			// occur.
+			if attempts > 0 {
+				time.Sleep(archiveExistenceCheckDelayMS * time.Millisecond)
+			}
+
+			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalArgs{
+				db:     args.db,
+				sha:    args.sha,
+				repo:   args.repo,
+				author: args.author,
+			}); archiveCheckErr != nil {
+				return fmt.Errorf(
+					"Could not check if package has been versioned in another context: %v.",
+					archiveCheckErr)
+			} else if archived {
+				// Since the package was archived elsewhere, exit here.
+				return nil
+			}
+		}
+
+		// The other package versioner context failed to deliver on time - complain
+		// about it.
+		return fmt.Errorf(
+			"Was waiting for package archival of \"%s/%s@%s\" in another context, but it did not happen fast enough.",
+			args.author,
+			args.repo,
+			args.sha)
+	}
+
 	// Push versioned package to depot, then delete the package directory from
 	// the construction zone.
 	if err = args.pushToDepot(packagePusherArgs{
@@ -56,6 +98,23 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		creds:        args.creds,
 		packagePaths: downloadPaths,
 	}); err != nil {
+		// TODO(skeswa): delete the depot repo if the push fails so that it can be
+		// tried again.
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO
+		// TODO TODO TODO DONT PUSH THIS YET
 		return fmt.Errorf("Could not push versioned package to depot: %v.", err)
 	}
 

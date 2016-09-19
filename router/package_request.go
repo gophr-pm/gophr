@@ -8,6 +8,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/verdeps"
 )
@@ -208,6 +209,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				pushToDepot:           pushToDepot,
 				versionDeps:           verdeps.VersionDeps,
 				downloadPackage:       downloadPackage,
+				createDepotRepo:       depot.CreateNewRepo,
 				constructionZonePath:  args.conf.ConstructionZonePath,
 				recordPackageArchival: args.recordPackageArchival,
 			}); err != nil {

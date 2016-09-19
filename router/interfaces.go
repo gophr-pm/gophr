@@ -56,7 +56,9 @@ type packageVersionerArgs struct {
 	author                string
 	pushToDepot           packagePusher
 	versionDeps           depsVersioner
+	createDepotRepo       depotRepoCreator
 	downloadPackage       packageDownloader
+	isPackageArchived     packageArchivalChecker
 	constructionZonePath  string
 	githubRequestService  github.RequestService
 	recordPackageArchival packageArchivalRecorder
@@ -98,4 +100,7 @@ type packagePusher func(args packagePusherArgs) error
 // depsVersioner is responsible for versioning the dependencies in a package.
 type depsVersioner func(args verdeps.VersionDepsArgs) error
 
-type depotRepoCreator func(author, rpeo, sha string) error
+// depotRepoCreator creates a repository in depot in accordance to the author,
+// repo and sha specified. Returns true if the repo was created by this func.,
+// or returns false is the the directory already existed.
+type depotRepoCreator func(author, repo, sha string) (bool, error)
