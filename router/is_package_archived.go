@@ -4,7 +4,6 @@ package main
 // before.
 func isPackageArchived(args packageArchivalCheckerArgs) (bool, error) {
 	// Translate the args struct into the call to the models package.
-	// TODO(skeswa): optimize for testability.
 	archivedInDB, err := args.isPackageArchivedInDB(
 		args.db,
 		args.author,
