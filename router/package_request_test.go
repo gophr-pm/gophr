@@ -13,6 +13,7 @@ import (
 	"github.com/jinzhu/copier"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/semver"
 	"github.com/skeswa/gophr/common/verdeps"
 	"github.com/stretchr/testify/assert"
@@ -293,16 +294,20 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.Equal(
 		t,
 		fmt.Sprintf("%v", packageVersionerArgs{
-			db:                   nil,
-			sha:                  "thisshouldbeashathisshouldbeashathisshou",
-			repo:                 "myrepo",
-			conf:                 conf,
-			creds:                creds,
-			author:               "myauthor",
-			pushToDepot:          pushToDepot,
-			versionDeps:          verdeps.VersionDeps,
-			downloadPackage:      downloadPackage,
-			constructionZonePath: "/a/b/c",
+			db:                     nil,
+			sha:                    "thisshouldbeashathisshouldbeashathisshou",
+			repo:                   "myrepo",
+			conf:                   conf,
+			creds:                  creds,
+			author:                 "myauthor",
+			pushToDepot:            pushToDepot,
+			versionDeps:            verdeps.VersionDeps,
+			downloadPackage:        downloadPackage,
+			createDepotRepo:        depot.CreateNewRepo,
+			destroyDepotRepo:       depot.DestroyRepo,
+			isPackageArchived:      isPackageArchived,
+			constructionZonePath:   "/a/b/c",
+			attemptWorkDirDeletion: deleteFolder,
 		}),
 		fmt.Sprintf("%v", actualPVAArgs))
 
@@ -359,16 +364,20 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.Equal(
 		t,
 		fmt.Sprintf("%v", packageVersionerArgs{
-			db:                   nil,
-			sha:                  "thisshouldbeashathisshouldbeashathisshou",
-			repo:                 "myrepo",
-			conf:                 conf,
-			creds:                creds,
-			author:               "myauthor",
-			pushToDepot:          pushToDepot,
-			versionDeps:          verdeps.VersionDeps,
-			downloadPackage:      downloadPackage,
-			constructionZonePath: "/a/b/c",
+			db:                     nil,
+			sha:                    "thisshouldbeashathisshouldbeashathisshou",
+			repo:                   "myrepo",
+			conf:                   conf,
+			creds:                  creds,
+			author:                 "myauthor",
+			pushToDepot:            pushToDepot,
+			versionDeps:            verdeps.VersionDeps,
+			downloadPackage:        downloadPackage,
+			createDepotRepo:        depot.CreateNewRepo,
+			destroyDepotRepo:       depot.DestroyRepo,
+			isPackageArchived:      isPackageArchived,
+			constructionZonePath:   "/a/b/c",
+			attemptWorkDirDeletion: deleteFolder,
 		}),
 		fmt.Sprintf("%v", actualPVAArgs))
 	assert.Equal(t, 200, w.Code)

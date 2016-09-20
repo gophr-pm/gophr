@@ -17,8 +17,9 @@ const (
 	archiveExistenceCheckAttemptsLimit = 3
 )
 
-// versionAndArchivePackage creates a github repo for the packageModel on
-// github.com/gophr/gophr-packages versioned a the specified args.sha.
+// versionAndArchivePackage takes a package, locks all of its versions
+// in a chronologically accurate way, and archives it in depot to be queried
+// later.
 func versionAndArchivePackage(args packageVersionerArgs) error {
 	log.Printf("Preparing to sub-version %s/%s@%s \n", args.author, args.repo, args.sha)
 
@@ -34,7 +35,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	}
 
 	// Perform clean-up after function exits.
-	defer deleteFolder(downloadPaths.workDirPath)
+	defer args.attemptWorkDirDeletion(downloadPaths.workDirPath)
 
 	// Version lock all of the Github dependencies in the packageModel.
 	if err = args.versionDeps(verdeps.VersionDepsArgs{
@@ -42,7 +43,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		Repo:          args.repo,
 		Path:          downloadPaths.archiveDirPath,
 		Author:        args.author,
-		GithubService: args.githubRequestService,
+		GithubService: args.ghSvc,
 	}); err != nil {
 		return fmt.Errorf("Could not version deps properly: %v.", err)
 	}
@@ -98,23 +99,20 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		creds:        args.creds,
 		packagePaths: downloadPaths,
 	}); err != nil {
-		// TODO(skeswa): delete the depot repo if the push fails so that it can be
-		// tried again.
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO
-		// TODO TODO TODO DONT PUSH THIS YET
+		// Yikes, we couldn't push. So as to not prevent this package from ever
+		// being versioned correctly, undo all the work we just did.
+		if deletionError := args.destroyDepotRepo(
+			args.author,
+			args.repo,
+			args.sha,
+		); deletionError != nil {
+			// This is wayy the worst case scenario here.
+			return fmt.Errorf(
+				"Could not delete package package in depot: %v. Had to delete because of a push error: %v.",
+				deletionError,
+				err)
+		}
+
 		return fmt.Errorf("Could not push versioned package to depot: %v.", err)
 	}
 

@@ -48,20 +48,22 @@ type packageArchivalChecker func(args packageArchivalArgs) (bool, error)
 
 // packageVersionerArgs is the arguments struct for packageVersioners.
 type packageVersionerArgs struct {
-	db                    *gocql.Session
-	sha                   string
-	repo                  string
-	conf                  *config.Config
-	creds                 *config.Credentials
-	author                string
-	pushToDepot           packagePusher
-	versionDeps           depsVersioner
-	createDepotRepo       depotRepoCreator
-	downloadPackage       packageDownloader
-	isPackageArchived     packageArchivalChecker
-	constructionZonePath  string
-	githubRequestService  github.RequestService
-	recordPackageArchival packageArchivalRecorder
+	db                     *gocql.Session
+	sha                    string
+	repo                   string
+	conf                   *config.Config
+	creds                  *config.Credentials
+	ghSvc                  github.RequestService
+	author                 string
+	pushToDepot            packagePusher
+	versionDeps            depsVersioner
+	createDepotRepo        depotRepoCreator
+	downloadPackage        packageDownloader
+	destroyDepotRepo       depotRepoDestroyer
+	isPackageArchived      packageArchivalChecker
+	constructionZonePath   string
+	recordPackageArchival  packageArchivalRecorder
+	attemptWorkDirDeletion workDirDeletionAttempter
 }
 
 // packageVersioner is responsible for versioning a downloaded package.
@@ -104,3 +106,12 @@ type depsVersioner func(args verdeps.VersionDepsArgs) error
 // repo and sha specified. Returns true if the repo was created by this func.,
 // or returns false is the the directory already existed.
 type depotRepoCreator func(author, repo, sha string) (bool, error)
+
+// depotRepoDestroyer destroys a repository in depot according to the author,
+// repo and sha.
+type depotRepoDestroyer func(author, repo, sha string) error
+
+// workDirDeletionAttempter attempts to delete a working directory. If it fails,
+// instead of returning the error, it logs the problem and moves on. Functions
+// implementing this type are designed to run in go-routines and defers.
+type workDirDeletionAttempter func(workDirPath string)

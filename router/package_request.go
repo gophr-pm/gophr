@@ -200,18 +200,22 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 			// Perform sub-versioning.
 			if err := args.versionPackage(packageVersionerArgs{
-				db:                    args.db,
-				sha:                   pr.matchedSHA,
-				repo:                  pr.parts.repo,
-				conf:                  args.conf,
-				creds:                 args.creds,
-				author:                pr.parts.author,
-				pushToDepot:           pushToDepot,
-				versionDeps:           verdeps.VersionDeps,
-				downloadPackage:       downloadPackage,
-				createDepotRepo:       depot.CreateNewRepo,
-				constructionZonePath:  args.conf.ConstructionZonePath,
-				recordPackageArchival: args.recordPackageArchival,
+				db:                     args.db,
+				sha:                    pr.matchedSHA,
+				repo:                   pr.parts.repo,
+				conf:                   args.conf,
+				creds:                  args.creds,
+				ghSvc:                  args.ghSvc,
+				author:                 pr.parts.author,
+				pushToDepot:            pushToDepot,
+				versionDeps:            verdeps.VersionDeps,
+				downloadPackage:        downloadPackage,
+				createDepotRepo:        depot.CreateNewRepo,
+				destroyDepotRepo:       depot.DestroyRepo,
+				isPackageArchived:      isPackageArchived,
+				constructionZonePath:   args.conf.ConstructionZonePath,
+				recordPackageArchival:  args.recordPackageArchival,
+				attemptWorkDirDeletion: deleteFolder,
 			}); err != nil {
 				// Report the sub-versioning failure to the logs.
 				log.Printf(
