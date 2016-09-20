@@ -14,8 +14,6 @@ func TestVersionAndArchivePackage(t *testing.T) {
 		repo:   "myrepo",
 		author: "myauthor",
 		downloadPackage: func(args packageDownloaderArgs) (packageDownloadPaths, error) {
-			// TODO(skeswa): @shikkic, write something that tests if "args" is correct
-			// here. :D kthxbai
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
@@ -32,8 +30,6 @@ func TestVersionAndArchivePackage(t *testing.T) {
 		repo:   "myrepo",
 		author: "myauthor",
 		downloadPackage: func(args packageDownloaderArgs) (packageDownloadPaths, error) {
-			// TODO(skeswa): @shikkic, write something that tests if "args" is correct
-			// here. :D kthxbai
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
@@ -49,6 +45,9 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.SHA)
 			assert.Equal(t, "/archive/dir/path", args.Path)
 			return errors.New("this is an error")
+		},
+		attemptWorkDirDeletion: func(workDirPath string) {
+			return
 		},
 	}
 	err = versionAndArchivePackage(args)
