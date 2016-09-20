@@ -23,7 +23,7 @@ func DestroyRepo(author, repo, sha string) error {
 	// Try to create the repo a few times.
 	for attempts := 0; attempts < repoDestructionAttemptsLimit; attempts = attempts + 1 {
 		// First, check if repo dir exists on the depot volume.
-		if exists, err := repoDirExists(repoDir); err != nil {
+		if exists, err := RepoExists(author, repo, sha); err != nil {
 			return fmt.Errorf("Failed to check if repo directory \"%s\" exists: %v.", repoDir, err)
 		} else if !exists {
 			// If the repo directory doesn't exist already, exit - the job is already

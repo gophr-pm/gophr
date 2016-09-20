@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
@@ -66,11 +67,13 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 				time.Sleep(archiveExistenceCheckDelayMS * time.Millisecond)
 			}
 
-			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalArgs{
-				db:     args.db,
-				sha:    args.sha,
-				repo:   args.repo,
-				author: args.author,
+			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalCheckerArgs{
+				db:                    args.db,
+				sha:                   args.sha,
+				repo:                  args.repo,
+				author:                args.author,
+				packageExistsInDepot:  depot.RepoExists,
+				recordPackageArchival: args.recordPackageArchival,
 			}); archiveCheckErr != nil {
 				return fmt.Errorf(
 					"Could not check if package has been versioned in another context: %v.",
@@ -117,7 +120,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 	}
 
 	// Record that this package has been archived.
-	go args.recordPackageArchival(packageArchivalArgs{
+	go args.recordPackageArchival(packageArchivalRecorderArgs{
 		db:     args.db,
 		sha:    args.sha,
 		repo:   args.repo,

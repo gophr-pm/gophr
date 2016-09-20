@@ -14,6 +14,7 @@ import (
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/depot"
+	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/semver"
 	"github.com/skeswa/gophr/common/verdeps"
 	"github.com/stretchr/testify/assert"
@@ -181,7 +182,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.Equal(t, refsData, w.Body.Bytes())
 
 	var (
-		actualPAAArgs packageArchivalArgs
+		actualPAAArgs packageArchivalCheckerArgs
 		actualRPDArgs packageDownloadRecorderArgs
 	)
 
@@ -203,7 +204,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			actualRPDArgs = args
 			wg1.Done()
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			actualPAAArgs = args
 			return false, errors.New("this is an error")
 		},
@@ -212,13 +213,14 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(
 		t,
-		packageArchivalArgs{
-			db:     nil,
-			sha:    "thisshouldbeashathisshouldbeashathisshou",
-			repo:   "myrepo",
-			author: "myauthor",
-		},
-		actualPAAArgs)
+		fmt.Sprintf("%v", packageArchivalCheckerArgs{
+			db:                    nil,
+			sha:                   "thisshouldbeashathisshouldbeashathisshou",
+			repo:                  "myrepo",
+			author:                "myauthor",
+			isPackageArchivedInDB: models.IsPackageArchived,
+		}),
+		fmt.Sprintf("%v", actualPAAArgs))
 	assert.Equal(
 		t,
 		packageDownloadRecorderArgs{
@@ -261,7 +263,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			actualRPDArgs = args
 			wg2.Done()
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			actualPAAArgs = args
 			return false, nil
 		},
@@ -274,13 +276,14 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(
 		t,
-		packageArchivalArgs{
-			db:     nil,
-			sha:    "thisshouldbeashathisshouldbeashathisshou",
-			repo:   "myrepo",
-			author: "myauthor",
-		},
-		actualPAAArgs)
+		fmt.Sprintf("%v", packageArchivalCheckerArgs{
+			db:                    nil,
+			sha:                   "thisshouldbeashathisshouldbeashathisshou",
+			repo:                  "myrepo",
+			author:                "myauthor",
+			isPackageArchivedInDB: models.IsPackageArchived,
+		}),
+		fmt.Sprintf("%v", actualPAAArgs))
 	assert.Equal(
 		t,
 		packageDownloadRecorderArgs{
@@ -331,7 +334,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			actualRPDArgs = args
 			wg3.Done()
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			actualPAAArgs = args
 			return false, nil
 		},
@@ -344,13 +347,14 @@ func TestRespondToPackageRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(
 		t,
-		packageArchivalArgs{
-			db:     nil,
-			sha:    "thisshouldbeashathisshouldbeashathisshou",
-			repo:   "myrepo",
-			author: "myauthor",
-		},
-		actualPAAArgs)
+		fmt.Sprintf("%v", packageArchivalCheckerArgs{
+			db:                    nil,
+			sha:                   "thisshouldbeashathisshouldbeashathisshou",
+			repo:                  "myrepo",
+			author:                "myauthor",
+			isPackageArchivedInDB: models.IsPackageArchived,
+		}),
+		fmt.Sprintf("%v", actualPAAArgs))
 	assert.Equal(
 		t,
 		packageDownloadRecorderArgs{

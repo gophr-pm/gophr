@@ -28,23 +28,34 @@ type packageDownloadRecorder func(args packageDownloadRecorderArgs)
 
 // packageArchivalArgs is the arguments struct for packageArchivalRecorders and
 // packageArchivalCheckers.
-type packageArchivalArgs struct {
-	db                    *gocql.Session
-	sha                   string
-	repo                  string
-	author                string
-	recordPackageArchival packageArchivalRecorder
+type packageArchivalRecorderArgs struct {
+	db     *gocql.Session
+	sha    string
+	repo   string
+	author string
 }
 
 // packageArchivalRecorder is responsible for recording package archival. If
 // there is a problem while recording, then the error is logged instead of
 // bubbled.
-type packageArchivalRecorder func(args packageArchivalArgs)
+type packageArchivalRecorder func(args packageArchivalRecorderArgs)
+
+// packageArchivalArgs is the arguments struct for packageArchivalRecorders and
+// packageArchivalCheckers.
+type packageArchivalCheckerArgs struct {
+	db                    *gocql.Session
+	sha                   string
+	repo                  string
+	author                string
+	packageExistsInDepot  depotExistenceChecker
+	recordPackageArchival packageArchivalRecorder
+	isPackageArchivedInDB dbPackageArchivalChecker
+}
 
 // packageArchivalChecker is responsible for checking whether a package has
 // been archived or not. Returns true if the package has been archived, and
 // false otherwise.
-type packageArchivalChecker func(args packageArchivalArgs) (bool, error)
+type packageArchivalChecker func(args packageArchivalCheckerArgs) (bool, error)
 
 // packageVersionerArgs is the arguments struct for packageVersioners.
 type packageVersionerArgs struct {
@@ -96,6 +107,14 @@ type packagePusherArgs struct {
 	packagePaths packageDownloadPaths
 }
 
+// dbPackageArchivalChecker returns true if a package version matching the
+// parameters exists in the database.
+type dbPackageArchivalChecker func(
+	db *gocql.Session,
+	author string,
+	repo string,
+	sha string) (bool, error)
+
 // packagePusher is responbile for pushing package to depot.
 type packagePusher func(args packagePusherArgs) error
 
@@ -110,6 +129,10 @@ type depotRepoCreator func(author, repo, sha string) (bool, error)
 // depotRepoDestroyer destroys a repository in depot according to the author,
 // repo and sha.
 type depotRepoDestroyer func(author, repo, sha string) error
+
+// depotExistenceChecker checks if a package matching author, repo and sha
+// exists in depot.
+type depotExistenceChecker func(author, repo, sha string) (bool, error)
 
 // workDirDeletionAttempter attempts to delete a working directory. If it fails,
 // instead of returning the error, it logs the problem and moves on. Functions

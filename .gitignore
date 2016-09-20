@@ -5,6 +5,7 @@ gin-bin
 web/dist/
 db-dev/data/
 coverage.out
+coverage.html
 
 # Created by https://www.gitignore.io/api/osx,go,node
 

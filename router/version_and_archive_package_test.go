@@ -117,7 +117,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return false, nil
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
@@ -157,7 +157,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return false, nil
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
@@ -197,7 +197,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return false, nil
 		},
-		isPackageArchived: func(args packageArchivalArgs) (bool, error) {
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
@@ -335,7 +335,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return nil
 		},
-		recordPackageArchival: func(args packageArchivalArgs) {
+		recordPackageArchival: func(args packageArchivalRecorderArgs) {
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)

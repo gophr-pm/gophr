@@ -10,6 +10,7 @@ import (
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
@@ -176,12 +177,13 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		})
 
 		// Check whether this package has already been archived.
-		packageArchived, err := args.isPackageArchived(packageArchivalArgs{
+		packageArchived, err := args.isPackageArchived(packageArchivalCheckerArgs{
 			db:                    args.db,
 			sha:                   pr.matchedSHA,
 			repo:                  pr.parts.repo,
 			author:                pr.parts.author,
 			recordPackageArchival: args.recordPackageArchival,
+			isPackageArchivedInDB: models.IsPackageArchived,
 		})
 		// If we cannot check whether a package has been archived, return
 		// unsuccessfully.
