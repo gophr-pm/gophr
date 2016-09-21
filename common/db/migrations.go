@@ -20,8 +20,10 @@ func Migrate(isDev bool, dbAddress string, migrationsPath string) error {
 	buffer.WriteString("?protocol=")
 	buffer.WriteString(strconv.Itoa(query.DBProtoVersion))
 
+	// NB: consistency is now always "all". This is due to the fact that every
+	// environment now has at least two nodes.
 	if isDev {
-		buffer.WriteString("&consistency=one&timeout=10")
+		buffer.WriteString("&consistency=all&timeout=10")
 	} else {
 		buffer.WriteString("&consistency=all&timeout=30")
 	}
