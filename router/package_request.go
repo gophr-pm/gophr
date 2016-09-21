@@ -16,17 +16,15 @@ import (
 )
 
 const (
-	formKeyGoGet                = "go-get"
-	formValueGoGet              = "1"
-	contentTypeHTML             = "text/html"
-	someFakeGitTagRef           = "refs/tags/thisisnotathinginanyrepowehopenothatitmatters"
-	gitRefsInfoSubPath          = "/info/refs"
-	httpLocationHeader          = "Location"
-	gitUploadPackSubPath        = "/git-upload-pack"
-	httpContentTypeHeader       = "Content-Type"
-	packagePageURLTemplate      = "https://%s/#/packages/%s/%s"
-	contentTypeGitUploadPack    = "application/x-git-upload-pack-advertisement"
-	githubUploadPackURLTemplate = "https://github.com/%s/%s/git-upload-pack"
+	formKeyGoGet           = "go-get"
+	formValueGoGet         = "1"
+	contentTypeHTML        = "text/html"
+	someFakeGitTagRef      = "refs/tags/thisisnotathinginanyrepowehopenothatitmatters"
+	gitRefsInfoSubPath     = "/info/refs"
+	httpLocationHeader     = "Location"
+	gitUploadPackSubPath   = "/git-upload-pack"
+	httpContentTypeHeader  = "Content-Type"
+	packagePageURLTemplate = "https://%s/#/packages/%s/%s"
 )
 
 // TODO(skeswa): IMPORTANT! When we merge in depot, go-gets will no longer
@@ -66,8 +64,9 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		packageRefsData []byte
 	)
 
-	// Only go out to fetch refs if they're going to get used.
-	if isGoGetRequest(args.req) || isInfoRefsRequest(parts) {
+	// Only go out to github to get the matched SHA if the matched SHA is
+	// necessary.
+	if isGoGetRequest(args.req) || isGitRequest(parts) {
 		// Get and process all of the refs for this package.
 		if refs, err = args.downloadRefs(
 			parts.author,
@@ -146,9 +145,8 @@ type respondToPackageRequestArgs struct {
 // respond crafts an appropriate response for a package request, serializes the
 // aforesaid response and sends it back to the original client.
 func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
-	// Take care of the cases that deoend inf variations in the subpath.
-	if pr.parts.subpath == gitUploadPackSubPath ||
-		pr.parts.subpath == gitRefsInfoSubPath {
+	// If this is a git request, make sure that the depot repo at exists.
+	if isGitRequest(pr.parts) {
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalCheckerArgs{
 			db:                    args.db,
@@ -206,16 +204,20 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Send a 301 stipulating the repository can be found on depot.
+		// All git requests are going to require a redirect, so build the base
+		// repo URL for a redirect.
+		depotRepoURL := depot.BuildExternalRepoURL(
+			getRequestDomain(pr.req),
+			pr.parts.author,
+			pr.parts.repo,
+			pr.matchedSHA)
+
+		// Set the redirect location.
 		args.res.Header().Set(
 			httpLocationHeader,
-			depot.BuildExternalRepoURL(
-				getRequestDomain(pr.req),
-				pr.parts.author,
-				pr.parts.repo,
-				pr.matchedSHA))
-		args.res.WriteHeader(http.StatusMovedPermanently)
-		return nil
+			depotRepoURL+pr.parts.subpath)
+		// Write status code 301.
+		resp.WriteHeader(http.StatusMovedPermanently)
 	}
 
 	// This means that go-get is requesting package/repository metadata.
@@ -235,9 +237,16 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		var (
 			domain   = getRequestDomain(pr.req)
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
-				gophrURL:        domain + pr.req.URL.Path,
-				treeURLTemplate: generateGithubTreeURLTemplate(pr.parts.author, pr.parts.repo, pr.matchedSHA),
-				blobURLTemplate: generateDepotBlobURLTemplate(domain, pr.parts.author, pr.parts.repo, pr.matchedSHA),
+				gophrURL: domain + pr.req.URL.Path,
+				treeURLTemplate: generateGithubTreeURLTemplate(
+					pr.parts.author,
+					pr.parts.repo,
+					pr.matchedSHA),
+				blobURLTemplate: generateDepotBlobURLTemplate(
+					domain,
+					pr.parts.author,
+					pr.parts.repo,
+					pr.matchedSHA),
 			}))
 		)
 
@@ -265,10 +274,11 @@ func isGoGetRequest(req *http.Request) bool {
 	return req.FormValue(formKeyGoGet) == formValueGoGet
 }
 
-// isInfoRefsRequest returns true if the request parts reflect that the request
-// is a git refs info request.
-func isInfoRefsRequest(parts *packageRequestParts) bool {
-	return parts.subpath == gitRefsInfoSubPath
+// isGitRequest returns true if the request parts reflect that the request
+// is made by, or for, git.
+func isGitRequest(parts *packageRequestParts) bool {
+	return parts.subpath == gitRefsInfoSubPath ||
+		parts.subpath == gitUploadPackSubPath
 }
 
 // getRequestDomain isolates and returns the domain of the specified request.
