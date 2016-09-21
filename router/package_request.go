@@ -155,11 +155,11 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		// + sha.
 		args.res.Header().Set(
 			httpLocationHeader,
-			fmt.Sprintf(
-				depot.UploadPackURLTemplate,
-				depot.DepotPublicServiceAddress,
-				depot.BuildHashedFolderName(pr.parts.author, pr.parts.repo, pr.matchedSHA),
-			))
+			depot.BuildExternalRepoURL(
+				getRequestDomain(pr.req),
+				pr.parts.author,
+				pr.parts.repo,
+				pr.matchedSHA))
 		args.res.WriteHeader(http.StatusMovedPermanently)
 		return nil
 	// TODO(skeswa): stop messing with the info refs endpoint. It is no longer necessary to ref redirection with the way that depot works.
@@ -240,19 +240,9 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Resolve the domain of the request.
-		var domain string
-		if len(pr.req.Host) > 0 {
-			domain = pr.req.Host
-		} else if len(pr.req.URL.Host) > 0 {
-			domain = pr.req.URL.Host
-		} else {
-			// This is a last resort.
-			domain = "gophr.pm"
-		}
-
 		// Compile the go-get metadata accordingly.)
 		var (
+			domain   = getRequestDomain(pr.req)
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
 				gophrURL:        domain + pr.req.URL.Path,
 				treeURLTemplate: generateGithubTreeURLTemplate(pr.parts.author, pr.parts.repo, pr.matchedSHA),
@@ -288,4 +278,25 @@ func isGoGetRequest(req *http.Request) bool {
 // is a git refs info request.
 func isInfoRefsRequest(parts *packageRequestParts) bool {
 	return parts.subpath == gitRefsInfoSubPath
+}
+
+// getRequestDomain isolates and returns the domain of the specified request.
+func getRequestDomain(req *http.Request) string {
+	// If there is no request, don't make a fuss: just return empty.
+	if req == nil {
+		return ""
+	}
+
+	// Resolve the domain of the request.
+	var domain string
+	if len(req.Host) > 0 {
+		domain = req.Host
+	} else if len(req.URL.Host) > 0 {
+		domain = req.URL.Host
+	} else {
+		// This is a last resort.
+		domain = "gophr.pm"
+	}
+
+	return domain
 }

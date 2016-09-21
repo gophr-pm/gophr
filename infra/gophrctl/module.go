@@ -119,7 +119,14 @@ var modules = map[string]*module{
 			"./infra/k8s/router/service.prod.yml",
 			"./infra/k8s/router/controller.prod.yml",
 		},
-		dockerfile:   "./infra/docker/router/Dockerfile",
+		dockerfile: "./infra/docker/router/Dockerfile",
+		prodVolumes: []gCloudVolume{
+			gCloudVolume{
+				name: gophrVolumePrefix + "depot",
+				gigs: dbVolumeCapacity,
+				ssd:  false,
+			},
+		},
 		versionfile:  "./infra/docker/router/Versionfile.prod",
 		buildContext: ".",
 	},

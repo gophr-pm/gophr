@@ -156,6 +156,9 @@ func TestNewPackageRequest(t *testing.T) {
 func TestRespondToPackageRequest(t *testing.T) {
 	w := httptest.NewRecorder()
 	err := (&packageRequest{
+		req: &http.Request{
+			Host: "some.domain",
+		},
 		parts: &packageRequestParts{
 			repo:    "xyz",
 			author:  "abc",
@@ -167,7 +170,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, 301, w.Code)
-	assert.Equal(t, "https://depot-svc/depot/3abc3xyz-123456.git", w.Header().Get("Location"))
+	assert.Equal(t, "https://some.domain/depot/3abc3xyz-123456.git", w.Header().Get("Location"))
 
 	w = httptest.NewRecorder()
 	refsData := []byte{1, 2, 3, 4}
