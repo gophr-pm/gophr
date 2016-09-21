@@ -156,9 +156,10 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		args.res.Header().Set(
 			httpLocationHeader,
 			fmt.Sprintf(
-				githubUploadPackURLTemplate,
-				pr.parts.author,
-				pr.parts.repo))
+				depot.UploadPackURLTemplate,
+				depot.DepotPublicServiceAddress,
+				depot.BuildHashedFolderName(pr.parts.author, pr.parts.repo, pr.matchedSHA),
+			))
 		args.res.WriteHeader(http.StatusMovedPermanently)
 		return nil
 	// TODO(skeswa): stop messing with the info refs endpoint. It is no longer necessary to ref redirection with the way that depot works.
