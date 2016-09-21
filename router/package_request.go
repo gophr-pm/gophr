@@ -184,6 +184,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			sha:                   pr.matchedSHA,
 			repo:                  pr.parts.repo,
 			author:                pr.parts.author,
+			packageExistsInDepot:  depot.RepoExists,
 			recordPackageArchival: args.recordPackageArchival,
 			isPackageArchivedInDB: models.IsPackageArchived,
 		})

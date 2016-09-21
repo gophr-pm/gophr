@@ -218,6 +218,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			sha:                   "thisshouldbeashathisshouldbeashathisshou",
 			repo:                  "myrepo",
 			author:                "myauthor",
+			packageExistsInDepot:  depot.RepoExists,
 			isPackageArchivedInDB: models.IsPackageArchived,
 		}),
 		fmt.Sprintf("%v", actualPAAArgs))
@@ -281,6 +282,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			sha:                   "thisshouldbeashathisshouldbeashathisshou",
 			repo:                  "myrepo",
 			author:                "myauthor",
+			packageExistsInDepot:  depot.RepoExists,
 			isPackageArchivedInDB: models.IsPackageArchived,
 		}),
 		fmt.Sprintf("%v", actualPAAArgs))
@@ -352,6 +354,7 @@ func TestRespondToPackageRequest(t *testing.T) {
 			sha:                   "thisshouldbeashathisshouldbeashathisshou",
 			repo:                  "myrepo",
 			author:                "myauthor",
+			packageExistsInDepot:  depot.RepoExists,
 			isPackageArchivedInDB: models.IsPackageArchived,
 		}),
 		fmt.Sprintf("%v", actualPAAArgs))
