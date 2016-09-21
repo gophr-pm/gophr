@@ -125,8 +125,11 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		return fmt.Errorf("Could not push versioned package to depot: %v.", err)
 	}
 
-	// Record that this package has been archived.
-	go args.recordPackageArchival(packageArchivalRecorderArgs{
+	// Record that this package has been archived. Make sure that this is
+	// performed synchronously so as to block the response.
+	// TODO(skeswa): maybe this should return an error so that we know whether
+	// the package was archived.
+	args.recordPackageArchival(packageArchivalRecorderArgs{
 		db:     args.db,
 		sha:    args.sha,
 		repo:   args.repo,

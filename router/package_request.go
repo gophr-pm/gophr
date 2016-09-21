@@ -147,42 +147,8 @@ type respondToPackageRequestArgs struct {
 // aforesaid response and sends it back to the original client.
 func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 	// Take care of the cases that deoend inf variations in the subpath.
-	switch pr.parts.subpath {
-	case gitUploadPackSubPath:
-		// Send a 301 stipulating the repository can be found on depot.
-		// TODO(skeswa): @Shikkic, you need to make this redirect to the
-		// externally excessible depot respository URL for this author + repo
-		// + sha.
-		args.res.Header().Set(
-			httpLocationHeader,
-			depot.BuildExternalRepoURL(
-				getRequestDomain(pr.req),
-				pr.parts.author,
-				pr.parts.repo,
-				pr.matchedSHA))
-		args.res.WriteHeader(http.StatusMovedPermanently)
-		return nil
-	// TODO(skeswa): stop messing with the info refs endpoint. It is no longer necessary to ref redirection with the way that depot works.
-	case gitRefsInfoSubPath:
-		// Return the adjusted refs data when refs info is requested.
-		args.res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
-		args.res.Write(pr.refsData)
-		return nil
-	}
-
-	// This means that go-get is requesting package/repository metadata.
-	if isGoGetRequest(pr.req) {
-		// Without blocking, count go-get surveying this package for installation as
-		// a download in the database.
-		go args.recordPackageDownload(packageDownloadRecorderArgs{
-			db:     args.db,
-			sha:    pr.matchedSHA,
-			repo:   pr.parts.repo,
-			author: pr.parts.author,
-			// It is ok for the matched sha label to be left blank.
-			version: pr.matchedSHALabel,
-		})
-
+	if pr.parts.subpath == gitUploadPackSubPath ||
+		pr.parts.subpath == gitRefsInfoSubPath {
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalCheckerArgs{
 			db:                    args.db,
@@ -240,7 +206,32 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Compile the go-get metadata accordingly.)
+		// Send a 301 stipulating the repository can be found on depot.
+		args.res.Header().Set(
+			httpLocationHeader,
+			depot.BuildExternalRepoURL(
+				getRequestDomain(pr.req),
+				pr.parts.author,
+				pr.parts.repo,
+				pr.matchedSHA))
+		args.res.WriteHeader(http.StatusMovedPermanently)
+		return nil
+	}
+
+	// This means that go-get is requesting package/repository metadata.
+	if isGoGetRequest(pr.req) {
+		// Without blocking, count go-get surveying this package for installation
+		// as a download in the database.
+		go args.recordPackageDownload(packageDownloadRecorderArgs{
+			db:     args.db,
+			sha:    pr.matchedSHA,
+			repo:   pr.parts.repo,
+			author: pr.parts.author,
+			// It is ok for the matched sha label to be left blank.
+			version: pr.matchedSHALabel,
+		})
+
+		// Compile the go-get metadata accordingly.
 		var (
 			domain   = getRequestDomain(pr.req)
 			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
