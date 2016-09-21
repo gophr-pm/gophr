@@ -18,28 +18,31 @@ const (
 
 func pushToDepot(args packagePusherArgs) error {
 	// Initialize Git Repo
-	repo, err := git.InitRepository(args.packagePaths.archiveDirPath, false)
+	repo, err := args.gitClient.InitRepo(
+		args.packagePaths.archiveDirPath,
+		false,
+	)
 	if err != nil {
 		return fmt.Errorf("Could not initialize new repository: %v.", err)
 	}
 
-	// Git add all.
-	index, err := repo.Index()
-	if err = index.AddAll([]string{}, git.IndexAddDefault, nil); err != nil {
+	// Create Index
+	index, err := args.gitClient.CreateIndex(repo)
+	if err = args.gitClient.IndexAddAll(index); err != nil {
 		return fmt.Errorf("Could not add files to git repo: %v.", err)
 	}
 
-	treeID, err := index.WriteTreeTo(repo)
+	treeID, err := args.gitClient.WriteToIndexTree(index, repo)
 	if err != nil {
 		return fmt.Errorf("Could not write tree: %v.", err)
 	}
 
 	// Write the index
-	if err = index.Write(); err != nil {
+	if err = args.gitClient.WriteIndex(index); err != nil {
 		return fmt.Errorf("Could not write index: %v.", err)
 	}
 
-	tree, err := repo.LookupTree(treeID)
+	tree, err := args.gitClient.LookUpTree(repo, treeID)
 	if err != nil {
 		return fmt.Errorf("Could not retrieve repo tree: %v.", err)
 	}
@@ -50,23 +53,25 @@ func pushToDepot(args packagePusherArgs) error {
 		Email: commitAuthorEmail,
 		When:  time.Now(),
 	}
-
-	if _, err = repo.CreateCommit(
+	commitMessage := fmt.Sprintf(
+		"Gophr versioned repo %s/%s@%s",
+		args.author,
+		args.repo,
+		args.sha,
+	)
+	if err = args.gitClient.CreateCommit(repo,
 		"HEAD",
 		sig,
 		sig,
-		fmt.Sprintf("Gophr versioned repo %s/%s@%s",
-			args.author,
-			args.repo,
-			args.sha,
-		),
+		commitMessage,
 		tree,
 	); err != nil {
 		return fmt.Errorf("Could not commit data: %v.", err)
 	}
 
 	// Create ref for master
-	if _, err = repo.References.CreateSymbolic(
+	if err = args.gitClient.CreateRef(
+		repo,
 		"HEAD",
 		masterBranchRef,
 		true,
@@ -76,20 +81,22 @@ func pushToDepot(args packagePusherArgs) error {
 	}
 
 	// Check out master.
-	if err = repo.CheckoutHead(&git.CheckoutOpts{
+	if err = args.gitClient.CheckoutHead(repo, &git.CheckoutOpts{
 		Strategy: git.CheckoutSafe | git.CheckoutRecreateMissing,
 	}); err != nil {
 		return fmt.Errorf("Could not checkout master: %v.", err)
 	}
 
 	// Create remote origin.
-	remote, err := repo.Remotes.Create(
+	remoteURL := fmt.Sprintf(
+		"http://%s/%s.git",
+		depot.DepotInternalServiceAddress,
+		depot.BuildHashedRepoName(args.author, args.repo, args.sha),
+	)
+	remote, err := args.gitClient.CreateRemote(
+		repo,
 		"origin",
-		fmt.Sprintf(
-			"http://%s/%s.git",
-			depot.DepotInternalServiceAddress,
-			depot.BuildHashedRepoName(args.author, args.repo, args.sha),
-		),
+		remoteURL,
 	)
 	if err != nil {
 		return fmt.Errorf("Could not create remote origin: %v.", err)
@@ -106,7 +113,11 @@ func pushToDepot(args packagePusherArgs) error {
 		},
 	}
 
-	if err = remote.Push([]string{masterPushDirective}, pushOptions); err != nil {
+	if err = args.gitClient.Push(
+		remote,
+		[]string{masterPushDirective},
+		pushOptions,
+	); err != nil {
 		return fmt.Errorf("Could not push to master: %v.", err)
 	}
 
