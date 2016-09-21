@@ -18,11 +18,11 @@ func podsCommand(c *cli.Context) error {
 			}
 		}
 
-		if output, err := getPodsInK8S(); err != nil {
+		output, err := getPodsInK8S()
+		if err != nil {
 			return err
-		} else {
-			fmt.Println(output)
 		}
+		fmt.Println(output)
 
 		return nil
 	}); err != nil {

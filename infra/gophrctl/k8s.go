@@ -189,7 +189,7 @@ func assertNamespaceInK8S() error {
 
 	// If we're here then the namespace does not exist. Time to create it.
 	startSpinner("Creating namespace in kubernetes")
-	output, err = exec.Command(kubectl, k8sNamespaceFlag, "create", "namespace", k8sNamespace).CombinedOutput()
+	_, err = exec.Command(kubectl, k8sNamespaceFlag, "create", "namespace", k8sNamespace).CombinedOutput()
 	if err != nil {
 		stopSpinner(false)
 		return err
