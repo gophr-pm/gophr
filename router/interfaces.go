@@ -1,10 +1,13 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/io"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
@@ -59,6 +62,7 @@ type packageArchivalChecker func(args packageArchivalCheckerArgs) (bool, error)
 
 // packageVersionerArgs is the arguments struct for packageVersioners.
 type packageVersionerArgs struct {
+	io                     io.IO
 	db                     *gocql.Session
 	sha                    string
 	repo                   string
@@ -82,9 +86,13 @@ type packageVersioner func(args packageVersionerArgs) error
 
 // packageDownloaderArgs is the arguments struct for packageDownloader.
 type packageDownloaderArgs struct {
+	io                   io.IO
 	author               string
 	repo                 string
 	sha                  string
+	doHTTPGet            httpGetter
+	unzipArchive         archiveUnzipper
+	deleteWorkDir        workDirDeletionAttempter
 	constructionZonePath string
 }
 
@@ -115,11 +123,18 @@ type dbPackageArchivalChecker func(
 	repo string,
 	sha string) (bool, error)
 
+// httpGetter executes an HTTP get to the specified URL and returns the
+// corresponding response.
+type httpGetter func(url string) (*http.Response, error)
+
 // packagePusher is responbile for pushing package to depot.
 type packagePusher func(args packagePusherArgs) error
 
 // depsVersioner is responsible for versioning the dependencies in a package.
 type depsVersioner func(args verdeps.VersionDepsArgs) error
+
+// archiveUnzipper unzips a zip archive.
+type archiveUnzipper func(archive, target string) error
 
 // depotRepoCreator creates a repository in depot in accordance to the author,
 // repo and sha specified. Returns true if the repo was created by this func.,

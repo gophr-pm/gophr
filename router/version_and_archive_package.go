@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/skeswa/gophr/common/depot"
@@ -26,9 +27,13 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// Download the package in the construction zone.
 	downloadPaths, err := args.downloadPackage(packageDownloaderArgs{
+		io:                   args.io,
 		sha:                  args.sha,
 		repo:                 args.repo,
 		author:               args.author,
+		doHTTPGet:            http.Get,
+		unzipArchive:         unzipArchive,
+		deleteWorkDir:        deleteFolder,
 		constructionZonePath: args.constructionZonePath,
 	})
 	if err != nil {

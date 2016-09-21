@@ -8,6 +8,7 @@ import (
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/errors"
 	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/io"
 )
 
 const (
@@ -25,6 +26,9 @@ func RequestHandler(
 	conf *config.Config,
 	session *gocql.Session,
 	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
+	// Instantiate the IO module for use in package downloading and versioning.
+	io := io.NewIO()
+
 	// Instantiate the the github request service to pass into new
 	// package requests.
 	ghSvc := github.NewRequestService(github.RequestServiceArgs{
@@ -58,6 +62,7 @@ func RequestHandler(
 
 		// Use the package request to respond.
 		if err = pr.respond(respondToPackageRequestArgs{
+			io:                    io,
 			db:                    session,
 			res:                   w,
 			conf:                  conf,

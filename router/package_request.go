@@ -10,6 +10,7 @@ import (
 	"github.com/skeswa/gophr/common/config"
 	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/github"
+	"github.com/skeswa/gophr/common/io"
 	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/verdeps"
 )
@@ -130,6 +131,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 // respondToPackageRequestArgs is the arguments struct for
 // packageRequest#respond.
 type respondToPackageRequestArgs struct {
+	io                    io.IO
 	db                    *gocql.Session
 	res                   http.ResponseWriter
 	conf                  *config.Config
@@ -202,6 +204,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 			// Perform sub-versioning.
 			if err := args.versionPackage(packageVersionerArgs{
+				io:                     args.io,
 				db:                     args.db,
 				sha:                    pr.matchedSHA,
 				repo:                   pr.parts.repo,
