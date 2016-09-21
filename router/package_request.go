@@ -149,7 +149,10 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 	// Take care of the cases that deoend inf variations in the subpath.
 	switch pr.parts.subpath {
 	case gitUploadPackSubPath:
-		// Send a 301 stipulating the repository can be found on github.
+		// Send a 301 stipulating the repository can be found on depot.
+		// TODO(skeswa): @Shikkic, you need to make this redirect to the
+		// externally excessible depot respository URL for this author + repo
+		// + sha.
 		args.res.Header().Set(
 			httpLocationHeader,
 			fmt.Sprintf(
@@ -158,6 +161,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				pr.parts.repo))
 		args.res.WriteHeader(http.StatusMovedPermanently)
 		return nil
+	// TODO(skeswa): stop messing with the info refs endpoint. It is no longer necessary to ref redirection with the way that depot works.
 	case gitRefsInfoSubPath:
 		// Return the adjusted refs data when refs info is requested.
 		args.res.Header().Set(httpContentTypeHeader, contentTypeGitUploadPack)
