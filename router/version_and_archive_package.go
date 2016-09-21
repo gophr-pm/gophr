@@ -106,6 +106,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		sha:          args.sha,
 		creds:        args.creds,
 		packagePaths: downloadPaths,
+		gitClient:    depot.NewGitClient(),
 	}); err != nil {
 		// Yikes, we couldn't push. So as to not prevent this package from ever
 		// being versioned correctly, undo all the work we just did.

@@ -6,6 +6,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/depot"
 	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/io"
 	"github.com/skeswa/gophr/common/verdeps"
@@ -113,6 +114,7 @@ type packagePusherArgs struct {
 	sha          string
 	creds        *config.Credentials
 	packagePaths packageDownloadPaths
+	gitClient    depot.GitClient
 }
 
 // dbPackageArchivalChecker returns true if a package version matching the

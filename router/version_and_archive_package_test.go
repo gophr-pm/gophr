@@ -264,6 +264,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "/my/cons/path", args.constructionZonePath)
 			return packageDownloadPaths{
 				archiveDirPath: "/archive/dir/path",
+				workDirPath:    "/work/dir/path",
 			}, nil
 		},
 		constructionZonePath: "/my/cons/path",
@@ -275,6 +276,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			return nil
 		},
 		attemptWorkDirDeletion: func(workDirPath string) {
+			assert.Equal(t, "/work/dir/path", workDirPath)
 			return
 		},
 		createDepotRepo: func(author, repo, sha string) (bool, error) {
@@ -310,6 +312,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "/my/cons/path", args.constructionZonePath)
 			return packageDownloadPaths{
 				archiveDirPath: "/archive/dir/path",
+				workDirPath:    "/work/dir/path",
 			}, nil
 		},
 		constructionZonePath: "/my/cons/path",
@@ -321,6 +324,7 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			return nil
 		},
 		attemptWorkDirDeletion: func(workDirPath string) {
+			assert.Equal(t, "/work/dir/path", workDirPath)
 			return
 		},
 		createDepotRepo: func(author, repo, sha string) (bool, error) {
