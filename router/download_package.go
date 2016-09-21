@@ -36,7 +36,9 @@ func downloadPackage(args packageDownloaderArgs) (packageDownloadPaths, error) {
 	// Create the zip file and unzip it.
 	zipFilePath := filepath.Join(workDirPath, packageZipFileName)
 	zipFile, err := args.io.Create(zipFilePath)
-	defer zipFile.Close()
+	if zipFile != nil {
+		defer zipFile.Close()
+	}
 	if err != nil {
 		args.deleteWorkDir(workDirPath)
 		return downloadPaths, fmt.Errorf("Could not write archive to file system: %v.", err)
