@@ -17,7 +17,7 @@ const (
 )
 
 func pushToDepot(args packagePusherArgs) error {
-	// Initialize Git Repo
+	// Initialize Git Repo.
 	repo, err := args.gitClient.InitRepo(
 		args.packagePaths.archiveDirPath,
 		false,
@@ -26,8 +26,12 @@ func pushToDepot(args packagePusherArgs) error {
 		return fmt.Errorf("Could not initialize new repository: %v.", err)
 	}
 
-	// Create Index
+	// Create Index.
 	index, err := args.gitClient.CreateIndex(repo)
+	if err != nil {
+		return fmt.Errorf("Could not create index: %v.", err)
+	}
+
 	if err = args.gitClient.IndexAddAll(index); err != nil {
 		return fmt.Errorf("Could not add files to git repo: %v.", err)
 	}
@@ -37,7 +41,7 @@ func pushToDepot(args packagePusherArgs) error {
 		return fmt.Errorf("Could not write tree: %v.", err)
 	}
 
-	// Write the index
+	// Write the index.
 	if err = args.gitClient.WriteIndex(index); err != nil {
 		return fmt.Errorf("Could not write index: %v.", err)
 	}
@@ -59,7 +63,8 @@ func pushToDepot(args packagePusherArgs) error {
 		args.repo,
 		args.sha,
 	)
-	if err = args.gitClient.CreateCommit(repo,
+	if err = args.gitClient.CreateCommit(
+		repo,
 		"HEAD",
 		sig,
 		sig,
