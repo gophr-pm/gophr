@@ -67,5 +67,7 @@ func downloadPackage(args packageDownloaderArgs) (packageDownloadPaths, error) {
 		}
 	}
 
+	// Failed to find the archive directory - exit with failure.
+	args.deleteWorkDir(workDirPath)
 	return downloadPaths, errors.New("Could not find archiveDirPath.")
 }
