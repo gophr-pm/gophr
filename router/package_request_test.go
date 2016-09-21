@@ -161,12 +161,13 @@ func TestRespondToPackageRequest(t *testing.T) {
 			author:  "abc",
 			subpath: "/git-upload-pack",
 		},
+		matchedSHA: "123456789",
 	}).respond(respondToPackageRequestArgs{
 		res: w,
 	})
 	assert.Nil(t, err)
 	assert.Equal(t, 301, w.Code)
-	assert.Equal(t, "https://github.com/abc/xyz/git-upload-pack", w.Header().Get("Location"))
+	assert.Equal(t, "https://depot-svc/depot/3abc3xyz-123456.git", w.Header().Get("Location"))
 
 	w = httptest.NewRecorder()
 	refsData := []byte{1, 2, 3, 4}
