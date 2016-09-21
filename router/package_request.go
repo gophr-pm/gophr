@@ -37,7 +37,6 @@ const (
 type packageRequest struct {
 	req             *http.Request
 	parts           *packageRequestParts
-	refsData        []byte
 	matchedSHA      string
 	matchedSHALabel string
 }
@@ -61,7 +60,6 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		refs            common.Refs
 		matchedSHA      string
 		matchedSHALabel string
-		packageRefsData []byte
 	)
 
 	// Only go out to github to get the matched SHA if the matched SHA is
@@ -99,29 +97,17 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 			// Re-serialize the refs data with said candidate.
 			matchedSHA = bestCandidate.GitRefHash
 			matchedSHALabel = bestCandidate.String()
-			packageRefsData = refs.Reserialize(
-				bestCandidate.GitRefName,
-				bestCandidate.GitRefHash)
 		} else if parts.hasSHASelector() {
 			// Re-serialize the refs data with the sha.
 			matchedSHA = parts.shaSelector
-			packageRefsData = refs.Reserialize(
-				someFakeGitTagRef,
-				parts.shaSelector)
 			// TODO(skeswa): investigate validating the ref to see if it actually
 			// exists.
-		} else {
-			// Since there was no selector, we are fine with the fact that we didn't
-			// find a match. Now, return the original refs that we downloaded from
-			// github that point to master by default.
-			packageRefsData = refs.Data
 		}
 	}
 
 	return &packageRequest{
 		req:             args.req,
 		parts:           parts,
-		refsData:        packageRefsData,
 		matchedSHA:      matchedSHA,
 		matchedSHALabel: matchedSHALabel,
 	}, nil
@@ -217,7 +203,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			httpLocationHeader,
 			depotRepoURL+pr.parts.subpath)
 		// Write status code 301.
-		resp.WriteHeader(http.StatusMovedPermanently)
+		args.res.WriteHeader(http.StatusMovedPermanently)
 	}
 
 	// This means that go-get is requesting package/repository metadata.

@@ -10,6 +10,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gocql/gocql"
 	"github.com/jinzhu/copier"
 	"github.com/skeswa/gophr/common"
 	"github.com/skeswa/gophr/common/config"
@@ -68,6 +69,9 @@ func reflines(lines ...string) string {
 }
 
 func TestNewPackageRequest(t *testing.T) {
+	// TODO(skeswa): @Shikkic, I need this test to be tweaked. Most of this is
+	// still ok. The stuff that counds on refsData needs to be removed.
+
 	pr, err := newPackageRequest(newPackageRequestArgs{
 		req:          fakeHTTPRequest("testalicious.af", "////", false),
 		downloadRefs: fakeRefsDownloader(common.Refs{}, nil),
@@ -154,11 +158,50 @@ func TestNewPackageRequest(t *testing.T) {
 }
 
 func TestRespondToPackageRequest(t *testing.T) {
+	// TODO(skeswa): @Shikkic, I need this test re-written. The stuff here fails	// and should probably be commented out.
+
 	w := httptest.NewRecorder()
+	// TODO(skeswa): we can do better with db mocks.
+	dbMock := &gocql.Session{}
+	isPackageArchivedCalled := false
 	err := (&packageRequest{
-		req: &http.Request{
-			Host: "some.domain",
+		req: &http.Request{Host: "some.domain"},
+		parts: &packageRequestParts{
+			sha:     "mysha",
+			repo:    "xyz",
+			author:  "abc",
+			subpath: "/git-upload-pack",
 		},
+		matchedSHA: "123456789",
+	}).respond(respondToPackageRequestArgs{
+		db:  dbMock,
+		res: w,
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
+			isPackageArchivedCalled = true
+			assert.Equal(t, dbMock, args.db)
+			assert.Equal(t, "123456789", args.sha)
+			assert.Equal(t, "xyz", args.repo)
+			assert.Equal(t, "abc", args.author)
+			assert.NotNil(t, args.packageExistsInDepot)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.isPackageArchivedInDB)
+
+			return false, errors.New("this is an error")
+		},
+	})
+	assert.NotNil(t, err)
+	assert.True(t, isPackageArchivedCalled)
+
+	w = httptest.NewRecorder()
+	// TODO(skeswa): we can do better with db mocks.
+	dbMock = &gocql.Session{}
+	confMock := &conf.Config()
+	credsMock := &conf.Credentials()
+	isPackageArchivedCalled = false
+	versionPackageCalled := false
+	err := (&packageRequest{
+		req: &http.Request{Host: "some.domain"},
 		parts: &packageRequestParts{
 			repo:    "xyz",
 			author:  "abc",
@@ -166,11 +209,37 @@ func TestRespondToPackageRequest(t *testing.T) {
 		},
 		matchedSHA: "123456789",
 	}).respond(respondToPackageRequestArgs{
+		db:  dbMock,
 		res: w,
+		isPackageArchived: func(args packageArchivalCheckerArgs) (bool, error) {
+			isPackageArchivedCalled = true
+			assert.Equal(t, dbMock, args.db)
+			assert.Equal(t, "123456789", args.sha)
+			assert.Equal(t, "xyz", args.repo)
+			assert.Equal(t, "abc", args.author)
+			assert.NotNil(t, args.packageExistsInDepot)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.isPackageArchivedInDB)
+
+			return false, nil
+		},
+		versionPackage: func(args packageVersionerArgs) error {
+			versionPackageCalled = true
+			assert.Equal(t, dbMock, args.db)
+			assert.Equal(t, "123456789", args.sha)
+			assert.Equal(t, "xyz", args.repo)
+			assert.Equal(t, "abc", args.author)
+			assert.NotNil(t, args.io)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.recordPackageArchival)
+			assert.NotNil(t, args.isPackageArchivedInDB)
+			actualPVAArgs = args
+			return errors.New("this is an error")
+		},
 	})
-	assert.Nil(t, err)
-	assert.Equal(t, 301, w.Code)
-	assert.Equal(t, "https://some.domain/depot/3abc3xyz-123456.git", w.Header().Get("Location"))
+	assert.NotNil(t, err)
+	assert.True(t, isPackageArchivedCalled)
 
 	w = httptest.NewRecorder()
 	refsData := []byte{1, 2, 3, 4}
