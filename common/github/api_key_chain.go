@@ -32,11 +32,11 @@ type APIKeyChain struct {
 
 // NewAPIKeyChain intializes and returns a new GitHubAPIKeyChain
 // and instantiates all available keys in the db as APIKeyModels
-func NewAPIKeyChain(params RequestServiceParams) *APIKeyChain {
+func NewAPIKeyChain(args RequestServiceArgs) *APIKeyChain {
 	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := APIKeyChain{}
 
-	gitHubAPIKeys, err := scanAllGitHubKey(params.Conf, params.Session, params.ForIndexer)
+	gitHubAPIKeys, err := scanAllGitHubKey(args.Conf, args.Session, args.ForIndexer)
 	if err != nil {
 		log.Println("Could not scan github keys, fatal error occurred")
 		log.Fatal(err)

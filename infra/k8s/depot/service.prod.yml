@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: depot-svc
+  labels:
+    module: depot
+  namespace: gophr
+spec:
+  ports:
+    - name: http
+      port: 80
+    - name: internal-http
+      port: 3000
+  selector:
+    module: depot

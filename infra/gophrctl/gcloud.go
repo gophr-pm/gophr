@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	gcloud           = "gcloud"
+	gcloud = "gcloud"
+	// TODO(skeswa): this should be configurable.
 	gcloudVolumeZone = "us-central1-b"
 )
 

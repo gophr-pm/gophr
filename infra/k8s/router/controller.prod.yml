@@ -25,9 +25,15 @@ spec:
           name: construction-zone
         - mountPath: /secrets
           name: secrets
+        - mountPath: /repos
+          name: repos
       volumes:
       - name: construction-zone
         emptyDir: {}
       - name: secrets
         secret:
           secretName: gophr-secrets
+      - name: repos
+        gcePersistentDisk:
+          pdName: gophr-volume-depot
+          fsType: ext4

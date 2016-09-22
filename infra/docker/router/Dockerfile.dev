@@ -59,7 +59,8 @@ ENV GOPHR_DB_ADDR="db-svc"
 ENV GOPHR_SECRETS_PATH="/secrets"
 ENV GOPHR_CONSTRUCTION_ZONE_PATH="/construction-zone"
 
-VOLUME ["/construction-zone", "/secrets"]
+VOLUME ["/construction-zone", "/secrets", "/repos"]
+
 
 # Set the generated directory as the work directory.
 WORKDIR /gophr

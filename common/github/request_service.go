@@ -6,6 +6,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common/config"
+	"github.com/skeswa/gophr/common/models"
 )
 
 // GitHubGophrPackageOrgName is the  Github organization name for all versioned packages
@@ -29,24 +30,31 @@ var (
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 )
 
-// RequestService is the library responsible for managing all outbound
+// RequestService is the external interface of the internal requestService.
+type RequestService interface {
+	FetchCommitSHA(string, string, time.Time) (string, error)
+	FetchCommitTimestamp(string, string, string) (time.Time, error)
+	FetchGitHubDataForPackageModel(models.PackageModel) (map[string]interface{}, error)
+}
+
+// requestService is the library responsible for managing all outbound
 // requests to GitHub
-type RequestService struct {
+type requestService struct {
 	APIKeyChain *APIKeyChain
 }
 
-// NewRequestService initialies a new GitHubRequestService and APIKeyChain
-func NewRequestService(params RequestServiceParams) *RequestService {
-	newRequestService := RequestService{}
-	newRequestService.APIKeyChain = NewAPIKeyChain(params)
+// NewRequestService initialies a new GitHubrequestService and APIKeyChain
+func NewRequestService(args RequestServiceArgs) RequestService {
+	svc := requestService{}
+	svc.APIKeyChain = NewAPIKeyChain(args)
 
-	return &newRequestService
+	return &svc
 }
 
-// RequestServiceParams passes import Kubernetes configuration and secrets.
+// RequestServiceArgs passes import Kubernetes configuration and secrets.
 // Also can dictate whether request service is being used by indexer.
-type RequestServiceParams struct {
-	ForIndexer bool
+type RequestServiceArgs struct {
 	Conf       *config.Config
 	Session    *gocql.Session
+	ForIndexer bool
 }
