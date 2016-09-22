@@ -16,7 +16,7 @@ spec:
       namespace: gophr
     spec:
       containers:
-      - name: depot
+      - name: depo
         image: gcr.io/valid-song-142700/gophr-api:1.0.0
         ports:
         - containerPort: 80
@@ -27,9 +27,10 @@ spec:
         - mountPath: /repos
           name: repos
       volumes:
+      - name: repos
+        gcePersistentDisk:
+          pdName: gophr-volume-depot
+          fsType: ext4
       - name: secrets
         secret:
           secretName: gophr-secrets
-      - name: repos
-        hostPath:
-          path: /data/repos
