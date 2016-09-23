@@ -5,7 +5,8 @@ import "bytes"
 const (
 	gophrVolumePrefix   = "gophr-volume-"
 	dbVolumeCapacity    = 120 // In gb.
-	depotVolumeCapacity = 800 // In gb.
+	depotVolumeCapacity = 600 // In gb.
+	depotVolumeName     = "gophr-volume-depot"
 )
 
 type module struct {
@@ -74,25 +75,46 @@ var modules = map[string]*module{
 		versionfile:  "./infra/docker/indexer/Versionfile.prod",
 		buildContext: ".",
 	},
-	"depot": &module{
-		name: "depot",
+	"depot-int": &module{
+		name: "depot-int",
 		devK8SFiles: []string{
-			"./infra/k8s/depot/service.dev.yml",
-			"./infra/k8s/depot/controller.dev.yml",
+			"./infra/k8s/depot/internal/service.dev.yml",
+			"./infra/k8s/depot/internal/controller.dev.yml",
 		},
 		prodK8SFiles: []string{
-			"./infra/k8s/depot/service.prod.yml",
-			"./infra/k8s/depot/controller.prod.yml",
+			"./infra/k8s/depot/internal/service.prod.yml",
+			"./infra/k8s/depot/internal/controller.prod.yml",
 		},
-		dockerfile: "./infra/docker/depot/Dockerfile",
+		dockerfile: "./infra/docker/depot/internal/Dockerfile",
 		prodVolumes: []gCloudVolume{
 			gCloudVolume{
-				name: gophrVolumePrefix + "depot",
-				gigs: dbVolumeCapacity,
+				name: depotVolumeName,
+				gigs: depotVolumeCapacity,
 				ssd:  false,
 			},
 		},
-		versionfile:  "./infra/docker/depot/Versionfile.dev",
+		versionfile:  "./infra/docker/depot/internal/Versionfile.prod",
+		buildContext: ".",
+	},
+	"depot-ext": &module{
+		name: "depot-ext",
+		devK8SFiles: []string{
+			"./infra/k8s/depot/external/service.dev.yml",
+			"./infra/k8s/depot/external/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/depot/external/service.prod.yml",
+			"./infra/k8s/depot/external/controller.prod.yml",
+		},
+		dockerfile: "./infra/docker/depot/external/Dockerfile",
+		prodVolumes: []gCloudVolume{
+			gCloudVolume{
+				name: depotVolumeName,
+				gigs: depotVolumeCapacity,
+				ssd:  false,
+			},
+		},
+		versionfile:  "./infra/docker/depot/external/Versionfile.prod",
 		buildContext: ".",
 	},
 	"api": &module{

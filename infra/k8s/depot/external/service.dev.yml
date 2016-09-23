@@ -1,18 +1,15 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: depot-svc
+  name: depot-ext-svc
   labels:
-    module: depot
+    module: depot-ext
   namespace: gophr
 spec:
   type: NodePort
   ports:
     - name: http
       port: 80
-      nodePort: 30999
-    - name: internal-http
-      port: 3000
-      nodePort: 30301
+      nodePort: 30950
   selector:
     module: depot

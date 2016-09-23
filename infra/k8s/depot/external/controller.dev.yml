@@ -1,36 +1,34 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: depot-rc
+  name: depot-ext-rc
   labels:
-    module: depot
+    module: depot-ext
   namespace: gophr
 spec:
   replicas: 1
   selector:
-    module: depot
+    module: depot-ext
   template:
     metadata:
       labels:
-        module: depot
+        module: depot-ext
       namespace: gophr
     spec:
       containers:
-      - name: depot
-        image: gcr.io/valid-song-142700/gophr-api:1.0.0
+      - name: depot-ext
+        image: gophr-depot-ext-dev:v1
         ports:
         - containerPort: 80
-        - containerPort: 3000
         volumeMounts:
         - mountPath: /secrets
           name: secrets
         - mountPath: /repos
           name: repos
       volumes:
-      - name: repos
-        gcePersistentDisk:
-          pdName: gophr-volume-depot
-          fsType: ext4
       - name: secrets
         secret:
           secretName: gophr-secrets
+      - name: repos
+        hostPath:
+          path: /data/repos

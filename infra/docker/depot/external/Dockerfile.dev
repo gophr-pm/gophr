@@ -2,7 +2,8 @@ FROM node:latest
 
 # Install nginx and build tools.
 ENV NGINX_VERSION 1.11.4-1~jessie
-RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
+RUN apt-key update \
+  && apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
 	&& echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
@@ -37,25 +38,25 @@ RUN mkdir -p /var/www/git \
 		&& chmod ugo+x /var/www/git/gitweb.cgi
 
 # Copy in gitweb and nginx configurations
-COPY ./infra/docker/depot/files/nginx/gitweb.conf /etc/gitweb.conf
-COPY ./infra/docker/depot/files/nginx/git.conf /etc/nginx/conf.d/git.conf
+COPY ./infra/docker/depot/external/files/nginx/gitweb.conf /etc/gitweb.conf
+COPY ./infra/docker/depot/external/files/nginx/git.conf /etc/nginx/conf.d/git.conf
 
 # Delete default nginx conf
 RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy in spawn-fcgi scripts
-COPY ./infra/docker/depot/files/bin/spawn-fcgi /usr/bin/spawn-fcgi
+COPY ./infra/docker/depot/external/files/bin/spawn-fcgi /usr/bin/spawn-fcgi
 RUN chmod +x /usr/bin/spawn-fcgi
 
 # Copy in spawn-fcgi scripts
-COPY ./infra/docker/depot/files/init.d/spawn-fcgi /etc/init.d/spawn-fcgi
+COPY ./infra/docker/depot/external/files/init.d/spawn-fcgi /etc/init.d/spawn-fcgi
 RUN chmod +x /etc/init.d/spawn-fcgi
 
 # Copy entrypoint script
-COPY ./infra/docker/depot/files/start.sh /start.sh
+COPY ./infra/docker/depot/external/files/start.sh /start.sh
 
 # Copy gitconfig
-COPY ./infra/docker/depot/files/git/gitconfig /etc/gitconfig
+COPY ./infra/docker/depot/external/files/git/gitconfig /etc/gitconfig
 
 VOLUME ["/secrets", "/repos"]
 
