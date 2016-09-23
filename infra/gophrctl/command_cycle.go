@@ -101,6 +101,7 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 		// Put together the absolute path.
 		k8sfilePath := filepath.Join(gophrRoot, k8sfile)
 		// Only destroy if its already a thing.
+		// TODO(skeswa): correct existence check for pods.
 		if existsInK8S(k8sfilePath) {
 			if err := deleteInK8S(k8sfilePath); err != nil {
 				return err
