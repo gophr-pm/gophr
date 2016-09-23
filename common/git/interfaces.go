@@ -1,9 +1,9 @@
-package depot
+package main
 
 import git "github.com/libgit2/git2go"
 
-// GitClient is the external interface of gitClient.
-type GitClient interface {
+// Client is the external interface of client.
+type Client interface {
 	InitRepo(archiveDirPath string, bare bool) (*git.Repository, error)
 	CreateIndex(repo *git.Repository) (*git.Index, error)
 	IndexAddAll(index *git.Index) error

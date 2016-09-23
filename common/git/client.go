@@ -1,48 +1,48 @@
-package depot
+package main
 
 import git "github.com/libgit2/git2go"
 
-// NewGitClient initialies a new implementation of a GitClient interface.
-func NewGitClient() GitClient {
-	return &gitClient{}
+// NewClient initialies a new implementation of a Client interface.
+func NewClient() Client {
+	return &client{}
 }
 
-// gitClient is responsible for managing all interal git2go functionality
+// client is responsible for managing all interal git2go functionality
 // for depot.
-type gitClient struct{}
+type client struct{}
 
 // TODO(Shikkic): add comments
-func (gc *gitClient) InitRepo(archiveDirPath string, bare bool) (*git.Repository, error) {
+func (gc *client) InitRepo(archiveDirPath string, bare bool) (*git.Repository, error) {
 	repo, err := git.InitRepository(archiveDirPath, bare)
 	return repo, err
 }
 
-func (gc *gitClient) CreateIndex(repo *git.Repository) (*git.Index, error) {
+func (gc *client) CreateIndex(repo *git.Repository) (*git.Index, error) {
 	index, err := repo.Index()
 	return index, err
 }
 
-func (gc *gitClient) IndexAddAll(index *git.Index) error {
+func (gc *client) IndexAddAll(index *git.Index) error {
 	err := index.AddAll([]string{}, git.IndexAddDefault, nil)
 	return err
 }
 
-func (gc *gitClient) WriteToIndexTree(index *git.Index, repo *git.Repository) (*git.Oid, error) {
+func (gc *client) WriteToIndexTree(index *git.Index, repo *git.Repository) (*git.Oid, error) {
 	treeID, err := index.WriteTreeTo(repo)
 	return treeID, err
 }
 
-func (gc *gitClient) WriteIndex(index *git.Index) error {
+func (gc *client) WriteIndex(index *git.Index) error {
 	err := index.Write()
 	return err
 }
 
-func (gc *gitClient) LookUpTree(repo *git.Repository, treeID *git.Oid) (*git.Tree, error) {
+func (gc *client) LookUpTree(repo *git.Repository, treeID *git.Oid) (*git.Tree, error) {
 	tree, err := repo.LookupTree(treeID)
 	return tree, err
 }
 
-func (gc *gitClient) CreateCommit(
+func (gc *client) CreateCommit(
 	repo *git.Repository,
 	refname string,
 	author *git.Signature,
@@ -60,7 +60,7 @@ func (gc *gitClient) CreateCommit(
 	return err
 }
 
-func (gc *gitClient) CreateRef(
+func (gc *client) CreateRef(
 	repo *git.Repository,
 	name string,
 	target string,
@@ -76,12 +76,12 @@ func (gc *gitClient) CreateRef(
 	return err
 }
 
-func (gc *gitClient) CheckoutHead(repo *git.Repository, opts *git.CheckoutOpts) error {
+func (gc *client) CheckoutHead(repo *git.Repository, opts *git.CheckoutOpts) error {
 	err := repo.CheckoutHead(opts)
 	return err
 }
 
-func (gc *gitClient) CreateRemote(
+func (gc *client) CreateRemote(
 	repo *git.Repository,
 	name string,
 	url string,
@@ -93,7 +93,7 @@ func (gc *gitClient) CreateRemote(
 	return remote, err
 }
 
-func (gc *gitClient) Push(
+func (gc *client) Push(
 	remote *git.Remote,
 	refspec []string,
 	opts *git.PushOptions,

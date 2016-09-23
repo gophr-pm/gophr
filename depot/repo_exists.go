@@ -1,15 +1,17 @@
-package depot
+package main
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/skeswa/gophr/common/depot"
 )
 
 // RepoExists returns true if the repoDir exists, and false otherwise. If
 // some other error occurs, returns that error.
-func RepoExists(author, repo, sha string) (bool, error) {
+func repoExists(depotReposPath, author, repo, sha string) (bool, error) {
 	// Compose author, repo and sha together to get the repo name.
-	repoDir := BuildHashedRepoName(author, repo, sha)
+	repoDir := depot.BuildHashedRepoName(author, repo, sha)
 
 	// TODO(skeswa): make the depotReposPath configurable (could change).
 	path := filepath.Join(depotReposPath, repoDir)

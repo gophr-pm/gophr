@@ -13,6 +13,7 @@ const (
 	environmentProd = "prod"
 
 	envVarsPort                 = "GOPHR_PORT, PORT"
+	envVarsDepotPath            = "GOPHR_DEPOT_PATH"
 	envVarsDbAddress            = "GOPHR_DB_ADDR"
 	envVarsEnvironment          = "GOPHR_ENV"
 	envVarsSecretsPath          = "GOPHR_SECRETS_PATH"
@@ -24,6 +25,7 @@ const (
 type Config struct {
 	IsDev                bool
 	Port                 int
+	DepotPath            string
 	DbAddress            string
 	SecretsPath          string
 	MigrationsPath       string
@@ -37,6 +39,11 @@ func (c *Config) String() string {
 	buffer.WriteString(strconv.FormatBool(c.IsDev))
 	buffer.WriteString("\nPort:                   ")
 	buffer.WriteString(strconv.Itoa(c.Port))
+
+	if len(c.DepotPath) > 0 {
+		buffer.WriteString("\nDepot path:             ")
+		buffer.WriteString(c.DepotPath)
+	}
 
 	if len(c.SecretsPath) > 0 {
 		buffer.WriteString("\nSecrets path:           ")
@@ -65,6 +72,7 @@ func (c *Config) String() string {
 func GetConfig() *Config {
 	var (
 		port                 int
+		depotPath            string
 		dbAddress            string
 		secretsPath          string
 		environment          string
@@ -93,6 +101,12 @@ func GetConfig() *Config {
 			Usage:       "http port to exposed by this binary",
 			EnvVar:      envVarsPort,
 			Destination: &port,
+		},
+		cli.StringFlag{
+			Name:        "depot-path",
+			Usage:       "path to the depot repos",
+			EnvVar:      envVarsDepotPath,
+			Destination: &depotPath,
 		},
 		cli.StringFlag{
 			Name:        "secrets-path, s",
@@ -142,6 +156,7 @@ func GetConfig() *Config {
 	return &Config{
 		IsDev:                environment == environmentDev,
 		Port:                 port,
+		DepotPath:            depotPath,
 		DbAddress:            dbAddress,
 		SecretsPath:          secretsPath,
 		MigrationsPath:       migrationsPath,
