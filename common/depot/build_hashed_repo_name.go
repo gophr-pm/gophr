@@ -11,7 +11,7 @@ const (
 	DepotInternalServiceAddress = "depot-svc:3000"
 	// externalRepoURLTemplate is the URL of a repo in depot that is accessible
 	// externally.
-	externalRepoURLTemplate = "https://%s/depot/%s.git"
+	externalRepoURLTemplate = "%s/depot/%s.git"
 	depotReposPath          = "/repos"
 )
 

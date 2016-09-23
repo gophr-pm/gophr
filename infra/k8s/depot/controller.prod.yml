@@ -16,7 +16,7 @@ spec:
       namespace: gophr
     spec:
       containers:
-      - name: depo
+      - name: depot
         image: gcr.io/valid-song-142700/gophr-api:1.0.0
         ports:
         - containerPort: 80

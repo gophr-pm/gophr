@@ -19,8 +19,6 @@ const (
 	formKeyGoGet           = "go-get"
 	formValueGoGet         = "1"
 	contentTypeHTML        = "text/html"
-	someFakeGitTagRef      = "refs/tags/thisisnotathinginanyrepowehopenothatitmatters"
-	gitRefsInfoSubPath     = "/info/refs"
 	httpLocationHeader     = "Location"
 	gitUploadPackSubPath   = "/git-upload-pack"
 	httpContentTypeHeader  = "Content-Type"
