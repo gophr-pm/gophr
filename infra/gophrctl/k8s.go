@@ -155,9 +155,8 @@ func runInK8S(c *cli.Context, fn func() error) error {
 	return nil
 }
 
-// TODO(skeswa): figure out a way to make this function work in every case.
 func existsInK8S(k8sConfigFilePath string) bool {
-	_, err := exec.Command(kubectl, k8sNamespaceFlag, "describe", "-f", k8sConfigFilePath).CombinedOutput()
+	_, err := exec.Command(kubectl, k8sNamespaceFlag, "describe", "--show-events=false", "-f", k8sConfigFilePath).CombinedOutput()
 	if err != nil {
 		return false
 	}
