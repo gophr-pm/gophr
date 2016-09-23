@@ -21,7 +21,7 @@ func main() {
 	)
 
 	// Register the status route.
-	r.HandleFunc("/status", StatusHandler()).Methods("GET")
+	r.HandleFunc("/api/status", StatusHandler()).Methods("GET")
 	// Register all the remaining routes for the main endpoint.
 	r.HandleFunc(endpoint, RepoExistsHandler(conf)).Methods("GET")
 	r.HandleFunc(endpoint, CreateRepoHandler(conf)).Methods("POST")

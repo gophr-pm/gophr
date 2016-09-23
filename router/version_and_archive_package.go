@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/skeswa/gophr/common/depot"
+	"github.com/skeswa/gophr/common/git"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
@@ -77,7 +77,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 				sha:                   args.sha,
 				repo:                  args.repo,
 				author:                args.author,
-				packageExistsInDepot:  depot.RepoExists,
+				packageExistsInDepot:  packageExistsInDepot,
 				recordPackageArchival: args.recordPackageArchival,
 			}); archiveCheckErr != nil {
 				return fmt.Errorf(
@@ -105,8 +105,8 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		repo:         args.repo,
 		sha:          args.sha,
 		creds:        args.creds,
+		gitClient:    git.NewClient(),
 		packagePaths: downloadPaths,
-		gitClient:    depot.NewGitClient(),
 	}); err != nil {
 		// Yikes, we couldn't push. So as to not prevent this package from ever
 		// being versioned correctly, undo all the work we just did.

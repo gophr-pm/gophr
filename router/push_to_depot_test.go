@@ -6,13 +6,13 @@ import (
 
 	git "github.com/libgit2/git2go"
 	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/depot"
+	g "github.com/skeswa/gophr/common/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestPushtoDepot(t *testing.T) {
-	mockGitClient := depot.NewMockGitClient()
+	mockGitClient := g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, errors.New("this is an error"))
 	args := packagePusherArgs{
 		author: "authorName",
@@ -26,7 +26,7 @@ func TestPushtoDepot(t *testing.T) {
 	err := pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, errors.New("this is an error"))
 	args = packagePusherArgs{
@@ -41,7 +41,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
 	mockGitClient.On("IndexAddAll", &git.Index{}).Return(errors.New("this is an error"))
@@ -57,7 +57,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, errors.New("this is an error"))
 	args = packagePusherArgs{
@@ -72,7 +72,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
 	mockGitClient.On("IndexAddAll", &git.Index{}).Return(nil)
@@ -89,7 +89,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
 	mockGitClient.On("IndexAddAll", &git.Index{}).Return(nil)
@@ -107,7 +107,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
 	mockGitClient.On("IndexAddAll", &git.Index{}).Return(nil)
@@ -126,7 +126,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig := mock.AnythingOfType("*git.Signature")
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
@@ -147,7 +147,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig = mock.AnythingOfType("*git.Signature")
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
 	mockGitClient.On("CreateIndex", &git.Repository{}).Return(&git.Index{}, nil)
@@ -169,7 +169,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig = mock.AnythingOfType("*git.Signature")
 	checkoutOpts := mock.AnythingOfType("*git.CheckoutOpts")
 	mockGitClient.On("InitRepo", "/archive/dir/path", false).Return(&git.Repository{}, nil)
@@ -193,7 +193,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig = mock.AnythingOfType("*git.Signature")
 	checkoutOpts = mock.AnythingOfType("*git.CheckoutOpts")
 	remoteURL := mock.AnythingOfType("string")
@@ -219,7 +219,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig = mock.AnythingOfType("*git.Signature")
 	checkoutOpts = mock.AnythingOfType("*git.CheckoutOpts")
 	remoteURL = mock.AnythingOfType("string")
@@ -254,7 +254,7 @@ func TestPushtoDepot(t *testing.T) {
 	err = pushToDepot(args)
 	assert.NotNil(t, err)
 
-	mockGitClient = depot.NewMockGitClient()
+	mockGitClient = g.NewMockClient()
 	sig = mock.AnythingOfType("*git.Signature")
 	checkoutOpts = mock.AnythingOfType("*git.CheckoutOpts")
 	remoteURL = mock.AnythingOfType("string")
