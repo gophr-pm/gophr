@@ -21,8 +21,6 @@ spec:
         ports:
         - containerPort: 80
         volumeMounts:
-        - mountPath: /secrets
-          name: secrets
         - mountPath: /repos
           name: repos
       volumes:
@@ -30,6 +28,3 @@ spec:
         gcePersistentDisk:
           pdName: gophr-volume-depot
           fsType: int4
-      - name: secrets
-        secret:
-          secretName: gophr-secrets

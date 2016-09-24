@@ -21,14 +21,9 @@ spec:
         ports:
         - containerPort: 80
         volumeMounts:
-        - mountPath: /secrets
-          name: secrets
         - mountPath: /repos
           name: repos
       volumes:
-      - name: secrets
-        secret:
-          secretName: gophr-secrets
       - name: repos
         hostPath:
           path: /data/repos

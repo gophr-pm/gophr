@@ -2,7 +2,8 @@ FROM node:latest
 
 # Install nginx and build tools.
 ENV NGINX_VERSION 1.11.4-1~jessie
-RUN apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
+RUN apt-key update \
+  && apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
 	&& echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
@@ -59,6 +60,6 @@ COPY ./infra/docker/depot/internal/files/git/gitconfig /etc/gitconfig
 
 VOLUME ["/secrets", "/repos"]
 
-EXPOSE 80 3000
+EXPOSE 80
 
 ENTRYPOINT /start.sh
