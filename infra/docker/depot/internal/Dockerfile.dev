@@ -39,7 +39,6 @@ RUN mkdir -p /var/www/git \
 		&& chmod ugo+x /var/www/git/gitweb.cgi
 
 # Copy in gitweb and nginx configurations.
-COPY ./infra/docker/depot/internal/files/nginx/gitweb.conf /etc/gitweb.conf
 COPY ./infra/docker/depot/internal/files/nginx/git.conf /etc/nginx/conf.d/git.conf
 COPY ./infra/docker/depot/internal/files/bin/spawn-fcgi /usr/bin/spawn-fcgi
 COPY ./infra/docker/depot/internal/files/init.d/spawn-fcgi /etc/init.d/spawn-fcgi
@@ -119,4 +118,5 @@ ENV GOPHR_DEPOT_PATH="/repos"
 
 EXPOSE 80
 VOLUME ["/repos"]
+WORKDIR /gophr
 ENTRYPOINT /start.sh
