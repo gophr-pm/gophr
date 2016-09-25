@@ -44,12 +44,12 @@ type K8SPodMetadata struct {
 }
 
 var (
-	serviceK8SFileRegex  = regexp.MustCompile(`service\.[a-z]+\.yml$`)
-	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
+	prodK8SImageURLRegex   = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
+	persistentK8SFileRegex = regexp.MustCompile(`(?:service|claim|volume)s?\.[a-z]+\.yml$`)
 )
 
 func isPersistentK8SResource(k8sfile string) bool {
-	return serviceK8SFileRegex.MatchString(k8sfile)
+	return persistentK8SFileRegex.MatchString(k8sfile)
 }
 
 func readK8SProdContext(c *cli.Context) (string, error) {

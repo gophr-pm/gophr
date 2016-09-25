@@ -1,5 +1,13 @@
 #!/bin/bash
 
+echo "Verifying that the depot volume is writable..."
+if [[ -z $(mount | grep "on $GOPHR_DEPOT_PATH type ext4 (rw") ]]; then
+  echo "\"$GOPHR_DEPOT_PATH\" is not writable. Now exiting..."
+  exit 1
+else
+  echo "\"$GOPHR_DEPOT_PATH\" is writable! Continuing..."
+fi
+
 echo "Starting fcgi..."
 /etc/init.d/spawn-fcgi start
 echo "Starting nginx in background..."

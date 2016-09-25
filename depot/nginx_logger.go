@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	nginxErrorLogPath  = "/var/log/nginx/internal_error.log"
-	nginxAccessLogPath = "/var/log/nginx/internal_access.log"
+	nginxErrorLogPath  = "/var/log/nginx/error.log"
+	nginxAccessLogPath = "/var/log/nginx/access.log"
 )
 
 // tailNginxLogs tails all the nginx logs in prints them with the default go

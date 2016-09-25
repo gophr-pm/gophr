@@ -10,4 +10,4 @@ spec:
     - name: http
       port: 80
   selector:
-    module: depot
+    module: depot-ext

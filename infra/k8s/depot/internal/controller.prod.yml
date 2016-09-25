@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: depot-int
-        image: gcr.io/valid-song-142700/gophr-depot-int:1.0.0
+        image: gcr.io/valid-song-142700/gophr-depot-int:1.0.3
         ports:
         - containerPort: 80
         volumeMounts:
@@ -27,4 +27,5 @@ spec:
       - name: repos
         gcePersistentDisk:
           pdName: gophr-volume-depot
-          fsType: int4
+          fsType: ext4
+          readOnly: false

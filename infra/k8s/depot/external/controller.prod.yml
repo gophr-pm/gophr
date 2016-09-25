@@ -6,7 +6,7 @@ metadata:
     module: depot-ext
   namespace: gophr
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     module: depot-ext
   template:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: depot-ext
-        image: gcr.io/valid-song-142700/gophr-depot-ext:1.0.0
+        image: gcr.io/valid-song-142700/gophr-depot-ext:1.0.1
         ports:
         - containerPort: 80
         volumeMounts:
@@ -30,6 +30,7 @@ spec:
         gcePersistentDisk:
           pdName: gophr-volume-depot
           fsType: ext4
+          readOnly: true
       - name: secrets
         secret:
           secretName: gophr-secrets
