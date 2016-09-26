@@ -13,8 +13,10 @@ import (
 const (
 	at                          = '@'
 	dot                         = '.'
+	hyphen                      = '-'
 	slash                       = '/'
 	shaLength                   = 40
+	shortSHALength              = 6
 	semverSelectorRegexTemplate = `([\%c\%c]?)([0-9]+)(?:\.([0-9]+|%c))?(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([\%c\%c]?)`
 )
 
@@ -34,6 +36,7 @@ var (
 )
 
 // packageRequestParts represents the piecewise breakdown of a package request.
+// TODO: Remove shaSelector and replace it with fullSHA and shortSHA
 type packageRequestParts struct {
 	url                   string
 	repo                  string
@@ -42,6 +45,8 @@ type packageRequestParts struct {
 	selector              string
 	shaSelector           string
 	semverSelector        semver.SemverSelector
+	hasFullSHASelector    bool
+	hasShortSHASelector   bool
 	semverSelectorDefined bool
 }
 
@@ -182,9 +187,17 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		}
 		// Whatever the case may be, this is where the selector ends.
 		selector = url[selectorStartIndex:i]
+		hasShortSHASelector := false
+		hasFullSHASelector := false
 
 		// Read the selector to figure out what it is.
-		if isSemverSelector(selector) {
+		if isShortSHASelector(selector) {
+			hasShortSHASelector = true
+			shaSelector = selector
+		} else if isFullSHASelector(selector) {
+			hasFullSHASelector = true
+			shaSelector = selector
+		} else {
 			var err error
 			if semverSelector, err = readSemverSelector(selector); err != nil {
 				return nil, NewInvalidPackageVersionRequestURLError(url, err)
@@ -192,8 +205,6 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 
 			// If we got here, the semver selector exists.
 			semverSelectorDefined = true
-		} else {
-			shaSelector = selector
 		}
 
 		// If we're out of url bytes then there is no subpath.
@@ -205,6 +216,8 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 				selector:              selector,
 				shaSelector:           shaSelector,
 				semverSelector:        semverSelector,
+				hasShortSHASelector:   hasShortSHASelector,
+				hasFullSHASelector:    hasFullSHASelector,
 				semverSelectorDefined: semverSelectorDefined,
 			}, nil
 		}
@@ -231,11 +244,16 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 	}, nil
 }
 
-// isSemverSelector returns true if the selector is in a valid semver format.
-func isSemverSelector(selector string) bool {
+// isFullSHASelector returns true if the selector is in a full sha
+func isFullSHASelector(selector string) bool {
 	// If it isn't a sha hash (which is 40 characters long), then its a semver
 	// selector for out purposes.
-	return len(selector) != shaLength || strings.IndexByte(selector, dot) != -1
+	return len(selector) == shaLength && strings.IndexByte(selector, dot) == -1
+}
+
+func isShortSHASelector(selector string) bool {
+	// If it isn't a 6 character short SHA return false, it might be semvar
+	return len(selector) == shortSHALength && strings.IndexByte(selector, dot) == -1 && strings.IndexByte(selector, hyphen) == -1
 }
 
 // isSemverSelector converts a semver selector string into a semver selector.
