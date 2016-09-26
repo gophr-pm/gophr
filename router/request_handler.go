@@ -55,6 +55,7 @@ func RequestHandler(
 		if pr, err = newPackageRequest(newPackageRequestArgs{
 			req:          r,
 			downloadRefs: common.FetchRefs,
+			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 		}); err != nil {
 			errors.RespondWithError(w, err)
 			return
