@@ -83,6 +83,8 @@ var modules = map[string]*module{
 	"depot-vol": &module{
 		name: "depot-vol",
 		devK8SFiles: []string{
+			"./infra/k8s/depot/volume/service.dev.yml",
+			"./infra/k8s/depot/volume/controller.dev.yml",
 			"./infra/k8s/depot/volume/volume.dev.yml",
 			"./infra/k8s/depot/volume/claim.dev.yml",
 		},

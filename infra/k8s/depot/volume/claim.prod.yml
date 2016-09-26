@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: depot-vol-pvc
-	labels:
+  labels:
     module: depot-vol
   namespace: gophr
 spec:

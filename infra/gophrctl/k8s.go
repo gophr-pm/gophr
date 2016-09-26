@@ -314,8 +314,13 @@ func areK8SPodsDead(moduleName string) (bool, error) {
 }
 
 func waitForK8SPods(moduleName string, waitTilFinished bool) error {
-	startSpinner(fmt.Sprintf("Waiting for module \"%s\" to start", moduleName))
+	if waitTilFinished {
+		startSpinner(fmt.Sprintf("Waiting for module \"%s\" to execute", moduleName))
+	} else {
+		startSpinner(fmt.Sprintf("Waiting for module \"%s\" to start", moduleName))
+	}
 
+	// TODO(skeswa): scale the checks for prod.
 	// Make enough attempts to span 1 minute.
 	for i := 0; i < 60; i++ {
 		// Pause for a second before trying again (after first attempt).

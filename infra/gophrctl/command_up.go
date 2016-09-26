@@ -32,20 +32,7 @@ func upCommand(c *cli.Context) error {
 		orderedModules := orderModulesByDeps(modules, excluded, false)
 
 		// For each module, in order, wait for the previous module before starting.
-		var (
-			prevModuleName      string
-			prevModuleTransient bool
-		)
-
 		for _, m := range orderedModules {
-			// Wait for the previous module before starting this one.
-			if len(prevModuleName) > 0 {
-				waitTilFinished := prevModuleTransient
-				if err = waitForK8SPods(prevModuleName, waitTilFinished); err != nil {
-					return err
-				}
-			}
-
 			// Do docker build in dev if not exists.
 			if env == environmentDev {
 				var (
@@ -107,9 +94,11 @@ func upCommand(c *cli.Context) error {
 				}
 			}
 
-			// Set the prev module name so on the next iteration we can wait for it.
-			prevModuleName = m.name
-			prevModuleTransient = m.transient
+			// Wait for the module to start (or finish) before continuing.
+			waitTilFinished := m.transient
+			if err = waitForK8SPods(m.name, waitTilFinished); err != nil {
+				return err
+			}
 		}
 
 		// We only get here if everything worked out.
