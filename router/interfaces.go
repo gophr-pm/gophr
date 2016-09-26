@@ -15,6 +15,9 @@ import (
 // refsDownloader is responsible for downloading the git refs for a package.
 type refsDownloader func(author, repo string) (common.Refs, error)
 
+// fullSHAFetcher is responsible for fetching a full commit SHA from a short SHA
+type fullSHAFetcher func(author, repo, shortSHA string) (string, error)
+
 // packageDownloadRecorderArgs is the arguments struct for
 // packageDownloadRecorders.
 type packageDownloadRecorderArgs struct {
