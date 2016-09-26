@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strings"
 	"syscall"
+	"time"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -288,10 +289,35 @@ func filterK8SPods(moduleName string) ([]string, error) {
 	return runningPodNames, nil
 }
 
+func waitForK8SPods(moduleName string) error {
+	startSpinner(fmt.Sprintf("Waiting for module \"%s\" to start", moduleName))
+	for i := 0; i < 10; i++ {
+		// Pause for half a second before trying again (after first attempt).
+		if i > 0 {
+			time.Sleep(500 * time.Millisecond)
+		}
+
+		// Check if there are pods.
+		if pods, err := filterK8SPods(moduleName); err != nil {
+			stopSpinner(false)
+			return err
+		} else if len(pods) > 0 {
+			stopSpinner(true)
+			return nil
+		}
+	}
+
+	// Ran out of attempts!
+	stopSpinner(false)
+	return fmt.Errorf(
+		"Timed out waiting for pods of module \"%s\" to come up.",
+		moduleName)
+}
+
 func abbreviateK8SPath(k8sPath string) string {
 	sep := string(os.PathSeparator)
 	parts := strings.Split(k8sPath, sep)
-	return strings.Join(parts[len(parts)-2:], sep)
+	return strings.Join(parts[len(parts)-3:], sep)
 }
 
 func secretExistsInK8S() bool {

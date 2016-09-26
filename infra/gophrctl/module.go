@@ -11,6 +11,7 @@ const (
 
 type module struct {
 	name         string
+	deps         []string
 	dockerfile   string
 	prodVolumes  []gCloudVolume
 	versionfile  string
@@ -53,6 +54,7 @@ var modules = map[string]*module{
 	},
 	"migrator": &module{
 		name: "migrator",
+		deps: []string{"db"},
 		devK8SFiles: []string{
 			"./infra/k8s/migrator/pod.dev.yml",
 		},
@@ -65,6 +67,7 @@ var modules = map[string]*module{
 	},
 	"indexer": &module{
 		name: "indexer",
+		deps: []string{"db", "migrator"},
 		devK8SFiles: []string{
 			"./infra/k8s/indexer/controller.dev.yml",
 		},
@@ -100,6 +103,7 @@ var modules = map[string]*module{
 	},
 	"depot-int": &module{
 		name: "depot-int",
+		deps: []string{"depot-vol"},
 		devK8SFiles: []string{
 			"./infra/k8s/depot/internal/service.dev.yml",
 			"./infra/k8s/depot/internal/controller.dev.yml",
@@ -108,19 +112,13 @@ var modules = map[string]*module{
 			"./infra/k8s/depot/internal/service.prod.yml",
 			"./infra/k8s/depot/internal/controller.prod.yml",
 		},
-		dockerfile: "./infra/docker/depot/internal/Dockerfile",
-		prodVolumes: []gCloudVolume{
-			gCloudVolume{
-				name: depotVolumeName,
-				gigs: depotVolumeCapacity,
-				ssd:  false,
-			},
-		},
+		dockerfile:   "./infra/docker/depot/internal/Dockerfile",
 		versionfile:  "./infra/docker/depot/internal/Versionfile.prod",
 		buildContext: ".",
 	},
 	"depot-ext": &module{
 		name: "depot-ext",
+		deps: []string{"depot-vol"},
 		devK8SFiles: []string{
 			"./infra/k8s/depot/external/service.dev.yml",
 			"./infra/k8s/depot/external/controller.dev.yml",
@@ -129,19 +127,13 @@ var modules = map[string]*module{
 			"./infra/k8s/depot/external/service.prod.yml",
 			"./infra/k8s/depot/external/controller.prod.yml",
 		},
-		dockerfile: "./infra/docker/depot/external/Dockerfile",
-		prodVolumes: []gCloudVolume{
-			gCloudVolume{
-				name: depotVolumeName,
-				gigs: depotVolumeCapacity,
-				ssd:  false,
-			},
-		},
+		dockerfile:   "./infra/docker/depot/external/Dockerfile",
 		versionfile:  "./infra/docker/depot/external/Versionfile.prod",
 		buildContext: ".",
 	},
 	"api": &module{
 		name: "api",
+		deps: []string{"db", "migrator"},
 		devK8SFiles: []string{
 			"./infra/k8s/api/service.dev.yml",
 			"./infra/k8s/api/controller.dev.yml",
@@ -156,6 +148,7 @@ var modules = map[string]*module{
 	},
 	"router": &module{
 		name: "router",
+		deps: []string{"db", "migrator", "depot-int"},
 		devK8SFiles: []string{
 			"./infra/k8s/router/service.dev.yml",
 			"./infra/k8s/router/controller.dev.yml",
@@ -164,19 +157,13 @@ var modules = map[string]*module{
 			"./infra/k8s/router/service.prod.yml",
 			"./infra/k8s/router/controller.prod.yml",
 		},
-		dockerfile: "./infra/docker/router/Dockerfile",
-		prodVolumes: []gCloudVolume{
-			gCloudVolume{
-				name: gophrVolumePrefix + "depot",
-				gigs: dbVolumeCapacity,
-				ssd:  false,
-			},
-		},
+		dockerfile:   "./infra/docker/router/Dockerfile",
 		versionfile:  "./infra/docker/router/Versionfile.prod",
 		buildContext: ".",
 	},
 	"web": &module{
 		name: "web",
+		deps: []string{"api", "router", "depot-int", "depot-ext"},
 		devK8SFiles: []string{
 			"./infra/k8s/web/service.dev.yml",
 			"./infra/k8s/web/controller.dev.yml",

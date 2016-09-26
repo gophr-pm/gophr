@@ -9,6 +9,8 @@ import (
 )
 
 const (
+	cliName    = "gophrctl"
+	cliDesc    = "Manages the gophr development and deployment environment."
 	cliVersion = "0.0.1"
 	envTypeDev = "dev"
 
@@ -16,31 +18,55 @@ const (
 	envVarKeyPath        = "GOPHR_KEYFILE_PATH"
 	envVarK8SProdContext = "GOPHR_K8S_CONTEXT"
 
-	flagNameGPI              = "gpi"
-	flagNameProd             = "prod"
-	flagNameKeyPath          = "key"
-	flagNameRepoPath         = "repo-path"
-	flagNameIncludeDB        = "include-db"
-	flagNameForeground       = "foreground"
-	flagNameK8SProdContext   = "k8s-context"
-	flagNameDeletePersistent = "delete-persistent"
+	flagNameGPI               = "gpi"
+	flagAliasGPI              = "g"
+	flagUsageGPI              = "gophr's google project id"
+	flagNameProd              = "prod"
+	flagUsageProd             = "gophr execution environment"
+	flagNameKeyPath           = "key"
+	flagAliasKeyPath          = "k"
+	flagUsageKeyPath          = "path to the key file"
+	flagNameRepoPath          = "repo-path"
+	flagUsageRepoPath         = "path to the gophr repository"
+	flagNameExclude           = "excluded-modules"
+	flagAliasExclude          = "e"
+	flagUsageExclude          = "comma-delimited list of modules to exclude"
+	flagNameIncludeDB         = "include-db"
+	flagUsageIncludeDB        = "includes the db in \"all\""
+	flagNameForeground        = "foreground"
+	flagNameK8SProdContext    = "k8s-context"
+	flagAliasK8SProdContext   = "c"
+	flagUsageK8SProdContext   = "the kubernetes production context"
+	flagNameDeletePersistent  = "delete-persistent"
+	flagUsageDeletePersistent = "deletes persistent components as well (e.g. services)"
 
-	commandNameBuild   = "build"
-	commandDescBuild   = "Updates module images"
-	commandNameCycle   = "cycle"
-	commandDescCycle   = "Re-creates a module in kubernetes"
-	commandNameLog     = "log"
-	commandDescLog     = "Logs module's container output to stdout"
-	commandNamePods    = "pods"
-	commandDescPods    = "Lists all pods in kubernetes"
-	commandNameSecrets = "secrets"
-	commandDescSecrets = "Deals with private data"
-	commandNameSSH     = "ssh"
-	commandDescSSH     = "Starts a shell session within a module's container"
-	commandNameStop    = "stop"
-	commandDescStop    = "Stops module containers"
-	commandNameUpdate  = "update"
-	commandDescUpdate  = "Updates module kubernetes definition"
+	commandNameBuild              = "build"
+	commandDescBuild              = "Updates module images"
+	commandNameCycle              = "cycle"
+	commandDescCycle              = "Re-creates a module in kubernetes"
+	commandNameLog                = "log"
+	commandDescLog                = "Logs module's container output to stdout"
+	commandNamePods               = "pods"
+	commandDescPods               = "Lists all pods in kubernetes"
+	commandNameSecrets            = "secrets"
+	commandDescSecrets            = "Deals with private data"
+	commandNameSecretsNewKey      = "new-key"
+	commandDescSecretsNewKey      = "Deals with private data"
+	commandArgsUsageSecretsNewKey = "[new key filepath]"
+	commandNameSecretsRecord      = "record"
+	commandDescSecretsRecord      = "Deals with private data"
+	commandArgsUsageSecretsRecord = "[flags...] [secret filepath]"
+	commandNameSecretsCycle       = "cycle"
+	commandDescSecretsCycle       = "Cycles all recorded secrets"
+	commandArgsUsageSecretsCycle  = "[flags...] [secret filepath]"
+	commandNameSSH                = "ssh"
+	commandDescSSH                = "Starts a shell session within a module's container"
+	commandNameStop               = "stop"
+	commandDescStop               = "Stops module containers"
+	commandNameUp                 = "up"
+	commandDescUp                 = "Starts all unstarted modules in order"
+	commandNameUpdate             = "update"
+	commandDescUpdate             = "Updates module kubernetes definition"
 )
 
 var (
@@ -64,25 +90,25 @@ func main() {
 	defaultRepoPath = filepath.Join(gopath, "src/github.com/skeswa/gophr")
 
 	// Then, describe command metadata.
-	app.Name = "gophrctl"
-	app.Usage = "Manages the gophr development and deployment environment."
+	app.Name = cliName
+	app.Usage = cliDesc
 	app.Version = cliVersion
-	app.HelpName = "gophrctl"
+	app.HelpName = cliName
 
 	// After that, set the global flags for gophrctl.
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  flagNameProd,
-			Usage: "gophr execution environment",
+			Usage: flagUsageProd,
 		},
 		cli.StringFlag{
 			Name:  flagNameRepoPath,
 			Value: defaultRepoPath,
-			Usage: "path to the gophr repository",
+			Usage: flagUsageRepoPath,
 		},
 		cli.StringFlag{
-			Name:   flagNameK8SProdContext + ",c",
-			Usage:  "the kubernetes production context",
+			Name:   flagNameK8SProdContext + "," + flagAliasK8SProdContext,
+			Usage:  flagUsageK8SProdContext,
 			EnvVar: envVarK8SProdContext,
 		},
 	}
@@ -99,11 +125,11 @@ func main() {
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
-					Usage: "includes the db in \"all\"",
+					Usage: flagUsageIncludeDB,
 				},
 				cli.StringFlag{
-					Name:   flagNameGPI + ",g",
-					Usage:  "gophr's google project id",
+					Name:   flagNameGPI + "," + flagAliasGPI,
+					Usage:  flagUsageGPI,
 					EnvVar: envVarGPI,
 				},
 			},
@@ -119,11 +145,11 @@ func main() {
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
-					Usage: "includes the db in \"all\"",
+					Usage: flagUsageIncludeDB,
 				},
 				cli.BoolFlag{
 					Name:  flagNameDeletePersistent,
-					Usage: "deletes persistent components as well (e.g. services)",
+					Usage: flagUsageDeletePersistent,
 				},
 			},
 		},
@@ -151,6 +177,20 @@ func main() {
 			ArgsUsage: moduleCommandArgsUsage,
 		},
 
+		// Up command.
+		{
+			Name:   commandNameUp,
+			Usage:  commandDescUp,
+			Action: upCommand,
+
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  flagNameExclude + "," + flagAliasExclude,
+					Usage: flagUsageExclude,
+				},
+			},
+		},
+
 		// Update command.
 		{
 			Name:      commandNameUpdate,
@@ -161,7 +201,7 @@ func main() {
 			Flags: []cli.Flag{
 				cli.BoolFlag{
 					Name:  flagNameIncludeDB,
-					Usage: "includes the db in \"all\"",
+					Usage: flagUsageIncludeDB,
 				},
 			},
 		},
@@ -172,34 +212,34 @@ func main() {
 			Usage: commandDescSecrets,
 			Subcommands: []cli.Command{
 				{
-					Name:      "new-key",
-					Usage:     "Creates a new key",
+					Name:      commandNameSecretsNewKey,
+					Usage:     commandDescSecretsNewKey,
 					Action:    secretsNewKeyCommand,
-					ArgsUsage: "[new key filepath]",
+					ArgsUsage: commandArgsUsageSecretsNewKey,
 				},
 				{
-					Name:      "record",
-					Usage:     "Records a new secret",
+					Name:      commandNameSecretsRecord,
+					Usage:     commandDescSecretsRecord,
 					Action:    secretsRecordCommand,
-					ArgsUsage: "[flags...][secret filepath]",
+					ArgsUsage: commandArgsUsageSecretsNewKey,
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:   flagNameKeyPath + ", k",
-							Usage:  "path to the key file",
+							Name:   flagNameKeyPath + "," + flagAliasKeyPath,
+							Usage:  flagUsageKeyPath,
 							EnvVar: envVarKeyPath,
 						},
 					},
 				},
 				{
-					Name:   "cycle",
-					Usage:  "Cycles all recorded secrets",
+					Name:   commandNameSecretsCycle,
+					Usage:  commandDescSecretsCycle,
 					Action: secretsCycleCommand,
 
 					Flags: []cli.Flag{
 						cli.StringFlag{
-							Name:   flagNameKeyPath + ", k",
-							Usage:  "path to the key file",
+							Name:   flagNameKeyPath + "," + flagAliasKeyPath,
+							Usage:  flagUsageKeyPath,
 							EnvVar: envVarKeyPath,
 						},
 					},
