@@ -12,6 +12,7 @@ const (
 type module struct {
 	name         string
 	deps         []string
+	transient    bool
 	dockerfile   string
 	prodVolumes  []gCloudVolume
 	versionfile  string
@@ -53,8 +54,9 @@ var modules = map[string]*module{
 		buildContext: ".",
 	},
 	"migrator": &module{
-		name: "migrator",
-		deps: []string{"db"},
+		name:      "migrator",
+		deps:      []string{"db"},
+		transient: true, // Means that migrator exits after a duration.
 		devK8SFiles: []string{
 			"./infra/k8s/migrator/pod.dev.yml",
 		},

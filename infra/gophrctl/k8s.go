@@ -268,7 +268,7 @@ func getPodsInK8S() (string, error) {
 	return string(output[:]), nil
 }
 
-func filterK8SPods(moduleName string) ([]string, error) {
+func filterRunningK8SPods(moduleName string) ([]string, error) {
 	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
 	if err != nil {
 		return nil, newExecError(output, err)
@@ -289,21 +289,58 @@ func filterK8SPods(moduleName string) ([]string, error) {
 	return runningPodNames, nil
 }
 
-func waitForK8SPods(moduleName string) error {
+func areK8SPodsDead(moduleName string) (bool, error) {
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
+	if err != nil {
+		return false, newExecError(output, err)
+	}
+
+	podList := K8SPodList{}
+	if err = json.Unmarshal(output, &podList); err != nil {
+		return false, newExecError(output, errors.New("Could not read pod metadata"))
+	}
+
+	runningCount := 0
+	notRunningCount := 0
+	for _, pod := range podList.Pods {
+		if pod.Status.Phase == "Running" {
+			runningCount = runningCount + 1
+		} else {
+			notRunningCount = notRunningCount + 1
+		}
+	}
+
+	return runningCount == 0 && notRunningCount > 0, nil
+}
+
+func waitForK8SPods(moduleName string, waitTilFinished bool) error {
 	startSpinner(fmt.Sprintf("Waiting for module \"%s\" to start", moduleName))
-	for i := 0; i < 10; i++ {
-		// Pause for half a second before trying again (after first attempt).
+
+	// Make enough attempts to span 1 minute.
+	for i := 0; i < 60; i++ {
+		// Pause for a second before trying again (after first attempt).
 		if i > 0 {
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 		}
 
-		// Check if there are pods.
-		if pods, err := filterK8SPods(moduleName); err != nil {
-			stopSpinner(false)
-			return err
-		} else if len(pods) > 0 {
-			stopSpinner(true)
-			return nil
+		if waitTilFinished {
+			// Check if there pods that have finished.
+			if podsAreDead, err := areK8SPodsDead(moduleName); err != nil {
+				stopSpinner(false)
+				return err
+			} else if podsAreDead {
+				stopSpinner(true)
+				return nil
+			}
+		} else {
+			// Check if there are running pods.
+			if pods, err := filterRunningK8SPods(moduleName); err != nil {
+				stopSpinner(false)
+				return err
+			} else if len(pods) > 0 {
+				stopSpinner(true)
+				return nil
+			}
 		}
 	}
 

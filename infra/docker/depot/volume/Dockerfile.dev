@@ -16,9 +16,9 @@ RUN apt-get update -qq \
   && mkdir -p /etc/sv/nfs
 
 # Copy lifecycle scripts from the files directory.
-COPY ./infra/docker/depot/internal/files/nfs.init       /etc/sv/nfs/run
-COPY ./infra/docker/depot/internal/files/nfs.stop       /etc/sv/nfs/finish
-COPY ./infra/docker/depot/internal/files/nfs_setup.sh   /usr/local/bin/nfs_setup
+COPY ./infra/docker/depot/volume/files/nfs.init       /etc/sv/nfs/run
+COPY ./infra/docker/depot/volume/files/nfs.stop       /etc/sv/nfs/finish
+COPY ./infra/docker/depot/volume/files/nfs_setup.sh   /usr/local/bin/nfs_setup
 
 # Make sure the lifecycle scripts have adequate permissions.
 RUN chmod +x /etc/sv/nfs/run \

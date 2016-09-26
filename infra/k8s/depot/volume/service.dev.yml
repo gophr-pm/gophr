@@ -6,10 +6,13 @@ metadata:
     module: depot-vol
   namespace: gophr
 spec:
+  type: NodePort
   ports:
     - name: nfs
       port: 2049
+      nodePort: 30980
     - name: rpcbind
       port: 111
+      nodePort: 30981
   selector:
     module: depot-vol

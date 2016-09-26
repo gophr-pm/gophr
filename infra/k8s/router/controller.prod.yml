@@ -29,11 +29,8 @@ spec:
           name: repos
       volumes:
       - name: construction-zone
-        emptyDir: {}
+        emptyDir:
+          medium: ""
       - name: secrets
         secret:
           secretName: gophr-secrets
-      - name: repos
-        gcePersistentDisk:
-          pdName: gophr-volume-depot
-          fsType: ext4
