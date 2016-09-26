@@ -25,5 +25,6 @@ spec:
           name: repos
       volumes:
       - name: repos
-        hostPath:
-          path: /data/repos
+        persistentVolumeClaim:
+          claimName: depot-vol-pvc
+          readOnly: true

@@ -26,9 +26,10 @@ spec:
         - mountPath: /repos
           name: repos
       volumes:
+      - name: repos
+        persistentVolumeClaim:
+          claimName: depot-vol-pvc
+          readOnly: true
       - name: secrets
         secret:
           secretName: gophr-secrets
-      - name: repos
-        hostPath:
-          path: /data/repos

@@ -12,7 +12,7 @@ RUN apt-get update -qq \
     nfs-kernel-server \
     runit \
     inotify-tools -qq \
-  && mkdir -p /exports \
+  && mkdir -p /repos \
   && mkdir -p /etc/sv/nfs
 
 # Copy lifecycle scripts from the files directory.
@@ -31,7 +31,7 @@ RUN echo "nfs             2049/tcp" >> /etc/services \
   && echo "nfs             111/udp" >> /etc/services
 
 # Specify the mount point for the volume that NFS exposes.
-VOLUME ["/exports"]
+VOLUME ["/repos"]
 
 # Expose the NFS operation ports (for both protocols).
 EXPOSE 111/udp 2049/tcp

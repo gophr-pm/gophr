@@ -75,6 +75,29 @@ var modules = map[string]*module{
 		versionfile:  "./infra/docker/indexer/Versionfile.prod",
 		buildContext: ".",
 	},
+	"depot-vol": &module{
+		name: "depot-vol",
+		devK8SFiles: []string{
+			"./infra/k8s/depot/volume/volume.dev.yml",
+			"./infra/k8s/depot/volume/claim.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/depot/volume/service.prod.yml",
+			"./infra/k8s/depot/volume/controller.prod.yml",
+			"./infra/k8s/depot/volume/volume.prod.yml",
+			"./infra/k8s/depot/volume/claim.prod.yml",
+		},
+		dockerfile: "./infra/docker/depot/volume/Dockerfile",
+		prodVolumes: []gCloudVolume{
+			gCloudVolume{
+				name: depotVolumeName,
+				gigs: depotVolumeCapacity,
+				ssd:  false,
+			},
+		},
+		versionfile:  "./infra/docker/depot/internal/Versionfile.prod",
+		buildContext: ".",
+	},
 	"depot-int": &module{
 		name: "depot-int",
 		devK8SFiles: []string{

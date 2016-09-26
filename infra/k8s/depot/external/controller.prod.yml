@@ -27,9 +27,8 @@ spec:
           name: repos
       volumes:
       - name: repos
-        gcePersistentDisk:
-          pdName: gophr-volume-depot
-          fsType: ext4
+        persistentVolumeClaim:
+          claimName: depot-vol-pvc
           readOnly: true
       - name: secrets
         secret:

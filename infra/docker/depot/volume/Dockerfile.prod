@@ -1,0 +1,39 @@
+FROM ubuntu
+
+# Disables interactive behavior in apt, and other things.
+ENV DEBIAN_FRONTEND noninteractive
+
+# Install NFS, init scheme and supervisor (runit), and filesystem notification
+# utilities. Afterwards, create the exports directory and the NFS lifecycle
+# scripts directory.
+RUN apt-get update -qq \
+  && apt-get install -y \
+    nfs-kernel-server \
+    runit \
+    inotify-tools -qq \
+  && mkdir -p /repos \
+  && mkdir -p /etc/sv/nfs
+
+# Copy lifecycle scripts from the files directory.
+COPY ./infra/docker/depot/internal/files/nfs.init       /etc/sv/nfs/run
+COPY ./infra/docker/depot/internal/files/nfs.stop       /etc/sv/nfs/finish
+COPY ./infra/docker/depot/internal/files/nfs_setup.sh   /usr/local/bin/nfs_setup
+
+# Make sure the lifecycle scripts have adequate permissions.
+RUN chmod +x /etc/sv/nfs/run \
+  && chmod +x /etc/sv/nfs/finish \
+  && chmod +x /usr/local/bin/nfs_setup
+
+# fix for issue #10: Servname not supported for ai_socktype
+# https://github.com/cpuguy83/docker-nfs-server/issues/10
+RUN echo "nfs             2049/tcp" >> /etc/services \
+  && echo "nfs             111/udp" >> /etc/services
+
+# Specify the mount point for the volume that NFS exposes.
+VOLUME ["/repos"]
+
+# Expose the NFS operation ports (for both protocols).
+EXPOSE 111/udp 2049/tcp
+
+# Run the setup script as the entrypoint.
+ENTRYPOINT ["/usr/local/bin/nfs_setup"]
