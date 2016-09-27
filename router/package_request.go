@@ -41,6 +41,7 @@ type newPackageRequestArgs struct {
 	req          *http.Request
 	downloadRefs refsDownloader
 	fetchFullSHA fullSHAFetcher
+	doHTTPHead   github.HTTPHeadReq
 }
 
 // newPackageRequest parses and simplifies the information in a package version
@@ -63,9 +64,12 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		// If we have a short SHA selector convert it to a full SHA.
 		if parts.hasShortSHASelector {
 			matchedSHA, err = args.fetchFullSHA(
-				parts.author,
-				parts.repo,
-				parts.shaSelector,
+				github.FetchFullSHAArgs{
+					Author:     parts.author,
+					Repo:       parts.repo,
+					ShortSHA:   parts.shaSelector,
+					DoHTTPHead: args.doHTTPHead,
+				},
 			)
 			if err != nil {
 				return nil, err

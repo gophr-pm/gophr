@@ -56,6 +56,7 @@ func RequestHandler(
 			req:          r,
 			downloadRefs: common.FetchRefs,
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
+			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
 			errors.RespondWithError(w, err)
 			return
