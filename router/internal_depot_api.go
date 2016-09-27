@@ -6,10 +6,7 @@ import (
 	"net/http"
 )
 
-const (
-	internalDepotAPIPort   = 3000
-	internalDepotAPIDomain = "depot-internal-svc"
-)
+const internalDepotAPIDomain = "depot-int-svc"
 
 // packageExistsInDepot will return true if a package matching author, repo and
 // sha exists in depot.
@@ -17,9 +14,8 @@ func packageExistsInDepot(author, repo, sha string) (bool, error) {
 	req, err := http.NewRequest(
 		"GET",
 		fmt.Sprintf(
-			"http://%s:%d/api/repos/%s/%s/%s",
+			"http://%s/api/repos/%s/%s/%s",
 			internalDepotAPIDomain,
-			internalDepotAPIPort,
 			author,
 			repo,
 			sha),
@@ -54,9 +50,8 @@ func createRepoInDepot(author, repo, sha string) (bool, error) {
 	req, err := http.NewRequest(
 		"POST",
 		fmt.Sprintf(
-			"http://%s:%d/api/repos/%s/%s/%s",
+			"http://%s/api/repos/%s/%s/%s",
 			internalDepotAPIDomain,
-			internalDepotAPIPort,
 			author,
 			repo,
 			sha),
@@ -90,9 +85,8 @@ func deleteRepoInDepot(author, repo, sha string) error {
 	req, err := http.NewRequest(
 		"DELETE",
 		fmt.Sprintf(
-			"http://%s:%d/api/repos/%s/%s/%s",
+			"http://%s/api/repos/%s/%s/%s",
 			internalDepotAPIDomain,
-			internalDepotAPIPort,
 			author,
 			repo,
 			sha),
