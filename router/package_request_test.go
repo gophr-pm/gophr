@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/jinzhu/copier"
 	"github.com/skeswa/gophr/common"
+	"github.com/skeswa/gophr/common/github"
 	"github.com/skeswa/gophr/common/semver"
 	"github.com/stretchr/testify/assert"
 )
@@ -71,6 +73,13 @@ func TestNewPackageRequest(t *testing.T) {
 	assert.Nil(t, pr)
 	assert.NotNil(t, err)
 
+	pr, err = newPackageRequest(newPackageRequestArgs{
+		req:          fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", false),
+		downloadRefs: fakeRefsDownloader(common.Refs{}, errors.New("This is an error.")),
+	})
+	assert.Nil(t, pr)
+	assert.NotNil(t, err)
+
 	req := fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", false)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
@@ -128,6 +137,7 @@ func TestNewPackageRequest(t *testing.T) {
 	assert.Equal(t, "GitRefHash1GitRefHash1GitRefHash1GitRefH", pr.matchedSHA)
 	assert.Equal(t, "1.2.0", pr.matchedSHALabel)
 
+	// Tests Full SHA
 	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@1234567890123456789012345678901234567890", true)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
@@ -137,6 +147,32 @@ func TestNewPackageRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "1234567890123456789012345678901234567890", pr.matchedSHA)
 	assert.Equal(t, "", pr.matchedSHALabel)
+
+	// Tests Short SHA with no errors
+	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@123456", true)
+	pr, err = newPackageRequest(newPackageRequestArgs{
+		req:          req,
+		downloadRefs: fakeRefsDownloader(fakeRefs("somemasterhash", nil), nil),
+		fetchFullSHA: func(args github.FetchFullSHAArgs) (string, error) {
+			return args.ShortSHA, nil
+		},
+	})
+	assert.NotNil(t, pr)
+	assert.Nil(t, err)
+	assert.Equal(t, "123456", pr.matchedSHA)
+	assert.Equal(t, "", pr.matchedSHALabel)
+
+	// Test Short SHA with error
+	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@123456", true)
+	pr, err = newPackageRequest(newPackageRequestArgs{
+		req:          req,
+		downloadRefs: fakeRefsDownloader(fakeRefs("somemasterhash", nil), nil),
+		fetchFullSHA: func(args github.FetchFullSHAArgs) (string, error) {
+			return "", errors.New("error occured")
+		},
+	})
+	assert.NotNil(t, err)
+	assert.Nil(t, pr)
 }
 
 // TODO(skeswa): Fix this
