@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	// archiveExistenceCheckDelayMS is the time gap between existence check
+	// archiveExistenceCheckDelay is the time gap between existence check
 	// attempts.
-	archiveExistenceCheckDelayMS = 500
+	archiveExistenceCheckDelay = 3000
 	// archiveExistenceCheckAttemptsLimit sets the cap on how many times an archive
 	// existence check is attempted before the an error is recorded.
-	archiveExistenceCheckAttemptsLimit = 3
+	archiveExistenceCheckAttemptsLimit = 5
 )
 
 // versionAndArchivePackage takes a package, locks all of its versions
@@ -70,7 +70,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 			// Enforce a time delay between attempts so as to allow for archival to
 			// occur.
 			if attempts > 0 {
-				time.Sleep(archiveExistenceCheckDelayMS * time.Millisecond)
+				time.Sleep(archiveExistenceCheckDelay * time.Millisecond)
 			}
 
 			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalCheckerArgs{

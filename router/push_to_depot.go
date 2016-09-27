@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	commitAuthor        = "Gophrs Archiver"
+	commitAuthor        = "Gophr Archiver"
 	commitAuthorEmail   = "archiver@gophr.pm"
 	masterBranchName    = "master"
 	masterBranchRef     = "refs/heads/master"
@@ -132,7 +132,6 @@ func pushToDepot(args packagePusherArgs) error {
 func generateCredentialsCallback(user, pass string) func(string, string, git.CredType) (git.ErrorCode, *git.Cred) {
 	return func(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
 		ret, cred := git.NewCredUserpassPlaintext(user, pass)
-
 		return git.ErrorCode(ret), &cred
 	}
 }

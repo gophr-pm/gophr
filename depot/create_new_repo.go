@@ -27,13 +27,13 @@ func createNewRepo(depotReposPath, author, repo, sha string) (bool, error) {
 	for attempts := 0; attempts < repoCreationAttemptsLimit; attempts = attempts + 1 {
 		// First, check if repo dir exists on the depot volume.
 		if exists, err := repoExists(depotReposPath, author, repo, sha); err != nil {
-			return false, fmt.Errorf(
+			return true, fmt.Errorf(
 				"Failed to check if repo directory \"%s\" exists: %v.",
 				repoDir,
 				err)
 		} else if exists {
 			// If the repo directory exists already, exit - the job is already done.
-			return false, nil
+			return true, nil
 		}
 
 		// The repo directory doesn't exist, so creating it should be ok.
@@ -46,7 +46,7 @@ func createNewRepo(depotReposPath, author, repo, sha string) (bool, error) {
 			}
 
 			// Woop! New repo in the depot!
-			return true, nil
+			return false, nil
 		}
 
 		// Merely log mkdir failure so that it can be re-attempted.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -11,7 +12,7 @@ import (
 // some other error occurs, returns that error.
 func repoExists(depotReposPath, author, repo, sha string) (bool, error) {
 	// Compose author, repo and sha together to get the repo name.
-	repoDir := depot.BuildHashedRepoName(author, repo, sha)
+	repoDir := fmt.Sprintf("%s.git", depot.BuildHashedRepoName(author, repo, sha))
 
 	// TODO(skeswa): make the depotReposPath configurable (could change).
 	path := filepath.Join(depotReposPath, repoDir)

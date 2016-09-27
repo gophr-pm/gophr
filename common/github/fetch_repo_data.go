@@ -18,8 +18,6 @@ func (svc *requestService) FetchGitHubDataForPackageModel(
 ) (map[string]interface{}, error) {
 	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	log.Printf("%+v \n", APIKeyModel)
-	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 	githubURL := buildGitHubRepoDataAPIURL(packageModel, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
@@ -36,7 +34,6 @@ func (svc *requestService) FetchGitHubDataForPackageModel(
 	}
 
 	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
-	APIKeyModel.print()
 
 	responseBodyMap, err := parseGitHubRepoDataResponseBody(resp)
 	if err != nil {
