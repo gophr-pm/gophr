@@ -25,6 +25,7 @@ spec:
           name: secrets
         - mountPath: /repos
           name: repos
+          readOnly: true
       volumes:
       - name: repos
         persistentVolumeClaim:
