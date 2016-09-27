@@ -3,42 +3,40 @@ package github
 import (
 	"errors"
 	"fmt"
-	"net/http"
 )
 
 const (
-	etagHeader = "Etag"
-	shaLength  = 40
+	etagHeader           = "Etag"
+	minSHALength         = 40
+	baseGithubArchiveURL = "https://github.com/%s/%s/archive/%s.zip"
 )
 
-// FetchFullSHAFromPartialSHA is responsible for fetching a full commit SHA from a short SHA
-func FetchFullSHAFromPartialSHA(author, repo, shortSHA string) (string, error) {
-	client := &http.Client{}
+// FetchFullSHAFromPartialSHA is responsible for fetching a full commit SHA from a short SHA.
+// This works by sending a HEAD request to the git archive endpoint with a short SHA.
+// The request returns a full SHA of the archive in the `Etag` of the request header that
+// is sent back.
+func FetchFullSHAFromPartialSHA(args FetchFullSHAArgs) (string, error) {
 	archiveURL := fmt.Sprintf(
-		"https://github.com/%s/%s/archive/%s.zip",
-		author,
-		repo,
-		shortSHA,
+		baseGithubArchiveURL,
+		args.Author,
+		args.Repo,
+		args.ShortSHA,
 	)
-	req, err := http.NewRequest(
-		"HEAD",
-		archiveURL,
-		nil,
-	)
+
+	gitHubRespHeader, err := args.DoHTTPHead(archiveURL)
 	if err != nil {
 		return "", err
 	}
 
-	resp, err := client.Do(req)
-	if err != nil || resp.StatusCode == 404 {
-		return "", err
+	eTagHeader := gitHubRespHeader.Get(etagHeader)
+	if len(eTagHeader) < minSHALength {
+		return "", errors.New(
+			"Unable to retrieve full commit SHA, Etag header was incomplete or empty.",
+		)
 	}
 
-	eTagHeader := resp.Header.Get(etagHeader)
-	if len(eTagHeader) < shaLength {
-		return "", errors.New("Unable to retrieve full commit SHA, Etag header was incomplete or empty.")
-	}
-
+	// The Etag in the header contains the full SHA wrapped in quotes.
+	// We need to remove the quotes.
 	fullSHA := eTagHeader[1 : len(eTagHeader)-1]
 
 	return fullSHA, nil
