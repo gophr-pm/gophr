@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	etagHeader           = "Etag"
-	minSHALength         = 40
-	baseGithubArchiveURL = "https://github.com/%s/%s/archive/%s.zip"
+	etagHeader             = "Etag"
+	minSHALengthWithQuotes = 42
+	baseGithubArchiveURL   = "https://github.com/%s/%s/archive/%s.zip"
 )
 
 // FetchFullSHAFromPartialSHA is responsible for fetching a full commit SHA from a short SHA.
@@ -29,7 +29,7 @@ func FetchFullSHAFromPartialSHA(args FetchFullSHAArgs) (string, error) {
 	}
 
 	eTagHeader := gitHubRespHeader.Get(etagHeader)
-	if len(eTagHeader) < minSHALength {
+	if len(eTagHeader) != minSHALengthWithQuotes {
 		return "", errors.New(
 			"Unable to retrieve full commit SHA, Etag header was incomplete or empty.",
 		)
