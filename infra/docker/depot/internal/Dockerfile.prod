@@ -4,39 +4,39 @@ FROM golang:latest
 ENV NGINX_VERSION 1.11.4-1~jessie
 RUN apt-key update \
   && apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
-	&& echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
-	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-		ca-certificates \
-		nginx=${NGINX_VERSION} \
-		nginx-module-geoip \
-		nginx-module-image-filter \
-		nginx-module-perl \
-		nginx-module-njs \
-		gettext-base \
-		gitweb \
-		autoconf \
-		build-essential \
+  && echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
+  && apt-get update \
+  && apt-get install --no-install-recommends --no-install-suggests -y \
+    ca-certificates \
+    nginx=${NGINX_VERSION} \
+    nginx-module-geoip \
+    nginx-module-image-filter \
+    nginx-module-perl \
+    nginx-module-njs \
+    gettext-base \
+    gitweb \
+    autoconf \
+    build-essential \
     pkg-config \
-		automake \
-		libtool \
-		libfcgi-dev \
-		git-core \
-		gitweb
+    automake \
+    libtool \
+    libfcgi-dev \
+    git-core \
+    gitweb
 
 # Build and install fcgiwrap.
 RUN git clone https://github.com/gnosek/fcgiwrap.git \
-		&& cd fcgiwrap/ \
-		&& autoreconf -i \
-		&& ./configure \
-		&& make \
-		&& make install \
-		&& cp fcgiwrap /usr/bin
+    && cd fcgiwrap/ \
+    && autoreconf -i \
+    && ./configure \
+    && make \
+    && make install \
+    && cp fcgiwrap /usr/bin
 
 # Symlink gitweb.cgi.
 RUN mkdir -p /var/www/git \
-		&& ln -s /usr/lib/cgi-bin/gitweb.cgi /var/www/git/gitweb.cgi \
-		&& chmod ugo+x /var/www/git/gitweb.cgi
+    && ln -s /usr/lib/cgi-bin/gitweb.cgi /var/www/git/gitweb.cgi \
+    && chmod ugo+x /var/www/git/gitweb.cgi
 
 # Copy in gitweb and nginx configurations.
 COPY ./infra/docker/depot/internal/files/nginx/git.conf /etc/nginx/conf.d/git.conf
@@ -66,22 +66,22 @@ RUN apt-get -q -y install \
   && curl -fsSL "https://github.com/libgit2/libgit2/archive/v$LIBGIT2_VERSION.tar.gz" -o "libgit2.tar.gz" \
   && mkdir "libssh2" \
   && mkdir "libgit2" \
- 	&& tar xvf "libssh2.tar.gz" -C "libssh2" \
+   && tar xvf "libssh2.tar.gz" -C "libssh2" \
   && tar xvf "libgit2.tar.gz" -C "libgit2" \
-	&& cd "/build-artifacts/libssh2/libssh2-$LIBSSH2_VERSION" \
+  && cd "/build-artifacts/libssh2/libssh2-$LIBSSH2_VERSION" \
   && echo -e "\nBuilding libssh2...\n" \
-	&& cmake -DBUILD_SHARED_LIBS=ON . \
-	&& cmake --build . \
-	&& make \
-	&& make install \
-	&& ldconfig \
+  && cmake -DBUILD_SHARED_LIBS=ON . \
+  && cmake --build . \
+  && make \
+  && make install \
+  && ldconfig \
   && cd "/build-artifacts/libgit2/libgit2-$LIBGIT2_VERSION" \
   && echo -e "\nBuilding libgit2...\n" \
-	&& cmake -DCURL=OFF . \
-	&& cmake --build . \
-	&& make \
-	&& make install \
-	&& ldconfig \
+  && cmake -DCURL=OFF . \
+  && cmake --build . \
+  && make \
+  && make install \
+  && ldconfig \
   && cd / \
   && echo -e "\nCleaning up native lib build artifacts...\n" \
   && rm -rf "/build-artifacts"
