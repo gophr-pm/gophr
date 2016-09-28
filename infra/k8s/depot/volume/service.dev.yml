@@ -11,8 +11,11 @@ spec:
     - name: nfs
       port: 2049
       nodePort: 30980
+    - name: mountd
+      port: 20048
+      nodePort: 30981
     - name: rpcbind
       port: 111
-      nodePort: 30981
+      nodePort: 30982
   selector:
     module: depot-vol
