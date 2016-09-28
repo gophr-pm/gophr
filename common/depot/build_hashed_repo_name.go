@@ -9,10 +9,6 @@ const (
 	// DepotInternalServiceAddress is the address for which all internal requests
 	// will be resolved.
 	DepotInternalServiceAddress = "depot-int-svc"
-	// externalRepoURLTemplate is the URL of a repo in depot that is accessible
-	// externally.
-	externalRepoURLTemplate = "%s/depot/%s.git"
-	depotReposPath          = "/repos"
 )
 
 // BuildHashedRepoName creates a new repo name hash uses for repo creation
@@ -25,16 +21,4 @@ func BuildHashedRepoName(author string, repo string, sha string) string {
 		len(repo),
 		repo,
 		sha)
-}
-
-// BuildExternalRepoURL composes and returns the URL of the depot repo
-// corresponding to the author, repo and sha provided.
-func BuildExternalRepoURL(domain, author, repo, sha string) string {
-	return fmt.Sprintf(
-		externalRepoURLTemplate,
-		domain,
-		BuildHashedRepoName(
-			author,
-			repo,
-			sha))
 }
