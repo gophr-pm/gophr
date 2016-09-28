@@ -20,8 +20,11 @@ const (
 	formValueGoGet         = "1"
 	contentTypeHTML        = "text/html"
 	httpLocationHeader     = "Location"
+	gitInfoRefsSubPath     = "/info/refs"
+	depotRepoURLTemplate   = "https://%s/depot/%s.git%s"
 	gitUploadPackSubPath   = "/git-upload-pack"
 	httpContentTypeHeader  = "Content-Type"
+	basePackageURLTemplate = "https://%s%s"
 	packagePageURLTemplate = "https://%s/#/packages/%s/%s"
 )
 
@@ -59,65 +62,59 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		matchedSHALabel string
 	)
 
-	// Check if we have a SHA selector.
-	if parts.hasSHASelector() {
-		// If we have a short SHA selector convert it to a full SHA.
-		if parts.hasShortSHASelector {
-			matchedSHA, err = args.fetchFullSHA(
-				github.FetchFullSHAArgs{
-					Author:     parts.author,
-					Repo:       parts.repo,
-					ShortSHA:   parts.shaSelector,
-					DoHTTPHead: args.doHTTPHead,
-				},
-			)
-			if err != nil {
-				return nil, err
+	if isGoGetRequest(args.req) || isGitRequest(parts) {
+		// Check if we have a SHA selector.
+		if parts.hasSHASelector() {
+			// If we have a short SHA selector convert it to a full SHA.
+			if parts.hasShortSHASelector {
+				matchedSHA, err = args.fetchFullSHA(
+					github.FetchFullSHAArgs{
+						Author:     parts.author,
+						Repo:       parts.repo,
+						ShortSHA:   parts.shaSelector,
+						DoHTTPHead: args.doHTTPHead,
+					},
+				)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			// If we have a full SHA selector set the matchedSHA.
+			if parts.hasFullSHASelector {
+				matchedSHA = parts.shaSelector
 			}
 		}
 
-		// If we have a full SHA selector set the matchedSHA.
-		if parts.hasFullSHASelector {
-			matchedSHA = parts.shaSelector
+		if parts.hasSemverSelector() {
+			// If there are no candidates, return in failure.
+			if refs.Candidates == nil || len(refs.Candidates) < 1 {
+				return nil, NewNoSuchPackageVersionError(
+					parts.author,
+					parts.repo,
+					parts.semverSelector.String())
+			}
+			// Find the best candidate.
+			bestCandidate := refs.Candidates.Best(parts.semverSelector)
+			if bestCandidate == nil {
+				return nil, NewNoSuchPackageVersionError(
+					parts.author,
+					parts.repo,
+					parts.semverSelector.String())
+			}
+
+			// Re-serialize the refs data with said candidate.
+			matchedSHA = bestCandidate.GitRefHash
+			matchedSHALabel = bestCandidate.String()
+
+			return &packageRequest{
+				req:             args.req,
+				parts:           parts,
+				matchedSHA:      matchedSHA,
+				matchedSHALabel: matchedSHALabel,
+			}, nil
 		}
 
-		return &packageRequest{
-			req:             args.req,
-			parts:           parts,
-			matchedSHA:      matchedSHA,
-			matchedSHALabel: matchedSHALabel,
-		}, nil
-	}
-
-	// Get and process all of the refs for this package.
-	if refs, err = args.downloadRefs(
-		parts.author,
-		parts.repo); err != nil {
-		return nil, err
-	}
-
-	if parts.hasSemverSelector() {
-		// If there are no candidates, return in failure.
-		if refs.Candidates == nil || len(refs.Candidates) < 1 {
-			return nil, NewNoSuchPackageVersionError(
-				parts.author,
-				parts.repo,
-				parts.semverSelector.String())
-		}
-
-		// Find the best candidate.
-		bestCandidate := refs.Candidates.Best(parts.semverSelector)
-		if bestCandidate == nil {
-			return nil, NewNoSuchPackageVersionError(
-				parts.author,
-				parts.repo,
-				parts.semverSelector.String())
-		}
-
-		// Re-serialize the refs data with said candidate.
-		matchedSHA = bestCandidate.GitRefHash
-		matchedSHALabel = bestCandidate.String()
-	} else {
 		// Set the default matched sha in case there is no semver selector.
 		matchedSHA = refs.MasterRefHash
 	}
@@ -148,6 +145,40 @@ type respondToPackageRequestArgs struct {
 // respond crafts an appropriate response for a package request, serializes the
 // aforesaid response and sends it back to the original client.
 func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
+	// Git requests must be redirected to depot.
+	if isGitRequest(pr.parts) {
+		// Join the repo URL with the subpath of this request.
+		redirectLocation := fmt.Sprintf(
+			depotRepoURLTemplate,
+			getRequestDomain(pr.req),
+			depot.BuildHashedRepoName(
+				pr.parts.author,
+				pr.parts.repo,
+				pr.matchedSHA),
+			pr.parts.subpath)
+
+		// Issue a permanent redirect.
+		http.Redirect(
+			args.res,
+			pr.req,
+			redirectLocation,
+			http.StatusMovedPermanently)
+
+		// Without blocking, count a packfile request as a package download.
+		if pr.parts.subpath == gitUploadPackSubPath {
+			go args.recordPackageDownload(packageDownloadRecorderArgs{
+				db:     args.db,
+				sha:    pr.matchedSHA,
+				repo:   pr.parts.repo,
+				author: pr.parts.author,
+				// It is ok for the matched sha label to be left blank.
+				version: pr.matchedSHALabel,
+			})
+		}
+
+		return nil
+	}
+
 	// This means that go-get is requesting package/repository metadata.
 	if isGoGetRequest(pr.req) {
 		// Check whether this package has already been archived.
@@ -156,7 +187,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			sha:                   pr.matchedSHA,
 			repo:                  pr.parts.repo,
 			author:                pr.parts.author,
-			packageExistsInDepot:  depot.RepoExists,
+			packageExistsInDepot:  packageExistsInDepot,
 			recordPackageArchival: args.recordPackageArchival,
 			isPackageArchivedInDB: models.IsPackageArchived,
 		})
@@ -188,8 +219,8 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 				pushToDepot:            pushToDepot,
 				versionDeps:            verdeps.VersionDeps,
 				downloadPackage:        downloadPackage,
-				createDepotRepo:        depot.CreateNewRepo,
-				destroyDepotRepo:       depot.DestroyRepo,
+				createDepotRepo:        createRepoInDepot,
+				destroyDepotRepo:       deleteRepoInDepot,
 				isPackageArchived:      isPackageArchived,
 				constructionZonePath:   args.conf.ConstructionZonePath,
 				recordPackageArchival:  args.recordPackageArchival,
@@ -207,27 +238,12 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Without blocking, count go-get surveying this package for installation
-		// as a download in the database.
-		go args.recordPackageDownload(packageDownloadRecorderArgs{
-			db:     args.db,
-			sha:    pr.matchedSHA,
-			repo:   pr.parts.repo,
-			author: pr.parts.author,
-			// It is ok for the matched sha label to be left blank.
-			version: pr.matchedSHALabel,
-		})
-
 		// Compile the go-get metadata accordingly.
 		var (
-			domain  = getRequestDomain(pr.req)
-			repoURL = depot.BuildExternalRepoURL(
-				domain,
-				pr.parts.author,
-				pr.parts.repo,
-				pr.matchedSHA)
-			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
-				gophrURL: repoURL,
+			domain         = getRequestDomain(pr.req)
+			basePackageURL = domain + pr.parts.getBasePackagePath()
+			metaData       = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
+				gophrURL: basePackageURL,
 				treeURLTemplate: generateGithubTreeURLTemplate(
 					pr.parts.author,
 					pr.parts.repo,
@@ -248,20 +264,27 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 
 	// If none of the other cases matched, then redirect to the package page.
 	// TODO(skeswa): make this redirect specific to the version of the package.
-	args.res.Header().Set(
-		httpLocationHeader,
+	http.Redirect(
+		args.res,
+		pr.req,
 		fmt.Sprintf(
 			packagePageURLTemplate,
-			pr.req.URL.Host,
+			getRequestDomain(pr.req),
 			pr.parts.author,
-			pr.parts.repo))
-	args.res.WriteHeader(http.StatusMovedPermanently)
+			pr.parts.repo),
+		http.StatusMovedPermanently)
 	return nil
 }
 
 // isGoGetRequest returns true if the request was made by go get.
 func isGoGetRequest(req *http.Request) bool {
 	return req.FormValue(formKeyGoGet) == formValueGoGet
+}
+
+// isGitRequest returns true if the request was made by git (in a clone setting).
+func isGitRequest(parts *packageRequestParts) bool {
+	return parts.subpath == gitInfoRefsSubPath ||
+		parts.subpath == gitUploadPackSubPath
 }
 
 // getRequestDomain isolates and returns the domain of the specified request.

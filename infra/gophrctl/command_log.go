@@ -45,7 +45,7 @@ func logModule(c *cli.Context, m *module, moduleName string, env environment) er
 	)
 
 	// Get the running module pods.
-	if podNames, err = filterK8SPods(moduleName); err != nil {
+	if podNames, err = filterRunningK8SPods(moduleName); err != nil {
 		return err
 	}
 

@@ -7,9 +7,11 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
+	"time"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -44,12 +46,12 @@ type K8SPodMetadata struct {
 }
 
 var (
-	serviceK8SFileRegex  = regexp.MustCompile(`service\.[a-z]+\.yml$`)
-	prodK8SImageURLRegex = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
+	prodK8SImageURLRegex   = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-_{}]+)/([a-zA-Z0-9\-:\.]+)`)
+	persistentK8SFileRegex = regexp.MustCompile(`(?:service|claim|volume)s?\.[a-z]+(\.template)?\.yml$`)
 )
 
 func isPersistentK8SResource(k8sfile string) bool {
-	return serviceK8SFileRegex.MatchString(k8sfile)
+	return persistentK8SFileRegex.MatchString(k8sfile)
 }
 
 func readK8SProdContext(c *cli.Context) (string, error) {
@@ -59,6 +61,58 @@ func readK8SProdContext(c *cli.Context) (string, error) {
 	}
 
 	return context, nil
+}
+
+// deleteK8STemplateFiles deletes any generated kubernetes config files.
+func deleteGeneratedK8SFiles(k8sfilePaths []string) error {
+	for _, k8sfilePath := range k8sfilePaths {
+		if isTemplateK8SFile(k8sfilePath) {
+			if err := os.Remove(k8sfilePath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// getModuleK8SFilePaths gets the appropriate kubernetes config files for the
+// module depending on the environment. Also compiles all templates.
+func getModuleK8SFilePaths(c *cli.Context, m *module) ([]string, error) {
+	var (
+		err       error
+		paths     []string
+		realPath  string
+		gophrRoot string
+		realPaths []string
+	)
+
+	if env := readEnvironment(c); env == environmentProd {
+		paths = m.prodK8SFiles
+	} else {
+		paths = m.devK8SFiles
+	}
+
+	// Figure out where everything is.
+	if gophrRoot, err = readGophrRoot(c); err != nil {
+		return nil, err
+	}
+
+	// Compile any templates that may exist.
+	for _, path := range paths {
+		realPath = filepath.Join(gophrRoot, path)
+
+		// If its a template, then compile it first.
+		if isTemplateK8SFile(realPath) {
+			if realPath, err = compileK8STemplateFile(c, realPath); err != nil {
+				return nil, err
+			}
+		}
+
+		realPaths = append(realPaths, realPath)
+	}
+
+	return realPaths, nil
 }
 
 // Returns the old kubernetes context, whether the context needs to be switched
@@ -267,7 +321,7 @@ func getPodsInK8S() (string, error) {
 	return string(output[:]), nil
 }
 
-func filterK8SPods(moduleName string) ([]string, error) {
+func filterRunningK8SPods(moduleName string) ([]string, error) {
 	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
 	if err != nil {
 		return nil, newExecError(output, err)
@@ -288,10 +342,77 @@ func filterK8SPods(moduleName string) ([]string, error) {
 	return runningPodNames, nil
 }
 
+func areK8SPodsDead(moduleName string) (bool, error) {
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "pods", "--selector=module="+moduleName, "--output=json").CombinedOutput()
+	if err != nil {
+		return false, newExecError(output, err)
+	}
+
+	podList := K8SPodList{}
+	if err = json.Unmarshal(output, &podList); err != nil {
+		return false, newExecError(output, errors.New("Could not read pod metadata"))
+	}
+
+	runningCount := 0
+	notRunningCount := 0
+	for _, pod := range podList.Pods {
+		if pod.Status.Phase == "Running" {
+			runningCount = runningCount + 1
+		} else {
+			notRunningCount = notRunningCount + 1
+		}
+	}
+
+	return runningCount == 0 && notRunningCount > 0, nil
+}
+
+func waitForK8SPods(moduleName string, waitTilFinished bool) error {
+	if waitTilFinished {
+		startSpinner(fmt.Sprintf("Waiting for module \"%s\" to execute", moduleName))
+	} else {
+		startSpinner(fmt.Sprintf("Waiting for module \"%s\" to start", moduleName))
+	}
+
+	// TODO(skeswa): scale the checks for prod.
+	// Make enough attempts to span 1 minute.
+	for i := 0; i < 60; i++ {
+		// Pause for a second before trying again (after first attempt).
+		if i > 0 {
+			time.Sleep(1 * time.Second)
+		}
+
+		if waitTilFinished {
+			// Check if there pods that have finished.
+			if podsAreDead, err := areK8SPodsDead(moduleName); err != nil {
+				stopSpinner(false)
+				return err
+			} else if podsAreDead {
+				stopSpinner(true)
+				return nil
+			}
+		} else {
+			// Check if there are running pods.
+			if pods, err := filterRunningK8SPods(moduleName); err != nil {
+				stopSpinner(false)
+				return err
+			} else if len(pods) > 0 {
+				stopSpinner(true)
+				return nil
+			}
+		}
+	}
+
+	// Ran out of attempts!
+	stopSpinner(false)
+	return fmt.Errorf(
+		"Timed out waiting for pods of module \"%s\" to come up.",
+		moduleName)
+}
+
 func abbreviateK8SPath(k8sPath string) string {
 	sep := string(os.PathSeparator)
 	parts := strings.Split(k8sPath, sep)
-	return strings.Join(parts[len(parts)-2:], sep)
+	return strings.Join(parts[len(parts)-3:], sep)
 }
 
 func secretExistsInK8S() bool {
@@ -340,13 +461,13 @@ func deleteSecretsInK8S() error {
 }
 
 func updateProdK8SFileImage(newImageURL, k8sfilePath string) error {
-	versionfileData, err := ioutil.ReadFile(k8sfilePath)
+	fileData, err := ioutil.ReadFile(k8sfilePath)
 	if err != nil {
 		return err
 	}
 
-	updatedVersionfileData := prodK8SImageURLRegex.ReplaceAll(versionfileData, []byte(newImageURL))
-	if err = ioutil.WriteFile(k8sfilePath, updatedVersionfileData, 0644); err != nil {
+	updatedFileData := prodK8SImageURLRegex.ReplaceAll(fileData, []byte(newImageURL))
+	if err = ioutil.WriteFile(k8sfilePath, updatedFileData, 0644); err != nil {
 		return err
 	}
 

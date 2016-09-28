@@ -60,6 +60,23 @@ func (parts *packageRequestParts) hasSemverSelector() bool {
 	return parts.semverSelectorDefined
 }
 
+// getBasePackagePath returns the base package path of the data in parts.
+// Simply, it is everything minus the base path and the domain.
+func (parts *packageRequestParts) getBasePackagePath() string {
+	var buffer bytes.Buffer
+	buffer.WriteByte(slash)
+	buffer.WriteString(parts.author)
+	buffer.WriteByte(slash)
+	buffer.WriteString(parts.repo)
+
+	if len(parts.selector) > 0 {
+		buffer.WriteByte(at)
+		buffer.WriteString(parts.selector)
+	}
+
+	return buffer.String()
+}
+
 // String returns a string representation of this struct. This function returns
 // a JSON-like representation of this struct.
 func (parts *packageRequestParts) String() string {

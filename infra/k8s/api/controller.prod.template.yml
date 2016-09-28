@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: api-rc
+  labels:
+    module: api
+  namespace: gophr
+spec:
+  replicas: 2
+  selector:
+    module: api
+  template:
+    metadata:
+      labels:
+        module: api
+      namespace: gophr
+    spec:
+      containers:
+      - name: api
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-api:1.0.9"
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets
