@@ -225,11 +225,8 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		// Compile the go-get metadata accordingly.
 		var (
 			domain         = getRequestDomain(pr.req)
-			basePackageURL = fmt.Sprintf(
-				basePackageURLTemplate,
-				domain,
-				pr.parts.getBasePackagePath())
-			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
+			basePackageURL = domain + pr.parts.getBasePackagePath()
+			metaData       = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
 				gophrURL: basePackageURL,
 				treeURLTemplate: generateGithubTreeURLTemplate(
 					pr.parts.author,
