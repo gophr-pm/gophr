@@ -60,19 +60,18 @@ func upCommand(c *cli.Context) error {
 			}
 
 			// Use the environment to toggle the unfiltered list.
-			k8sfiles, err := getModuleK8SFilePaths(c, m)
+			k8sfilePaths, err := getModuleK8SFilePaths(c, m)
 			if err != nil {
 				return err
 			}
 			// Make sure any potential generated files get deleted.
-			defer deleteGeneratedK8SFiles(k8sfiles)
+			defer deleteGeneratedK8SFiles(k8sfilePaths)
 
 			// Delete module in k8s only if transient (can exit).
 			if m.transient {
-				// Delete in order (if exists).
-				for _, k8sfile := range k8sfiles {
-					// Put together the absolute path.
-					k8sfilePath := filepath.Join(gophrRoot, k8sfile)
+				// Delete in reverse order (if exists).
+				for i := len(k8sfilePaths) - 1; i >= 0; i-- {
+					k8sfilePath := k8sfilePaths[i]
 					// Perform the delete command.
 					if existsInK8S(k8sfilePath) {
 						if err = deleteInK8S(k8sfilePath); err != nil {
@@ -83,9 +82,7 @@ func upCommand(c *cli.Context) error {
 			}
 
 			// Create in order (if not exists).
-			for _, k8sfile := range k8sfiles {
-				// Put together the absolute path.
-				k8sfilePath := filepath.Join(gophrRoot, k8sfile)
+			for _, k8sfilePath := range k8sfilePaths {
 				// Perform the create command.
 				if !existsInK8S(k8sfilePath) {
 					if err = createInK8S(k8sfilePath); err != nil {

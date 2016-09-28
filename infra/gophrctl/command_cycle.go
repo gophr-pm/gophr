@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -82,24 +81,22 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	}
 
 	// Use the environment to toggle the unfiltered list.
-	k8sfiles, err := getModuleK8SFilePaths(c, m)
+	k8sfilePaths, err := getModuleK8SFilePaths(c, m)
 	if err != nil {
 		return err
 	}
 	// Make sure any potential generated files get deleted.
-	defer deleteGeneratedK8SFiles(k8sfiles)
+	defer deleteGeneratedK8SFiles(k8sfilePaths)
 
 	// Destroy in reverse order.
-	for i := len(k8sfiles) - 1; i >= 0; i-- {
-		k8sfile := k8sfiles[i]
+	for i := len(k8sfilePaths) - 1; i >= 0; i-- {
+		k8sfilePath := k8sfilePaths[i]
 
 		// Only delete persistent resources if that flag says so.
-		if !shouldDeletePersistent && isPersistentK8SResource(k8sfile) {
+		if !shouldDeletePersistent && isPersistentK8SResource(k8sfilePath) {
 			continue
 		}
 
-		// Put together the absolute path.
-		k8sfilePath := filepath.Join(gophrRoot, k8sfile)
 		// Only destroy if its already a thing.
 		if existsInK8S(k8sfilePath) {
 			if err := deleteInK8S(k8sfilePath); err != nil {
@@ -109,9 +106,7 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	}
 
 	// Create in order.
-	for _, k8sfile := range k8sfiles {
-		// Put together the absolute path.
-		k8sfilePath := filepath.Join(gophrRoot, k8sfile)
+	for _, k8sfilePath := range k8sfilePaths {
 		// Perform the create command.
 		if !existsInK8S(k8sfilePath) {
 			if err := createInK8S(k8sfilePath); err != nil {

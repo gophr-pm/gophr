@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
@@ -79,32 +80,36 @@ func deleteGeneratedK8SFiles(k8sfilePaths []string) error {
 // module depending on the environment. Also compiles all templates.
 func getModuleK8SFilePaths(c *cli.Context, m *module) ([]string, error) {
 	var (
-		paths []string
-		env   = readEnvironment(c)
+		err       error
+		paths     []string
+		realPath  string
+		gophrRoot string
+		realPaths []string
 	)
-	if env == environmentProd {
+
+	if env := readEnvironment(c); env == environmentProd {
 		paths = m.prodK8SFiles
 	} else {
 		paths = m.devK8SFiles
 	}
 
-	var (
-		err       error
-		realPath  string
-		realPaths []string
-	)
+	// Figure out where everything is.
+	if gophrRoot, err = readGophrRoot(c); err != nil {
+		return nil, err
+	}
 
 	// Compile any templates that may exist.
 	for _, path := range paths {
-		if isTemplateK8SFile(path) {
-			if realPath, err = compileK8STemplateFile(c, path); err != nil {
+		realPath = filepath.Join(gophrRoot, path)
+
+		// If its a template, then compile it first.
+		if isTemplateK8SFile(realPath) {
+			if realPath, err = compileK8STemplateFile(c, realPath); err != nil {
 				return nil, err
 			}
-		} else {
-			realPath = path
 		}
 
-		realPaths = append(realPaths, realPath)
+		realPaths = append(realPaths, filepath.Join(gophrRoot, realPath))
 	}
 
 	return realPaths, nil
