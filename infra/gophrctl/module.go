@@ -30,7 +30,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/db/service.prod.yml",
-			"./infra/k8s/db/controllers.prod.yml",
+			"./infra/k8s/db/controllers.prod.template.yml",
 		},
 		dockerfile: "./infra/docker/db/Dockerfile",
 		prodVolumes: []gCloudVolume{
