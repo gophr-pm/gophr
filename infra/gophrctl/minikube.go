@@ -105,3 +105,28 @@ func buildInMinikube(args buildInMinikubeArgs) error {
 	stopSpinner(true)
 	return nil
 }
+
+func isBuiltInMinikube(imageName, imageTag string) (bool, error) {
+	imageIdentifier := imageName + ":" + imageTag
+	startSpinner("Checking if docker image " + imageIdentifier + " exists")
+
+	dockerEnv, err := getMinikubeDockerEnv()
+	if err != nil {
+		stopSpinner(false)
+		return false, err
+	}
+
+	dockerCmd := exec.Command("docker", "images", "-q", imageIdentifier)
+	dockerCmd.Env = dockerEnv
+
+	if output, err := dockerCmd.CombinedOutput(); err != nil {
+		stopSpinner(false)
+		return false, err
+	} else if len(output) <= 1 {
+		stopSpinner(true)
+		return false, nil
+	}
+
+	stopSpinner(true)
+	return true, nil
+}

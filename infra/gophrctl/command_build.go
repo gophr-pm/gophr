@@ -93,13 +93,13 @@ func buildModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 			imageName = "gophr-" + m.name
 		)
 
-		// Get the google project id for the push.
-		if gpi, err = readGPI(c); err != nil {
+		// Bump the version in the versionfile.
+		if version, err = promptImageVersionBump(filepath.Join(gophrRoot, m.versionfile)); err != nil {
 			return err
 		}
 
-		// Bump the version in the versionfile.
-		if version, err = promptImageVersionBump(filepath.Join(gophrRoot, m.versionfile)); err != nil {
+		// Get the gce project id for the push.
+		if gpi, err = readGPI(c); err != nil {
 			return err
 		}
 
@@ -124,7 +124,11 @@ func buildModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 		startSpinner("Updating kubernetes configuration")
 		for _, k8sfile := range m.prodK8SFiles {
 			var (
-				newImageURL = fmt.Sprintf("gcr.io/%s/%s:%s", gpi, imageName, version.String())
+				newImageURL = fmt.Sprintf(
+					"gcr.io/%s/%s:%s",
+					templateVarGCEProjectID,
+					imageName,
+					version.String())
 				k8sfilePath = filepath.Join(gophrRoot, k8sfile)
 			)
 

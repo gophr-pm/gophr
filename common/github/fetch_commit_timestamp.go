@@ -18,8 +18,6 @@ func (svc *requestService) FetchCommitTimestamp(
 	repo string,
 	sha string) (time.Time, error) {
 	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
-	log.Println(APIKeyModel)
-	log.Printf("%+v \n", APIKeyModel)
 	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
 
 	githubURL := buildGitHubCommitTimestampAPIURL(*APIKeyModel, author, repo, sha)
@@ -38,7 +36,6 @@ func (svc *requestService) FetchCommitTimestamp(
 	}
 
 	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
-	APIKeyModel.print()
 
 	timestamp, err := parseGitHubCommitLookUpResponseBody(resp)
 	if err != nil {
