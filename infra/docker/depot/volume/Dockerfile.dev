@@ -1,40 +1,28 @@
-# Based on https://github.com/cpuguy83/docker-nfs-server.
-FROM ubuntu
+# Copyright 2016 The Kubernetes Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# Disables interactive behavior in apt, and other things.
-ENV DEBIAN_FRONTEND noninteractive
-
-# Install NFS, init scheme and supervisor (runit), and filesystem notification
-# utilities. Afterwards, create the exports directory and the NFS lifecycle
-# scripts directory.
-RUN apt-get update -qq \
-  && apt-get install -y \
-    nfs-kernel-server \
-    runit \
-    inotify-tools -qq \
-  && mkdir -p /repos \
-  && mkdir -p /etc/sv/nfs
-
-# Copy lifecycle scripts from the files directory.
-COPY ./infra/docker/depot/volume/files/nfs.init       /etc/sv/nfs/run
-COPY ./infra/docker/depot/volume/files/nfs.stop       /etc/sv/nfs/finish
-COPY ./infra/docker/depot/volume/files/nfs_setup.sh   /usr/local/bin/nfs_setup
-
-# Make sure the lifecycle scripts have adequate permissions.
-RUN chmod +x /etc/sv/nfs/run \
-  && chmod +x /etc/sv/nfs/finish \
-  && chmod +x /usr/local/bin/nfs_setup
-
-# fix for issue #10: Servname not supported for ai_socktype
-# https://github.com/cpuguy83/docker-nfs-server/issues/10
-RUN echo "nfs             2049/tcp" >> /etc/services \
-  && echo "nfs             111/udp" >> /etc/services
+FROM centos
+MAINTAINER Jan Safranek, jsafrane@redhat.com; Huamin Chen, hchen@redhat.com
+RUN yum -y install /usr/bin/ps nfs-utils && yum clean all
+RUN mkdir -p /repos
+ADD run_nfs.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/run_nfs.sh
 
 # Specify the mount point for the volume that NFS exposes.
 VOLUME ["/repos"]
 
-# Expose the NFS operation ports (for both protocols).
-EXPOSE 111/udp 2049/tcp
+# expose mountd 20048/tcp and nfsd 2049/tcp and rpcbind 111/tcp
+EXPOSE 2049/tcp 20048/tcp 111/tcp 111/udp
 
-# Run the setup script as the entrypoint.
-ENTRYPOINT ["/usr/local/bin/nfs_setup"]
+ENTRYPOINT ["/usr/local/bin/run_nfs.sh", "/repos"]
