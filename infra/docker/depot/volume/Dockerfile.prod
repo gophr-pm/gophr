@@ -16,7 +16,7 @@ FROM centos
 MAINTAINER Jan Safranek, jsafrane@redhat.com; Huamin Chen, hchen@redhat.com
 RUN yum -y install /usr/bin/ps nfs-utils && yum clean all
 RUN mkdir -p /repos
-ADD run_nfs.sh /usr/local/bin/
+ADD ./infra/docker/depot/volume/files/run_nfs.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/run_nfs.sh
 
 # Specify the mount point for the volume that NFS exposes.
