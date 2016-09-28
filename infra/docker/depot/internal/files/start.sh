@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Verifying that the depot volume is writable..."
-if [[ -z $(mount | grep "on $GOPHR_DEPOT_PATH type ext4 (rw") ]]; then
+if [[ -z $(mount | grep "on $GOPHR_DEPOT_PATH type nfs (rw") ]]; then
   echo "\"$GOPHR_DEPOT_PATH\" is not writable. Now exiting..."
   exit 1
 else
