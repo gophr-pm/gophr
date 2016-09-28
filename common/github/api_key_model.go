@@ -19,6 +19,7 @@ type APIKeyModel struct {
 
 // TODO:(Shikkic) consider revising how we parse the values from header
 func (apiKey *APIKeyModel) incrementUsageFromResponseHeader(header http.Header) {
+	// TODO(skeswa): spell check.
 	remaingRequests := header.Get("X-RateLimit-Remaining")
 	rateLimitResetTime := header.Get("X-RateLimit-Reset")
 
@@ -29,18 +30,18 @@ func (apiKey *APIKeyModel) incrementUsageFromResponseHeader(header http.Header) 
 	apiKey.RemainingUses = remainingRequestsInt
 	apiKey.RateLimitResetTime = rateLimitResetTimestamp
 
-	log.Printf("Rate limit remaining requests %s \n", remaingRequests)
-	log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
-	log.Printf("Decrementing APIKeyModel usage to %d uses \n", remainingRequestsInt)
+	if remainingRequestsInt < 1000 {
+		log.Printf("Rate limit remaining requests %s \n", remaingRequests)
+		log.Printf("Rate limit reset time %s \n", rateLimitResetTime)
+	}
 }
 
 // TODO:(Shikkic) consider passing url endpoint to prime, or maybe an enum for more accuracy when pinging GH
 func (apiKey *APIKeyModel) prime() {
 	gitHubTestURL := fmt.Sprintf("%s/repos/a/b?access_token=%s", GitHubBaseAPIURL, apiKey.Key)
-	log.Printf("Preparing to prime APIKeyModel with key %s and url %s \n", apiKey.Key, gitHubTestURL)
-
 	resp, err := http.Get(gitHubTestURL)
 	if err != nil {
+		// TODO(skeswa): [NOISY] return an error instead of logging about it.
 		log.Println("Could not prime APIKey, fatal error in Github API request")
 		log.Fatal(err)
 	}
@@ -53,6 +54,7 @@ func (apiKey *APIKeyModel) reset() {
 	apiKey.RemainingUses = 5000
 }
 
+// TODO(skeswa): Unnecessary helper function.
 func (apiKey *APIKeyModel) print() {
 	log.Printf("%+v", apiKey)
 }

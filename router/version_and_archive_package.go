@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/skeswa/gophr/common/depot"
+	"github.com/skeswa/gophr/common/git"
+	"github.com/skeswa/gophr/common/models"
 	"github.com/skeswa/gophr/common/verdeps"
 )
 
 const (
-	// archiveExistenceCheckDelayMS is the time gap between existence check
+	// archiveExistenceCheckDelay is the time gap between existence check
 	// attempts.
-	archiveExistenceCheckDelayMS = 500
+	archiveExistenceCheckDelay = 3000
 	// archiveExistenceCheckAttemptsLimit sets the cap on how many times an archive
 	// existence check is attempted before the an error is recorded.
-	archiveExistenceCheckAttemptsLimit = 3
+	archiveExistenceCheckAttemptsLimit = 5
 )
 
 // versionAndArchivePackage takes a package, locks all of its versions
@@ -69,7 +70,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 			// Enforce a time delay between attempts so as to allow for archival to
 			// occur.
 			if attempts > 0 {
-				time.Sleep(archiveExistenceCheckDelayMS * time.Millisecond)
+				time.Sleep(archiveExistenceCheckDelay * time.Millisecond)
 			}
 
 			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalCheckerArgs{
@@ -77,7 +78,8 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 				sha:                   args.sha,
 				repo:                  args.repo,
 				author:                args.author,
-				packageExistsInDepot:  depot.RepoExists,
+				packageExistsInDepot:  packageExistsInDepot,
+				isPackageArchivedInDB: models.IsPackageArchived,
 				recordPackageArchival: args.recordPackageArchival,
 			}); archiveCheckErr != nil {
 				return fmt.Errorf(
@@ -105,8 +107,8 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 		repo:         args.repo,
 		sha:          args.sha,
 		creds:        args.creds,
+		gitClient:    git.NewClient(),
 		packagePaths: downloadPaths,
-		gitClient:    depot.NewGitClient(),
 	}); err != nil {
 		// Yikes, we couldn't push. So as to not prevent this package from ever
 		// being versioned correctly, undo all the work we just did.

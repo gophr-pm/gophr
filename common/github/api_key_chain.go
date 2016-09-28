@@ -33,11 +33,10 @@ type APIKeyChain struct {
 // NewAPIKeyChain intializes and returns a new GitHubAPIKeyChain
 // and instantiates all available keys in the db as APIKeyModels
 func NewAPIKeyChain(args RequestServiceArgs) *APIKeyChain {
-	log.Println("Creating new github api keychain")
 	newGitHubAPIKeyChain := APIKeyChain{}
-
 	gitHubAPIKeys, err := scanAllGitHubKey(args.Conf, args.Session, args.ForIndexer)
 	if err != nil {
+		// TODO(skeswa): [NOISY] return an error instead of logging about it.
 		log.Println("Could not scan github keys, fatal error occurred")
 		log.Fatal(err)
 	}
@@ -54,17 +53,13 @@ func initializeGitHubAPIKeyModels(keys []string) []APIKeyModel {
 	var gitHubAPIKeyModels = make([]APIKeyModel, 0)
 
 	for _, key := range keys {
-		log.Println("KEY =", key)
 		gitHubAPIKeyModel := APIKeyModel{
 			string(key),
 			5000,
 			5000,
 			time.Time{},
 		}
-		log.Println("Priming API KEY")
 		gitHubAPIKeyModel.prime()
-		gitHubAPIKeyModel.print()
-
 		gitHubAPIKeyModels = append(gitHubAPIKeyModels, gitHubAPIKeyModel)
 	}
 

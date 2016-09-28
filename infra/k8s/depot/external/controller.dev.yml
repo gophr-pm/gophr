@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: depot-ext-rc
+  labels:
+    module: depot-ext
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: depot-ext
+  template:
+    metadata:
+      labels:
+        module: depot-ext
+      namespace: gophr
+    spec:
+      containers:
+      - name: depot-ext
+        image: gophr-depot-ext-dev:v1
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+        - mountPath: /repos
+          name: repos
+          readOnly: true
+      volumes:
+      - name: repos
+        persistentVolumeClaim:
+          claimName: depot-vol-pvc
+          readOnly: true
+      - name: secrets
+        secret:
+          secretName: gophr-secrets
