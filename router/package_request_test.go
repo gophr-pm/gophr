@@ -87,7 +87,7 @@ func TestNewPackageRequest(t *testing.T) {
 	})
 	assert.NotNil(t, pr)
 	assert.Nil(t, err)
-	assert.Equal(t, "", pr.matchedSHA)
+	assert.Equal(t, "mymasterhash", pr.matchedSHA)
 	assert.Equal(t, "", pr.matchedSHALabel)
 
 	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@1.x/mysubpath", true)

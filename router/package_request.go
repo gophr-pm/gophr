@@ -96,9 +96,6 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		return nil, err
 	}
 
-	// Set the default matched sha in case there is no semver selector.
-	matchedSHA = refs.MasterRefHash
-
 	if parts.hasSemverSelector() {
 		// If there are no candidates, return in failure.
 		if refs.Candidates == nil || len(refs.Candidates) < 1 {
@@ -120,6 +117,9 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		// Re-serialize the refs data with said candidate.
 		matchedSHA = bestCandidate.GitRefHash
 		matchedSHALabel = bestCandidate.String()
+	} else {
+		// Set the default matched sha in case there is no semver selector.
+		matchedSHA = refs.MasterRefHash
 	}
 
 	return &packageRequest{
