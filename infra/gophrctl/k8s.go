@@ -47,7 +47,7 @@ type K8SPodMetadata struct {
 
 var (
 	prodK8SImageURLRegex   = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-_{}]+)/([a-zA-Z0-9\-:\.]+)`)
-	persistentK8SFileRegex = regexp.MustCompile(`(?:service|claim|volume)s?\.[a-z]+\.yml$`)
+	persistentK8SFileRegex = regexp.MustCompile(`(?:service|claim|volume)s?\.[a-z]+(\.template)?\.yml$`)
 )
 
 func isPersistentK8SResource(k8sfile string) bool {
@@ -109,7 +109,7 @@ func getModuleK8SFilePaths(c *cli.Context, m *module) ([]string, error) {
 			}
 		}
 
-		realPaths = append(realPaths, filepath.Join(gophrRoot, realPath))
+		realPaths = append(realPaths, realPath)
 	}
 
 	return realPaths, nil
