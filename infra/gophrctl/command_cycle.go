@@ -82,12 +82,12 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	}
 
 	// Use the environment to toggle the unfiltered list.
-	var k8sfiles []string
-	if env == environmentProd {
-		k8sfiles = m.prodK8SFiles
-	} else {
-		k8sfiles = m.devK8SFiles
+	k8sfiles, err := getModuleK8SFilePaths(c, m)
+	if err != nil {
+		return err
 	}
+	// Make sure any potential generated files get deleted.
+	defer deleteGeneratedK8SFiles(k8sfiles)
 
 	// Destroy in reverse order.
 	for i := len(k8sfiles) - 1; i >= 0; i-- {

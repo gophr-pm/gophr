@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: depot-vol
-          image: gcr.io/valid-song-142700/gophr-depot-vol:1.0.0
+          image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-depot-vol:1.0.5"
           ports:
             - name: nfs
               containerPort: 2049

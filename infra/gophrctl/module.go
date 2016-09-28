@@ -5,7 +5,7 @@ import "bytes"
 const (
 	gophrVolumePrefix   = "gophr-volume-"
 	dbVolumeCapacity    = 120 // In gb.
-	depotVolumeCapacity = 600 // In gb.
+	depotVolumeCapacity = 300 // In gb.
 	depotVolumeName     = "gophr-volume-depot"
 )
 
@@ -61,7 +61,7 @@ var modules = map[string]*module{
 			"./infra/k8s/migrator/pod.dev.yml",
 		},
 		prodK8SFiles: []string{
-			"./infra/k8s/migrator/pod.prod.yml",
+			"./infra/k8s/migrator/pod.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/migrator/Dockerfile",
 		versionfile:  "./infra/docker/migrator/Versionfile.prod",
@@ -74,7 +74,7 @@ var modules = map[string]*module{
 			"./infra/k8s/indexer/controller.dev.yml",
 		},
 		prodK8SFiles: []string{
-			"./infra/k8s/indexer/controller.prod.yml",
+			"./infra/k8s/indexer/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/indexer/Dockerfile",
 		versionfile:  "./infra/docker/indexer/Versionfile.prod",
@@ -90,8 +90,8 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/depot/volume/service.prod.yml",
-			"./infra/k8s/depot/volume/controller.prod.yml",
-			"./infra/k8s/depot/volume/volume.prod.yml",
+			"./infra/k8s/depot/volume/controller.prod.template.yml",
+			"./infra/k8s/depot/volume/volume.prod.template.yml",
 			"./infra/k8s/depot/volume/claim.prod.yml",
 		},
 		dockerfile: "./infra/docker/depot/volume/Dockerfile",
@@ -114,7 +114,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/depot/internal/service.prod.yml",
-			"./infra/k8s/depot/internal/controller.prod.yml",
+			"./infra/k8s/depot/internal/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/depot/internal/Dockerfile",
 		versionfile:  "./infra/docker/depot/internal/Versionfile.prod",
@@ -129,7 +129,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/depot/external/service.prod.yml",
-			"./infra/k8s/depot/external/controller.prod.yml",
+			"./infra/k8s/depot/external/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/depot/external/Dockerfile",
 		versionfile:  "./infra/docker/depot/external/Versionfile.prod",
@@ -144,7 +144,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/api/service.prod.yml",
-			"./infra/k8s/api/controller.prod.yml",
+			"./infra/k8s/api/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/api/Dockerfile",
 		versionfile:  "./infra/docker/api/Versionfile.prod",
@@ -159,7 +159,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/router/service.prod.yml",
-			"./infra/k8s/router/controller.prod.yml",
+			"./infra/k8s/router/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/router/Dockerfile",
 		versionfile:  "./infra/docker/router/Versionfile.prod",
@@ -174,7 +174,7 @@ var modules = map[string]*module{
 		},
 		prodK8SFiles: []string{
 			"./infra/k8s/web/service.prod.yml",
-			"./infra/k8s/web/controller.prod.yml",
+			"./infra/k8s/web/controller.prod.template.yml",
 		},
 		dockerfile:   "./infra/docker/web/Dockerfile",
 		versionfile:  "./infra/docker/web/Versionfile.prod",

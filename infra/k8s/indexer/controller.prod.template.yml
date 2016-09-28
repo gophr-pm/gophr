@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: indexer
-        image: gcr.io/valid-song-142700/gophr-indexer:1.0.2
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-indexer:1.0.2"
         volumeMounts:
         - mountPath: /secrets
           name: secrets

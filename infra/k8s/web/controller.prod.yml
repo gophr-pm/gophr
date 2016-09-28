@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: web
-        image: gcr.io/valid-song-142700/gophr-web:1.2.0
+        image: gcr.io/valid-song-142700/gophr-web:1.2.1
         ports:
         - containerPort: 80
         - containerPort: 443

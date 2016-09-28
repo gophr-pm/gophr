@@ -151,6 +151,11 @@ func main() {
 					Name:  flagNameDeletePersistent,
 					Usage: flagUsageDeletePersistent,
 				},
+				cli.StringFlag{
+					Name:   flagNameGPI + "," + flagAliasGPI,
+					Usage:  flagUsageGPI,
+					EnvVar: envVarGPI,
+				},
 			},
 		},
 

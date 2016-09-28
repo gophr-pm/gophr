@@ -45,7 +45,7 @@ type K8SPodMetadata struct {
 }
 
 var (
-	prodK8SImageURLRegex   = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-]+)/([a-zA-Z0-9\-:\.]+)`)
+	prodK8SImageURLRegex   = regexp.MustCompile(`gcr\.io/([a-zA-Z0-9\-_{}]+)/([a-zA-Z0-9\-:\.]+)`)
 	persistentK8SFileRegex = regexp.MustCompile(`(?:service|claim|volume)s?\.[a-z]+\.yml$`)
 )
 
@@ -60,6 +60,54 @@ func readK8SProdContext(c *cli.Context) (string, error) {
 	}
 
 	return context, nil
+}
+
+// deleteK8STemplateFiles deletes any generated kubernetes config files.
+func deleteGeneratedK8SFiles(k8sfilePaths []string) error {
+	for _, k8sfilePath := range k8sfilePaths {
+		if isTemplateK8SFile(k8sfilePath) {
+			if err := os.Remove(k8sfilePath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// getModuleK8SFilePaths gets the appropriate kubernetes config files for the
+// module depending on the environment. Also compiles all templates.
+func getModuleK8SFilePaths(c *cli.Context, m *module) ([]string, error) {
+	var (
+		paths []string
+		env   = readEnvironment(c)
+	)
+	if env == environmentProd {
+		paths = m.prodK8SFiles
+	} else {
+		paths = m.devK8SFiles
+	}
+
+	var (
+		err       error
+		realPath  string
+		realPaths []string
+	)
+
+	// Compile any templates that may exist.
+	for _, path := range paths {
+		if isTemplateK8SFile(path) {
+			if realPath, err = compileK8STemplateFile(c, path); err != nil {
+				return nil, err
+			}
+		} else {
+			realPath = path
+		}
+
+		realPaths = append(realPaths, realPath)
+	}
+
+	return realPaths, nil
 }
 
 // Returns the old kubernetes context, whether the context needs to be switched
@@ -408,13 +456,13 @@ func deleteSecretsInK8S() error {
 }
 
 func updateProdK8SFileImage(newImageURL, k8sfilePath string) error {
-	versionfileData, err := ioutil.ReadFile(k8sfilePath)
+	fileData, err := ioutil.ReadFile(k8sfilePath)
 	if err != nil {
 		return err
 	}
 
-	updatedVersionfileData := prodK8SImageURLRegex.ReplaceAll(versionfileData, []byte(newImageURL))
-	if err = ioutil.WriteFile(k8sfilePath, updatedVersionfileData, 0644); err != nil {
+	updatedFileData := prodK8SImageURLRegex.ReplaceAll(fileData, []byte(newImageURL))
+	if err = ioutil.WriteFile(k8sfilePath, updatedFileData, 0644); err != nil {
 		return err
 	}
 

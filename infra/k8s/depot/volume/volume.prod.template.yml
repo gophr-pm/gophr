@@ -7,9 +7,9 @@ metadata:
   namespace: gophr
 spec:
   capacity:
-    storage: 600G
+    storage: 300G
   accessModes:
     - ReadWriteMany
   nfs:
-    server: "depot-vol-svc"
+    server: "{{DEPOT_VOL_SVC_IP}}"
     path: "/repos"
