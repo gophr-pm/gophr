@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
@@ -22,16 +21,10 @@ const (
 	contentTypeHTML        = "text/html"
 	httpLocationHeader     = "Location"
 	gitInfoRefsSubPath     = "/info/refs"
-	depotRepoURLTemplate   = "https://%s/depot/%s.git%s"
-	gitUploadPackSubPath   = "/git-upload-pack"
+	depotRepoURLTemplate   = "https://%s/depot/%s.git"
 	httpContentTypeHeader  = "Content-Type"
 	basePackageURLTemplate = "https://%s%s"
 	packagePageURLTemplate = "https://%s/#/packages/%s/%s"
-)
-
-var (
-	// Subpaths of all incoming git requests will look like this.
-	gitRequestSubpathRegex = regexp.MustCompile(`/(?:info/refs|objects/(?:info/[^/]+|[0-9a-f]{2}/[0-9a-f]{38}|pack/pack-[0-9a-f]{40}\.(?:pack|idx))|git-upload-pack)`)
 )
 
 // PackageRequest is stuct that standardizes the output of all the scenarios
@@ -48,9 +41,9 @@ type packageRequest struct {
 // newPackageRequestArgs is the arguments struct for newPackageRequest.
 type newPackageRequestArgs struct {
 	req          *http.Request
-	downloadRefs refsDownloader
-	fetchFullSHA fullSHAFetcher
 	doHTTPHead   github.HTTPHeadReq
+	fetchFullSHA fullSHAFetcher
+	downloadRefs refsDownloader
 }
 
 // newPackageRequest parses and simplifies the information in a package version
@@ -68,8 +61,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		matchedSHALabel string
 	)
 
-	fmt.Println("parts", parts)
-	if isGoGetRequest(args.req) || isGitRequest(parts) {
+	if isGoGetRequest(args.req) {
 		// Check if we have a SHA selector.
 		if parts.hasSHASelector() {
 			// If we have a short SHA selector convert it to a full SHA.
@@ -152,7 +144,7 @@ type respondToPackageRequestArgs struct {
 // aforesaid response and sends it back to the original client.
 func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 	// This means that go-get is requesting package/repository metadata.
-	if isGoGetRequest(pr.req) || isGitRequest(pr.parts) {
+	if isGoGetRequest(pr.req) {
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalCheckerArgs{
 			db:                    args.db,
@@ -210,43 +202,19 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Git requests must be redirected to depot.
-		if isGitRequest(pr.parts) {
-			// Join the repo URL with the subpath of this request.
-			redirectLocation := fmt.Sprintf(
-				depotRepoURLTemplate,
-				getRequestDomain(pr.req),
-				depot.BuildHashedRepoName(
-					pr.parts.author,
-					pr.parts.repo,
-					pr.matchedSHA),
-				pr.parts.subpath)
-
-			// Issue a permanent redirect.
-			sendPermanentRedirect(args.res, redirectLocation)
-
-			// Without blocking, count a packfile request as a package download.
-			if pr.parts.subpath == gitUploadPackSubPath {
-				go args.recordPackageDownload(packageDownloadRecorderArgs{
-					db:     args.db,
-					sha:    pr.matchedSHA,
-					repo:   pr.parts.repo,
-					author: pr.parts.author,
-					// It is ok for the matched sha label to be left blank.
-					version: pr.matchedSHALabel,
-				})
-			}
-
-			return nil
-		}
-
 		// At this point, this must be a go-get request. Compile the go-get metadata
 		// accordingly.
 		var (
-			domain         = getRequestDomain(pr.req)
-			basePackageURL = domain + pr.parts.getBasePackagePath()
-			metaData       = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
-				gophrURL: basePackageURL,
+			domain   = getRequestDomain(pr.req)
+			metaData = []byte(generateGoGetMetadata(generateGoGetMetadataArgs{
+				gophrURL: (domain + pr.parts.getBasePackagePath()),
+				depotURL: fmt.Sprintf(
+					depotRepoURLTemplate,
+					domain,
+					depot.BuildHashedRepoName(
+						pr.parts.author,
+						pr.parts.repo,
+						pr.matchedSHA)),
 				treeURLTemplate: generateGithubTreeURLTemplate(
 					pr.parts.author,
 					pr.parts.repo,
@@ -283,17 +251,6 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 // isGoGetRequest returns true if the request was made by go get.
 func isGoGetRequest(req *http.Request) bool {
 	return req.FormValue(formKeyGoGet) == formValueGoGet
-}
-
-// isGitRequest returns true if the request was made by git (in a clone setting).
-func isGitRequest(parts *packageRequestParts) bool {
-	return gitRequestSubpathRegex.MatchString(parts.subpath)
-}
-
-// sendPermanentRedirect writes a 301 and a redirect location to a response.
-func sendPermanentRedirect(w http.ResponseWriter, location string) {
-	w.Header().Set(httpLocationHeader, location)
-	w.WriteHeader(http.StatusMovedPermanently)
 }
 
 // getRequestDomain isolates and returns the domain of the specified request.

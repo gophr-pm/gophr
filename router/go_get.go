@@ -9,7 +9,7 @@ const (
 	goGetMetadataFormat = `
 <html>
 <head>
-<meta name="go-import" content="%s git https://%s">
+<meta name="go-import" content="%s git %s">
 <meta name="go-source" content="%s _ %s %s">
 </head>
 <body>
@@ -22,7 +22,8 @@ go get %s
 )
 
 type generateGoGetMetadataArgs struct {
-	gophrURL        string // e.g. "gopkg.in/urfave/cli.v1"
+	gophrURL        string // e.g. "gophr.pm/abc/wxyz@1.1+"
+	depotURL        string // e.g. "https://gophr.pm/depot/3abc4wxyz-97e17db9944a97a72765fcc18a237aaa0bb200a3.git"
 	treeURLTemplate string // e.g. "https://github.com/urfave/cli/tree/v1.18.1{/dir}"
 	blobURLTemplate string // e.g. "https://github.com/urfave/cli/blob/v1.18.1{/dir}/{file}#L{line}"
 }
@@ -64,7 +65,7 @@ func generateGoGetMetadata(args generateGoGetMetadataArgs) string {
 	return fmt.Sprintf(
 		goGetMetadataFormat,
 		args.gophrURL,
-		args.gophrURL,
+		args.depotURL,
 		args.gophrURL,
 		args.treeURLTemplate,
 		args.blobURLTemplate,
