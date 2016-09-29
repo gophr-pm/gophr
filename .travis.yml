@@ -16,7 +16,7 @@ go:
   - 1.7
 
 script:
-  - go test ./.. -v -covermode=count -coverprofile=coverage.out $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test ./... -v -covermode=count -coverprofile=coverage.out $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 secure: "LE+anl5S1BX0cCF+YITsci5viR3Bf4MKYy2yLGQE1YEF6mNyyUlxQQTjX+g/Uj0WyeABB6cBAo09ftXHu46lvbsqlYcbw1yRAlziLaFsGZN2WUY4CU9Ceuydm2hsWNMERNHw3CO2MachtzP+na+EfS5ZFWRX8ZqWdkppXECmAyyG2n4QjfTANgmUI/CEHeQCJoRO30LC9fmLOpxPwB6HsXPNweZoicdgV9oId6TsE3YxpJ2mjYkf0LxEOufFM5lHrg3kIHTX6NidhsHWvv+MWTYYGGs+oqGrQmc16F8KzLBaNYg1l0MsSnt4w8a5/NJu1000CgW6Iqs5/DZUGkonlyUpJp44uWKt9v+yiqeRe2i/0c3gVtGZPxqIBj3v/f0KJSi5BN8qCweMqOQtmcuBxt5RN0rSRmo3RRiupPjgO1DcqVnzkbgHeY5YC86xGvKicRn8gu5hhROX6c7Qq6UolJj/FoclXcc45Jq8MVOIcosoS2S91zL0EUafOFceptTBapJFg+uQ/aIjUw7+pzRZ26aeUlPZEdIlmlEXw5FJvBRI/ws+L6JSDIyJD1tYizIfKgSNJuwDIo5e2toyGyN+I0odziR0Ghkp6xQHczf5YFxvjR+KlL93k3b+tj+hNcgZz0nnNpNopR24Yq9ciugp8SUuYj+o51RUDtjqBzlzLsk="
 
