@@ -29,7 +29,7 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 
 	log.Println("Initializing gitHub component")
 	gitHubRequestService := github.NewRequestService(
-		github.RequestServiceParams{
+		github.RequestServiceArgs{
 			ForIndexer: true,
 			Conf:       conf,
 			Session:    session,
