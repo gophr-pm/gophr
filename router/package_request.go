@@ -62,6 +62,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		matchedSHALabel string
 	)
 
+	fmt.Println("parts", parts)
 	if isGoGetRequest(args.req) || isGitRequest(parts) {
 		// Check if we have a SHA selector.
 		if parts.hasSHASelector() {
@@ -144,42 +145,8 @@ type respondToPackageRequestArgs struct {
 // respond crafts an appropriate response for a package request, serializes the
 // aforesaid response and sends it back to the original client.
 func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
-	// Git requests must be redirected to depot.
-	if isGitRequest(pr.parts) {
-		// Join the repo URL with the subpath of this request.
-		redirectLocation := fmt.Sprintf(
-			depotRepoURLTemplate,
-			getRequestDomain(pr.req),
-			depot.BuildHashedRepoName(
-				pr.parts.author,
-				pr.parts.repo,
-				pr.matchedSHA),
-			pr.parts.subpath)
-
-		// Issue a permanent redirect.
-		http.Redirect(
-			args.res,
-			pr.req,
-			redirectLocation,
-			http.StatusMovedPermanently)
-
-		// Without blocking, count a packfile request as a package download.
-		if pr.parts.subpath == gitUploadPackSubPath {
-			go args.recordPackageDownload(packageDownloadRecorderArgs{
-				db:     args.db,
-				sha:    pr.matchedSHA,
-				repo:   pr.parts.repo,
-				author: pr.parts.author,
-				// It is ok for the matched sha label to be left blank.
-				version: pr.matchedSHALabel,
-			})
-		}
-
-		return nil
-	}
-
 	// This means that go-get is requesting package/repository metadata.
-	if isGoGetRequest(pr.req) {
+	if isGoGetRequest(pr.req) || isGitRequest(pr.parts) {
 		// Check whether this package has already been archived.
 		packageArchived, err := args.isPackageArchived(packageArchivalCheckerArgs{
 			db:                    args.db,
@@ -237,7 +204,38 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			}
 		}
 
-		// Compile the go-get metadata accordingly.
+		// Git requests must be redirected to depot.
+		if isGitRequest(pr.parts) {
+			// Join the repo URL with the subpath of this request.
+			redirectLocation := fmt.Sprintf(
+				depotRepoURLTemplate,
+				getRequestDomain(pr.req),
+				depot.BuildHashedRepoName(
+					pr.parts.author,
+					pr.parts.repo,
+					pr.matchedSHA),
+				pr.parts.subpath)
+
+			// Issue a permanent redirect.
+			sendPermanentRedirect(args.res, redirectLocation)
+
+			// Without blocking, count a packfile request as a package download.
+			if pr.parts.subpath == gitUploadPackSubPath {
+				go args.recordPackageDownload(packageDownloadRecorderArgs{
+					db:     args.db,
+					sha:    pr.matchedSHA,
+					repo:   pr.parts.repo,
+					author: pr.parts.author,
+					// It is ok for the matched sha label to be left blank.
+					version: pr.matchedSHALabel,
+				})
+			}
+
+			return nil
+		}
+
+		// At this point, this must be a go-get request. Compile the go-get metadata
+		// accordingly.
 		var (
 			domain         = getRequestDomain(pr.req)
 			basePackageURL = domain + pr.parts.getBasePackagePath()
@@ -258,6 +256,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		// Return the go-get metadata.
 		args.res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 		args.res.Write(metaData)
+
 		return nil
 	}
 
@@ -284,6 +283,12 @@ func isGoGetRequest(req *http.Request) bool {
 func isGitRequest(parts *packageRequestParts) bool {
 	return parts.subpath == gitInfoRefsSubPath ||
 		parts.subpath == gitUploadPackSubPath
+}
+
+// sendPermanentRedirect writes a 301 and a redirect location to a response.
+func sendPermanentRedirect(w http.ResponseWriter, location string) {
+	w.Header().Set(httpLocationHeader, location)
+	w.WriteHeader(http.StatusMovedPermanently)
 }
 
 // getRequestDomain isolates and returns the domain of the specified request.

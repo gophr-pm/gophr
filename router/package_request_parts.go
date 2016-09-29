@@ -110,6 +110,22 @@ func (parts *packageRequestParts) String() string {
 	if parts != nil {
 		b.WriteString(parts.semverSelector.String())
 	}
+	b.WriteString("\", hasFullSHASelector: ")
+	if parts != nil {
+		if parts.hasFullSHASelector {
+			b.WriteString("true")
+		} else {
+			b.WriteString("false")
+		}
+	}
+	b.WriteString("\", hasShortSHASelector: ")
+	if parts != nil {
+		if parts.hasShortSHASelector {
+			b.WriteString("true")
+		} else {
+			b.WriteString("false")
+		}
+	}
 	b.WriteString(" }")
 
 	return b.String()
@@ -124,12 +140,14 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		url    = strings.TrimSpace(req.URL.Path)
 		urlLen = len(url)
 
-		repoEndIndex       = -1 // Exclusive
-		repoStartIndex     = -1 // Inclusive
-		authorEndIndex     = -1
-		authorStartIndex   = -1
-		subpathStartIndex  = -1
-		selectorStartIndex = -1
+		repoEndIndex        = -1 // Exclusive
+		repoStartIndex      = -1 // Inclusive
+		authorEndIndex      = -1
+		authorStartIndex    = -1
+		subpathStartIndex   = -1
+		selectorStartIndex  = -1
+		hasFullSHASelector  = false
+		hasShortSHASelector = false
 
 		selector              string
 		shaSelector           string
@@ -204,16 +222,14 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		}
 		// Whatever the case may be, this is where the selector ends.
 		selector = url[selectorStartIndex:i]
-		hasShortSHASelector := false
-		hasFullSHASelector := false
 
 		// Read the selector to figure out what it is.
 		if isShortSHASelector(selector) {
+			shaSelector = selector
 			hasShortSHASelector = true
-			shaSelector = selector
 		} else if isFullSHASelector(selector) {
-			hasFullSHASelector = true
 			shaSelector = selector
+			hasFullSHASelector = true
 		} else {
 			var err error
 			if semverSelector, err = readSemverSelector(selector); err != nil {
@@ -233,8 +249,8 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 				selector:              selector,
 				shaSelector:           shaSelector,
 				semverSelector:        semverSelector,
-				hasShortSHASelector:   hasShortSHASelector,
 				hasFullSHASelector:    hasFullSHASelector,
+				hasShortSHASelector:   hasShortSHASelector,
 				semverSelectorDefined: semverSelectorDefined,
 			}, nil
 		}
@@ -257,6 +273,8 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 		selector:              selector,
 		shaSelector:           shaSelector,
 		semverSelector:        semverSelector,
+		hasFullSHASelector:    hasFullSHASelector,
+		hasShortSHASelector:   hasShortSHASelector,
 		semverSelectorDefined: semverSelectorDefined,
 	}, nil
 }
