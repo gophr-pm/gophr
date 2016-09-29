@@ -2,7 +2,7 @@ language: go
 
 sudo: required
 
-install:
+before_install:
   - go get -d github.com/libgit2/git2go
   - cd $GOPATH/src/github.com/libgit2/git2go && ./script/install-libgit2.sh
   - go get ./...
