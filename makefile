@@ -1,7 +1,7 @@
-.PHONY: test-cover-html
+.PHONY: test-cover
 PACKAGES = $(shell find ./ -type d -not -path '*/\.*')
 
-test-cover-html:
+test-cover:
 	echo "mode: count" > coverage-all.out
 	$(foreach pkg,$(PACKAGES),\
 		go test -coverprofile=coverage.out -covermode=count $(pkg);\
