@@ -2,6 +2,7 @@
 # Gophr - go package management
 [![Go Report Card](https://goreportcard.com/badge/github.com/gophr-pm/gophr)](https://goreportcard.com/report/github.com/gophr-pm/gophr)
 [![GoDoc](https://godoc.org/github.com/gophr-pm/gophr/common?status.svg)](https://godoc.org/github.com/gophr-pm/gophr/common)
+[![Build Status](https://travis-ci.org/gophr-pm/gophr.svg?branch=shikkic%2Fadd-travis)](https://travis-ci.org/gophr-pm/gophr)
 
 An end-to-end package management solution for Go. **No manifest or lock file and a fully versioned dependency graph.** Simply place the url in your import path and it's automatically fully versioned.
 
