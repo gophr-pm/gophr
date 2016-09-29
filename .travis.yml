@@ -1,14 +1,20 @@
 language: go
-
 sudo: required
-
 before_install:
-  - go get -d github.com/libgit2/git2go
-  - $GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh
-
+- go get -d github.com/libgit2/git2go
+- "$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh"
+install:
+- go get golang.org/x/tools/cmd/cover
+- go get github.com/mattn/goveralls
+- go get ./...
 go:
-  - 1.6
-  - 1.7
-
+- 1.6
+- 1.7
+script:
+- make
+- $HOME/gopath/bin/goveralls -coverprofile=coverage-all.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 notifications:
-  - email: false
+- email: false
+env:
+  global:
+    secure: IGq7BgCYksohEkrmkR/tB19fHn/se2Ow2RGEjuIFB0fsmkAMxswX06DR48gS0IiZDVQP7vmlK5cRim9BLY82QpcGyecgyuVEsvPqPqEtrAZmHAjV5/WEOtXFo8iH8Uj8iN64BNmcsCbP/oIVdjRB8yrWjuVNp8jdRGCwDJlxvEYqri6VCFPUdku/i2w+vdTCY8S3Q1vhXJWHO8di7Ydnd1OPjSxYI0+Fb3yEfZ2MZtse/ThOej21cXuJZRW15YaWM8m8RjwerHHJ1ET7wV6BAYSifDPAwSy0NbazqLqk+UyUImgYqvZUadq2zdswVsSFBoC1Unk8/e7b1RlQaJUkfJAmuZPlI//sBrfjHl9kFNHo3o2bo9RRXi0PTpN4teOSueymS1++ihw5hfAaZijSiQ0lyd6htirMm2u2HuncGKIRcpE74GehRMiDTJeK1UHPOoEKGyReXaXgiy/g21wRMs0ioKQHkkCktyNub8C0xhnVOOhAtsaHpGgd/2aJylHpQqBpLdC0YFtNRj1yPFq+BG9UpkdnlgIZYvovFzK/bc70mortTOnkQ88wYGJmpckgRo73Z9Uex5HrWD+676rFifVyIF5JwngtTntiwJUjg7m1eo4+O+i78hg/t+BOYdZIEKAlX4e2Yvc3kR74fsuI2M/hqvOrQJSMt51mRONbUuM=
