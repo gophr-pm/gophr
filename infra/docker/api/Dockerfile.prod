@@ -4,12 +4,12 @@ FROM golang:alpine
 RUN set -ex && apk add --update 'git' && apk add 'bash'
 
 # Copy in requisite files.
-COPY ./api /go/src/github.com/skeswa/gophr/api
-COPY ./infra /go/src/github.com/skeswa/gophr/infra
-COPY ./common /go/src/github.com/skeswa/gophr/common
+COPY ./api /go/src/github.com/gophr-pm/gophr/api
+COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
+COPY ./common /go/src/github.com/gophr-pm/gophr/common
 
 # Build source and move things around.
-RUN cd /go/src/github.com/skeswa/gophr/api \
+RUN cd /go/src/github.com/gophr-pm/gophr/api \
     && echo -e "\nFetching dependencies...\n" \
     && go get -d -v \
     && echo -e "\nBuilding the binary...\n" \

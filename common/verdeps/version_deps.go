@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/skeswa/gophr/common/github"
+	"github.com/gophr-pm/gophr/common/github"
 )
 
 // VersionDepsArgs is the arguments struct for VersionDeps(...).

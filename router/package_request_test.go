@@ -9,9 +9,9 @@ import (
 	"testing"
 
 	"github.com/jinzhu/copier"
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/github"
-	"github.com/skeswa/gophr/common/semver"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/github"
+	"github.com/gophr-pm/gophr/common/semver"
 	"github.com/stretchr/testify/assert"
 )
 

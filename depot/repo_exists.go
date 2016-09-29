@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/skeswa/gophr/common/depot"
+	"github.com/gophr-pm/gophr/common/depot"
 )
 
 // RepoExists returns true if the repoDir exists, and false otherwise. If

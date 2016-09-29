@@ -5,10 +5,10 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/gorilla/mux"
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/dtos"
-	"github.com/skeswa/gophr/common/errors"
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/dtos"
+	"github.com/gophr-pm/gophr/common/errors"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 const (

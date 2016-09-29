@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/db/query"
+	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/db/query"
 
 	// Load the migrate cassandra driver.
 	_ "github.com/skeswa/migrate/driver/cassandra"

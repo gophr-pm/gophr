@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/skeswa/gophr/common/models"
+import "github.com/gophr-pm/gophr/common/models"
 
 // GitHubPackageModelDTO TODO Optimize this
 type GitHubPackageModelDTO struct {

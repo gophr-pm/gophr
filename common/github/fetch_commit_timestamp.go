@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/skeswa/gophr/common/dtos"
+	"github.com/gophr-pm/gophr/common/dtos"
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API

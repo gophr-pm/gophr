@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/skeswa/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/config"
 )
 
 // CreateRepoHandler creates a new repository in the depot.

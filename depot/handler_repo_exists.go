@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/skeswa/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/config"
 )
 
 // RepoExistsHandler returns a 200 if the repo exists, or 404 if it doesn't.

@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/pquerna/ffjson/ffjson"
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/dtos"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/dtos"
 )
 
 // FetchCommitSHA Fetches a commitSHA closest to a given timestamp

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/skeswa/gophr/common/semver"
+	"github.com/gophr-pm/gophr/common/semver"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,7 +3,7 @@ package dtos
 import (
 	"bytes"
 
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 //go:generate ffjson $GOFILE

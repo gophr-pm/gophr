@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/db"
+	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/db"
 )
 
 func main() {

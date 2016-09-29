@@ -3,7 +3,7 @@ package dtos
 import (
 	"bytes"
 
-	"github.com/skeswa/gophr/common/semver"
+	"github.com/gophr-pm/gophr/common/semver"
 )
 
 //go:generate ffjson $GOFILE

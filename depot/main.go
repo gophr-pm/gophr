@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/skeswa/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/config"
 )
 
 func main() {

@@ -8,7 +8,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 // FetchGitHubDataForPackageModel fetchs current repo data of a given packageModel
