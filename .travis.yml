@@ -3,4 +3,7 @@ nguage: go
 go:
   - 1.9
 
+install:
+  - go get ./...
+
 script: go test ./...
