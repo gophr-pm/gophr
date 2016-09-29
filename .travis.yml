@@ -11,7 +11,7 @@ go:
 - 1.6
 - 1.7
 script:
-- $HOME/gopath/bin/goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN"
+- $HOME/gopath/bin/goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN
 notifications:
 - email: false
 env:
