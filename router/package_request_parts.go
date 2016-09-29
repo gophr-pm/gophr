@@ -270,7 +270,10 @@ func isFullSHASelector(selector string) bool {
 
 func isShortSHASelector(selector string) bool {
 	// If it isn't a 6 character short SHA return false, it might be semvar
-	return len(selector) == minShortSHALength && strings.IndexByte(selector, dot) == -1 && strings.IndexByte(selector, hyphen) == -1
+	return len(selector) >= minShortSHALength &&
+		len(selector) < shaLength &&
+		strings.IndexByte(selector, dot) == -1 &&
+		strings.IndexByte(selector, hyphen) == -1
 }
 
 // isSemverSelector converts a semver selector string into a semver selector.

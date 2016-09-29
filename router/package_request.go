@@ -84,39 +84,38 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 			if parts.hasFullSHASelector {
 				matchedSHA = parts.shaSelector
 			}
-		}
-
-		if parts.hasSemverSelector() {
-			// If there are no candidates, return in failure.
-			if refs.Candidates == nil || len(refs.Candidates) < 1 {
-				return nil, NewNoSuchPackageVersionError(
-					parts.author,
-					parts.repo,
-					parts.semverSelector.String())
-			}
-			// Find the best candidate.
-			bestCandidate := refs.Candidates.Best(parts.semverSelector)
-			if bestCandidate == nil {
-				return nil, NewNoSuchPackageVersionError(
-					parts.author,
-					parts.repo,
-					parts.semverSelector.String())
+		} else {
+			if refs, err = args.downloadRefs(
+				parts.author,
+				parts.repo); err != nil {
+				return nil, err
 			}
 
-			// Re-serialize the refs data with said candidate.
-			matchedSHA = bestCandidate.GitRefHash
-			matchedSHALabel = bestCandidate.String()
+			if parts.hasSemverSelector() {
+				// If there are no candidates, return in failure.
+				if refs.Candidates == nil || len(refs.Candidates) < 1 {
+					return nil, NewNoSuchPackageVersionError(
+						parts.author,
+						parts.repo,
+						parts.semverSelector.String())
+				}
+				// Find the best candidate.
+				bestCandidate := refs.Candidates.Best(parts.semverSelector)
+				if bestCandidate == nil {
+					return nil, NewNoSuchPackageVersionError(
+						parts.author,
+						parts.repo,
+						parts.semverSelector.String())
+				}
 
-			return &packageRequest{
-				req:             args.req,
-				parts:           parts,
-				matchedSHA:      matchedSHA,
-				matchedSHALabel: matchedSHALabel,
-			}, nil
+				// Re-serialize the refs data with said candidate.
+				matchedSHA = bestCandidate.GitRefHash
+				matchedSHALabel = bestCandidate.String()
+			} else {
+				// Set the default matched sha in case there is no semver selector.
+				matchedSHA = refs.MasterRefHash
+			}
 		}
-
-		// Set the default matched sha in case there is no semver selector.
-		matchedSHA = refs.MasterRefHash
 	}
 
 	return &packageRequest{
