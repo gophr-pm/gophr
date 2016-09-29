@@ -87,7 +87,7 @@ func main() {
 	}
 
 	// Next, create the default repo path
-	defaultRepoPath = filepath.Join(gopath, "src/github.com/skeswa/gophr")
+	defaultRepoPath = filepath.Join(gopath, "src/github.com/gophr-pm/gophr")
 
 	// Then, describe command metadata.
 	app.Name = cliName

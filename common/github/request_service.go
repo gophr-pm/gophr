@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 // GitHubGophrPackageOrgName is the  Github organization name for all versioned packages

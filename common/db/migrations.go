@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/skeswa/gophr/common/db/query"
+	"github.com/gophr-pm/gophr/common/db/query"
 	"github.com/skeswa/migrate/migrate"
 )
 

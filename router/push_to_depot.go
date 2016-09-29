@@ -5,7 +5,7 @@ import (
 	"time"
 
 	git "github.com/libgit2/git2go"
-	"github.com/skeswa/gophr/common/depot"
+	"github.com/gophr-pm/gophr/common/depot"
 )
 
 const (

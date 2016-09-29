@@ -82,12 +82,12 @@ RUN apt-get -q -y install \
   && rm -rf "/build-artifacts"
 
 # Copy in source for the API binary.
-COPY ./infra /go/src/github.com/skeswa/gophr/infra
-COPY ./depot /go/src/github.com/skeswa/gophr/depot
-COPY ./common /go/src/github.com/skeswa/gophr/common
+COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
+COPY ./depot /go/src/github.com/gophr-pm/gophr/depot
+COPY ./common /go/src/github.com/gophr-pm/gophr/common
 
 # Build source and move things around.
-RUN cd /go/src/github.com/skeswa/gophr/depot \
+RUN cd /go/src/github.com/gophr-pm/gophr/depot \
   && echo -e "\nFetching depot API dependencies...\n" \
   && go get -d -v \
   && echo -e "\nBuilding the depot API binary...\n" \

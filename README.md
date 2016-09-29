@@ -1,7 +1,7 @@
 
 # Gophr - go package management
-[![Go Report Card](https://goreportcard.com/badge/github.com/skeswa/gophr)](https://goreportcard.com/report/github.com/skeswa/gophr)
-[![GoDoc](https://godoc.org/github.com/skeswa/gophr/common?status.svg)](https://godoc.org/github.com/skeswa/gophr/common)
+[![Go Report Card](https://goreportcard.com/badge/github.com/gophr-pm/gophr)](https://goreportcard.com/report/github.com/gophr-pm/gophr)
+[![GoDoc](https://godoc.org/github.com/gophr-pm/gophr/common?status.svg)](https://godoc.org/github.com/gophr-pm/gophr/common)
 
 An end-to-end package management solution for Go. **No manifest or lock file and a fully versioned dependency graph.** Simply place the url in your import path and it's automatically fully versioned.
 
@@ -51,12 +51,12 @@ We give you the power of semver to reference tags and create logical equivalence
 We also **fully** version the entire dependency graph. Meaning, we version lock every sub-dependency as well, so it's perfectly preserved, everytime. Something **no one else** does.
 
 ### Gophr Resources
-- [Home](https://github.com/skeswa/gophr/wiki)
-- [Gophr CLI](https://github.com/skeswa/gophr/wiki/Gophr-CLI)
-- [Gophr Web](https://github.com/skeswa/gophr/wiki/Gophr-Web)
-- [How do I contribute?](https://github.com/skeswa/gophr/wiki/How-do-I-contribute%3F)
-- [How does Gophr work?](https://github.com/skeswa/gophr/wiki/How-does-Gophr-work%3F)
-- [Our Microservices](https://github.com/skeswa/gophr/wiki/Our-Microservices)
-- [Setting up dev environment](https://github.com/skeswa/gophr/wiki/Setting-up-dev-environment)
+- [Home](https://github.com/gophr-pm/gophr/wiki)
+- [Gophr CLI](https://github.com/gophr-pm/gophr/wiki/Gophr-CLI)
+- [Gophr Web](https://github.com/gophr-pm/gophr/wiki/Gophr-Web)
+- [How do I contribute?](https://github.com/gophr-pm/gophr/wiki/How-do-I-contribute%3F)
+- [How does Gophr work?](https://github.com/gophr-pm/gophr/wiki/How-does-Gophr-work%3F)
+- [Our Microservices](https://github.com/gophr-pm/gophr/wiki/Our-Microservices)
+- [Setting up dev environment](https://github.com/gophr-pm/gophr/wiki/Setting-up-dev-environment)
 
 Questions, comments, concerns? Feel free to open an issue or reach out on [slack](http://gophrpm.slack.com) @shikkic or @skeswa

@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/db"
+	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/db"
 )
 
 // Init initializes a gophr backend component. Returns all the pre-requisites to

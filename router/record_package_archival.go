@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 // recordPackageArchival is a helper function that records the download of a

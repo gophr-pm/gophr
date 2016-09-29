@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/skeswa/gophr/common/github"
+	"github.com/gophr-pm/gophr/common/github"
 )
 
 type processDepsArgs struct {

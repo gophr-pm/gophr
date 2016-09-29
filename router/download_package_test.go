@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/io"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/io"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

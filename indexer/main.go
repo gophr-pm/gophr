@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/models"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/models"
 )
 
 func main() {

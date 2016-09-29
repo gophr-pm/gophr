@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/config"
-	"github.com/skeswa/gophr/common/errors"
-	"github.com/skeswa/gophr/common/github"
-	"github.com/skeswa/gophr/common/io"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/errors"
+	"github.com/gophr-pm/gophr/common/github"
+	"github.com/gophr-pm/gophr/common/io"
 )
 
 const (

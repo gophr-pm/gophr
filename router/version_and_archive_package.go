@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/skeswa/gophr/common/git"
-	"github.com/skeswa/gophr/common/models"
-	"github.com/skeswa/gophr/common/verdeps"
+	"github.com/gophr-pm/gophr/common/git"
+	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/verdeps"
 )
 
 const (

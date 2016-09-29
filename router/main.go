@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/skeswa/gophr/common"
-	"github.com/skeswa/gophr/common/config"
+	"github.com/gophr-pm/gophr/common"
+	"github.com/gophr-pm/gophr/common/config"
 )
 
 func main() {

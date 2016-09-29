@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/skeswa/gophr/common/semver"
+	"github.com/gophr-pm/gophr/common/semver"
 )
 
 const (

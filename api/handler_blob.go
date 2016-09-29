@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/skeswa/gophr/common/depot"
-	"github.com/skeswa/gophr/common/errors"
+	"github.com/gophr-pm/gophr/common/depot"
+	"github.com/gophr-pm/gophr/common/errors"
 )
 
 const (

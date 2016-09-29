@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/skeswa/gophr/common/errors"
+	"github.com/gophr-pm/gophr/common/errors"
 )
 
 // Constants directly related to interacting with the package model in the

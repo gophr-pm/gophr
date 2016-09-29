@@ -31,12 +31,12 @@ RUN cd $HOME && curl -fsSL https://github.com/libgit2/libgit2/archive/v0.24.1.ta
 	&& rm -rf $HOME/libgit2
 
 # Copy in requisite files.
-COPY ./infra /go/src/github.com/skeswa/gophr/infra
-COPY ./router /go/src/github.com/skeswa/gophr/router
-COPY ./common /go/src/github.com/skeswa/gophr/common
+COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
+COPY ./router /go/src/github.com/gophr-pm/gophr/router
+COPY ./common /go/src/github.com/gophr-pm/gophr/common
 
 # Build source and move things around.
-RUN cd /go/src/github.com/skeswa/gophr/router \
+RUN cd /go/src/github.com/gophr-pm/gophr/router \
     && echo -e "\nFetching dependencies...\n" \
     && go get -d -v \
     && echo -e "\nBuilding the binary...\n" \
