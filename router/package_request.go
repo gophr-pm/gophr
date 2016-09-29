@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 
 	"github.com/gocql/gocql"
 	"github.com/skeswa/gophr/common"
@@ -26,6 +27,11 @@ const (
 	httpContentTypeHeader  = "Content-Type"
 	basePackageURLTemplate = "https://%s%s"
 	packagePageURLTemplate = "https://%s/#/packages/%s/%s"
+)
+
+var (
+	// Subpaths of all incoming git requests will look like this.
+	gitRequestSubpathRegex = regexp.MustCompile(`/(?:info/refs|objects/(?:info/[^/]+|[0-9a-f]{2}/[0-9a-f]{38}|pack/pack-[0-9a-f]{40}\.(?:pack|idx))|git-upload-pack)`)
 )
 
 // PackageRequest is stuct that standardizes the output of all the scenarios
@@ -281,8 +287,7 @@ func isGoGetRequest(req *http.Request) bool {
 
 // isGitRequest returns true if the request was made by git (in a clone setting).
 func isGitRequest(parts *packageRequestParts) bool {
-	return parts.subpath == gitInfoRefsSubPath ||
-		parts.subpath == gitUploadPackSubPath
+	return gitRequestSubpathRegex.MatchString(parts.subpath)
 }
 
 // sendPermanentRedirect writes a 301 and a redirect location to a response.

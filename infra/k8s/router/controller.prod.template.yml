@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: router
-        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-router:1.2.0"
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-router:1.2.1"
         ports:
         - containerPort: 3000
         volumeMounts:
