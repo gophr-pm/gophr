@@ -13,10 +13,10 @@ import (
 const (
 	at                          = '@'
 	dot                         = '.'
-	hyphen                      = '-'
 	slash                       = '/'
+	hyphen                      = '-'
 	shaLength                   = 40
-	shortSHALength              = 6
+	minShortSHALength           = 6
 	semverSelectorRegexTemplate = `([\%c\%c]?)([0-9]+)(?:\.([0-9]+|%c))?(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([\%c\%c]?)`
 )
 
@@ -270,7 +270,10 @@ func isFullSHASelector(selector string) bool {
 
 func isShortSHASelector(selector string) bool {
 	// If it isn't a 6 character short SHA return false, it might be semvar
-	return len(selector) == shortSHALength && strings.IndexByte(selector, dot) == -1 && strings.IndexByte(selector, hyphen) == -1
+	return len(selector) >= minShortSHALength &&
+		len(selector) < shaLength &&
+		strings.IndexByte(selector, dot) == -1 &&
+		strings.IndexByte(selector, hyphen) == -1
 }
 
 // isSemverSelector converts a semver selector string into a semver selector.

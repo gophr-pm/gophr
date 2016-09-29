@@ -44,6 +44,7 @@ type newPackageRequestArgs struct {
 	req          *http.Request
 	downloadRefs refsDownloader
 	fetchFullSHA fullSHAFetcher
+	doHTTPHead   github.HTTPHeadReq
 }
 
 // newPackageRequest parses and simplifies the information in a package version
@@ -67,9 +68,12 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 			// If we have a short SHA selector convert it to a full SHA.
 			if parts.hasShortSHASelector {
 				matchedSHA, err = args.fetchFullSHA(
-					parts.author,
-					parts.repo,
-					parts.shaSelector,
+					github.FetchFullSHAArgs{
+						Author:     parts.author,
+						Repo:       parts.repo,
+						ShortSHA:   parts.shaSelector,
+						DoHTTPHead: args.doHTTPHead,
+					},
 				)
 				if err != nil {
 					return nil, err
@@ -80,54 +84,38 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 			if parts.hasFullSHASelector {
 				matchedSHA = parts.shaSelector
 			}
-
-			return &packageRequest{
-				req:             args.req,
-				parts:           parts,
-				matchedSHA:      matchedSHA,
-				matchedSHALabel: matchedSHALabel,
-			}, nil
-		}
-
-		// Get and process all of the refs for this package.
-		if refs, err = args.downloadRefs(
-			parts.author,
-			parts.repo); err != nil {
-			return nil, err
-		}
-
-		if parts.hasSemverSelector() {
-			// If there are no candidates, return in failure.
-			if refs.Candidates == nil || len(refs.Candidates) < 1 {
-				return nil, NewNoSuchPackageVersionError(
-					parts.author,
-					parts.repo,
-					parts.semverSelector.String())
+		} else {
+			if refs, err = args.downloadRefs(
+				parts.author,
+				parts.repo); err != nil {
+				return nil, err
 			}
 
-			// Find the best candidate.
-			bestCandidate := refs.Candidates.Best(parts.semverSelector)
-			if bestCandidate == nil {
-				return nil, NewNoSuchPackageVersionError(
-					parts.author,
-					parts.repo,
-					parts.semverSelector.String())
+			if parts.hasSemverSelector() {
+				// If there are no candidates, return in failure.
+				if refs.Candidates == nil || len(refs.Candidates) < 1 {
+					return nil, NewNoSuchPackageVersionError(
+						parts.author,
+						parts.repo,
+						parts.semverSelector.String())
+				}
+				// Find the best candidate.
+				bestCandidate := refs.Candidates.Best(parts.semverSelector)
+				if bestCandidate == nil {
+					return nil, NewNoSuchPackageVersionError(
+						parts.author,
+						parts.repo,
+						parts.semverSelector.String())
+				}
+
+				// Re-serialize the refs data with said candidate.
+				matchedSHA = bestCandidate.GitRefHash
+				matchedSHALabel = bestCandidate.String()
+			} else {
+				// Set the default matched sha in case there is no semver selector.
+				matchedSHA = refs.MasterRefHash
 			}
-
-			// Re-serialize the refs data with said candidate.
-			matchedSHA = bestCandidate.GitRefHash
-			matchedSHALabel = bestCandidate.String()
-
-			return &packageRequest{
-				req:             args.req,
-				parts:           parts,
-				matchedSHA:      matchedSHA,
-				matchedSHALabel: matchedSHALabel,
-			}, nil
 		}
-
-		// Set the default matched sha in case there is no semver selector.
-		matchedSHA = refs.MasterRefHash
 	}
 
 	return &packageRequest{
