@@ -13,6 +13,7 @@ go:
 script:
 - make
 - $HOME/gopath/bin/goveralls -coverprofile=coverage-all.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+- go test ./..
 notifications:
 - email: false
 env:
