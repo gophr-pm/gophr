@@ -4,7 +4,7 @@ sudo: required
 
 before_install:
   - go get -d github.com/libgit2/git2go
-  - ./$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh
+  - .$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh
 
 install:
   - go get ./...
