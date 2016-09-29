@@ -1,7 +1,17 @@
 language: go
 
+sudo: required
+
+install:
+  - go get -d github.com/libgit2/git2go
+  - cd $GOPATH/src/github.com/libgit2/git2go && ./script/install-libgit2.sh
+  - go get ./...
+
 go:
   - 1.6
   - 1.7
 
 script: go test ./...
+
+notifications:
+  - email: false
