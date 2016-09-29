@@ -157,11 +157,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			pr.parts.subpath)
 
 		// Issue a permanent redirect.
-		http.Redirect(
-			args.res,
-			pr.req,
-			redirectLocation,
-			http.StatusMovedPermanently)
+		sendPermanentRedirect(args.res, redirectLocation)
 
 		// Without blocking, count a packfile request as a package download.
 		if pr.parts.subpath == gitUploadPackSubPath {
@@ -284,6 +280,12 @@ func isGoGetRequest(req *http.Request) bool {
 func isGitRequest(parts *packageRequestParts) bool {
 	return parts.subpath == gitInfoRefsSubPath ||
 		parts.subpath == gitUploadPackSubPath
+}
+
+// sendPermanentRedirect writes a 301 and a redirect location to a response.
+func sendPermanentRedirect(w http.ResponseWriter, location string) {
+	w.Header().Set(httpLocationHeader, location)
+	w.WriteHeader(http.StatusMovedPermanently)
 }
 
 // getRequestDomain isolates and returns the domain of the specified request.
