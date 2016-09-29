@@ -30,7 +30,9 @@ Gophr allows you to version lock your dependencies by semver or SHA.
       // Version by semver logic
       "gophr.pm/a/b@>1.0.0"
       "gophr.pm/a/b@<1.3.2"
-      // Version by SHA
+      // Version by partial or full SHA (Anything between 6 - 40 Characters)
+      "gophr.pm/a/b@24638c"
+      "gophr.pm/a/b@24638c6d1aaa1"
       "gophr.pm/a/b@24638c6d1aaa1a39c14c704918e354fd3949b93c"
   )
 ```
