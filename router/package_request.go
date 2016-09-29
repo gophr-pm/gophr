@@ -231,6 +231,17 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 		args.res.Header().Set(httpContentTypeHeader, contentTypeHTML)
 		args.res.Write(metaData)
 
+		// Without blocking, count go-get surveying this package for installation
+		// as a download in the database.
+		go args.recordPackageDownload(packageDownloadRecorderArgs{
+			db:     args.db,
+			sha:    pr.matchedSHA,
+			repo:   pr.parts.repo,
+			author: pr.parts.author,
+			// It is ok for the matched sha label to be left blank.
+			version: pr.matchedSHALabel,
+		})
+
 		return nil
 	}
 
