@@ -18,10 +18,9 @@ type reviseDepsArgs struct {
 
 func reviseDeps(args reviseDepsArgs) {
 	var (
-		path             string
-		revs             []*revision
-		importCount      int
-		pathRevisionsMap = make(map[string][]*revision)
+		path                   string
+		revs                   *revisionList
+		pathImportRevisionsMap = make(map[string]*revisionList)
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
@@ -32,45 +31,54 @@ func reviseDeps(args reviseDepsArgs) {
 	for rev := range args.inputChan {
 		// Get the rev slice, and add this rev.
 		path = rev.path
-		revs = pathRevisionsMap[path]
-		revs = append(revs, rev)
-		importCount = args.syncedImportCounts.importCountOf(path)
+		// Create revs if it does not exist already.
+		if revs = pathImportRevisionsMap[path]; revs == nil {
+			revs = newRevisionList()
+		}
+		// Add the new rev to revs.
+		revs.add(rev)
 
 		// Decide whether its time to apply the revs.
-		if importCount == len(revs) {
+		if revs.importRevCount >= args.syncedImportCounts.importCountOf(path) &&
+			revs.packageRevCount > 0 {
 			// Apply the revisions now that we have all the appropriate revisions.
-			if len(revs) > 0 {
-				go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
-			}
+			go applyRevisions(
+				path,
+				revs.getRevs(),
+				args.revisionWaitGroup,
+				args.accumulatedErrors)
 			// Get rids of the revs from the map since we don't need them anymore.
-			delete(pathRevisionsMap, path)
-		} else {
-			// Update the revs in the map - keep waiting for more revs.
-			pathRevisionsMap[path] = revs
+			delete(pathImportRevisionsMap, path)
 		}
 	}
 
 	var (
 		missedImports           = 0
-		filesWithMissingImports = len(pathRevisionsMap)
+		missedPackages          = 0
+		filesWithMissingImports = len(pathImportRevisionsMap)
 	)
 
 	// Apply all remaining revisions, and log the files that don't have every
 	// import versioned.
-	for path, revs = range pathRevisionsMap {
-		// Record how many imports we missed
-		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - len(revs))
+	for path, revs = range pathImportRevisionsMap {
+		// Record how many imports we missed.
+		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - revs.importRevCount)
+		missedPackages = missedPackages + (1 - revs.packageRevCount)
 		// Apply the revisions that we have (given we have any).
-		if len(revs) > 0 {
-			go applyRevisions(path, revs, args.revisionWaitGroup, args.accumulatedErrors)
+		revsSlice := revs.getRevs()
+		if len(revsSlice) > 0 {
+			go applyRevisions(path, revsSlice, args.revisionWaitGroup, args.accumulatedErrors)
 		}
 		// Get rids of the revs from the map since we don't need them anymore.
-		delete(pathRevisionsMap, path)
+		delete(pathImportRevisionsMap, path)
 	}
 
 	// Summarize what we missed in a log message.
 	if missedImports > 0 {
 		log.Printf("Missed %d imports in %d files.\n", missedImports, filesWithMissingImports)
+	}
+	if missedPackages > 0 {
+		log.Printf("Missed %d package statements in %d files.\n", missedPackages, filesWithMissingImports)
 	}
 }
 
@@ -99,18 +107,29 @@ func applyRevisions(
 
 	// Create bytes diffs for each of the revisions.
 	for _, rev := range revs {
-		// Adjust from and to so that they fall on quote bytes.
-		if from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex); err != nil {
-			// Exit if the import path boundaries could not be adjusted.
-			accumulatedErrors.add(err)
-			return
-		}
+		if rev.revisesImport {
+			// Adjust from and to so that they fall on quote bytes.
+			if from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex); err != nil {
+				// Exit if the import path boundaries could not be adjusted.
+				accumulatedErrors.add(err)
+				return
+			}
 
-		diffs = append(diffs, bytesDiff{
-			bytes:         rev.gophrURL,
-			exclusiveTo:   to,
-			inclusiveFrom: from,
-		})
+			diffs = append(diffs, bytesDiff{
+				bytes:         rev.gophrURL,
+				exclusiveTo:   to,
+				inclusiveFrom: from,
+			})
+		} else if rev.revisesPackage {
+			// Remove any package import comments that we might find.
+			if from, to = findPackageImportComment(fileData, rev.fromIndex); from >= 0 && to > from {
+				diffs = append(diffs, bytesDiff{
+					bytes:         nil,
+					exclusiveTo:   to,
+					inclusiveFrom: from,
+				})
+			}
+		}
 	}
 
 	// Combine the diffs and the file data.

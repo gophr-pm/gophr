@@ -10,10 +10,11 @@ import (
 )
 
 type readDepsArgs struct {
-	outputChan         chan *importSpec
-	packagePath        string
-	accumulatedErrors  *syncedErrors
-	syncedImportCounts *syncedImportCounts
+	packagePath           string
+	accumulatedErrors     *syncedErrors
+	syncedImportCounts    *syncedImportCounts
+	outputImportSpecChan  chan *importSpec
+	outputPackageSpecChan chan *packageSpec
 }
 
 func readDeps(args readDepsArgs) {
@@ -27,9 +28,10 @@ func readDeps(args readDepsArgs) {
 		return
 	}
 
-	// Make sure that the output chan is closed when there are no more files to
+	// Make sure that the output chans are closed when there are no more files to
 	// walk.
-	defer close(args.outputChan)
+	defer close(args.outputImportSpecChan)
+	defer close(args.outputPackageSpecChan)
 
 	if err = filepath.Walk(fullPackagePath, func(path string, info os.FileInfo, err error) error {
 		var f *ast.File
@@ -44,6 +46,12 @@ func readDeps(args readDepsArgs) {
 				return err
 			}
 
+			// Throw the package spec. into the mix.
+			args.outputPackageSpecChan <- &packageSpec{
+				filePath:   path,
+				startIndex: int(f.Package),
+			}
+
 			// Filter the deps.
 			var filteredSpecs []*importSpec
 			for _, spec := range f.Imports {
@@ -56,14 +64,14 @@ func readDeps(args readDepsArgs) {
 				}
 			}
 
+			// Set the import count before enqueing deps.
+			args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
+
 			// Provided that we have specs, ship them to the next stage.
 			if len(filteredSpecs) > 0 {
-				// Set the import count before enqueing deps.
-				args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
-
 				// Enqueue the deps.
 				for _, spec := range filteredSpecs {
-					args.outputChan <- spec
+					args.outputImportSpecChan <- spec
 				}
 			}
 		}

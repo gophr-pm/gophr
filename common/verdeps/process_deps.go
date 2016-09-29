@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/common/github"
+	"github.com/streamrail/concurrent-map"
 )
 
 type processDepsArgs struct {
@@ -23,9 +24,10 @@ type processDepsArgs struct {
 func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan       = make(chan *revision)
-		waitingSpecs       = make(map[string]*specWaitingList)
-		importPathSHAs     = make(map[string]string)
+		waitingSpecs       = cmap.New() // make(map[string]*specWaitingList)
+		importPathSHAs     = cmap.New() // make(map[string]string)
 		importSpecChan     = make(chan *importSpec)
+		packageSpecChan    = make(chan *packageSpec)
 		importPathSHAChan  = make(chan *importPathSHA)
 		accumulatedErrors  = newSyncedErrors()
 		revisionWaitGroup  = &sync.WaitGroup{}
@@ -35,10 +37,11 @@ func processDeps(args processDepsArgs) error {
 
 	// Start reading the deps.
 	go readDeps(readDepsArgs{
-		outputChan:         importSpecChan,
-		packagePath:        args.packagePath,
-		accumulatedErrors:  accumulatedErrors,
-		syncedImportCounts: syncedImportCounts,
+		packagePath:           args.packagePath,
+		accumulatedErrors:     accumulatedErrors,
+		syncedImportCounts:    syncedImportCounts,
+		outputImportSpecChan:  importSpecChan,
+		outputPackageSpecChan: packageSpecChan,
 	})
 
 	// Revise dependencies in the go source files.
@@ -61,24 +64,34 @@ func processDeps(args processDepsArgs) error {
 
 			// Create an entry in the map.
 			importPathHash := importPathHashOf(ips.importPath)
-			importPathSHAs[importPathHash] = ips.sha
+			importPathSHAs.Set(importPathHash, ips.sha)
 
 			// Clear away the waiting specs.
-			if waitingList, exists := waitingSpecs[importPathHash]; exists {
+			if waitingList, exists := waitingSpecs.Get(importPathHash); exists {
 				// There is a waiting list, so it needs to be cleared.
-				if specs := waitingList.clear(); specs != nil {
+				if specs := waitingList.(*specWaitingList).clear(); specs != nil {
 					for _, spec := range specs {
-						enqueueRevision(revisionChan, spec.imports.Path.Value, ips.sha, spec)
+						enqueueImportRevision(revisionChan, spec.imports.Path.Value, ips.sha, spec)
 					}
 				}
 			}
 
-			// Check if this is the last time tme an import path sha will come through.
+			// Check if this is the last time that an import path sha will come through.
 			// We check this by checking if the spec channel has already closed, and
 			// if there are no pending sha requests. If so, close this channel.
 			if pendingSHARequests.value() == 0 && importSpecChan == nil {
 				closeImportPathSHAChan(importPathSHAChan, waitingSpecs)
 			}
+
+		case spec, alive := <-packageSpecChan:
+			// Nil the channel if no longer alive.
+			if !alive {
+				packageSpecChan = nil
+				break
+			}
+
+			// Pass the package revision along to the file-writing stage.
+			enqueuePackageRevision(revisionChan, spec)
 
 		case spec, alive := <-importSpecChan:
 			// Nil the channel if no longer alive.
@@ -97,10 +110,10 @@ func processDeps(args processDepsArgs) error {
 			// For each incoming spec, make it wait keyed on the import path hash.
 			importPath := spec.imports.Path.Value
 			importPathHash := importPathHashOf(spec.imports.Path.Value)
-			if sha, exists := importPathSHAs[importPathHash]; !exists {
+			if shaRaw, exists := importPathSHAs.Get(importPathHash); !exists {
 				// If we don't presently have the sha, then we have to go out and get it.
-				if specs, exists := waitingSpecs[importPathHash]; !exists {
-					waitingSpecs[importPathHash] = newSpecWaitingList(spec)
+				if specsRaw, exists := waitingSpecs.Get(importPathHash); !exists {
+					waitingSpecs.SetIfAbsent(importPathHash, newSpecWaitingList(spec))
 					// Signal that a request is about to begin synchronously to prevent
 					// race conditions.
 					pendingSHARequests.increment()
@@ -116,25 +129,33 @@ func processDeps(args processDepsArgs) error {
 						packageVersionDate: args.packageVersionDate,
 					})
 				} else {
+					specs := specsRaw.(*specWaitingList)
 					if ok := specs.add(spec); !ok {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
-						if sha, exists = importPathSHAs[importPathHash]; !exists {
-							accumulatedErrors.add(fmt.Errorf("Could not version dependency %s because the SHA did not yet exist.", importPath))
+						if shaRaw, exists = importPathSHAs.Get(importPathHash); !exists {
+							accumulatedErrors.add(fmt.Errorf(
+								"Could not version dependency %s because the SHA did not yet exist.",
+								importPath))
 						} else {
-							enqueueRevision(revisionChan, importPath, sha, spec)
+							sha := shaRaw.(string)
+							enqueueImportRevision(revisionChan, importPath, sha, spec)
 						}
 					}
 				}
 			} else {
-				// If we got here, it means that the sha has already been obtained, so the
-				// new import path exists.
-				enqueueRevision(revisionChan, importPath, sha, spec)
+				// If we got here, it means that the sha has already been obtained, so
+				// the new import path exists.
+				sha := shaRaw.(string)
+				enqueueImportRevision(revisionChan, importPath, sha, spec)
 			}
 		}
 
-		// If both of the channels being selected are nil, its time to stop selecting.
-		if importPathSHAChan == nil && importSpecChan == nil {
+		// If both of the channels being selected are nil, its time to stop
+		// selecting.
+		if importPathSHAChan == nil &&
+			packageSpecChan == nil &&
+			importSpecChan == nil {
 			// At this point, the deps chan should be closed since all potential deps
 			// have been seen and processed.
 			close(revisionChan)
@@ -157,23 +178,42 @@ func processDeps(args processDepsArgs) error {
 	return nil
 }
 
-// enqueueRevision is a helper function that puts a revision into the revision channel.
-func enqueueRevision(revisionChan chan *revision, importPath, sha string, spec *importSpec) {
+// enqueueImportRevision is a helper function that puts a revision into the
+// revision channel that revises an import statement.
+func enqueueImportRevision(
+	revisionChan chan *revision,
+	importPath, sha string,
+	spec *importSpec,
+) {
 	author, repo, subpath := parseImportPath(importPath)
 	newImportPath := composeNewImportPath(author, repo, sha, subpath)
 
-	revisionChan <- newRevision(spec, newImportPath)
+	revisionChan <- newImportRevision(spec, newImportPath)
+}
+
+// enqueuePackageRevision is a helper function that puts a revision into the
+// revision channel that (potentially) revises a package statement.
+func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
+	revisionChan <- newPackageRevision(spec)
 }
 
 // closeImportPathSHAChan closes the importPathSHAChan and clears all spec waiting list.
 // The waiting lists are cleared because they're waiting for a SHA that will
 // presumably never come.
-func closeImportPathSHAChan(importPathSHAChan chan *importPathSHA, importPathSHAs map[string]*specWaitingList) {
+func closeImportPathSHAChan(importPathSHAChan chan *importPathSHA, waitingSpecs cmap.ConcurrentMap) {
 	// Clear all the waiting lists.
-	for importPath, waitingList := range importPathSHAs {
+	var importPathsToDelete []string
+	for tuple := range waitingSpecs.IterBuffered() {
+		importPath, waitingList := tuple.Key, tuple.Val.(*specWaitingList)
 		waitingList.clear()
-		// Remove this key-value pair from the map.
-		delete(importPathSHAs, importPath)
+
+		// Enqueue this import path to be removed from the map.
+		importPathsToDelete = append(importPathsToDelete, importPath)
+	}
+
+	// Remove all the things that should be removed.
+	for _, importPathToDelete := range importPathsToDelete {
+		waitingSpecs.Remove(importPathToDelete)
 	}
 
 	// Finally, close the channel.
