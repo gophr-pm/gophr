@@ -6,6 +6,7 @@ before_install:
 install:
 - go get golang.org/x/tools/cmd/cover
 - go get github.com/mattn/goveralls
+- go get github.com/jinzhu/copier
 - go get ./...
 go:
 - 1.6
