@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/common/github"
-	"github.com/streamrail/concurrent-map"
 )
 
 type processDepsArgs struct {
@@ -24,8 +23,8 @@ type processDepsArgs struct {
 func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan       = make(chan *revision)
-		waitingSpecs       = cmap.New() // make(map[string]*specWaitingList)
-		importPathSHAs     = cmap.New() // make(map[string]string)
+		waitingSpecs       = newSyncedWaitingListMap()
+		importPathSHAs     = newSyncedStringMap()
 		importSpecChan     = make(chan *importSpec)
 		packageSpecChan    = make(chan *packageSpec)
 		importPathSHAChan  = make(chan *importPathSHA)
@@ -64,12 +63,12 @@ func processDeps(args processDepsArgs) error {
 
 			// Create an entry in the map.
 			importPathHash := importPathHashOf(ips.importPath)
-			importPathSHAs.Set(importPathHash, ips.sha)
+			importPathSHAs.set(importPathHash, ips.sha)
 
 			// Clear away the waiting specs.
-			if waitingList, exists := waitingSpecs.Get(importPathHash); exists {
+			if waitingList, exists := waitingSpecs.get(importPathHash); exists {
 				// There is a waiting list, so it needs to be cleared.
-				if specs := waitingList.(*specWaitingList).clear(); specs != nil {
+				if specs := waitingList.clear(); specs != nil {
 					for _, spec := range specs {
 						enqueueImportRevision(revisionChan, spec.imports.Path.Value, ips.sha, spec)
 					}
@@ -110,10 +109,10 @@ func processDeps(args processDepsArgs) error {
 			// For each incoming spec, make it wait keyed on the import path hash.
 			importPath := spec.imports.Path.Value
 			importPathHash := importPathHashOf(spec.imports.Path.Value)
-			if shaRaw, exists := importPathSHAs.Get(importPathHash); !exists {
+			if sha, exists := importPathSHAs.get(importPathHash); !exists {
 				// If we don't presently have the sha, then we have to go out and get it.
-				if specsRaw, exists := waitingSpecs.Get(importPathHash); !exists {
-					waitingSpecs.SetIfAbsent(importPathHash, newSpecWaitingList(spec))
+				if specs, exists := waitingSpecs.get(importPathHash); !exists {
+					waitingSpecs.setIfAbsent(importPathHash, newSpecWaitingList(spec))
 					// Signal that a request is about to begin synchronously to prevent
 					// race conditions.
 					pendingSHARequests.increment()
@@ -129,16 +128,14 @@ func processDeps(args processDepsArgs) error {
 						packageVersionDate: args.packageVersionDate,
 					})
 				} else {
-					specs := specsRaw.(*specWaitingList)
 					if ok := specs.add(spec); !ok {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
-						if shaRaw, exists = importPathSHAs.Get(importPathHash); !exists {
+						if sha, exists = importPathSHAs.get(importPathHash); !exists {
 							accumulatedErrors.add(fmt.Errorf(
 								"Could not version dependency %s because the SHA did not yet exist.",
 								importPath))
 						} else {
-							sha := shaRaw.(string)
 							enqueueImportRevision(revisionChan, importPath, sha, spec)
 						}
 					}
@@ -146,7 +143,6 @@ func processDeps(args processDepsArgs) error {
 			} else {
 				// If we got here, it means that the sha has already been obtained, so
 				// the new import path exists.
-				sha := shaRaw.(string)
 				enqueueImportRevision(revisionChan, importPath, sha, spec)
 			}
 		}
@@ -200,21 +196,10 @@ func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 // closeImportPathSHAChan closes the importPathSHAChan and clears all spec waiting list.
 // The waiting lists are cleared because they're waiting for a SHA that will
 // presumably never come.
-func closeImportPathSHAChan(importPathSHAChan chan *importPathSHA, waitingSpecs cmap.ConcurrentMap) {
-	// Clear all the waiting lists.
-	var importPathsToDelete []string
-	for tuple := range waitingSpecs.IterBuffered() {
-		importPath, waitingList := tuple.Key, tuple.Val.(*specWaitingList)
+func closeImportPathSHAChan(importPathSHAChan chan *importPathSHA, waitingSpecs *syncedWaitingListMap) {
+	waitingSpecs.each(func(importPath string, waitingList *specWaitingList) {
 		waitingList.clear()
-
-		// Enqueue this import path to be removed from the map.
-		importPathsToDelete = append(importPathsToDelete, importPath)
-	}
-
-	// Remove all the things that should be removed.
-	for _, importPathToDelete := range importPathsToDelete {
-		waitingSpecs.Remove(importPathToDelete)
-	}
+	}).clear()
 
 	// Finally, close the channel.
 	close(importPathSHAChan)
