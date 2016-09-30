@@ -8,7 +8,6 @@ import (
 	"github.com/gophr-pm/gophr/common"
 	"github.com/gophr-pm/gophr/common/config"
 	"github.com/gophr-pm/gophr/common/newrelic"
-	newrelic "github.com/newrelic/go-agent"
 )
 
 func main() {
@@ -19,24 +18,16 @@ func main() {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
-	var app newrelic.Application
-	if !conf.IsDev {
-		newRelicKey, err := nr.GenerateKey(conf)
-		if err != nil {
-			log.Fatalln("Failed to read newrelic credentials secret:", err)
-		}
-		config := newrelic.NewConfig("Gophr", newRelicKey)
-		app, err = newrelic.NewApplication(config)
-		if err != nil {
-			log.Fatalln("Failed to create new relic monitoring application:", err)
-		}
+	newRelicApp, err := nr.CreateNewRelicApp(conf)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	// Ensure that the session is closed eventually.
 	defer db.Close()
 
 	// Start serving.
-	http.HandleFunc(wildcardHandlerPattern, RequestHandler(conf, db, creds, app))
+	http.HandleFunc(wildcardHandlerPattern, RequestHandler(conf, db, creds, newRelicApp))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

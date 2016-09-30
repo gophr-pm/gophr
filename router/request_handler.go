@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gocql/gocql"
@@ -10,6 +9,7 @@ import (
 	"github.com/gophr-pm/gophr/common/errors"
 	"github.com/gophr-pm/gophr/common/github"
 	"github.com/gophr-pm/gophr/common/io"
+	"github.com/gophr-pm/gophr/common/newrelic"
 	"github.com/newrelic/go-agent"
 )
 
@@ -42,12 +42,8 @@ func RequestHandler(
 	})
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Create a new relic transaction.
-		if !conf.IsDev {
-			log.Printf("Logging request for %s \n", r.URL.String())
-			txn := newRelicApp.StartTransaction(r.URL.String(), w, r)
-			defer txn.End()
-		}
+		txn := nr.CreateNewRelicTxn(newRelicApp, conf, &w, r)
+		defer txn.End()
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
@@ -69,6 +65,7 @@ func RequestHandler(
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
+			nr.ReportNewRelicError(txn, err, conf.IsDev)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -86,6 +83,7 @@ func RequestHandler(
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
+			nr.ReportNewRelicError(txn, err, conf.IsDev)
 			errors.RespondWithError(w, err)
 			return
 		}
