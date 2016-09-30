@@ -9,6 +9,8 @@ import (
 	"github.com/gophr-pm/gophr/common/errors"
 	"github.com/gophr-pm/gophr/common/github"
 	"github.com/gophr-pm/gophr/common/io"
+	"github.com/gophr-pm/gophr/common/newrelic"
+	"github.com/newrelic/go-agent"
 )
 
 const (
@@ -25,7 +27,9 @@ var (
 func RequestHandler(
 	conf *config.Config,
 	session *gocql.Session,
-	creds *config.Credentials) func(http.ResponseWriter, *http.Request) {
+	creds *config.Credentials,
+	newRelicApp newrelic.Application,
+) func(http.ResponseWriter, *http.Request) {
 	// Instantiate the IO module for use in package downloading and versioning.
 	io := io.NewIO()
 
@@ -38,6 +42,8 @@ func RequestHandler(
 	})
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		txn := nr.CreateNewRelicTxn(newRelicApp, conf, &w, r)
+
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
 		if r.URL.Path == healthCheckRoute {
@@ -58,6 +64,7 @@ func RequestHandler(
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
+			nr.ReportNewRelicError(txn, err, conf.IsDev)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -75,6 +82,7 @@ func RequestHandler(
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
+			nr.ReportNewRelicError(txn, err, conf.IsDev)
 			errors.RespondWithError(w, err)
 			return
 		}
