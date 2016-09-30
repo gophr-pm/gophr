@@ -8,7 +8,8 @@ import (
 	newrelic "github.com/newrelic/go-agent"
 )
 
-// CreateNewRelicTxn lol
+// CreateNewRelicTxn starts a transaction that will log activity
+// to new relic.
 func CreateNewRelicTxn(
 	newRelicApp newrelic.Application,
 	conf *config.Config,

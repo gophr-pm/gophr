@@ -8,7 +8,8 @@ import (
 	newrelic "github.com/newrelic/go-agent"
 )
 
-// CreateNewRelicApp lol
+// CreateNewRelicApp return a newrelic object that can create
+// transactions to monitor endpoints.
 func CreateNewRelicApp(conf *config.Config) (newrelic.Application, error) {
 	var app newrelic.Application
 	if !conf.IsDev {

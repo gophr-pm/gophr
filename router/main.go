@@ -18,6 +18,7 @@ func main() {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
+	// Create new relic app for monitoring.
 	newRelicApp, err := nr.CreateNewRelicApp(conf)
 	if err != nil {
 		log.Fatalln(err)
