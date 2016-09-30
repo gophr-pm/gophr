@@ -46,12 +46,6 @@ func readDeps(args readDepsArgs) {
 				return err
 			}
 
-			// Throw the package spec. into the mix.
-			args.outputPackageSpecChan <- &packageSpec{
-				filePath:   path,
-				startIndex: int(f.Package),
-			}
-
 			// Filter the deps.
 			var filteredSpecs []*importSpec
 			for _, spec := range f.Imports {
@@ -66,6 +60,12 @@ func readDeps(args readDepsArgs) {
 
 			// Set the import count before enqueing deps.
 			args.syncedImportCounts.setImportCount(path, len(filteredSpecs))
+
+			// Throw the package spec. into the mix.
+			args.outputPackageSpecChan <- &packageSpec{
+				filePath:   path,
+				startIndex: int(f.Package),
+			}
 
 			// Provided that we have specs, ship them to the next stage.
 			if len(filteredSpecs) > 0 {

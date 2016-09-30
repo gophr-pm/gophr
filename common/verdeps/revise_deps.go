@@ -18,49 +18,44 @@ type reviseDepsArgs struct {
 
 func reviseDeps(args reviseDepsArgs) {
 	var (
-		path                   string
-		revs                   *revisionList
-		pathImportRevisionsMap = make(map[string]*revisionList)
+		path                         string
+		pathRevisionsMap             = newSyncedRevisionListMap()
+		revisionApplicationWaitGroup = &sync.WaitGroup{}
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
 	args.revisionWaitGroup.Add(1)
-	defer args.revisionWaitGroup.Done()
 
 	// Process every revision that comes in from the revision channel.
 	for rev := range args.inputChan {
 		// Get the rev slice, and add this rev.
 		path = rev.path
-		// Create revs if it does not exist already.
-		if revs = pathImportRevisionsMap[path]; revs == nil {
-			revs = newRevisionList()
-		}
 		// Add the new rev to revs.
-		revs.add(rev)
+		pathRevisionsMap.add(path, rev)
 
 		// Decide whether its time to apply the revs.
-		if revs.importRevCount >= args.syncedImportCounts.importCountOf(path) &&
-			revs.packageRevCount > 0 {
+		if pathRevisionsMap.ready(path, args.syncedImportCounts.importCountOf(path)) {
 			// Apply the revisions now that we have all the appropriate revisions.
+			revisionApplicationWaitGroup.Add(1)
 			go applyRevisions(
 				path,
-				revs.getRevs(),
-				args.revisionWaitGroup,
+				pathRevisionsMap.getRevs(path),
+				revisionApplicationWaitGroup,
 				args.accumulatedErrors)
 			// Get rids of the revs from the map since we don't need them anymore.
-			delete(pathImportRevisionsMap, path)
+			pathRevisionsMap.delete(path)
 		}
 	}
 
 	var (
 		missedImports           = 0
 		missedPackages          = 0
-		filesWithMissingImports = len(pathImportRevisionsMap)
+		filesWithMissingImports = pathRevisionsMap.count()
 	)
 
 	// Apply all remaining revisions, and log the files that don't have every
 	// import versioned.
-	for path, revs = range pathImportRevisionsMap {
+	pathRevisionsMap.each(func(path string, revs *revisionList) {
 		// Record how many imports we missed.
 		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - revs.importRevCount)
 		missedPackages = missedPackages + (1 - revs.packageRevCount)
@@ -69,9 +64,10 @@ func reviseDeps(args reviseDepsArgs) {
 		if len(revsSlice) > 0 {
 			go applyRevisions(path, revsSlice, args.revisionWaitGroup, args.accumulatedErrors)
 		}
-		// Get rids of the revs from the map since we don't need them anymore.
-		delete(pathImportRevisionsMap, path)
-	}
+	})
+
+	// Remove all remaining paths from the map.
+	pathRevisionsMap.clear()
 
 	// Summarize what we missed in a log message.
 	if missedImports > 0 {
@@ -80,6 +76,9 @@ func reviseDeps(args reviseDepsArgs) {
 	if missedPackages > 0 {
 		log.Printf("Missed %d package statements in %d files.\n", missedPackages, filesWithMissingImports)
 	}
+
+	revisionApplicationWaitGroup.Wait()
+	args.revisionWaitGroup.Done()
 }
 
 // applyRevisions applies all the provided revisions to the appropriate files.
@@ -96,7 +95,6 @@ func applyRevisions(
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
-	waitGroup.Add(1)
 	defer waitGroup.Done()
 
 	// Read the file data at the specified path.
