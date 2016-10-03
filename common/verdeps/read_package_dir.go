@@ -3,6 +3,7 @@ package verdeps
 import (
 	"bytes"
 	"errors"
+	"runtime"
 	"strconv"
 	"sync"
 )
@@ -20,10 +21,6 @@ type readPackageDirArgs struct {
 // the remainder of the dependency versioner codebase to "gophrify" the
 // appropriate imports in said package.
 func readPackageDir(args readPackageDirArgs) {
-	// Close the input channels on exit.
-	defer close(args.importSpecChan)
-	defer close(args.packageSpecChan)
-
 	// Create a localized error list.
 	errs := newSyncedErrors()
 	waitGroup := &sync.WaitGroup{}
@@ -66,6 +63,13 @@ func readPackageDir(args readPackageDirArgs) {
 
 		args.errors.add(errors.New(buffer.String()))
 	}
+
+	// We're done. Time to close the output channels.
+	close(args.importSpecChan)
+	close(args.packageSpecChan)
+
+	// Clean up after ourselves (traversal allocates a lot of memory).
+	runtime.GC()
 }
 
 // func renameInternalDirectory(dirPath, parentDirPath, internalRenameTarget string) error {
