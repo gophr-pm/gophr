@@ -34,14 +34,7 @@ func processDeps(args processDepsArgs) error {
 		syncedImportCounts = newSyncedImportCounts()
 	)
 
-	// Start reading the deps.
-	// go readDeps(readDepsArgs{
-	// 	packagePath:           args.packagePath,
-	// 	accumulatedErrors:     accumulatedErrors,
-	// 	syncedImportCounts:    syncedImportCounts,
-	// 	outputImportSpecChan:  importSpecChan,
-	// 	outputPackageSpecChan: packageSpecChan,
-	// })
+	// Read the package looking for import and package metadata.
 	go readPackageDir(readPackageDirArgs{
 		errors:          accumulatedErrors,
 		importCounts:    syncedImportCounts,
