@@ -30,8 +30,8 @@ func (si *syncedErrors) len() int {
 	return length
 }
 
-func (si *syncedErrors) add(err error) {
+func (si *syncedErrors) add(errors ...error) {
 	si.lock.Lock()
-	si.errors = append(si.errors, err)
+	si.errors = append(si.errors, errors...)
 	si.lock.Unlock()
 }

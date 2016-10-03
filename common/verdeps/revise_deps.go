@@ -2,6 +2,7 @@ package verdeps
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"sync"
@@ -59,10 +60,18 @@ func reviseDeps(args reviseDepsArgs) {
 		// Record how many imports we missed.
 		missedImports = missedImports + (args.syncedImportCounts.importCountOf(path) - revs.importRevCount)
 		missedPackages = missedPackages + (1 - revs.packageRevCount)
+		if revs.packageRevCount == 0 {
+			fmt.Println("Missed package in", path)
+		}
 		// Apply the revisions that we have (given we have any).
 		revsSlice := revs.getRevs()
 		if len(revsSlice) > 0 {
-			go applyRevisions(path, revsSlice, args.revisionWaitGroup, args.accumulatedErrors)
+			revisionApplicationWaitGroup.Add(1)
+			go applyRevisions(
+				path,
+				revsSlice,
+				revisionApplicationWaitGroup,
+				args.accumulatedErrors)
 		}
 	})
 

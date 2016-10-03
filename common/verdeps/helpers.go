@@ -1,6 +1,11 @@
 package verdeps
 
-import "bytes"
+import (
+	"bytes"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
@@ -74,4 +79,52 @@ func importPathHashOf(importPath string) string {
 	buffer.WriteString(repo)
 
 	return buffer.String()
+}
+
+// getPackageDirPaths gets the vendor directory path (if one exists), all the
+// sub-directories names, and the go-file paths of the supplied package
+// directory path.
+func getPackageDirPaths(
+	files []os.FileInfo,
+	packageDirPath string,
+) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
+	for _, file := range files {
+		if file.IsDir() {
+			if file.Name() == vendorDirName {
+				// If the "src" dir exists, then that is the vendor dir path.
+				srcDirPath := filepath.Join(
+					packageDirPath,
+					vendorDirName,
+					vendorSrcDirName)
+				srcDirStat, err := os.Stat(srcDirPath)
+				if err == nil && srcDirStat.IsDir() {
+					vendorDirPath = srcDirPath
+				} else {
+					vendorDirPath = filepath.Join(packageDirPath, vendorDirName)
+				}
+			} else {
+				subDirNames = append(subDirNames, file.Name())
+			}
+		} else if strings.HasSuffix(file.Name(), goFileSuffix) {
+			goFilePaths = append(
+				goFilePaths,
+				filepath.Join(packageDirPath, file.Name()))
+		}
+	}
+
+	return vendorDirPath, subDirNames, goFilePaths
+}
+
+// subDirExists returns true if dirPath/subDirName is a directory.
+func subDirExists(dirPath, subDirName string) (bool, error) {
+	path := filepath.Join(dirPath, subDirName)
+	stat, err := os.Stat(path)
+	if err == nil {
+		return stat.IsDir(), nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return stat.IsDir(), err
 }

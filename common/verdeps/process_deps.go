@@ -35,12 +35,19 @@ func processDeps(args processDepsArgs) error {
 	)
 
 	// Start reading the deps.
-	go readDeps(readDepsArgs{
-		packagePath:           args.packagePath,
-		accumulatedErrors:     accumulatedErrors,
-		syncedImportCounts:    syncedImportCounts,
-		outputImportSpecChan:  importSpecChan,
-		outputPackageSpecChan: packageSpecChan,
+	// go readDeps(readDepsArgs{
+	// 	packagePath:           args.packagePath,
+	// 	accumulatedErrors:     accumulatedErrors,
+	// 	syncedImportCounts:    syncedImportCounts,
+	// 	outputImportSpecChan:  importSpecChan,
+	// 	outputPackageSpecChan: packageSpecChan,
+	// })
+	go readPackageDir(readPackageDirArgs{
+		errors:          accumulatedErrors,
+		importCounts:    syncedImportCounts,
+		packageDirPath:  args.packagePath,
+		importSpecChan:  importSpecChan,
+		packageSpecChan: packageSpecChan,
 	})
 
 	// Revise dependencies in the go source files.

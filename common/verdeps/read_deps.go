@@ -1,5 +1,6 @@
 package verdeps
 
+/*
 import (
 	"go/ast"
 	"go/parser"
@@ -82,3 +83,4 @@ func readDeps(args readDepsArgs) {
 		return
 	}
 }
+*/
