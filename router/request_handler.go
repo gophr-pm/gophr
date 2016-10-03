@@ -43,6 +43,7 @@ func RequestHandler(
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		txn := nr.CreateNewRelicTxn(newRelicApp, conf, &w, r)
+		defer txn.End()
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.

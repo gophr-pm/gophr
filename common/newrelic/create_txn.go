@@ -21,7 +21,6 @@ func CreateNewRelicTxn(
 		log.Printf("Logging request for %s \n", r.URL.String())
 		// Create a new relic transaction.
 		txn = newRelicApp.StartTransaction(r.URL.String(), *w, r)
-		defer txn.End()
 	}
 
 	return txn

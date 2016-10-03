@@ -10,6 +10,9 @@ import (
 func ReportNewRelicError(txn newrelic.Transaction, err error, isDev bool) {
 	if !isDev {
 		log.Println("Reporting error to newrelic: ", err)
-		txn.NoticeError(err)
+		newRelicErr := txn.NoticeError(err)
+		if newRelicErr != nil {
+			log.Println("New relic error occured: ", err)
+		}
 	}
 }
