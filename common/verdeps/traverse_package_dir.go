@@ -112,7 +112,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 		// Now, wait for all the vendorable import specs to be retried.
 		bufferVendorablesWaitGroup.Wait()
 
-		//Exit if there were problems.
+		// Exit if there were problems.
 		if subErrors.len() > 0 {
 			fmt.Printf("error founds found while traversing %s\n", vendorDirPath)
 			args.errors.add(subErrors.get()...)
