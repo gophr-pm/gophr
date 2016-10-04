@@ -10,15 +10,16 @@ import (
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
 type traversePackageDirArgs struct {
-	errors          *syncedErrors
-	dirPath         string
-	waitGroup       *sync.WaitGroup
-	subDirPath      string
-	inVendorDir     bool
-	importCounts    *syncedImportCounts
-	vendorContext   *vendorContext
-	importSpecChan  chan *importSpec
-	packageSpecChan chan *packageSpec
+	errors                   *syncedErrors
+	dirPath                  string
+	waitGroup                *sync.WaitGroup
+	subDirPath               string
+	inVendorDir              bool
+	importCounts             *syncedImportCounts
+	vendorContext            *vendorContext
+	importSpecChan           chan *importSpec
+	packageSpecChan          chan *packageSpec
+	generatedInternalDirName string
 }
 
 // traversePackageDir recursively traverses a package directory in order to find
@@ -124,6 +125,21 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 	// Explore all child directories that aren't "vendor".
 	for _, subDirName := range subDirNames {
+		// Internal directories must be renamed for gophr to function correctly.
+		if subDirName == internalDirName {
+			if err := os.Rename(
+				filepath.Join(args.dirPath, args.subDirPath, internalDirName),
+				filepath.Join(args.dirPath, args.subDirPath, args.generatedInternalDirName),
+			); err != nil {
+				// If there was a problem performing the rename, exit immediately.
+				args.errors.add(err)
+				return
+			}
+
+			// Obviously, the subDirName must now change accordingly.
+			subDirName = args.generatedInternalDirName
+		}
+
 		subWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
 			errors:          args.errors,

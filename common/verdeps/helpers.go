@@ -2,9 +2,11 @@ package verdeps
 
 import (
 	"bytes"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
@@ -52,7 +54,14 @@ func parseImportPath(importPath string) (author string, repo string, subpath str
 	return author, repo, subpath
 }
 
-func composeNewImportPath(author, repo, sha, subpath string) []byte {
+// composeNewImportPath assembles a new import path given package metadata.
+func composeNewImportPath(
+	author string,
+	repo string,
+	sha string,
+	subpath string,
+	generatedInternalDirName string,
+) []byte {
 	var buffer bytes.Buffer
 	buffer.WriteString(gophrPrefix)
 	buffer.WriteString(author)
@@ -62,7 +71,21 @@ func composeNewImportPath(author, repo, sha, subpath string) []byte {
 	buffer.WriteString(sha)
 
 	if len(subpath) > 0 {
-		buffer.WriteString(subpath)
+		// Check for "internal". If it is in the sub-path, replace it. Otherwise,
+		// just write the sub-path as-is.
+		if i := strings.Index(subpath, internalSubPathPart); i != -1 {
+			buffer.WriteString(strings.Replace(
+				subpath,
+				internalSubPathPart,
+				generatedInternalDirName,
+				1))
+		} else if strings.HasSuffix(subpath, internalSubPathSuffix) {
+			buffer.WriteString(subpath[:len(subpath)-len(internalSubPathSuffix)])
+			buffer.WriteByte('/')
+			buffer.WriteString(generatedInternalDirName)
+		} else {
+			buffer.WriteString(subpath)
+		}
 	}
 
 	buffer.WriteByte('"')
@@ -127,4 +150,19 @@ func subDirExists(dirPath, subDirName string) (bool, error) {
 	}
 
 	return stat.IsDir(), err
+}
+
+// generatedInternalDirNameRunes is the set of eligible characters for a
+// generateInternalDirName.
+var generatedInternalDirNameRunes = []rune("abcdef0123456789")
+
+// generateInternalDirName generates a 16 character directory name for Internal
+// package files.
+func generateInternalDirName() string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, generatedInternalDirNameLength)
+	for i := range b {
+		b[i] = generatedInternalDirNameRunes[rand.Intn(len(generatedInternalDirNameRunes))]
+	}
+	return string(b)
 }

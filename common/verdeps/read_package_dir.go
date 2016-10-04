@@ -10,11 +10,12 @@ import (
 
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
-	errors          *syncedErrors
-	importCounts    *syncedImportCounts
-	packageDirPath  string
-	importSpecChan  chan *importSpec
-	packageSpecChan chan *packageSpec
+	errors                   *syncedErrors
+	importCounts             *syncedImportCounts
+	packageDirPath           string
+	importSpecChan           chan *importSpec
+	packageSpecChan          chan *packageSpec
+	generatedInternalDirName string
 }
 
 // readPackageDir deduces important Go import and package metadata in order for
@@ -29,15 +30,16 @@ func readPackageDir(args readPackageDirArgs) {
 	// handling go package vendoring.
 	waitGroup.Add(1)
 	traversePackageDir(traversePackageDirArgs{
-		errors:          errs,
-		dirPath:         args.packageDirPath,
-		waitGroup:       waitGroup,
-		subDirPath:      "",
-		inVendorDir:     false,
-		importCounts:    args.importCounts,
-		vendorContext:   newVendorContext(),
-		importSpecChan:  args.importSpecChan,
-		packageSpecChan: args.packageSpecChan,
+		errors:                   errs,
+		dirPath:                  args.packageDirPath,
+		waitGroup:                waitGroup,
+		subDirPath:               "",
+		inVendorDir:              false,
+		importCounts:             args.importCounts,
+		vendorContext:            newVendorContext(),
+		importSpecChan:           args.importSpecChan,
+		packageSpecChan:          args.packageSpecChan,
+		generatedInternalDirName: args.generatedInternalDirName,
 	})
 
 	// Wait for traversal to finish before concocting an error.
