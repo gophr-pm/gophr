@@ -22,25 +22,27 @@ type processDepsArgs struct {
 
 func processDeps(args processDepsArgs) error {
 	var (
-		revisionChan       = make(chan *revision)
-		waitingSpecs       = newSyncedWaitingListMap()
-		importPathSHAs     = newSyncedStringMap()
-		importSpecChan     = make(chan *importSpec)
-		packageSpecChan    = make(chan *packageSpec)
-		importPathSHAChan  = make(chan *importPathSHA)
-		accumulatedErrors  = newSyncedErrors()
-		revisionWaitGroup  = &sync.WaitGroup{}
-		pendingSHARequests = newSyncedInt()
-		syncedImportCounts = newSyncedImportCounts()
+		revisionChan             = make(chan *revision)
+		waitingSpecs             = newSyncedWaitingListMap()
+		importPathSHAs           = newSyncedStringMap()
+		importSpecChan           = make(chan *importSpec)
+		packageSpecChan          = make(chan *packageSpec)
+		importPathSHAChan        = make(chan *importPathSHA)
+		accumulatedErrors        = newSyncedErrors()
+		revisionWaitGroup        = &sync.WaitGroup{}
+		pendingSHARequests       = newSyncedInt()
+		syncedImportCounts       = newSyncedImportCounts()
+		generatedInternalDirName = generateInternalDirName()
 	)
 
-	// Start reading the deps.
-	go readDeps(readDepsArgs{
-		packagePath:           args.packagePath,
-		accumulatedErrors:     accumulatedErrors,
-		syncedImportCounts:    syncedImportCounts,
-		outputImportSpecChan:  importSpecChan,
-		outputPackageSpecChan: packageSpecChan,
+	// Read the package looking for import and package metadata.
+	go readPackageDir(readPackageDirArgs{
+		errors:                   accumulatedErrors,
+		importCounts:             syncedImportCounts,
+		packageDirPath:           args.packagePath,
+		importSpecChan:           importSpecChan,
+		packageSpecChan:          packageSpecChan,
+		generatedInternalDirName: generatedInternalDirName,
 	})
 
 	// Revise dependencies in the go source files.
@@ -70,7 +72,12 @@ func processDeps(args processDepsArgs) error {
 				// There is a waiting list, so it needs to be cleared.
 				if specs := waitingList.clear(); specs != nil {
 					for _, spec := range specs {
-						enqueueImportRevision(revisionChan, spec.imports.Path.Value, ips.sha, spec)
+						enqueueImportRevision(
+							revisionChan,
+							spec.imports.Path.Value,
+							ips.sha,
+							generatedInternalDirName,
+							spec)
 					}
 				}
 			}
@@ -136,14 +143,24 @@ func processDeps(args processDepsArgs) error {
 								"Could not version dependency %s because the SHA did not yet exist.",
 								importPath))
 						} else {
-							enqueueImportRevision(revisionChan, importPath, sha, spec)
+							enqueueImportRevision(
+								revisionChan,
+								importPath,
+								sha,
+								generatedInternalDirName,
+								spec)
 						}
 					}
 				}
 			} else {
 				// If we got here, it means that the sha has already been obtained, so
 				// the new import path exists.
-				enqueueImportRevision(revisionChan, importPath, sha, spec)
+				enqueueImportRevision(
+					revisionChan,
+					importPath,
+					sha,
+					generatedInternalDirName,
+					spec)
 			}
 		}
 
@@ -178,11 +195,18 @@ func processDeps(args processDepsArgs) error {
 // revision channel that revises an import statement.
 func enqueueImportRevision(
 	revisionChan chan *revision,
-	importPath, sha string,
+	importPath string,
+	sha string,
+	generatedInternalDirName string,
 	spec *importSpec,
 ) {
 	author, repo, subpath := parseImportPath(importPath)
-	newImportPath := composeNewImportPath(author, repo, sha, subpath)
+	newImportPath := composeNewImportPath(
+		author,
+		repo,
+		sha,
+		subpath,
+		generatedInternalDirName)
 
 	revisionChan <- newImportRevision(spec, newImportPath)
 }

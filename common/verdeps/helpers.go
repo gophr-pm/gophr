@@ -1,6 +1,13 @@
 package verdeps
 
-import "bytes"
+import (
+	"bytes"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+)
 
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
@@ -47,7 +54,14 @@ func parseImportPath(importPath string) (author string, repo string, subpath str
 	return author, repo, subpath
 }
 
-func composeNewImportPath(author, repo, sha, subpath string) []byte {
+// composeNewImportPath assembles a new import path given package metadata.
+func composeNewImportPath(
+	author string,
+	repo string,
+	sha string,
+	subpath string,
+	generatedInternalDirName string,
+) []byte {
 	var buffer bytes.Buffer
 	buffer.WriteString(gophrPrefix)
 	buffer.WriteString(author)
@@ -57,7 +71,21 @@ func composeNewImportPath(author, repo, sha, subpath string) []byte {
 	buffer.WriteString(sha)
 
 	if len(subpath) > 0 {
-		buffer.WriteString(subpath)
+		// Check for "internal". If it is in the sub-path, replace it. Otherwise,
+		// just write the sub-path as-is.
+		if i := strings.Index(subpath, internalSubPathPart); i != -1 {
+			buffer.WriteString(strings.Replace(
+				subpath,
+				internalSubPathPart,
+				"/"+generatedInternalDirName+"/",
+				1))
+		} else if strings.HasSuffix(subpath, internalSubPathSuffix) {
+			buffer.WriteString(subpath[:len(subpath)-len(internalSubPathSuffix)])
+			buffer.WriteByte('/')
+			buffer.WriteString(generatedInternalDirName)
+		} else {
+			buffer.WriteString(subpath)
+		}
 	}
 
 	buffer.WriteByte('"')
@@ -74,4 +102,67 @@ func importPathHashOf(importPath string) string {
 	buffer.WriteString(repo)
 
 	return buffer.String()
+}
+
+// getPackageDirPaths gets the vendor directory path (if one exists), all the
+// sub-directories names, and the go-file paths of the supplied package
+// directory path.
+func getPackageDirPaths(
+	files []os.FileInfo,
+	packageDirPath string,
+) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
+	for _, file := range files {
+		if file.IsDir() {
+			if file.Name() == vendorDirName {
+				// If the "src" dir exists, then that is the vendor dir path.
+				srcDirPath := filepath.Join(
+					packageDirPath,
+					vendorDirName,
+					vendorSrcDirName)
+				srcDirStat, err := os.Stat(srcDirPath)
+				if err == nil && srcDirStat.IsDir() {
+					vendorDirPath = srcDirPath
+				} else {
+					vendorDirPath = filepath.Join(packageDirPath, vendorDirName)
+				}
+			} else {
+				subDirNames = append(subDirNames, file.Name())
+			}
+		} else if strings.HasSuffix(file.Name(), goFileSuffix) {
+			goFilePaths = append(
+				goFilePaths,
+				filepath.Join(packageDirPath, file.Name()))
+		}
+	}
+
+	return vendorDirPath, subDirNames, goFilePaths
+}
+
+// subDirExists returns true if dirPath/subDirName is a directory.
+func subDirExists(dirPath, subDirName string) (bool, error) {
+	path := filepath.Join(dirPath, subDirName)
+	stat, err := os.Stat(path)
+	if err == nil {
+		return stat.IsDir(), nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	return stat.IsDir(), err
+}
+
+// generatedInternalDirNameRunes is the set of eligible characters for a
+// generateInternalDirName.
+var generatedInternalDirNameRunes = []rune("abcdef0123456789")
+
+// generateInternalDirName generates a 16 character directory name for Internal
+// package files.
+func generateInternalDirName() string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]rune, generatedInternalDirNameLength)
+	for i := range b {
+		b[i] = generatedInternalDirNameRunes[rand.Intn(len(generatedInternalDirNameRunes))]
+	}
+	return string(b)
 }
