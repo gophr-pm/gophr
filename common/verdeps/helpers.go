@@ -77,7 +77,7 @@ func composeNewImportPath(
 			buffer.WriteString(strings.Replace(
 				subpath,
 				internalSubPathPart,
-				generatedInternalDirName,
+				"/"+generatedInternalDirName+"/",
 				1))
 		} else if strings.HasSuffix(subpath, internalSubPathSuffix) {
 			buffer.WriteString(subpath[:len(subpath)-len(internalSubPathSuffix)])
