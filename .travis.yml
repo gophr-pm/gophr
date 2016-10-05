@@ -2,6 +2,8 @@ language: go
 sudo: required
 before_install:
 - go get -d github.com/libgit2/git2go
+- sudo apt-get -qq update
+- sudo apt-get install -y libgit2
 - "$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh"
 install:
 - go get golang.org/x/tools/cmd/cover

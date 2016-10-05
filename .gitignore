@@ -15,7 +15,10 @@ coverage.html
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
+# IntelliJ
+.idea/
 
 # Thumbnails
 ._*
