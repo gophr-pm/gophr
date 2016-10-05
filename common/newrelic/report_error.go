@@ -7,12 +7,10 @@ import (
 )
 
 // ReportNewRelicError reports errors to newrelic.
-func ReportNewRelicError(txn newrelic.Transaction, err error, isDev bool) {
-	if !isDev {
-		log.Println("Reporting error to newrelic: ", err)
-		newRelicErr := txn.NoticeError(err)
-		if newRelicErr != nil {
-			log.Println("New relic error occured: ", err)
-		}
+func ReportNewRelicError(txn newrelic.Transaction, err error) {
+	log.Println("Reporting error to newrelic: ", err)
+	newRelicErr := txn.NoticeError(err)
+	if newRelicErr != nil {
+		log.Println("New relic error occured: ", err)
 	}
 }

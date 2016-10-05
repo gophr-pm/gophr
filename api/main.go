@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/gophr-pm/gophr/common"
+	"github.com/gorilla/mux"
 )
 
 func main() {

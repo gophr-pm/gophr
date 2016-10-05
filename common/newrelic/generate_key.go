@@ -21,29 +21,23 @@ const (
 
 // generateKey returns a NewRelicKey from a secret.
 func generateKey(conf *config.Config) (string, error) {
-	if !conf.IsDev {
-		var filePath string
-		filePath = filepath.Join(conf.SecretsPath, prodAPIKeysSecretFileName)
+	var (
+		err        error
+		apiKeyJSON []byte
+		filePath   = filepath.Join(conf.SecretsPath, prodAPIKeysSecretFileName)
+	)
 
-		var (
-			err        error
-			apiKeyJSON []byte
-		)
-
-		// Read the secret data.
-		if apiKeyJSON, err = ioutil.ReadFile(filePath); err != nil {
-			return "", err
-		}
-
-		key := NewRelicKey{}
-		if err = json.Unmarshal(apiKeyJSON, &key); err != nil {
-			return "", err
-		} else if len(key.NewRelicKey) < 1 {
-			return "", fmt.Errorf("There were no keys in the secret!")
-		}
-
-		return key.NewRelicKey, nil
+	// Read the secret data.
+	if apiKeyJSON, err = ioutil.ReadFile(filePath); err != nil {
+		return "", err
 	}
 
-	return "", nil
+	key := NewRelicKey{}
+	if err = json.Unmarshal(apiKeyJSON, &key); err != nil {
+		return "", err
+	} else if len(key.NewRelicKey) < 1 {
+		return "", fmt.Errorf("There were no keys in the secret!")
+	}
+
+	return key.NewRelicKey, nil
 }

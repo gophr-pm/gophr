@@ -42,8 +42,12 @@ func RequestHandler(
 	})
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		txn := nr.CreateNewRelicTxn(newRelicApp, conf, &w, r)
-		defer txn.End()
+		// Log this transaction in new relic if in production.
+		var nrTxn newrelic.Transaction
+		if conf.IsDev {
+			nrTxn = nr.CreateNewRelicTxn(newRelicApp, &w, r)
+			defer nrTxn.End()
+		}
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
@@ -65,7 +69,10 @@ func RequestHandler(
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
-			nr.ReportNewRelicError(txn, err, conf.IsDev)
+			if nrTxn != nil {
+				nr.ReportNewRelicError(nrTxn, err)
+			}
+
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -83,7 +90,10 @@ func RequestHandler(
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
-			nr.ReportNewRelicError(txn, err, conf.IsDev)
+			if nrTxn != nil {
+				nr.ReportNewRelicError(nrTxn, err)
+			}
+
 			errors.RespondWithError(w, err)
 			return
 		}
