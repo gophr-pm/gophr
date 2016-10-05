@@ -33,7 +33,7 @@ func (qb *KeyspaceQueryBuilder) WithReplication(class string, factor int) *Keysp
 }
 
 // Create serializes and creates the query.
-func (qb *KeyspaceQueryBuilder) Create(session *gocql.Session) *gocql.Query {
+func (qb *KeyspaceQueryBuilder) Create(q Queryable) *gocql.Query {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("create keyspace if not exists ")
@@ -45,5 +45,5 @@ func (qb *KeyspaceQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 	buffer.WriteString("'} and durable_writes = ")
 	buffer.WriteString(strconv.FormatBool(qb.durableWrites))
 
-	return session.Query(buffer.String())
+	return q.Query(buffer.String())
 }

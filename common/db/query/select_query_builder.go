@@ -22,6 +22,11 @@ func Select(columns ...string) *SelectQueryBuilder {
 	}
 }
 
+// SelectCount starts constructing a select query that counts rows.
+func SelectCount() *SelectQueryBuilder {
+	return &SelectQueryBuilder{columns: []string{countOperator}}
+}
+
 // From specifies the table in a select query.
 func (qb *SelectQueryBuilder) From(table string) *SelectQueryBuilder {
 	qb.table = table
@@ -47,7 +52,7 @@ func (qb *SelectQueryBuilder) Limit(limit int) *SelectQueryBuilder {
 }
 
 // Create serializes and creates the query.
-func (qb *SelectQueryBuilder) Create(session *gocql.Session) *gocql.Query {
+func (qb *SelectQueryBuilder) Create(q Queryable) *gocql.Query {
 	var (
 		buffer     bytes.Buffer
 		parameters []interface{}
@@ -84,5 +89,5 @@ func (qb *SelectQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 		buffer.WriteString(strconv.Itoa(*qb.limit))
 	}
 
-	return session.Query(buffer.String(), parameters...)
+	return q.Query(buffer.String(), parameters...)
 }

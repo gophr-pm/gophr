@@ -28,7 +28,7 @@ func (qb *InsertQueryBuilder) Value(column string, value interface{}) *InsertQue
 }
 
 // Create serializes and creates the query.
-func (qb *InsertQueryBuilder) Create(session *gocql.Session) *gocql.Query {
+func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("insert into ")
@@ -53,5 +53,5 @@ func (qb *InsertQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 	}
 	buffer.WriteByte(')')
 
-	return session.Query(buffer.String(), qb.values...)
+	return q.Query(buffer.String(), qb.values...)
 }

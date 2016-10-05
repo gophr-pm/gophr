@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/common/git"
-	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/models/packages/archives"
 	"github.com/gophr-pm/gophr/common/verdeps"
 )
 
@@ -79,7 +79,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 				repo:                  args.repo,
 				author:                args.author,
 				packageExistsInDepot:  packageExistsInDepot,
-				isPackageArchivedInDB: models.IsPackageArchived,
+				isPackageArchivedInDB: archives.Exists,
 				recordPackageArchival: args.recordPackageArchival,
 			}); archiveCheckErr != nil {
 				return fmt.Errorf(

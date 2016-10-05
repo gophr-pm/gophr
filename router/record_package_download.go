@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gophr-pm/gophr/common/models"
+	downloads "github.com/gophr-pm/gophr/common/models/downloads/daily"
 )
 
 // recordPackageDownload is a helper function that records the download of a
@@ -11,11 +11,12 @@ import (
 func recordPackageDownload(args packageDownloadRecorderArgs) {
 	// TODO(skeswa): support "version" + "sha" in daily downloads with sha
 	// remaining the primary identfier.
-	if err := models.RecordDailyDownload(
+	if err := downloads.Record(
 		args.db,
 		args.author,
 		args.repo,
-		args.sha); err != nil {
+		args.sha,
+		args.version); err != nil {
 		// Instead of bubbling this error, just commit it to the logs. This is
 		// necessary because this function is executed asynchronously.
 		log.Printf(

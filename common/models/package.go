@@ -9,6 +9,18 @@ import (
 	"github.com/gophr-pm/gophr/common/errors"
 )
 
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+// TODO(skeswa): demolish and re-distribute into function files.
+
 // Constants directly related to interacting with the package model in the
 // cassandra database.
 const (
@@ -160,14 +172,20 @@ func NewPackageModelFromBulkSelect(
 }
 
 // TODO(Shikkic): Fix func name and attribute naming scheme
+
+// NewPackageModelTest needs to change.
 func NewPackageModelTest(
 	author string,
 	repo string,
+	// @Shikkic ಠ_ಠ
 	awesome_go bool,
 	description string,
 	exists bool,
+	// @Shikkic ಠ_ಠ
 	godoc_url string,
+	// @Shikkic ಠ_ಠ
 	index_time time.Time,
+	// @Shikkic ಠ_ಠ
 	search_blob string,
 	versions []string,
 	stars int,

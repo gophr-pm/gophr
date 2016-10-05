@@ -60,8 +60,8 @@ func (qb *UpdateQueryBuilder) And(condition *Condition) *UpdateQueryBuilder {
 	return qb.Where(condition)
 }
 
-// Create serializes and creates the query.
-func (qb *UpdateQueryBuilder) Create(session *gocql.Session) *gocql.Query {
+// compose composes the text and parameters for this query.
+func (qb *UpdateQueryBuilder) compose() (string, []interface{}) {
 	var (
 		buffer     bytes.Buffer
 		parameters []interface{}
@@ -101,5 +101,17 @@ func (qb *UpdateQueryBuilder) Create(session *gocql.Session) *gocql.Query {
 		}
 	}
 
-	return session.Query(buffer.String(), parameters...)
+	return buffer.String(), parameters
+}
+
+// Create serializes and creates the query.
+func (qb *UpdateQueryBuilder) Create(q Queryable) *gocql.Query {
+	text, params := qb.compose()
+	return q.Query(text, params...)
+}
+
+// CreateVoid serializes and creates the query with no return.
+func (qb *UpdateQueryBuilder) CreateVoid(q VoidQueryable) {
+	text, params := qb.compose()
+	q.Query(text, params...)
 }

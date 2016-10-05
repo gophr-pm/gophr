@@ -6,6 +6,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/common"
 	"github.com/gophr-pm/gophr/common/config"
+	"github.com/gophr-pm/gophr/common/db/query"
 	"github.com/gophr-pm/gophr/common/git"
 	"github.com/gophr-pm/gophr/common/github"
 	"github.com/gophr-pm/gophr/common/io"
@@ -123,7 +124,7 @@ type packagePusherArgs struct {
 // dbPackageArchivalChecker returns true if a package version matching the
 // parameters exists in the database.
 type dbPackageArchivalChecker func(
-	db *gocql.Session,
+	q query.Queryable,
 	author string,
 	repo string,
 	sha string) (bool, error)

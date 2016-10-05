@@ -30,7 +30,7 @@ func (cb *ColumnConditionBuilder) Equals(value interface{}) *Condition {
 	}
 }
 
-// IndexConditionBuilder helps to buidl conditions.
+// IndexConditionBuilder helps to build conditions.
 type IndexConditionBuilder struct {
 	index string
 }

@@ -18,7 +18,7 @@ func (svc *requestService) FetchGitHubDataForPackageModel(
 ) (map[string]interface{}, error) {
 	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
 	log.Println(APIKeyModel)
-	githubURL := buildGitHubRepoDataAPIURL(packageModel, *APIKeyModel)
+	githubURL := buildGitHubRepoDataAPIURL(*packageModel.Author, *packageModel.Repo, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 
 	resp, err := http.Get(githubURL)
@@ -43,10 +43,17 @@ func (svc *requestService) FetchGitHubDataForPackageModel(
 	return responseBodyMap, nil
 }
 
-func buildGitHubRepoDataAPIURL(packageModel models.PackageModel, APIKeyModel APIKeyModel) string {
-	author := *packageModel.Author
-	repo := *packageModel.Repo
-	url := fmt.Sprintf("%s/repos/%s/%s?access_token=%s", GitHubBaseAPIURL, author, repo, APIKeyModel.Key)
+func buildGitHubRepoDataAPIURL(
+	author string,
+	repo string,
+	keyModel APIKeyModel,
+) string {
+	url := fmt.Sprintf(
+		"%s/repos/%s/%s?access_token=%s",
+		GitHubBaseAPIURL,
+		author,
+		repo,
+		keyModel.Key)
 	return url
 }
 

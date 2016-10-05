@@ -11,7 +11,7 @@ import (
 	"github.com/gophr-pm/gophr/common/depot"
 	"github.com/gophr-pm/gophr/common/github"
 	"github.com/gophr-pm/gophr/common/io"
-	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/common/models/packages/archives"
 	"github.com/gophr-pm/gophr/common/verdeps"
 )
 
@@ -153,7 +153,7 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			author:                pr.parts.author,
 			packageExistsInDepot:  packageExistsInDepot,
 			recordPackageArchival: args.recordPackageArchival,
-			isPackageArchivedInDB: models.IsPackageArchived,
+			isPackageArchivedInDB: archives.Exists,
 		})
 		// If we cannot check whether a package has been archived, return
 		// unsuccessfully.
