@@ -37,6 +37,34 @@ func TestHasSemverSelector(t *testing.T) {
 	assert.False(t, parts.hasSemverSelector())
 }
 
+func TestReadPackageRequestParts_invalidPackageRequest(t *testing.T) {
+	// Invalid semvers
+	req := &http.Request{URL: &url.URL{Path: "/abc/def@sddm/ghi"}}
+	_, err := readPackageRequestParts(req)
+	assert.NotNil(t, err)
+
+	req = &http.Request{URL: &url.URL{Path: "/abc/def@1.x.x+/ghi"}}
+	_, err = readPackageRequestParts(req)
+	assert.NotNil(t, err)
+
+	req = &http.Request{URL: &url.URL{Path: "/a/b@/c"}}
+	_, err = readPackageRequestParts(req)
+	assert.NotNil(t, err)
+
+	req = &http.Request{URL: &url.URL{Path: "/a/b@1.x/"}}
+	_, err = readPackageRequestParts(req)
+	assert.NotNil(t, err)
+	
+	// Invalid paths
+	req = &http.Request{URL: &url.URL{Path: "//"}}
+	_, err = readPackageRequestParts(req)
+	assert.NotNil(t, err)
+
+	req = &http.Request{URL: &url.URL{Path: "/a//b"}}
+	_, err = readPackageRequestParts(req)
+	assert.NotNil(t, err)
+}
+
 func TestReadPackageRequestParts(t *testing.T) {
 	req := &http.Request{URL: &url.URL{Path: "/abc/def"}}
 	expectedParts := &packageRequestParts{
@@ -84,6 +112,8 @@ func TestReadPackageRequestParts(t *testing.T) {
 		selector:              "123456abcd123456abcd123456abcd123456abcd",
 		shaSelector:           "123456abcd123456abcd123456abcd123456abcd",
 		semverSelector:        semver.SemverSelector{},
+		hasShortSHASelector: false, 
+		hasFullSHASelector:  	true, 
 		semverSelectorDefined: false,
 	}
 	actualParts, err = readPackageRequestParts(req)
@@ -140,6 +170,7 @@ func TestReadPackageRequestParts(t *testing.T) {
 		shaSelector:           "123456abcd123456abcd123456abcd123456abcd",
 		semverSelector:        semver.SemverSelector{},
 		semverSelectorDefined: false,
+		hasFullSHASelector: true,
 	}
 	actualParts, err = readPackageRequestParts(req)
 	assert.Nil(t, err)
@@ -147,28 +178,4 @@ func TestReadPackageRequestParts(t *testing.T) {
 		t,
 		reflect.DeepEqual(expectedParts, actualParts),
 		fmt.Sprintf("%s should equal %s", actualParts.String(), expectedParts.String()))
-
-	req = &http.Request{URL: &url.URL{Path: "/abc/def@sddm/ghi"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
-
-	req = &http.Request{URL: &url.URL{Path: "/abc/def@1.x.x+/ghi"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
-
-	req = &http.Request{URL: &url.URL{Path: "//"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
-
-	req = &http.Request{URL: &url.URL{Path: "/a//b"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
-
-	req = &http.Request{URL: &url.URL{Path: "/a/b@/c"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
-
-	req = &http.Request{URL: &url.URL{Path: "/a/b@1.x/"}}
-	_, err = readPackageRequestParts(req)
-	assert.NotNil(t, err)
 }

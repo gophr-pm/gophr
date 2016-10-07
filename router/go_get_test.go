@@ -17,15 +17,15 @@ func TestGenerateGithubTreeURLTemplate(t *testing.T) {
 }
 
 func TestGenerateDepotBlobURLTemplate(t *testing.T) {
-	assert.Equal(t, "https://a/blob/b/c/d{/dir}/{file}#L{line}", generateDepotBlobURLTemplate("a", "b", "c", "d"))
-	assert.Equal(t, "https://a/blob/b/c/master{/dir}/{file}#L{line}", generateDepotBlobURLTemplate("a", "b", "c", ""))
+	assert.Equal(t, "https://a/api/blob/b/c/d{/dir}/{file}#L{line}", generateDepotBlobURLTemplate("a", "b", "c", "d"))
+	assert.Equal(t, "https://a/api/blob/b/c/{/dir}/{file}#L{line}", generateDepotBlobURLTemplate("a", "b", "c", ""))
 }
 
 func TestGenerateGoGetMetadata(t *testing.T) {
 	assert.Equal(t, `
 <html>
 <head>
-<meta name="go-import" content=" git https://">
+<meta name="go-import" content=" git ">
 <meta name="go-source" content=" _  ">
 </head>
 <body>
@@ -37,7 +37,7 @@ go get
 	assert.Equal(t, `
 <html>
 <head>
-<meta name="go-import" content="a git https://a">
+<meta name="go-import" content="a git ">
 <meta name="go-source" content="a _ b c">
 </head>
 <body>

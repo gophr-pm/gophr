@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"sort"
 )
 
 var inequalityTuples = []*semverInequalityTuple{
@@ -244,9 +245,11 @@ func TestSemverCandidateList(t *testing.T) {
 	expectedHighest, _ = NewSemverCandidate("a", "b", "c", "3", "5", "6", "", "")
 	list = append(list, expectedHighest)
 
+	sort.Sort(list)
+	
 	lowest := list.Lowest()
 	highest := list.Highest()
-
+	
 	assert.Equal(t, 0, lowest.CompareTo(expectedLowest), "The lowest candidate should be correct")
 	assert.Equal(t, 0, highest.CompareTo(expectedHighest), "The highest candidate should be correct")
 
