@@ -96,12 +96,13 @@ var refsTests = []refsTest{{
 	),
 	"v1",
 	reflines(
-		"00000000000000000000000000000000000hash4 HEAD\x00symref=HEAD:refs/heads/v1.2",
-		"00000000000000000000000000000000000hash4 refs/heads/master",
+		"00000000000000000000000000000000000hash3 HEAD\x00symref=HEAD:refs/heads/v1.3",
+		"00000000000000000000000000000000000hash3 refs/heads/master",
 		"00000000000000000000000000000000000hash2 refs/heads/v1.1",
 		"00000000000000000000000000000000000hash3 refs/heads/v1.3",
 		"00000000000000000000000000000000000hash4 refs/heads/v1.2",
 	),
+	// semver candidates are sorted in refs.go
 	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash2", // hash
@@ -114,21 +115,21 @@ var refsTests = []refsTest{{
 			0,                                          // pre-release version
 			false,                                      // pre-release exists
 		}, {
-			"00000000000000000000000000000000000hash3", // hash
-			"refs/heads/v1.3",                          // name
-			"v1.3",                                     // label
-			1,                                          // major
-			3,                                          // minor
-			0,                                          // patch
-			"",                                         // pre-release label
-			0,                                          // pre-release version
-			false,                                      // pre-release exists
-		}, {
 			"00000000000000000000000000000000000hash4", // hash
 			"refs/heads/v1.2",                          // name
 			"v1.2",                                     // label
 			1,                                          // major
 			2,                                          // minor
+			0,                                          // patch
+			"",                                         // pre-release label
+			0,                                          // pre-release version
+			false,                                      // pre-release exists
+		}, {
+			"00000000000000000000000000000000000hash3", // hash
+			"refs/heads/v1.3",                          // name
+			"v1.3",                                     // label
+			1,                                          // major
+			3,                                          // minor
 			0,                                          // patch
 			"",                                         // pre-release label
 			0,                                          // pre-release version
@@ -277,6 +278,7 @@ var refsTests = []refsTest{{
 		"00000000000000000000000000000000000hash4 refs/tags/v1^{}",
 		"00000000000000000000000000000000000hash5 refs/tags/v2",
 	),
+	// Identical semver candidates are pruned from the semver candidate list in refs.go
 	[]semver.SemverCandidate{
 		{
 			"00000000000000000000000000000000000hash3", // hash
@@ -288,17 +290,7 @@ var refsTests = []refsTest{{
 			"",                                         // pre-release label
 			0,                                          // pre-release version
 			false,                                      // pre-release exists
-		}, {
-			"00000000000000000000000000000000000hash4", // hash
-			"refs/tags/v1",                             // name
-			"v1",                                       // label
-			1,                                          // major
-			0,                                          // minor
-			0,                                          // patch
-			"",                                         // pre-release label
-			0,                                          // pre-release version
-			false,                                      // pre-release exists
-		}, {
+		},  {
 			"00000000000000000000000000000000000hash5", // hash
 			"refs/tags/v2",                             // name
 			"v2",                                       // label
@@ -353,21 +345,21 @@ var refsTests = []refsTest{{
 			0,                                          // pre-release version
 			true,                                       // pre-release exists
 		}, {
-			"00000000000000000000000000000000000hash5", // hash
-			"refs/heads/v1.3-unstable",                 // name
-			"v1.3-unstable",                            // label
-			1,                                          // major
-			3,                                          // minor
-			0,                                          // patch
-			"unstable",                                 // pre-release label
-			0,                                          // pre-release version
-			true,                                       // pre-release exists
-		}, {
 			"00000000000000000000000000000000000hash6", // hash
 			"refs/heads/v1.2-unstable",                 // name
 			"v1.2-unstable",                            // label
 			1,                                          // major
 			2,                                          // minor
+			0,                                          // patch
+			"unstable",                                 // pre-release label
+			0,                                          // pre-release version
+			true,                                       // pre-release exists
+		}, {
+			"00000000000000000000000000000000000hash5", // hash
+			"refs/heads/v1.3-unstable",                 // name
+			"v1.3-unstable",                            // label
+			1,                                          // major
+			3,                                          // minor
 			0,                                          // patch
 			"unstable",                                 // pre-release label
 			0,                                          // pre-release version
