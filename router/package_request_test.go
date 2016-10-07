@@ -74,13 +74,13 @@ func TestNewPackageRequest(t *testing.T) {
 	assert.NotNil(t, err)
 
 	pr, err = newPackageRequest(newPackageRequestArgs{
-		req:          fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", false),
+		req:          fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", true),
 		downloadRefs: fakeRefsDownloader(common.Refs{}, errors.New("This is an error.")),
 	})
 	assert.Nil(t, pr)
 	assert.NotNil(t, err)
 
-	req := fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", false)
+	req := fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", true)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
 		downloadRefs: fakeRefsDownloader(fakeRefs("mymasterhash", nil), nil),
