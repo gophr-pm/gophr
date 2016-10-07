@@ -12,7 +12,8 @@ go:
 - 1.6
 - 1.7
 script:
-- make
+- chmod +x build.sh
+- ./build.sh
 - $HOME/gopath/bin/goveralls -coverprofile=coverage-all.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 notifications:
 - email: false
