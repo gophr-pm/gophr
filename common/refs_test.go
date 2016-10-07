@@ -290,7 +290,7 @@ var refsTests = []refsTest{{
 			"",                                         // pre-release label
 			0,                                          // pre-release version
 			false,                                      // pre-release exists
-		},  {
+		}, {
 			"00000000000000000000000000000000000hash5", // hash
 			"refs/tags/v2",                             // name
 			"v2",                                       // label
