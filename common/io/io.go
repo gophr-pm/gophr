@@ -31,4 +31,6 @@ type IO interface {
 	// ReadDir reads the directory named by dirname and returns a list of
 	// directory entries sorted by filename.
 	ReadDir(dirname string) ([]os.FileInfo, error)
+	// Stat returns the FileInfo of a file 
+	Stat(dirname string) (os.FileInfo, error)
 }
