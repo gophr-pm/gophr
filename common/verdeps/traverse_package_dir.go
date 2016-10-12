@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"github.com/gophr-pm/gophr/common/io"
 )
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
@@ -43,10 +44,9 @@ func traversePackageDir(args traversePackageDirArgs) {
 		return
 	}
 
+	verdepsHelper := &verdepsHelperArgs{io: io.NewIO()}
 	// Get all relevant pathing information in one fell swoop.
-	vendorDirPath, subDirNames, goFilePaths := getPackageDirPaths(
-		files,
-		fullDirPath)
+	vendorDirPath, subDirNames, goFilePaths := verdepsHelper.getPackageDirPaths(files, fullDirPath)
 
 	// Record this subpath as a vendored package.
 	if args.inVendorDir &&

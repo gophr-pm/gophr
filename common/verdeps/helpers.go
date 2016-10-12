@@ -7,7 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"github.com/gophr-pm/gophr/common/io"
 )
+
+type verdepsHelperArgs struct {
+	io io.IO
+} 
 
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
@@ -107,7 +112,7 @@ func importPathHashOf(importPath string) string {
 // getPackageDirPaths gets the vendor directory path (if one exists), all the
 // sub-directories names, and the go-file paths of the supplied package
 // directory path.
-func getPackageDirPaths(
+func (args *verdepsHelperArgs) getPackageDirPaths(
 	files []os.FileInfo,
 	packageDirPath string,
 ) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
@@ -119,7 +124,7 @@ func getPackageDirPaths(
 					packageDirPath,
 					vendorDirName,
 					vendorSrcDirName)
-				srcDirStat, err := os.Stat(srcDirPath)
+				srcDirStat, err := args.io.Stat(srcDirPath)
 				if err == nil && srcDirStat.IsDir() {
 					vendorDirPath = srcDirPath
 				} else {
