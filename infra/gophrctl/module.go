@@ -67,17 +67,17 @@ var modules = map[string]*module{
 		versionfile:  "./infra/docker/migrator/Versionfile.prod",
 		buildContext: ".",
 	},
-	"indexer": &module{
-		name: "indexer",
+	"scheduler": &module{
+		name: "scheduler",
 		deps: []string{"db", "migrator"},
 		devK8SFiles: []string{
-			"./infra/k8s/indexer/controller.dev.yml",
+			"./infra/k8s/scheduler/controller.dev.yml",
 		},
 		prodK8SFiles: []string{
-			"./infra/k8s/indexer/controller.prod.template.yml",
+			"./infra/k8s/scheduler/controller.prod.template.yml",
 		},
-		dockerfile:   "./infra/docker/indexer/Dockerfile",
-		versionfile:  "./infra/docker/indexer/Versionfile.prod",
+		dockerfile:   "./infra/docker/scheduler/Dockerfile",
+		versionfile:  "./infra/docker/scheduler/Versionfile.prod",
 		buildContext: ".",
 	},
 	"depot-vol": &module{
