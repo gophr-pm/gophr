@@ -1,23 +1,23 @@
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: indexer-rc
+  name: scheduler-rc
   labels:
-    module: indexer
+    module: scheduler
   namespace: gophr
 spec:
   replicas: 1
   selector:
-    module: indexer
+    module: scheduler
   template:
     metadata:
       labels:
-        module: indexer
+        module: scheduler
       namespace: gophr
     spec:
       containers:
-      - name: indexer
-        image: gophr-indexer-dev:v1
+      - name: scheduler
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-scheduler:1.0.2"
         volumeMounts:
         - mountPath: /secrets
           name: secrets
