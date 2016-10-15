@@ -30,7 +30,7 @@ RUN cd $HOME && curl -fsSL https://github.com/libgit2/libgit2/archive/v0.24.1.ta
 # Copy in requisite files.
 COPY ./api /go/src/github.com/gophr-pm/gophr/api
 COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
-COPY ./common /go/src/github.com/gophr-pm/gophr/common
+COPY ./common /go/src/github.com/gophr-pm/gophr/lib
 
 # Build source and move things around.
 RUN cd /go/src/github.com/gophr-pm/gophr/api \

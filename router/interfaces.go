@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/db/query"
-	"github.com/gophr-pm/gophr/common/git"
-	"github.com/gophr-pm/gophr/common/github"
-	"github.com/gophr-pm/gophr/common/io"
-	"github.com/gophr-pm/gophr/common/verdeps"
+	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/git"
+	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/io"
+	"github.com/gophr-pm/gophr/lib/verdeps"
 )
 
 // refsDownloader is responsible for downloading the git refs for a package.
@@ -22,11 +22,11 @@ type fullSHAFetcher func(args github.FetchFullSHAArgs) (string, error)
 // packageDownloadRecorderArgs is the arguments struct for
 // packageDownloadRecorders.
 type packageDownloadRecorderArgs struct {
-	db      *gocql.Session
-	sha     string
-	repo    string
-	author  string
-	version string
+	db     *gocql.Session
+	sha    string
+	repo   string
+	ghSvc  github.RequestService
+	author string
 }
 
 // packageDownloadRecorder is responsible for recording package downloads. If

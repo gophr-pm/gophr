@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/dtos"
-	"github.com/gophr-pm/gophr/common/github"
-	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/dtos"
+	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/model"
 )
 
 var requestTimeBuffer = 50 * time.Millisecond

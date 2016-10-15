@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common/db/query"
+	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/stretchr/testify/assert"
 )
 

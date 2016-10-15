@@ -5,7 +5,7 @@ RUN set -ex && apk add --update 'git' && apk add 'bash'
 
 # Copy in requisite files.
 COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
-COPY ./common /go/src/github.com/gophr-pm/gophr/common
+COPY ./common /go/src/github.com/gophr-pm/gophr/lib
 COPY ./migrator /go/src/github.com/gophr-pm/gophr/migrator
 
 # Build source and move things around.

@@ -89,7 +89,7 @@ RUN apt-get -q -y install \
 # Copy in source for the API binary.
 COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
 COPY ./depot /go/src/github.com/gophr-pm/gophr/depot
-COPY ./common /go/src/github.com/gophr-pm/gophr/common
+COPY ./common /go/src/github.com/gophr-pm/gophr/lib
 
 # Build source and move things around.
 RUN cd /go/src/github.com/gophr-pm/gophr/depot \

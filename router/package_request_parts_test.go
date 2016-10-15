@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/gophr-pm/gophr/common/semver"
+	"github.com/gophr-pm/gophr/lib/semver"
 	"github.com/stretchr/testify/assert"
 )
 

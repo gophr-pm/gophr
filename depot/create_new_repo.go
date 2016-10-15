@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	git "github.com/libgit2/git2go"
-	"github.com/gophr-pm/gophr/common/depot"
+	"github.com/gophr-pm/gophr/lib/depot"
 )
 
 // repoCreationAttemptsLimit sets the cap on how many times repo creation is

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gophr-pm/gophr/common/verdeps"
+	"github.com/gophr-pm/gophr/lib/verdeps"
 	"github.com/stretchr/testify/assert"
 )
 

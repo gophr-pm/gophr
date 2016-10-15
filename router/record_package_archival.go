@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gophr-pm/gophr/common/models/packages/archives"
+	"github.com/gophr-pm/gophr/lib/model/package/archive"
 )
 
 // recordPackageArchival is a helper function that records the download of a

@@ -6,13 +6,13 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/depot"
-	"github.com/gophr-pm/gophr/common/github"
-	"github.com/gophr-pm/gophr/common/io"
-	"github.com/gophr-pm/gophr/common/models/packages/archives"
-	"github.com/gophr-pm/gophr/common/verdeps"
+	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/depot"
+	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/io"
+	"github.com/gophr-pm/gophr/lib/model/package/archive"
+	"github.com/gophr-pm/gophr/lib/verdeps"
 )
 
 const (
@@ -237,9 +237,8 @@ func (pr *packageRequest) respond(args respondToPackageRequestArgs) error {
 			db:     args.db,
 			sha:    pr.matchedSHA,
 			repo:   pr.parts.repo,
+			ghSvc:  args.ghSvc,
 			author: pr.parts.author,
-			// It is ok for the matched sha label to be left blank.
-			version: pr.matchedSHALabel,
 		})
 
 		return nil

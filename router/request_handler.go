@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/errors"
-	"github.com/gophr-pm/gophr/common/github"
-	"github.com/gophr-pm/gophr/common/io"
-	"github.com/gophr-pm/gophr/common/newrelic"
+	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/errors"
+	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/io"
+	"github.com/gophr-pm/gophr/lib/newrelic"
 	"github.com/newrelic/go-agent"
 )
 
@@ -44,7 +44,7 @@ func RequestHandler(
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Log this transaction in new relic if in production.
 		var nrTxn newrelic.Transaction
-		if conf.IsDev {
+		if !conf.IsDev {
 			nrTxn = nr.CreateNewRelicTxn(newRelicApp, &w, r)
 			defer nrTxn.End()
 		}
