@@ -4,6 +4,10 @@
 DROP INDEX IF EXISTS packages_index;
 DROP TABLE IF EXISTS packages;
 
+---------------------------- AWESOME PACKAGE TABLE -----------------------------
+
+DROP TABLE IF EXISTS awesome_packages;
+
 ------------------------- PACKAGE ARCHIVE RECORD TABLE -------------------------
 
 DROP TABLE IF EXISTS package_archive_records;
