@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gophr-pm/gophr/common"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/newrelic"
+	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/newrelic"
 )
 
 func main() {

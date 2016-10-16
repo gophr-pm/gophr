@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gophr-pm/gophr/common/depot"
+	"github.com/gophr-pm/gophr/lib/depot"
 )
 
 // repoDestructionAttemptsLimit sets the cap on how many times repo destruction
