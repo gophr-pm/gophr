@@ -6,11 +6,16 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/common/config"
-	"github.com/gophr-pm/gophr/common/dtos"
-	"github.com/gophr-pm/gophr/common/github"
-	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/dtos"
+	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/model"
 )
+
+type packageRepoTuple struct {
+	pkg      *models.PackageModel
+	repoData dtos.GithubRepoDTO
+}
 
 var requestTimeBuffer = 50 * time.Millisecond
 
@@ -38,21 +43,19 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
-	packageChan := make(chan dtos.GitHubPackageModelDTO, 20)
+	packageChan := make(chan packageRepoTuple, 20)
 
 	log.Printf("Spinning up %d consumers", nbConcurrentInserts)
 	for i := 0; i < nbConcurrentInserts; i++ {
 		wg.Add(1)
 		go func() {
-			for gitHubPackageModelDTO := range packageChan {
-				packageStarCount := github.ParseStarCount(gitHubPackageModelDTO.ResponseBody)
-				log.Printf("Star count %d \n", packageStarCount)
+			for tuple := range packageChan {
 				indexTime := time.Now()
-				log.Printf("New index time %s \n", indexTime)
-				packageModel := gitHubPackageModelDTO.Package
+				packageModel := tuple.pkg
+				packageModel.Description = &tuple.repoData.Description
 				packageModel.IndexTime = &indexTime
-				packageModel.Stars = &packageStarCount
-				err := models.InsertPackage(session, &packageModel)
+				packageModel.Stars = &tuple.repoData.Stars
+				err := models.InsertPackage(session, packageModel)
 				if err != nil {
 					log.Println("Could not insert packageModel, error occured")
 					log.Println(err)
@@ -65,9 +68,9 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 	log.Printf("Preparing to fetch stars for %d repos", numPackageModels)
 	for count, packageModel := range packageModels {
 		log.Printf("Processing package %s/%s #%d \n", *packageModel.Author, *packageModel.Repo, count)
-		packageModelGitHubData, err := gitHubRequestService.FetchGitHubDataForPackageModel(*packageModel)
+		packageModelGitHubData, err := gitHubRequestService.FetchGitHubDataForPackageModel(*packageModel.Author, *packageModel.Repo)
 
-		if packageModelGitHubData == nil && err == nil {
+		if err == nil {
 			log.Println(err)
 			wg.Add(1)
 			go func() {
@@ -80,7 +83,10 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 			log.Println(err)
 		}
 
-		packageChan <- dtos.GitHubPackageModelDTO{Package: *packageModel, ResponseBody: packageModelGitHubData}
+		packageChan <- packageRepoTuple{
+			pkg:      packageModel,
+			repoData: packageModelGitHubData,
+		}
 		time.Sleep(requestTimeBuffer)
 	}
 

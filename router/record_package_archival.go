@@ -3,14 +3,14 @@ package main
 import (
 	"log"
 
-	"github.com/gophr-pm/gophr/common/models"
+	"github.com/gophr-pm/gophr/lib/model/package/archive"
 )
 
 // recordPackageArchival is a helper function that records the download of a
 // specific version of a package.
 func recordPackageArchival(args packageArchivalRecorderArgs) {
 	// Use the package archive model to record this in the database.
-	if err := models.RecordPackageArchival(
+	if err := archives.Create(
 		args.db,
 		args.author,
 		args.repo,

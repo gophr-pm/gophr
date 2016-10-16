@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	git "github.com/libgit2/git2go"
-	"github.com/gophr-pm/gophr/common/config"
-	g "github.com/gophr-pm/gophr/common/git"
+	"github.com/gophr-pm/gophr/lib/config"
+	g "github.com/gophr-pm/gophr/lib/git"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
