@@ -18,6 +18,11 @@ func (r *realIO) Create(name string) (*os.File, error) {
 	return os.Create(name)
 }
 
+// Stat calls os.Stat
+func (r *realIO) Stat(dirname string) (os.FileInfo, error) {
+	return os.Stat(dirname)
+}
+
 // Copy calls io.Copy.
 func (r *realIO) Copy(dst io.Writer, src io.Reader) (int64, error) {
 	return io.Copy(dst, src)

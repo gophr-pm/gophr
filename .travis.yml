@@ -2,7 +2,7 @@ language: go
 sudo: required
 before_install:
 - go get -d github.com/libgit2/git2go
-- "$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh"
+- "$GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh 1>/dev/null"
 install:
 - go get golang.org/x/tools/cmd/cover
 - go get github.com/mattn/goveralls
@@ -12,9 +12,9 @@ go:
 - 1.6
 - 1.7
 script:
-- make
+- chmod +x build.sh
+- ./build.sh
 - $HOME/gopath/bin/goveralls -coverprofile=coverage-all.out -service=travis-ci -repotoken $COVERALLS_TOKEN
-- go test ./..
 notifications:
 - email: false
 env:
