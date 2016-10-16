@@ -1,16 +1,17 @@
 package verdeps
 
 import (
-	"testing"
-	"regexp"
-	"github.com/stretchr/testify/assert"
-	"github.com/gophr-pm/gophr/common/io"
 	"os"
+	"regexp"
+	"testing"
+
+	"github.com/gophr-pm/gophr/lib/io"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 var validInternalDirnameRegex = regexp.MustCompile(`\b[0-9a-f]{16}\b`)
-var generatedInternalDirName string = generateInternalDirName();
+var generatedInternalDirName = generateInternalDirName()
 
 const author = "raymondChandler"
 const repo = "theLongGoodBye"
@@ -34,7 +35,7 @@ func TestIsSubPackage(t *testing.T) {
 
 func TestParseImportPath_validAuthor(t *testing.T) {
 	t.Parallel()
-	expectedAuthor, expectedRepo, expectedSubpath := author, "", "";
+	expectedAuthor, expectedRepo, expectedSubpath := author, "", ""
 	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/")
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
@@ -43,7 +44,7 @@ func TestParseImportPath_validAuthor(t *testing.T) {
 
 func TestParseImportPath_invalidAuthor(t *testing.T) {
 	t.Parallel()
-	expectedAuthor, expectedRepo, expectedSubpath := "IdontEndInAForwardSlashSoIWillBeMissingACha", "", "";
+	expectedAuthor, expectedRepo, expectedSubpath := "IdontEndInAForwardSlashSoIWillBeMissingACha", "", ""
 	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + "IdontEndInAForwardSlashSoIWillBeMissingAChar")
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
@@ -52,7 +53,7 @@ func TestParseImportPath_invalidAuthor(t *testing.T) {
 
 func TestParseImportPath_validRepo(t *testing.T) {
 	t.Parallel()
-	expectedAuthor, expectedRepo, expectedSubpath := author, repo, "";
+	expectedAuthor, expectedRepo, expectedSubpath := author, repo, ""
 	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/" + repo)
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
@@ -61,7 +62,7 @@ func TestParseImportPath_validRepo(t *testing.T) {
 
 func TestParseImportPath_validSubpath(t *testing.T) {
 	t.Parallel()
-	expectedAuthor, expectedRepo, expectedSubpath := author, repo, subpath;
+	expectedAuthor, expectedRepo, expectedSubpath := author, repo, subpath
 	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/" + repo + subpath)
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
@@ -72,35 +73,35 @@ func TestGenerateInternalDirName_hasProperLengthAndAcceptedCharacters(t *testing
 	t.Parallel()
 	for i := 0; i < 10; i++ {
 		internalDirName := generateInternalDirName()
-		assert.True(t, validInternalDirnameRegex.MatchString(internalDirName));
+		assert.True(t, validInternalDirnameRegex.MatchString(internalDirName))
 	}
 }
 
 func TestComposeNewImportPath_noSubpath(t *testing.T) {
 	t.Parallel()
-	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha +  "\""
+	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + "\""
 	actualComposedPath := string(composeNewImportPath(author, repo, sixCharSha, "", generatedInternalDirName)[:])
 	assert.Equal(t, expectedComposedPath, actualComposedPath)
 }
 
 func TestComposeNewImportPath_withInternalSubpath(t *testing.T) {
 	t.Parallel()
-	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + "/" + generatedInternalDirName + "/" +  "\""
+	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + "/" + generatedInternalDirName + "/" + "\""
 	actualComposedPath := string(composeNewImportPath(author, repo, sixCharSha, internalSubPathPart, generatedInternalDirName)[:])
 	assert.Equal(t, expectedComposedPath, actualComposedPath)
 }
 
 func TestComposeNewImportPath_withInternalSuffixSubpath(t *testing.T) {
 	t.Parallel()
-	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + "/" + generatedInternalDirName +  "\""
+	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + "/" + generatedInternalDirName + "\""
 	actualComposedPath := string(composeNewImportPath(author, repo, sixCharSha, internalSubPathSuffix, generatedInternalDirName)[:])
 	assert.Equal(t, expectedComposedPath, actualComposedPath)
 }
 
 func TestComposeNewImportPath_withRegularSubpath(t *testing.T) {
 	t.Parallel()
-	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + subpath +  "\""
-	actualComposedPath := string(composeNewImportPath(author, repo, sixCharSha,  subpath, generatedInternalDirName)[:])
+	expectedComposedPath := gophrPrefix + author + "/" + repo + "@" + sixCharSha + subpath + "\""
+	actualComposedPath := string(composeNewImportPath(author, repo, sixCharSha, subpath, generatedInternalDirName)[:])
 	assert.Equal(t, expectedComposedPath, actualComposedPath)
 }
 
@@ -117,7 +118,7 @@ func TestGetPackageDirPaths_onlyVendorDir(t *testing.T) {
 	mockFiles = append(mockFiles, mockVendorFile)
 
 	vendorDirPath, subDirNames, goFilePaths := verdepsHelperArgs.getPackageDirPaths(mockFiles, packageDirPath)
-	assert.Equal(t, packageDirPath + "/vendor/src", vendorDirPath)
+	assert.Equal(t, packageDirPath+"/vendor/src", vendorDirPath)
 	assert.Equal(t, expectedSubDirs, subDirNames)
 	assert.Equal(t, expectedSubDirs, goFilePaths)
 }
@@ -136,7 +137,7 @@ func TestGetPackageDirPaths_vendorDirWithSrcDir(t *testing.T) {
 	mockFiles = append(mockFiles, mockVendorFile, mockSrcFile)
 
 	vendorDirPath, subDirNames, goFilePaths := verdepsHelperArgs.getPackageDirPaths(mockFiles, packageDirPath)
-	assert.Equal(t, packageDirPath + "/vendor", vendorDirPath)
+	assert.Equal(t, packageDirPath+"/vendor", vendorDirPath)
 	assert.Equal(t, expectedSubDirs, subDirNames)
 	assert.Equal(t, expectedSubDirs, goFilePaths)
 }
@@ -146,13 +147,13 @@ func TestGetPackageDirPaths_vendorDirAndGoFiles(t *testing.T) {
 	var mockFiles []os.FileInfo
 	var expectedSubDirs []string
 	var expectedGoFileNames []string
-	
-	expectedGoFiles := makeRandomMockFiles(5, ".go", false) 
+
+	expectedGoFiles := makeRandomMockFiles(5, ".go", false)
 	for _, file := range expectedGoFiles {
-		expectedGoFileNames = append(expectedGoFileNames, packageDirPath + "/" + file.Name()) 
+		expectedGoFileNames = append(expectedGoFileNames, packageDirPath+"/"+file.Name())
 		mockFiles = append(mockFiles, file)
 	}
-	
+
 	mockVendorFile := io.MockFileInfo{NameProp: "vendor", IsDirProp: true}
 	mockIo := io.NewMockIO()
 	mockIo.On("Stat", mock.AnythingOfType("string")).Return(mockVendorFile, nil)
@@ -161,8 +162,8 @@ func TestGetPackageDirPaths_vendorDirAndGoFiles(t *testing.T) {
 	mockFiles = append(mockFiles, mockVendorFile)
 
 	vendorDirPath, subDirNames, goFilePaths := verdepsHelperArgs.getPackageDirPaths(mockFiles, packageDirPath)
-	
-	assert.Equal(t, packageDirPath + "/vendor/src", vendorDirPath,)
+
+	assert.Equal(t, packageDirPath+"/vendor/src", vendorDirPath)
 	assert.Equal(t, expectedSubDirs, subDirNames)
 	assert.Equal(t, expectedGoFileNames, goFilePaths)
 }
@@ -175,10 +176,10 @@ func TestGetPackageDirPaths_vendorDirAndGoFilesAndSubdirs(t *testing.T) {
 
 	expectedGoFiles := makeRandomMockFiles(5, ".go", false)
 	for _, file := range expectedGoFiles {
-		expectedGoFileNames = append(expectedGoFileNames, packageDirPath + "/" + file.Name())
+		expectedGoFileNames = append(expectedGoFileNames, packageDirPath+"/"+file.Name())
 		mockFiles = append(mockFiles, file)
 	}
-	
+
 	expectedSubDirs := makeRandomMockFiles(5, "", true)
 	for _, file := range expectedSubDirs {
 		expectedSubDirNames = append(expectedSubDirNames, file.Name())
@@ -194,16 +195,16 @@ func TestGetPackageDirPaths_vendorDirAndGoFilesAndSubdirs(t *testing.T) {
 
 	vendorDirPath, subDirNames, goFilePaths := verdepsHelperArgs.getPackageDirPaths(mockFiles, packageDirPath)
 
-	assert.Equal(t, packageDirPath + "/vendor/src", vendorDirPath)
+	assert.Equal(t, packageDirPath+"/vendor/src", vendorDirPath)
 	assert.Equal(t, expectedSubDirNames, subDirNames)
 	assert.Equal(t, expectedGoFileNames, goFilePaths)
 }
 
-func makeRandomMockFiles(numberOfFiles int, extension string, isDir bool) ([]os.FileInfo) {
+func makeRandomMockFiles(numberOfFiles int, extension string, isDir bool) []os.FileInfo {
 	var mockFileInfos []os.FileInfo
-	for x := 0; x<numberOfFiles; x++ {
+	for x := 0; x < numberOfFiles; x++ {
 		// conveniently, generateInternalDirName is a random string generator
 		mockFileInfos = append(mockFileInfos, io.MockFileInfo{NameProp: generateInternalDirName() + extension, IsDirProp: isDir})
 	}
-	return mockFileInfos;
+	return mockFileInfos
 }

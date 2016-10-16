@@ -7,12 +7,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"github.com/gophr-pm/gophr/common/io"
+
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 type verdepsHelperArgs struct {
 	io io.IO
-} 
+}
 
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo

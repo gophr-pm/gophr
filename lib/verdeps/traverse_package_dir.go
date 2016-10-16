@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"github.com/gophr-pm/gophr/common/io"
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
