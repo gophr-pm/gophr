@@ -12,16 +12,6 @@ import (
 )
 
 // TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
-// TODO(skeswa): demolish and re-distribute into function files.
 
 // Constants directly related to interacting with the package model in the
 // cassandra database.
