@@ -1,5 +1,7 @@
 package models
 
+// TODO(skeswa): models -> model
+
 import (
 	"fmt"
 	"regexp"

@@ -19,6 +19,7 @@ func Exists(
 		Where(query.Column(columnNameAuthor).Equals(author)).
 		And(query.Column(columnNameRepo).Equals(repo)).
 		And(query.Column(columnNameSHA).Equals(sha)).
+		Limit(1).
 		Create(q).
 		Scan(&count); err != nil {
 		return false, err

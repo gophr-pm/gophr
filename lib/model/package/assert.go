@@ -26,6 +26,7 @@ func AssertExistence(
 		From(packagesTableName).
 		Where(query.Column(packagesColumnNameAuthor).Equals(author)).
 		And(query.Column(packagesColumnNameRepo).Equals(repo)).
+		Limit(1).
 		Create(q).
 		Scan(&count); err != nil {
 		return fmt.Errorf(

@@ -1,7 +1,7 @@
 FROM golang:latest
 
 # Install nginx and build tools.
-ENV NGINX_VERSION 1.11.4-1~jessie
+ENV NGINX_VERSION 1.11.5-1~jessie
 RUN apt-key update \
   && apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62 \
   && echo "deb http://nginx.org/packages/mainline/debian/ jessie nginx" >> /etc/apt/sources.list \
@@ -84,7 +84,7 @@ RUN apt-get -q -y install \
 # Copy in source for the API binary.
 COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
 COPY ./depot /go/src/github.com/gophr-pm/gophr/depot
-COPY ./common /go/src/github.com/gophr-pm/gophr/lib
+COPY ./lib /go/src/github.com/gophr-pm/gophr/lib
 
 # Build source and move things around.
 RUN cd /go/src/github.com/gophr-pm/gophr/depot \

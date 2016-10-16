@@ -22,18 +22,18 @@ CREATE CUSTOM INDEX IF NOT EXISTS packages_index
   ON packages ()
   USING 'com.stratio.cassandra.lucene.Index'
   WITH OPTIONS = {
-  'refresh_seconds': '3600',
-  'schema': '{
-    default_analyzer: "english",
-    fields: {
-      trend_score: {type: "float"},
-      search_blob: {type: "text"},
-      daily_downloads: {type: "bigint"},
-      weekly_downloads: {type: "bigint"},
-      monthly_downloads: {type: "bigint"},
-    }
-  }'
-};
+    'refresh_seconds': '60',
+    'schema': '{
+      default_analyzer: "english",
+      fields: {
+        trend_score: {type: "float"},
+        search_blob: {type: "text"},
+        daily_downloads: {type: "bigint"},
+        weekly_downloads: {type: "bigint"},
+        monthly_downloads: {type: "bigint"}
+      }
+    }'
+  };
 
 ---------------------------- AWESOME PACKAGE TABLE -----------------------------
 
@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS package_archive_records (
 ----------------------------- GITHUB API KEY TABLE -----------------------------
 
 CREATE TABLE IF NOT EXISTS github_api_key (
+  for_indexer boolean,
   key text PRIMARY KEY,
 );
 

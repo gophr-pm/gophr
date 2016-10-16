@@ -18,6 +18,7 @@ func IsAwesome(q query.Queryable, author, repo string) (bool, error) {
 		From(awesomeTableName).
 		Where(query.Column(awesomeColumnNameAuthor).Equals(author)).
 		And(query.Column(awesomeColumnNameRepo).Equals(repo)).
+		Limit(1).
 		Create(q).
 		Scan(&count); err != nil {
 		return false, fmt.Errorf(
