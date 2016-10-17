@@ -11,10 +11,6 @@ import (
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
-type verdepsHelperArgs struct {
-	io io.IO
-}
-
 func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
 }
@@ -110,26 +106,30 @@ func importPathHashOf(importPath string) string {
 	return buffer.String()
 }
 
+// verdepsHelperArgs is the arguments struct for
+type getPackageDirPathsArgs struct {
+	io             io.IO
+	files          []os.FileInfo
+	packageDirPath string
+}
+
 // getPackageDirPaths gets the vendor directory path (if one exists), all the
 // sub-directories names, and the go-file paths of the supplied package
 // directory path.
-func (args *verdepsHelperArgs) getPackageDirPaths(
-	files []os.FileInfo,
-	packageDirPath string,
-) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
-	for _, file := range files {
+func getPackageDirPaths(args getPackageDirPathsArgs) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
+	for _, file := range args.files {
 		if file.IsDir() {
 			if file.Name() == vendorDirName {
 				// If the "src" dir exists, then that is the vendor dir path.
 				srcDirPath := filepath.Join(
-					packageDirPath,
+					args.packageDirPath,
 					vendorDirName,
 					vendorSrcDirName)
 				srcDirStat, err := args.io.Stat(srcDirPath)
 				if err == nil && srcDirStat.IsDir() {
 					vendorDirPath = srcDirPath
 				} else {
-					vendorDirPath = filepath.Join(packageDirPath, vendorDirName)
+					vendorDirPath = filepath.Join(args.packageDirPath, vendorDirName)
 				}
 			} else {
 				subDirNames = append(subDirNames, file.Name())
@@ -137,7 +137,7 @@ func (args *verdepsHelperArgs) getPackageDirPaths(
 		} else if strings.HasSuffix(file.Name(), goFileSuffix) {
 			goFilePaths = append(
 				goFilePaths,
-				filepath.Join(packageDirPath, file.Name()))
+				filepath.Join(args.packageDirPath, file.Name()))
 		}
 	}
 

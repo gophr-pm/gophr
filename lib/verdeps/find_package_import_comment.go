@@ -15,7 +15,8 @@ const (
 var packageImportCommentRegex = regexp.MustCompile(packageImportComment)
 
 // findPackageImportComment finds the indices of the package import comment if
-// one exists. If not, then it returns -1s.
+// one exists. If not, then it returns -1s. This code is inspired by the way
+// godeps does this exact thing.
 func findPackageImportComment(
 	fileData []byte,
 	packageStartIndex int,

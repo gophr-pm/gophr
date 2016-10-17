@@ -6,10 +6,13 @@ import (
 	"runtime"
 	"strconv"
 	"sync"
+
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
+	io                       io.IO
 	errors                   *syncedErrors
 	importCounts             *syncedImportCounts
 	packageDirPath           string
@@ -23,13 +26,16 @@ type readPackageDirArgs struct {
 // appropriate imports in said package.
 func readPackageDir(args readPackageDirArgs) {
 	// Create a localized error list.
-	errs := newSyncedErrors()
-	waitGroup := &sync.WaitGroup{}
+	var (
+		errs      = newSyncedErrors()
+		waitGroup = &sync.WaitGroup{}
+	)
 
 	// Traverse the directory tree looking for go files - all the while properly
 	// handling go package vendoring.
 	waitGroup.Add(1)
 	traversePackageDir(traversePackageDirArgs{
+		io:                       args.io,
 		errors:                   errs,
 		dirPath:                  args.packageDirPath,
 		waitGroup:                waitGroup,
@@ -73,14 +79,3 @@ func readPackageDir(args readPackageDirArgs) {
 	// Clean up after ourselves (traversal allocates a lot of memory).
 	runtime.GC()
 }
-
-// func renameInternalDirectory(dirPath, parentDirPath, internalRenameTarget string) error {
-// 	if err := os.Rename(
-// 		dirPath,
-// 		filepath.Join(parentDirPath, internalRenameTarget),
-// 	); err != nil {
-// 		return err
-// 	}
-//
-// 	return nil
-// }

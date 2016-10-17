@@ -6,11 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
 type traversePackageDirArgs struct {
+	io                       io.IO
 	errors                   *syncedErrors
 	dirPath                  string
 	waitGroup                *sync.WaitGroup
@@ -44,9 +46,13 @@ func traversePackageDir(args traversePackageDirArgs) {
 		return
 	}
 
-	verdepsHelper := &verdepsHelperArgs{io: io.NewIO()}
 	// Get all relevant pathing information in one fell swoop.
-	vendorDirPath, subDirNames, goFilePaths := verdepsHelper.getPackageDirPaths(files, fullDirPath)
+	vendorDirPath, subDirNames, goFilePaths := getPackageDirPaths(
+		getPackageDirPathsArgs{
+			io:             args.io,
+			files:          files,
+			packageDirPath: fullDirPath,
+		})
 
 	// Record this subpath as a vendored package.
 	if args.inVendorDir &&
@@ -70,12 +76,13 @@ func traversePackageDir(args traversePackageDirArgs) {
 		subErrors := newSyncedErrors()
 		subImportSpecChan := make(chan *importSpec)
 		subPackageSpecChan := make(chan *packageSpec)
-		traversePackageDirWaitGroup := &sync.WaitGroup{}
 		bufferVendorablesWaitGroup := &sync.WaitGroup{}
+		traversePackageDirWaitGroup := &sync.WaitGroup{}
 
 		// Traverse the vendor dir.
 		traversePackageDirWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
+			io:              args.io,
 			errors:          subErrors,
 			dirPath:         vendorDirPath,
 			waitGroup:       traversePackageDirWaitGroup,
@@ -142,6 +149,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 		subWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
+			io:              args.io,
 			errors:          args.errors,
 			dirPath:         args.dirPath,
 			waitGroup:       subWaitGroup,
