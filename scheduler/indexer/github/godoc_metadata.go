@@ -14,17 +14,26 @@ type godocMetadata struct {
 	repo        string
 }
 
+const (
+	godocURL = "https://godoc.org/-/index"
+)
+
+// fetchGodocMetadata converts entries listed in godoc/Index
+// into a godocMetadata struct.
 func fetchGodocMetadata() ([]godocMetadata, error) {
-	doc, err := goquery.NewDocument("https://godoc.org/-/index")
+	var (
+		godocMetadataList []godocMetadata
+		metadata          godocMetadata
+	)
+
+	doc, err := goquery.NewDocument(godocURL)
 	if err != nil {
 		return nil, err
 	}
 
-	var godocMetadataList []godocMetadata
-
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		children := s.Children()
-		godocMetadata := godocMetadata{}
+		metadata = godocMetadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {
@@ -33,23 +42,23 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 
 			if childURLexists == true {
 				childURL = strings.Trim(childURL, "/")
-				godocMetadata.githubURL = childURL
+				metadata.githubURL = childURL
 			}
 
 			if len(childDescription) > 0 {
 				// TODO check if description isn't just the url, if so dont set it
-				godocMetadata.description = sanitizeUTF8String(strings.TrimPrefix(childDescription, childURL))
+				metadata.description = sanitizeUTF8String(strings.TrimPrefix(childDescription, childURL))
 			}
 		})
 
-		githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
+		githubURLTokens := strings.Split(metadata.githubURL, "/")
 
 		if len(githubURLTokens) == 3 && githubURLTokens[0] == "github.com" {
-			githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
-			godocMetadata.author = githubURLTokens[1]
-			godocMetadata.repo = githubURLTokens[2]
+			githubURLTokens := strings.Split(metadata.githubURL, "/")
+			metadata.author = githubURLTokens[1]
+			metadata.repo = githubURLTokens[2]
 
-			godocMetadataList = append(godocMetadataList, godocMetadata)
+			godocMetadataList = append(godocMetadataList, metadata)
 		}
 	})
 
