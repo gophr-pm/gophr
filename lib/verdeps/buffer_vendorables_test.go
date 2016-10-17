@@ -48,37 +48,69 @@ func TestBufferVendorables(t *testing.T) {
 		inputImportSpecChan <- generateTestImportSpec("filepath2", `"github.com/b/c"`)
 		inputImportSpecChan <- generateTestImportSpec("filepath2", `"github.com/c/d"`)
 		inputPackageSpecChan <- generateTestPackageSpec("filepath3", 1)
+		inputImportSpecChan <- generateTestImportSpec("filepath3", `"ignore.me/r/s"`)
 		inputImportSpecChan <- generateTestImportSpec("filepath3", `"github.com/x/y"`)
-
 		// Prepare to read outputs.
 		close(inputImportSpecChan)
 		close(inputPackageSpecChan)
 
 		var (
+			numberOfImportSpecs         = 8
+			numberOfPackageSpecs        = 3
+			numberOfVendoredImportSpecs = 2
+
 			outputImportSpecStrings  = make(map[string]bool)
 			outputPackageSpecStrings = make(map[string]bool)
 		)
 
-		// Read the import specs.
+		// Make sure these channels get closed before the test completes.
+		defer close(outputImportSpecChan)
+		defer close(outputPackageSpecChan)
+
+		i := 0
 		for spec := range outputImportSpecChan {
-			outputImportSpecStrings[spec.filePath+":"+spec.imports.Path.Value] = true
+			key := spec.filePath + ":" + spec.imports.Path.Value
+			outputImportSpecStrings[key] = true
+
+			// Break after all the specs we put in come out again.
+			if i++; i >= (numberOfImportSpecs - numberOfVendoredImportSpecs) {
+				break
+			}
 		}
+
+		i = 0
 		for spec := range outputPackageSpecChan {
-			outputPackageSpecStrings[spec.filePath+":"+strconv.Itoa(spec.startIndex)] = true
+			key := spec.filePath + ":" + strconv.Itoa(spec.startIndex)
+			outputPackageSpecStrings[key] = true
+
+			// Break after all the specs we put in come out again.
+			if i++; i >= numberOfPackageSpecs {
+				break
+			}
 		}
 
 		// Make sure everything lines up as expected.
-		// TODO(skeswa): continue here.
-		Convey("All the right import specs should come through", func() {
+		Convey("Function shouldn't deadlock", func() {
+			waitGroup.Wait()
+		})
+		Convey("Unvendored github imports should come through", func() {
 			So(outputImportSpecStrings[`filepath1:"github.com/d/e"`], ShouldBeTrue)
 			So(outputImportSpecStrings[`filepath1:"github.com/f/g"`], ShouldBeTrue)
-			So(outputImportSpecStrings[`filepath1:"github.com/f/g"`], ShouldBeTrue)
+			So(outputImportSpecStrings[`filepath1:"github.com/g/h"`], ShouldBeTrue)
+			So(outputImportSpecStrings[`filepath2:"github.com/b/c"`], ShouldBeTrue)
+			So(outputImportSpecStrings[`filepath2:"github.com/c/d"`], ShouldBeTrue)
+		})
+		Convey("Vendored imports should be ignored", func() {
+			So(outputImportSpecStrings[`filepath2:"github.com/a/b"`], ShouldBeFalse)
+			So(outputImportSpecStrings[`filepath3:"github.com/x/y"`], ShouldBeFalse)
+		})
+		Convey("Non-github imports shouldn't be ignored", func() {
+			So(outputImportSpecStrings[`filepath3:"ignore.me/r/s"`], ShouldBeTrue)
 		})
 		Convey("The import counts should be correct", func() {
-
-		})
-		Convey("The import counts should be correct", func() {
-
+			So(importCounts.importCountOf("filepath1"), ShouldEqual, 3)
+			So(importCounts.importCountOf("filepath2"), ShouldEqual, 2)
+			So(importCounts.importCountOf("filepath3"), ShouldEqual, 1)
 		})
 	})
 }
