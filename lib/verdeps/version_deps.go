@@ -1,7 +1,7 @@
 package verdeps
 
 import (
-	"errors"
+	"github.com/gophr-pm/gophr/lib/errors"
 	"fmt"
 
 	"github.com/gophr-pm/gophr/lib/github"

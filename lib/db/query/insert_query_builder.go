@@ -67,8 +67,7 @@ func (qb *InsertQueryBuilder) IfNotExists() *InsertQueryBuilder {
 	return qb
 }
 
-// Create serializes and creates the query.
-func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *InsertQueryBuilder) compose() (string, []interface{}) {
 	var (
 		buffer bytes.Buffer
 		params []interface{}
@@ -112,5 +111,17 @@ func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
 		buffer.WriteString(strconv.FormatUint(uint64(qb.ttl/time.Microsecond), 10))
 	}
 
-	return q.Query(buffer.String(), params...)
+	return buffer.String(), params
+}
+
+// Create serializes and creates the query.
+func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
+	text, params := qb.compose()
+	return q.Query(text, params...)
+}
+
+// CreateVoid serializes and creates the query.
+func (qb *InsertQueryBuilder) CreateVoid(q VoidQueryable) {
+	text, params := qb.compose()
+	q.Query(text, params...)
 }

@@ -4,15 +4,22 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gophr-pm/gophr/scheduler/indexer/github"
 	"github.com/robfig/cron"
 )
+
+/*
+
+	1). Github Indexer
+	2). Downloads Indexer
+*/
 
 func main() {
 	// Instantiate new cron instance.
 	c := cron.New()
 
 	// List cron jobs.
-	c.AddFunc("* * * * * *", Github_indexer)
+	c.AddFunc("* * * * * *", github.Github_indexer)
 
 	// Start the cron process.
 	c.Start()

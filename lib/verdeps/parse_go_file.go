@@ -6,11 +6,13 @@ import (
 	"go/token"
 	"strings"
 	"sync"
+
+	"github.com/gophr-pm/gophr/lib/errors"
 )
 
 // parseGoFileArgs is the arguments struct for parseGoFileArgs.
 type parseGoFileArgs struct {
-	errors          *syncedErrors
+	errors          *errors.SyncedErrors
 	filePath        string
 	waitGroup       *sync.WaitGroup
 	importCounts    *syncedImportCounts
@@ -39,7 +41,7 @@ func parseGoFile(args parseGoFileArgs) {
 		nil,
 		parser.ImportsOnly,
 	); err != nil {
-		args.errors.add(err)
+		args.errors.Add(err)
 		return
 	}
 

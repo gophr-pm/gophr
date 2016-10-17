@@ -16,8 +16,4 @@ const (
 	packagesColumnNameMonthlyDownloads        = "monthly_downloads"
 	packagesColumnNameAllTimeDownloads        = "all_time_downloads"
 	packagesColumnNameAllTimeVersionDownloads = "all_time_downloads"
-
-	awesomeTableName        = "awesome_packages"
-	awesomeColumnNameRepo   = "repo"
-	awesomeColumnNameAuthor = "author"
 )

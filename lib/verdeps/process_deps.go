@@ -1,13 +1,11 @@
 package verdeps
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/github"
 )
 
@@ -28,7 +26,7 @@ func processDeps(args processDepsArgs) error {
 		importSpecChan           = make(chan *importSpec)
 		packageSpecChan          = make(chan *packageSpec)
 		importPathSHAChan        = make(chan *importPathSHA)
-		accumulatedErrors        = newSyncedErrors()
+		accumulatedErrors        = errors.NewSyncedErrors()
 		revisionWaitGroup        = &sync.WaitGroup{}
 		pendingSHARequests       = newSyncedInt()
 		syncedImportCounts       = newSyncedImportCounts()
@@ -139,7 +137,7 @@ func processDeps(args processDepsArgs) error {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
 						if sha, exists = importPathSHAs.get(importPathHash); !exists {
-							accumulatedErrors.add(fmt.Errorf(
+							accumulatedErrors.Add(fmt.Errorf(
 								"Could not version dependency %s because the SHA did not yet exist.",
 								importPath))
 						} else {
@@ -183,8 +181,8 @@ func processDeps(args processDepsArgs) error {
 	}
 
 	// If there were any errors, compose all the errors into on error.
-	if accumulatedErrors.len() > 0 {
-		return concatErrors(accumulatedErrors)
+	if accumulatedErrors.Len() > 0 {
+		return accumulatedErrors.Compose("Failed to process dependencies")
 	}
 
 	// Otherwise, return without a hitch.
@@ -236,26 +234,4 @@ func shouldCloseImportPathSHAChan(
 	importSpecChan chan *importSpec,
 	importPathSHAChan chan *importPathSHA) bool {
 	return pendingSHARequests.value() == 0 && importSpecChan == nil && importPathSHAChan != nil
-}
-
-// concatErrors joins all the accumulated individual errors into one combined
-// error.
-func concatErrors(accumulatedErrors *syncedErrors) error {
-	errs := accumulatedErrors.get()
-	buffer := bytes.Buffer{}
-
-	buffer.WriteString("Failed to process dependencies. Bumped into ")
-	buffer.WriteString(strconv.Itoa(len(errs)))
-	buffer.WriteString(" problems: [ ")
-
-	for i, err := range errs {
-		if i > 0 {
-			buffer.WriteString(", ")
-		}
-		buffer.WriteString(err.Error())
-	}
-
-	buffer.WriteString(" ].")
-
-	return errors.New(buffer.String())
 }

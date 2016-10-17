@@ -1,16 +1,18 @@
 package verdeps
 
 import (
-	"bytes"
-	"errors"
+	"fmt"
 	"runtime"
-	"strconv"
 	"sync"
+
+	"github.com/gophr-pm/gophr/lib/errors"
+
+	errs "github.com/gophr-pm/gophr/lib/errors"
 )
 
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
-	errors                   *syncedErrors
+	errors                   *errs.SyncedErrors
 	importCounts             *syncedImportCounts
 	packageDirPath           string
 	importSpecChan           chan *importSpec
@@ -23,7 +25,7 @@ type readPackageDirArgs struct {
 // appropriate imports in said package.
 func readPackageDir(args readPackageDirArgs) {
 	// Create a localized error list.
-	errs := newSyncedErrors()
+	errs := errors.NewSyncedErrors()
 	waitGroup := &sync.WaitGroup{}
 
 	// Traverse the directory tree looking for go files - all the while properly
@@ -46,24 +48,8 @@ func readPackageDir(args readPackageDirArgs) {
 	waitGroup.Wait()
 
 	// Compose any errors that there may be into one error.
-	if errs.len() > 0 {
-		var buffer bytes.Buffer
-		buffer.WriteString("Failed to read package directory \"")
-		buffer.WriteString(args.packageDirPath)
-		buffer.WriteString("\" due to ")
-		buffer.WriteString(strconv.Itoa(errs.len()))
-		buffer.WriteString(" error(s) with file system traversal: [ ")
-		rawErrors := errs.errors
-		for i, err := range rawErrors {
-			if i > 0 {
-				buffer.WriteString(", ")
-			}
-
-			buffer.WriteString(err.Error())
-		}
-		buffer.WriteString(" ]")
-
-		args.errors.add(errors.New(buffer.String()))
+	if errs.Len() > 0 {
+		args.errors.Add(errs.Compose(fmt.Sprintf("Failed to read package directory \"%s\"", args.packageDirPath)))
 	}
 
 	// We're done. Time to close the output channels.
@@ -73,14 +59,3 @@ func readPackageDir(args readPackageDirArgs) {
 	// Clean up after ourselves (traversal allocates a lot of memory).
 	runtime.GC()
 }
-
-// func renameInternalDirectory(dirPath, parentDirPath, internalRenameTarget string) error {
-// 	if err := os.Rename(
-// 		dirPath,
-// 		filepath.Join(parentDirPath, internalRenameTarget),
-// 	); err != nil {
-// 		return err
-// 	}
-//
-// 	return nil
-// }
