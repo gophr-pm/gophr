@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 type processDepsArgs struct {
+	io                 io.IO
 	ghSvc              github.RequestService
 	packageSHA         string
 	packagePath        string
@@ -37,6 +39,7 @@ func processDeps(args processDepsArgs) error {
 
 	// Read the package looking for import and package metadata.
 	go readPackageDir(readPackageDirArgs{
+		io:                       args.io,
 		errors:                   accumulatedErrors,
 		importCounts:             syncedImportCounts,
 		packageDirPath:           args.packagePath,
