@@ -8,7 +8,7 @@ import (
 	"github.com/gophr-pm/gophr/lib/model"
 )
 
-// Index is responsible for updating packags github metadata.
+// Index is responsible for updating packages' github metadata.
 func Index() {
 	log.Println("Preparing to initialize DB connection")
 	conf, session := common.Init()
@@ -17,21 +17,23 @@ func Index() {
 	log.Println("Fetching godoc metadata")
 	godocMetadataList, err := fetchGodocMetadata()
 	if err != nil {
-		log.Println("Failed to fetch godoc metadata")
 		log.Fatalln(err)
 	}
 
-	log.Println("Fetching awesome go list")
-	awesomeGoIndex, err := fetchAwesomeGoList()
+	log.Println("Fetching awesome go list.")
+	awesomePackages, err := fetchAwesomeGoList()
 	if err != nil {
-		log.Println("Failed to fetch awesome go list")
 		log.Fatalln(err)
 	}
 
 	// TODO(Shikkic): For each element in awesomeGoIndex, store each entry.
+	log.Println("Persisting awesome go list.")
+	if err = persistAwesomePackages(session, awesomePackages); err != nil {
+		log.Fatalln(err)
+	}
 
 	log.Println("Preparing to build package models")
-	packageModels, err := buildPackageModels(godocMetadataList, awesomeGoIndex)
+	packageModels, err := buildPackageModels(godocMetadataList, awesomePackages)
 	if err != nil {
 		log.Println("Failed to build package models")
 		log.Fatalln(err)
