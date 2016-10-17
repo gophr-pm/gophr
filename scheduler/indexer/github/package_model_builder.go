@@ -10,7 +10,7 @@ import (
 	"github.com/gophr-pm/gophr/lib/model"
 )
 
-func fetchPackageVersions(metadata godocMetadata) ([]string, error) {
+func fetchPackageVersions(metadata godoc.godocMetadata) ([]string, error) {
 	refs, err := common.FetchRefs(metadata.author, metadata.repo)
 	if err != nil {
 		return nil, err

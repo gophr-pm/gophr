@@ -1,4 +1,4 @@
-package github
+package godoc
 
 import (
 	"strings"
@@ -7,7 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type godocMetadata struct {
+type metadata struct {
 	githubURL   string
 	description string
 	author      string
@@ -15,15 +15,16 @@ type godocMetadata struct {
 }
 
 const (
-	godocURL = "https://godoc.org/-/index"
+	godocURL      = "https://godoc.org/-/index"
+	gitHubBaseURL = "github.com"
 )
 
-// fetchGodocMetadata converts entries listed in godoc/Index
-// into a godocMetadata struct.
-func fetchGodocMetadata() ([]godocMetadata, error) {
+// fetchMetadata converts entries listed in godoc.org/index
+// into a metadata struct.
+func fetchMetadata() ([]metadata, error) {
 	var (
-		godocMetadataList []godocMetadata
-		metadata          godocMetadata
+		metadataList  []metadata
+		godocMetadata metadata
 	)
 
 	doc, err := goquery.NewDocument(godocURL)
@@ -31,9 +32,11 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 		return nil, err
 	}
 
+	// Traverse the godoc.org/index html and find every instance of <tr>.
+	// This is because Godoc organizes their packages in tables.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		children := s.Children()
-		metadata = godocMetadata{}
+		godocMetadata = metadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {
@@ -42,27 +45,27 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 
 			if childURLexists == true {
 				childURL = strings.Trim(childURL, "/")
-				metadata.githubURL = childURL
+				godocMetadata.githubURL = childURL
 			}
 
 			if len(childDescription) > 0 {
 				// TODO check if description isn't just the url, if so dont set it
-				metadata.description = sanitizeUTF8String(strings.TrimPrefix(childDescription, childURL))
+				godocMetadata.description = sanitizeUTF8String(strings.TrimPrefix(childDescription, childURL))
 			}
 		})
 
-		githubURLTokens := strings.Split(metadata.githubURL, "/")
+		githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
 
-		if len(githubURLTokens) == 3 && githubURLTokens[0] == "github.com" {
-			githubURLTokens := strings.Split(metadata.githubURL, "/")
-			metadata.author = githubURLTokens[1]
-			metadata.repo = githubURLTokens[2]
+		if len(githubURLTokens) == 3 && githubURLTokens[0] == gitHubBaseURL {
+			githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
+			godocMetadata.author = githubURLTokens[1]
+			godocMetadata.repo = githubURLTokens[2]
 
-			godocMetadataList = append(godocMetadataList, metadata)
+			metadataList = append(metadataList, godocMetadata)
 		}
 	})
 
-	return godocMetadataList, nil
+	return metadataList, nil
 }
 
 func sanitizeUTF8String(str string) string {
