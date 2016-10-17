@@ -7,7 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-type metadata struct {
+type packageMetadata struct {
 	githubURL   string
 	description string
 	author      string
@@ -19,12 +19,12 @@ const (
 	gitHubBaseURL = "github.com"
 )
 
-// fetchMetadata converts entries listed in godoc.org/index
-// into a metadata struct.
-func fetchMetadata() ([]metadata, error) {
+// fetchPackageMetadata converts entries listed in godoc.org/index
+// into a package metadata struct.
+func fetchPackageMetadata() ([]packageMetadata, error) {
 	var (
-		metadataList  []metadata
-		godocMetadata metadata
+		metadataList  []packageMetadata
+		godocMetadata packageMetadata
 	)
 
 	doc, err := goquery.NewDocument(godocURL)
@@ -36,7 +36,7 @@ func fetchMetadata() ([]metadata, error) {
 	// This is because Godoc organizes their packages in tables.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		children := s.Children()
-		godocMetadata = metadata{}
+		godocMetadata = packageMetadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {
