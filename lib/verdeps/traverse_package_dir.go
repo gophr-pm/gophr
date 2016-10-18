@@ -167,10 +167,10 @@ func traversePackageDir(args traversePackageDirArgs) {
 	for _, goFilePath := range goFilePaths {
 		subWaitGroup.Add(1)
 		go parseGoFile(parseGoFileArgs{
+			parse:           parser.ParseFile,
 			errors:          args.errors,
 			filePath:        goFilePath,
 			waitGroup:       subWaitGroup,
-			parseGoFile:     parser.ParseFile,
 			importCounts:    args.importCounts,
 			vendorContext:   args.vendorContext,
 			importSpecChan:  args.importSpecChan,

@@ -18,10 +18,10 @@ type goFileParser func(
 
 // parseGoFileArgs is the arguments struct for parseGoFileArgs.
 type parseGoFileArgs struct {
+	parse           goFileParser
 	errors          *syncedErrors
 	filePath        string
 	waitGroup       *sync.WaitGroup
-	parseGoFile     goFileParser
 	importCounts    *syncedImportCounts
 	vendorContext   *vendorContext
 	importSpecChan  chan *importSpec
@@ -42,7 +42,7 @@ func parseGoFile(args parseGoFileArgs) {
 	defer args.waitGroup.Done()
 
 	// Parse the imports of the file.
-	if f, err = args.parseGoFile(
+	if f, err = args.parse(
 		token.NewFileSet(),
 		args.filePath,
 		nil,
