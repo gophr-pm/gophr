@@ -6,17 +6,14 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestFindPackageImportComment(t *testing.T) {
-	Convey("Given file data and a start index", t, func() {
-		Convey("When there is a package import comment, its indices should be returned", func() {
-			var (
-				fileData = []byte(`
+var (
+	fileDataWithComment = []byte(`
 /**
- * Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ex orci,
- * cursus et vehicula eget, condimentum in mauris. Nam lacinia, turpis eget
- * volutpat pellentesque, tortor dolor gravida nisl, vel pellentesque felis
- * purus quis est. Class aptent taciti sociosqu ad litora
- * torquent per conubia nostra, per inceptos himenaeos. */
+* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ex orci,
+* cursus et vehicula eget, condimentum in mauris. Nam lacinia, turpis eget
+* volutpat pellentesque, tortor dolor gravida nisl, vel pellentesque felis
+* purus quis est. Class aptent taciti sociosqu ad litora
+* torquent per conubia nostra, per inceptos himenaeos. */
 
 package thingy // import "github.com/a/thingy"
 
@@ -26,8 +23,31 @@ some()
 other()
 stuff()
 `)
-				expectedEndIndex   = 397
-				expectedStartIndex = 365
+	fileDataWithoutComment = []byte(`
+/**
+* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ex orci,
+* cursus et vehicula eget, condimentum in mauris. Nam lacinia, turpis eget
+* volutpat pellentesque, tortor dolor gravida nisl, vel pellentesque felis
+* purus quis est. Class aptent taciti sociosqu ad litora
+* torquent per conubia nostra, per inceptos himenaeos. */
+
+package thingy
+
+this()
+is()
+some()
+other()
+stuff()
+`)
+)
+
+func TestFindPackageImportComment(t *testing.T) {
+	Convey("Given file data and a start index", t, func() {
+		Convey("When there is a package import comment, its indices should be returned", func() {
+			var (
+				fileData           = fileDataWithComment
+				expectedEndIndex   = 392
+				expectedStartIndex = 360
 			)
 
 			actualStartIndex, actualEndIndex := findPackageImportComment(
@@ -49,22 +69,7 @@ stuff()
 
 		Convey("When there is not a package import comment, -1 should be returned", func() {
 			var (
-				fileData = []byte(`
-/**
- * Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam ex orci,
- * cursus et vehicula eget, condimentum in mauris. Nam lacinia, turpis eget
- * volutpat pellentesque, tortor dolor gravida nisl, vel pellentesque felis
- * purus quis est. Class aptent taciti sociosqu ad litora
- * torquent per conubia nostra, per inceptos himenaeos. */
-
-package thingy
-
-this()
-is()
-some()
-other()
-stuff
-`)
+				fileData           = fileDataWithoutComment
 				expectedEndIndex   = -1
 				expectedStartIndex = -1
 			)

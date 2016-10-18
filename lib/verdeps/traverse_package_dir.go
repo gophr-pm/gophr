@@ -2,6 +2,7 @@ package verdeps
 
 import (
 	"fmt"
+	"go/parser"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -169,6 +170,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 			errors:          args.errors,
 			filePath:        goFilePath,
 			waitGroup:       subWaitGroup,
+			parseGoFile:     parser.ParseFile,
 			importCounts:    args.importCounts,
 			vendorContext:   args.vendorContext,
 			importSpecChan:  args.importSpecChan,
