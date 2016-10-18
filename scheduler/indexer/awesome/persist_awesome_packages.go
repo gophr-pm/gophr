@@ -1,8 +1,7 @@
-package github
+package awesome
 
 import (
 	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/model/package/awesome"
 )
@@ -11,23 +10,23 @@ const (
 	numPackagesPerBatch = 50
 )
 
-// persistAwesomePackages batch inserts awesome packages to help reduce network traffic.
-func persistAwesomePackages(session query.BatchingQueryable, pkgs []awesomePackage) error {
+// PersistAwesomePackages batch inserts awesome packages to help reduce network traffic.
+func PersistAwesomePackages(args PersistAwesomePackagesArgs) error {
 	var (
-		currentBatch = session.NewBatch(gocql.UnloggedBatch)
+		currentBatch = args.NewBatchCreator(gocql.UnloggedBatch)
 		resultChan   = make(chan error)
 		numBatches   = 0
 		resultCount  = 0
 		queryErrors  []error
 	)
 
-	for i, pkg := range pkgs {
+	for i, pkg := range args.PackageTuples {
 		awesome.AppendAddPackageQuery(currentBatch, pkg.author, pkg.repo)
-		if last := i == len(pkgs)-1; i%numPackagesPerBatch == 0 && i > 0 || last {
+		if last := i == len(args.PackageTuples)-1; i%numPackagesPerBatch == 0 && i > 0 || last {
 			numBatches++
-			go execBatch(session, currentBatch, resultChan)
+			go args.BatchExecutor(args.Session, currentBatch, resultChan)
 			if !last {
-				currentBatch = session.NewBatch(gocql.UnloggedBatch)
+				currentBatch = args.NewBatchCreator(gocql.UnloggedBatch)
 			}
 		}
 	}
@@ -40,18 +39,11 @@ func persistAwesomePackages(session query.BatchingQueryable, pkgs []awesomePacka
 		}
 	}
 
-	if queryErrors != nil {
-		return errors.ComposeErrors("Failed to persist awesome packages", queryErrors)
+	for _, err := range queryErrors {
+		if err != nil {
+			return errors.ComposeErrors("Failed to persist awesome packages", queryErrors)
+		}
 	}
 
 	return nil
-}
-
-func execBatch(
-	session query.BatchingQueryable,
-	batch *gocql.Batch,
-	resultChan chan error,
-) {
-	err := session.ExecuteBatch(batch)
-	resultChan <- err
 }

@@ -3,8 +3,6 @@ package awesome
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
-	"net/http"
 	"regexp"
 	"strings"
 )
@@ -18,39 +16,29 @@ var (
 	linkRegex = regexp.MustCompile(`\[[^\]]+\]\(https://github\.com/([^\)]+)`)
 )
 
-type awesomePackage struct {
-	author string
-	repo   string
-}
-
-// fetchAwesomeGoList returns a map of all awesome go packages.
-func fetchAwesomeGoList() ([]awesomePackage, error) {
-	resp, err := http.Get(awesomeGoURL)
+// FetchAwesomeGoList returns a map of all awesome go packages.
+func FetchAwesomeGoList(args FetchAwesomeGoListArgs) ([]PackageTuple, error) {
+	body, err := args.doHTTPGet(awesomeGoURL)
 	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+		return nil, errors.New("Failed to make request to godoc.")
 	}
 
-	i := bytes.IndexAny(body, awesomeGoReadmeContentsHeading)
+	i := bytes.Index(body, []byte(awesomeGoReadmeContentsHeading))
 	if i == -1 {
 		return nil, errors.New("Failed to find contents heading in awesome go readme.")
 	}
 
 	matches := linkRegex.FindAllStringSubmatch(string(body[i:]), -1)
-	var awesomePackages []awesomePackage
+	var PackageTuples []PackageTuple
 	for _, match := range matches {
 		packageParts := strings.Split(match[1], "/")
 		if len(packageParts) >= 2 {
-			awesomePackages = append(awesomePackages, awesomePackage{
+			PackageTuples = append(PackageTuples, PackageTuple{
 				author: packageParts[0],
 				repo:   packageParts[1],
 			})
 		}
 	}
 
-	return awesomePackages, nil
+	return PackageTuples, nil
 }

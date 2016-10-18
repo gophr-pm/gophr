@@ -2,11 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
-	"golang.org/x/tools/godoc"
-
+	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/scheduler/indexer/awesome"
 	"github.com/gophr-pm/gophr/scheduler/indexer/github"
+	"github.com/gophr-pm/gophr/scheduler/indexer/godoc"
 	"github.com/robfig/cron"
 )
 
@@ -15,7 +17,19 @@ func main() {
 	c := cron.New()
 
 	// List cron jobs.
-	c.AddFunc("0 0 * * * *", awesome.Index)
+	c.AddFunc("0 0 * * * *", func() {
+		if err := awesome.Index(awesome.IndexArgs{
+			Init:            common.Init,
+			DoHTTPGet:       awesome.DoHTTPGet,
+			BatchExecutor:   awesome.ExecBatch,
+			PackageFetcher:  awesome.FetchAwesomeGoList,
+			PersistPackages: awesome.PersistAwesomePackages,
+		}); err != nil {
+			// TODO(Shikkic): Send error somewhere, possibly deadman's snitch?
+			log.Println(err)
+		}
+	})
+
 	c.AddFunc("0 0 * * * *", godoc.Index)
 	c.AddFunc("0 0 0 * * *", github.Index)
 

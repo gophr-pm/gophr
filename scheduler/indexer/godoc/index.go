@@ -8,7 +8,7 @@ import (
 
 // Index is responsible for looking up every package in godoc.org/Index
 // and persisting the packages.
-func main() {
+func Index() {
 	_, session := common.Init()
 	defer session.Close()
 
