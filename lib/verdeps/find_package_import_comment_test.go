@@ -37,7 +37,7 @@ stuff()
 			So(actualEndIndex, ShouldEqual, expectedEndIndex)
 			So(actualStartIndex, ShouldEqual, expectedStartIndex)
 
-			Convey("If the package start index if after the package import comment, then -1 should be returned", func() {
+			Convey("If the package start index is after the package import comment, then -1 should be returned", func() {
 				expectedEndIndex = -1
 				expectedStartIndex = -1
 				actualStartIndex, actualEndIndex = findPackageImportComment(fileData, len(fileData)-1)
