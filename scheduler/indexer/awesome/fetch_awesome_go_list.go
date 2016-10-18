@@ -16,11 +16,11 @@ var (
 	linkRegex = regexp.MustCompile(`\[[^\]]+\]\(https://github\.com/([^\)]+)`)
 )
 
-// FetchAwesomeGoList returns a map of all awesome go packages.
+// FetchAwesomeGoList parses all the packages from the README on github.com/avelino/awesome-go.
 func FetchAwesomeGoList(args FetchAwesomeGoListArgs) ([]PackageTuple, error) {
 	body, err := args.doHTTPGet(awesomeGoURL)
 	if err != nil {
-		return nil, errors.New("Failed to make request to godoc.")
+		return nil, errors.New("Failed to make request to awesome-go.")
 	}
 
 	i := bytes.Index(body, []byte(awesomeGoReadmeContentsHeading))

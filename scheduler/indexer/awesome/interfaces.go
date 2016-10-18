@@ -27,7 +27,7 @@ type httpGetter func(url string) ([]byte, error)
 // an error channel.
 type BatchExecutor func(query.BatchingQueryable, *gocql.Batch, chan error)
 
-// PackageFetcher is responsible for fetching packages found on godoc.org/index.
+// PackageFetcher is responsible for fetching packages found on awesome-go.
 type PackageFetcher func(FetchAwesomeGoListArgs) ([]PackageTuple, error)
 
 // PersistPackages is reponsible for grouping batch package queries.
@@ -38,7 +38,7 @@ type FetchAwesomeGoListArgs struct {
 	doHTTPGet httpGetter
 }
 
-// PackageTuple represents packages found on godoc as a Tuple of
+// PackageTuple represents packages found on awesome-go as a Tuple of
 // author and repo.
 type PackageTuple struct {
 	author string

@@ -12,13 +12,13 @@ import (
 func TestAwesomeIndex(t *testing.T) {
 	Convey("The indexer should run", t, func() {
 
-		Convey("if we fail to get packages from godoc, we should fail", func() {
+		Convey("if we fail to get packages from awesome-go, we should fail", func() {
 			err := Index(IndexArgs{
 				Init: func() (*config.Config, *gocql.Session) {
 					return &config.Config{}, &gocql.Session{}
 				},
 				PackageFetcher: func(FetchAwesomeGoListArgs) ([]PackageTuple, error) {
-					return nil, errors.New("Failed to retrieve godoc markdown")
+					return nil, errors.New("Failed to retrieve awesome-go markdown")
 				},
 			})
 
