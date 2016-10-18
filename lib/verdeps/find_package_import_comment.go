@@ -23,16 +23,19 @@ func findPackageImportComment(
 ) (fromIndex int, toIndex int) {
 	// Read until the end of the line or the end of the file.
 	packageEndIndex := packageStartIndex
-	for packageEndIndex < len(fileData) && fileData[packageEndIndex] != '\n' {
+	for packageEndIndex < len(fileData)-1 && fileData[packageEndIndex] != '\n' {
 		packageEndIndex++
 	}
 	// Read backwards until the beginning of the file or the previous line.
-	for packageStartIndex >= 0 && fileData[packageStartIndex] != '\n' {
+	for packageStartIndex > 0 && fileData[packageStartIndex] != '\n' {
 		packageStartIndex--
 	}
 	// Advance the start index by one to make sure it is securely at the
 	// beginning of the line.
-	packageStartIndex++
+	if packageStartIndex < len(fileData)-1 &&
+		fileData[packageStartIndex] == '\n' {
+		packageStartIndex++
+	}
 
 	// Find matches in [packageStartIndex, packageEndIndex).
 	line := fileData[packageStartIndex:packageEndIndex]
