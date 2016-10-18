@@ -70,6 +70,8 @@ func parseGoFile(args parseGoFileArgs) {
 
 	// Set the import count for this file path.
 	if args.importCounts != nil {
+		// TODO(skeswa): figure out if this is necessary since it also appears in
+		// the buffer_vendorables_test.go.
 		args.importCounts.setImportCount(args.filePath, len(specs))
 	}
 
