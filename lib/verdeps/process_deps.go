@@ -12,16 +12,33 @@ import (
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
+// shaFetcher is a function type that de-couples verdeps.processDeps from
+// verdeps.fetchSHA.
+type shaFetcher func(args fetchSHAArgs)
+
+// depsReviser is a function type that de-couples verdeps.processDeps from
+// verdeps.reviseDeps.
+type depsReviser func(args reviseDepsArgs)
+
+// packageDirReader is a function type that de-couples verdeps.processDeps from
+// verdeps.readPackageDir.
+type packageDirReader func(args readPackageDirArgs)
+
+// processDepsArgs is the arguments struct for processDeps.
 type processDepsArgs struct {
 	io                 io.IO
 	ghSvc              github.RequestService
+	fetchSHA           shaFetcher
+	reviseDeps         depsReviser
 	packageSHA         string
 	packagePath        string
 	packageRepo        string
 	packageAuthor      string
+	readPackageDir     packageDirReader
 	packageVersionDate time.Time
 }
 
+// TODO(skeswa): add a descriptive comment.
 func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan             = make(chan *revision)
@@ -38,7 +55,7 @@ func processDeps(args processDepsArgs) error {
 	)
 
 	// Read the package looking for import and package metadata.
-	go readPackageDir(readPackageDirArgs{
+	go args.readPackageDir(readPackageDirArgs{
 		io:                       args.io,
 		errors:                   accumulatedErrors,
 		importCounts:             syncedImportCounts,
@@ -49,7 +66,7 @@ func processDeps(args processDepsArgs) error {
 	})
 
 	// Revise dependencies in the go source files.
-	go reviseDeps(reviseDepsArgs{
+	go args.reviseDeps(reviseDepsArgs{
 		inputChan:          revisionChan,
 		revisionWaitGroup:  revisionWaitGroup,
 		accumulatedErrors:  accumulatedErrors,
@@ -127,7 +144,7 @@ func processDeps(args processDepsArgs) error {
 					// race conditions.
 					pendingSHARequests.increment()
 					// Start the request itself.
-					go fetchSHA(fetchSHAArgs{
+					go args.fetchSHA(fetchSHAArgs{
 						ghSvc:              args.ghSvc,
 						outputChan:         importPathSHAChan,
 						importPath:         importPath,
