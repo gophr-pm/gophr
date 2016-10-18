@@ -220,10 +220,12 @@ func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 	revisionChan <- newPackageRevision(spec)
 }
 
-// closeImportPathSHAChan closes the importPathSHAChan and clears all spec waiting list.
-// The waiting lists are cleared because they're waiting for a SHA that will
-// presumably never come.
-func closeImportPathSHAChan(importPathSHAChan chan *importPathSHA, waitingSpecs *syncedWaitingListMap) {
+// closeImportPathSHAChan closes the importPathSHAChan and clears all spec
+// waiting list. The waiting lists are cleared because they're waiting for a SHA
+// that will presumably never come.
+func closeImportPathSHAChan(
+	importPathSHAChan chan *importPathSHA,
+	waitingSpecs *syncedWaitingListMap) {
 	waitingSpecs.each(func(importPath string, waitingList *specWaitingList) {
 		waitingList.clear()
 	}).clear()
@@ -238,7 +240,9 @@ func shouldCloseImportPathSHAChan(
 	pendingSHARequests *syncedInt,
 	importSpecChan chan *importSpec,
 	importPathSHAChan chan *importPathSHA) bool {
-	return pendingSHARequests.value() == 0 && importSpecChan == nil && importPathSHAChan != nil
+	return pendingSHARequests.value() == 0 &&
+		importSpecChan == nil &&
+		importPathSHAChan != nil
 }
 
 // concatErrors joins all the accumulated individual errors into one combined
