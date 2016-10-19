@@ -30,6 +30,8 @@ type specWaitingListCreator func(
 	initialSpecs ...*importSpec,
 ) specWaitingList
 
+type syncedStringMapCreator func() syncedStringMap
+
 // processDepsArgs is the arguments struct for processDeps.
 type processDepsArgs struct {
 	io                 io.IO
@@ -43,6 +45,7 @@ type processDepsArgs struct {
 	readPackageDir     packageDirReader
 	packageVersionDate time.Time
 	newSpecWaitingList specWaitingListCreator
+	newSyncedStringMap syncedStringMapCreator
 }
 
 // TODO(skeswa): add a descriptive comment.
@@ -50,7 +53,7 @@ func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan             = make(chan *revision)
 		waitingSpecs             = newSyncedWaitingListMap()
-		importPathSHAs           = newSyncedStringMap()
+		importPathSHAs           = args.newSyncedStringMap()
 		importSpecChan           = make(chan *importSpec)
 		packageSpecChan          = make(chan *packageSpec)
 		importPathSHAChan        = make(chan *importPathSHA)
