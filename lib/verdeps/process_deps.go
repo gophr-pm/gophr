@@ -66,6 +66,7 @@ func processDeps(args processDepsArgs) error {
 	})
 
 	// Revise dependencies in the go source files.
+	revisionWaitGroup.Add(1)
 	go args.reviseDeps(reviseDepsArgs{
 		inputChan:          revisionChan,
 		revisionWaitGroup:  revisionWaitGroup,
@@ -126,7 +127,11 @@ func processDeps(args processDepsArgs) error {
 
 				// If there are no pending sha requests, then there never will be since
 				// this channel is closing. Therefore, we can close the sha channel.
-				if shouldCloseImportPathSHAChan(pendingSHARequests, importSpecChan, importPathSHAChan) {
+				if shouldCloseImportPathSHAChan(
+					pendingSHARequests,
+					importSpecChan,
+					importPathSHAChan,
+				) {
 					closeImportPathSHAChan(importPathSHAChan, waitingSpecs)
 				}
 

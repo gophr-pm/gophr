@@ -24,7 +24,7 @@ func reviseDeps(args reviseDepsArgs) {
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
-	args.revisionWaitGroup.Add(1)
+	defer args.revisionWaitGroup.Done()
 
 	// Process every revision that comes in from the revision channel.
 	for rev := range args.inputChan {
@@ -83,7 +83,6 @@ func reviseDeps(args reviseDepsArgs) {
 	}
 
 	revisionApplicationWaitGroup.Wait()
-	args.revisionWaitGroup.Done()
 }
 
 // applyRevisions applies all the provided revisions to the appropriate files.
