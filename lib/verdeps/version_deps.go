@@ -61,5 +61,6 @@ func VersionDeps(args VersionDepsArgs) error {
 		packageAuthor:      args.Author,
 		readPackageDir:     readPackageDir,
 		packageVersionDate: commitDate,
+		newSpecWaitingList: newSpecWaitingList,
 	})
 }

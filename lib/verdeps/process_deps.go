@@ -24,6 +24,12 @@ type depsReviser func(args reviseDepsArgs)
 // verdeps.readPackageDir.
 type packageDirReader func(args readPackageDirArgs)
 
+// specWaitingListCreator is a function type that de-couples verdeps.processDeps
+// from newSpecWaitingList.
+type specWaitingListCreator func(
+	initialSpecs ...*importSpec,
+) specWaitingList
+
 // processDepsArgs is the arguments struct for processDeps.
 type processDepsArgs struct {
 	io                 io.IO
@@ -36,6 +42,7 @@ type processDepsArgs struct {
 	packageAuthor      string
 	readPackageDir     packageDirReader
 	packageVersionDate time.Time
+	newSpecWaitingList specWaitingListCreator
 }
 
 // TODO(skeswa): add a descriptive comment.
@@ -138,16 +145,25 @@ func processDeps(args processDepsArgs) error {
 				break
 			}
 
+			// Signal that a request might be about to begin to prevent race conditions.
+			// This is done regardless of whether a request actually occurs to prevent
+			// pendingSHARequests.value() from being evaluated between the beginning of
+			// the case statement and go args.fetchSHA(...).
+			pendingSHARequests.increment()
+
 			// For each incoming spec, make it wait keyed on the import path hash.
 			importPath := spec.imports.Path.Value
 			importPathHash := importPathHashOf(spec.imports.Path.Value)
 			if sha, exists := importPathSHAs.get(importPathHash); !exists {
-				// If we don't presently have the sha, then we have to go out and get it.
+				// If we don't presently have the sha, then we have to go out and get
+				// it.
 				if specs, exists := waitingSpecs.get(importPathHash); !exists {
-					waitingSpecs.setIfAbsent(importPathHash, newSpecWaitingList(spec))
-					// Signal that a request is about to begin synchronously to prevent
-					// race conditions.
-					pendingSHARequests.increment()
+					// Create a new waiting list for this import path since it does not
+					// yet exist.
+					waitingSpecs.setIfAbsent(
+						importPathHash,
+						args.newSpecWaitingList(spec))
+
 					// Start the request itself.
 					go args.fetchSHA(fetchSHAArgs{
 						ghSvc:              args.ghSvc,
@@ -160,6 +176,9 @@ func processDeps(args processDepsArgs) error {
 						packageVersionDate: args.packageVersionDate,
 					})
 				} else {
+					// It is now clear that no pending request began here.
+					pendingSHARequests.decrement()
+
 					if ok := specs.add(spec); !ok {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
@@ -178,6 +197,9 @@ func processDeps(args processDepsArgs) error {
 					}
 				}
 			} else {
+				// It is now clear that no pending request began here.
+				pendingSHARequests.decrement()
+
 				// If we got here, it means that the sha has already been obtained, so
 				// the new import path exists.
 				enqueueImportRevision(
@@ -248,7 +270,7 @@ func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 func closeImportPathSHAChan(
 	importPathSHAChan chan *importPathSHA,
 	waitingSpecs *syncedWaitingListMap) {
-	waitingSpecs.each(func(importPath string, waitingList *specWaitingList) {
+	waitingSpecs.each(func(importPath string, waitingList specWaitingList) {
 		waitingList.clear()
 	}).clear()
 
