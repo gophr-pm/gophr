@@ -30,29 +30,36 @@ type specWaitingListCreator func(
 	initialSpecs ...*importSpec,
 ) specWaitingList
 
+// syncedStringMapCreator is function type that de-couples verdeps.processDeps
+// from newSyncedStringMap.
 type syncedStringMapCreator func() syncedStringMap
+
+// syncedWaitingListMapCreator is function type that de-couples
+// verdeps.processDeps from newSyncedWaitingListMap.
+type syncedWaitingListMapCreator func() syncedWaitingListMap
 
 // processDepsArgs is the arguments struct for processDeps.
 type processDepsArgs struct {
-	io                 io.IO
-	ghSvc              github.RequestService
-	fetchSHA           shaFetcher
-	reviseDeps         depsReviser
-	packageSHA         string
-	packagePath        string
-	packageRepo        string
-	packageAuthor      string
-	readPackageDir     packageDirReader
-	packageVersionDate time.Time
-	newSpecWaitingList specWaitingListCreator
-	newSyncedStringMap syncedStringMapCreator
+	io                      io.IO
+	ghSvc                   github.RequestService
+	fetchSHA                shaFetcher
+	reviseDeps              depsReviser
+	packageSHA              string
+	packagePath             string
+	packageRepo             string
+	packageAuthor           string
+	readPackageDir          packageDirReader
+	packageVersionDate      time.Time
+	newSpecWaitingList      specWaitingListCreator
+	newSyncedStringMap      syncedStringMapCreator
+	newSyncedWaitingListMap syncedWaitingListMapCreator
 }
 
 // TODO(skeswa): add a descriptive comment.
 func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan             = make(chan *revision)
-		waitingSpecs             = newSyncedWaitingListMap()
+		waitingSpecs             = args.newSyncedWaitingListMap()
 		importPathSHAs           = args.newSyncedStringMap()
 		importSpecChan           = make(chan *importSpec)
 		packageSpecChan          = make(chan *packageSpec)
@@ -113,9 +120,10 @@ func processDeps(args processDepsArgs) error {
 				}
 			}
 
-			// Check if this is the last time that an import path sha will come through.
-			// We check this by checking if the spec channel has already closed, and
-			// if there are no pending sha requests. If so, close this channel.
+			// Check if this is the last time that an import path sha will come
+			// through. We check this by checking if the spec channel has already
+			// closed, and if there are no pending sha requests. If so, close this
+			// channel.
 			if pendingSHARequests.value() == 0 && importSpecChan == nil {
 				closeImportPathSHAChan(importPathSHAChan, waitingSpecs)
 			}
@@ -148,10 +156,10 @@ func processDeps(args processDepsArgs) error {
 				break
 			}
 
-			// Signal that a request might be about to begin to prevent race conditions.
-			// This is done regardless of whether a request actually occurs to prevent
-			// pendingSHARequests.value() from being evaluated between the beginning of
-			// the case statement and go args.fetchSHA(...).
+			// Signal that a request might be about to begin to prevent race
+			// conditions. This is done regardless of whether a request actually
+			// occurs to prevent pendingSHARequests.value() from being evaluated
+			// between the beginning of the case statement and go args.fetchSHA(...).
 			pendingSHARequests.increment()
 
 			// For each incoming spec, make it wait keyed on the import path hash.
@@ -272,7 +280,7 @@ func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 // that will presumably never come.
 func closeImportPathSHAChan(
 	importPathSHAChan chan *importPathSHA,
-	waitingSpecs *syncedWaitingListMap) {
+	waitingSpecs syncedWaitingListMap) {
 	waitingSpecs.each(func(importPath string, waitingList specWaitingList) {
 		waitingList.clear()
 	}).clear()

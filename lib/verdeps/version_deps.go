@@ -51,17 +51,18 @@ func VersionDeps(args VersionDepsArgs) error {
 	}
 
 	return processDeps(processDepsArgs{
-		io:                 args.IO,
-		ghSvc:              args.GithubService,
-		fetchSHA:           fetchSHA,
-		reviseDeps:         reviseDeps,
-		packageSHA:         args.SHA,
-		packagePath:        args.Path,
-		packageRepo:        args.Repo,
-		packageAuthor:      args.Author,
-		readPackageDir:     readPackageDir,
-		packageVersionDate: commitDate,
-		newSpecWaitingList: newSpecWaitingList,
-		newSyncedStringMap: newSyncedStringMap,
+		io:                      args.IO,
+		ghSvc:                   args.GithubService,
+		fetchSHA:                fetchSHA,
+		reviseDeps:              reviseDeps,
+		packageSHA:              args.SHA,
+		packagePath:             args.Path,
+		packageRepo:             args.Repo,
+		packageAuthor:           args.Author,
+		readPackageDir:          readPackageDir,
+		packageVersionDate:      commitDate,
+		newSpecWaitingList:      newSpecWaitingList,
+		newSyncedStringMap:      newSyncedStringMap,
+		newSyncedWaitingListMap: newSyncedWaitingListMap,
 	})
 }

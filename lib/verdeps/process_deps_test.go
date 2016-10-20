@@ -48,6 +48,10 @@ func TestProcessDeps(t *testing.T) {
 
 			// Create fakes of the worker functions passed into processDeps.
 			fetchSHA = func(args fetchSHAArgs) {
+				// Make sure this bad boy gets decremented *after* using the output
+				// channel.
+				defer args.pendingSHARequests.decrement()
+
 				// Record this invocation of fetchSHA in a synchronized map.
 				shaRequestsLock.Lock()
 				shaRequests[args.importPath] = &args
@@ -55,7 +59,6 @@ func TestProcessDeps(t *testing.T) {
 
 				// After a pause, signal that this SHA was fetched.
 				introduceRandomLag(0.6, 30)
-				args.pendingSHARequests.decrement()
 
 				args.outputChan <- &importPathSHA{
 					sha:        "thisistheshafor" + args.importPath,
@@ -113,18 +116,19 @@ func TestProcessDeps(t *testing.T) {
 
 			// Execute synchronously to make life easier.
 			err := processDeps(processDepsArgs{
-				io:                 io,
-				ghSvc:              ghSvc,
-				fetchSHA:           fetchSHA,
-				reviseDeps:         reviseDeps,
-				packageSHA:         packageSHA,
-				packagePath:        packagePath,
-				packageRepo:        packageRepo,
-				packageAuthor:      packageAuthor,
-				readPackageDir:     readPackageDir,
-				packageVersionDate: packageVersionDate,
-				newSpecWaitingList: newSpecWaitingList,
-				newSyncedStringMap: newSyncedStringMap,
+				io:                      io,
+				ghSvc:                   ghSvc,
+				fetchSHA:                fetchSHA,
+				reviseDeps:              reviseDeps,
+				packageSHA:              packageSHA,
+				packagePath:             packagePath,
+				packageRepo:             packageRepo,
+				packageAuthor:           packageAuthor,
+				readPackageDir:          readPackageDir,
+				packageVersionDate:      packageVersionDate,
+				newSpecWaitingList:      newSpecWaitingList,
+				newSyncedStringMap:      newSyncedStringMap,
+				newSyncedWaitingListMap: newSyncedWaitingListMap,
 			})
 
 			// Assert up a storm starting with fetchSHA.
@@ -156,6 +160,9 @@ func TestProcessDeps(t *testing.T) {
 			So(importRevStrings[`filepath1:104:120:"gophr.pm/a/b@thisistheshafor"github.com/a/b""`], ShouldBeTrue)
 			So(importRevStrings[`filepath2:105:125:"gophr.pm/h/i@thisistheshafor"github.com/h/i/j/k"/j/k"`], ShouldBeTrue)
 			So(importRevStrings[`filepath3:106:122:"gophr.pm/b/c@thisistheshafor"github.com/b/c""`], ShouldBeTrue)
+			So(packageRevStrings[`filepath1:1:0:`], ShouldBeTrue)
+			So(packageRevStrings[`filepath2:2:0:`], ShouldBeTrue)
+			So(packageRevStrings[`filepath3:3:0:`], ShouldBeTrue)
 
 			// Time for the readPackageDir asserts.
 			So(actualReadPackageDirArgs.errors, ShouldNotBeNil)
@@ -268,18 +275,19 @@ func TestProcessDeps(t *testing.T) {
 
 			// Execute synchronously to make life easier.
 			err := processDeps(processDepsArgs{
-				io:                 io,
-				ghSvc:              ghSvc,
-				fetchSHA:           fetchSHA,
-				reviseDeps:         reviseDeps,
-				packageSHA:         packageSHA,
-				packagePath:        packagePath,
-				packageRepo:        packageRepo,
-				packageAuthor:      packageAuthor,
-				readPackageDir:     readPackageDir,
-				packageVersionDate: packageVersionDate,
-				newSpecWaitingList: newSpecWaitingList,
-				newSyncedStringMap: newSyncedStringMap,
+				io:                      io,
+				ghSvc:                   ghSvc,
+				fetchSHA:                fetchSHA,
+				reviseDeps:              reviseDeps,
+				packageSHA:              packageSHA,
+				packagePath:             packagePath,
+				packageRepo:             packageRepo,
+				packageAuthor:           packageAuthor,
+				readPackageDir:          readPackageDir,
+				packageVersionDate:      packageVersionDate,
+				newSpecWaitingList:      newSpecWaitingList,
+				newSyncedStringMap:      newSyncedStringMap,
+				newSyncedWaitingListMap: newSyncedWaitingListMap,
 			})
 
 			// Assert up a storm starting with fetchSHA.
@@ -306,6 +314,8 @@ func TestProcessDeps(t *testing.T) {
 			So(importRevStrings[`filepath1:104:124:"gophr.pm/a/b@thisistheshafor"github.com/a/b"/d/e"`], ShouldBeTrue)
 			So(importRevStrings[`filepath2:106:128:"gophr.pm/a/b@thisistheshafor"github.com/a/b"/x/y/z"`], ShouldBeTrue)
 			So(importRevStrings[`filepath2:105:125:"gophr.pm/h/i@thisistheshafor"github.com/h/i/j/k"/j/k"`], ShouldBeTrue)
+			So(packageRevStrings[`filepath1:1:0:`], ShouldBeTrue)
+			So(packageRevStrings[`filepath2:2:0:`], ShouldBeTrue)
 
 			// Time for the readPackageDir asserts.
 			So(actualReadPackageDirArgs.errors, ShouldNotBeNil)
@@ -319,8 +329,194 @@ func TestProcessDeps(t *testing.T) {
 			// Finally, perform asserts for general outputs.
 			So(err, ShouldBeNil)
 		})
+
+		Convey("An error should be raised if an import spec cannot be enqueued to receive a SHA", func() {
+			var (
+				reviseDeps         depsReviser
+				readPackageDir     packageDirReader
+				importRevStrings   = make(map[string]bool)
+				packageRevStrings  = make(map[string]bool)
+				packageVersionDate = time.Date(
+					2016,
+					time.April,
+					8,
+					14,
+					12,
+					0,
+					0,
+					time.UTC)
+			)
+
+			reviseDeps = func(args reviseDepsArgs) {
+				// Signal that revise deps is over when the function exits.
+				defer args.revisionWaitGroup.Done()
+
+				// Read the input revisions, and record what comes through.
+				for input := range args.inputChan {
+					if input.revisesImport {
+						importRevStrings[stringifyRevision(input)] = true
+					} else if input.revisesPackage {
+						packageRevStrings[stringifyRevision(input)] = true
+					}
+				}
+			}
+			readPackageDir = func(args readPackageDirArgs) {
+				args.importCounts.setImportCount("filepath1", 1)
+				introduceRandomLag(0.4, 15)
+				args.importSpecChan <- generateTestImportSpecWithPos(
+					101,
+					"filepath1",
+					`"github.com/a/b"`)
+				introduceRandomLag(0.4, 15)
+				args.packageSpecChan <- generateTestPackageSpec("filepath1", 1)
+
+				// Close both channels once we're done.
+				close(args.importSpecChan)
+				close(args.packageSpecChan)
+			}
+
+			var (
+				waitingSpecs    = newFakeSyncedWaitingListMap()
+				importPathSHAs  = newFakeSyncedStringMap()
+				specWaitingList = newFakeSpecWaitingList(importPathSHAs, "")
+			)
+
+			// Make sure the SHA "doesn't exist yet".
+			importPathSHAs.overrideGet(
+				importPathHashOf(`"github.com/a/b"`),
+				"",
+				false)
+			// Ensure that there is already a waiting list.
+			waitingSpecs.overrideGet(
+				importPathHashOf(`"github.com/a/b"`),
+				specWaitingList,
+				true)
+			// The add must fail.
+			specWaitingList.overwriteAdd(generateTestImportSpec(
+				"filepath1",
+				`"github.com/a/b"`))
+
+			// Execute synchronously to make life easier.
+			err := processDeps(processDepsArgs{
+				io:                      nil,
+				ghSvc:                   nil,
+				fetchSHA:                nil,
+				reviseDeps:              reviseDeps,
+				packageSHA:              "",
+				packagePath:             "",
+				packageRepo:             "",
+				packageAuthor:           "",
+				readPackageDir:          readPackageDir,
+				packageVersionDate:      packageVersionDate,
+				newSpecWaitingList:      specWaitingList.creator(),
+				newSyncedStringMap:      importPathSHAs.creator(),
+				newSyncedWaitingListMap: waitingSpecs.creator(),
+			})
+
+			// The error should bubble up.
+			So(err, ShouldNotBeNil)
+			// Should generate an error instead of enqueuing the revision.
+			So(
+				importRevStrings[`filepath1:101:117:"gophr.pm/a/b@thisistheshafor"github.com/a/b""`],
+				ShouldBeFalse)
+		})
+
+		Convey("The SHA should still be bound if the SHA of an import is received mid-waiting-list-enqueue", func() {
+			var (
+				reviseDeps         depsReviser
+				readPackageDir     packageDirReader
+				importRevStrings   = make(map[string]bool)
+				packageRevStrings  = make(map[string]bool)
+				packageVersionDate = time.Date(
+					2016,
+					time.April,
+					8,
+					14,
+					12,
+					0,
+					0,
+					time.UTC)
+			)
+
+			reviseDeps = func(args reviseDepsArgs) {
+				// Signal that revise deps is over when the function exits.
+				defer args.revisionWaitGroup.Done()
+
+				// Read the input revisions, and record what comes through.
+				for input := range args.inputChan {
+					if input.revisesImport {
+						importRevStrings[stringifyRevision(input)] = true
+					} else if input.revisesPackage {
+						packageRevStrings[stringifyRevision(input)] = true
+					}
+				}
+			}
+			readPackageDir = func(args readPackageDirArgs) {
+				args.importCounts.setImportCount("filepath1", 1)
+				introduceRandomLag(0.4, 15)
+				args.importSpecChan <- generateTestImportSpecWithPos(
+					101,
+					"filepath1",
+					`"github.com/a/b"`)
+				introduceRandomLag(0.4, 15)
+				args.packageSpecChan <- generateTestPackageSpec("filepath1", 1)
+
+				// Close both channels once we're done.
+				close(args.importSpecChan)
+				close(args.packageSpecChan)
+			}
+
+			var (
+				waitingSpecs    = newFakeSyncedWaitingListMap()
+				importPathSHAs  = newFakeSyncedStringMap()
+				specWaitingList = newFakeSpecWaitingList(
+					importPathSHAs,
+					"someshathatdoesnotmatter")
+			)
+
+			// Make sure the SHA "doesn't exist yet".
+			importPathSHAs.overrideGet(
+				importPathHashOf(`"github.com/a/b"`),
+				"",
+				false)
+			// Ensure that there is already a waiting list.
+			waitingSpecs.overrideGet(
+				importPathHashOf(`"github.com/a/b"`),
+				specWaitingList,
+				true)
+			// The add must fail.
+			specWaitingList.overwriteAdd(generateTestImportSpec(
+				"filepath1",
+				`"github.com/a/b"`))
+
+			// Execute synchronously to make life easier.
+			err := processDeps(processDepsArgs{
+				io:                      nil,
+				ghSvc:                   nil,
+				fetchSHA:                nil,
+				reviseDeps:              reviseDeps,
+				packageSHA:              "",
+				packagePath:             "",
+				packageRepo:             "",
+				packageAuthor:           "",
+				readPackageDir:          readPackageDir,
+				packageVersionDate:      packageVersionDate,
+				newSpecWaitingList:      specWaitingList.creator(),
+				newSyncedStringMap:      importPathSHAs.creator(),
+				newSyncedWaitingListMap: waitingSpecs.creator(),
+			})
+
+			// There is no error since the SHA ends up paired with the import.
+			So(err, ShouldBeNil)
+			// Should not generate an error, and instead enqueue the revision.
+			So(
+				importRevStrings[`filepath1:101:117:"gophr.pm/a/b@someshathatdoesnotmatter"`],
+				ShouldBeTrue)
+		})
 	})
 }
+
+/*********************************** HELPERS **********************************/
 
 // stringifyRevision turns revisions into strings for easy comparison.
 func stringifyRevision(rev *revision) string {
@@ -342,7 +538,11 @@ func introduceRandomLag(chanceOfLag float32, maxMS int) {
 
 // generateTestImportSpecWithPos generates an import spec that has position
 // metadata included.
-func generateTestImportSpecWithPos(pos int, filePath, importPath string) *importSpec {
+func generateTestImportSpecWithPos(
+	pos int,
+	filePath string,
+	importPath string,
+) *importSpec {
 	return &importSpec{
 		imports: &ast.ImportSpec{
 			Path: &ast.BasicLit{
@@ -355,41 +555,184 @@ func generateTestImportSpecWithPos(pos int, filePath, importPath string) *import
 	}
 }
 
-type fakeSpecWaitingList struct {
-	lock    *sync.Mutex
-	specs   []*importSpec
-	cleared bool
+/************************ FAKE SYNCED WAITING LIST MAP ************************/
+
+type fakeSyncedWaitingListMap struct {
+	swlm              syncedWaitingListMapImpl
+	getOverrideKey    string
+	getOverrideLock   sync.Mutex
+	getOverrideValue  specWaitingList
+	getOverrideExists bool
 }
 
-func newFakeSpecWaitingList(initialSpecs ...*importSpec) specWaitingList {
-	return &fakeSpecWaitingList{
-		lock:    &sync.Mutex{},
-		specs:   initialSpecs,
-		cleared: false,
+func newFakeSyncedWaitingListMap() *fakeSyncedWaitingListMap {
+	return &fakeSyncedWaitingListMap{
+		swlm: syncedWaitingListMapImpl{
+			values: make(map[string]specWaitingList),
+			lock:   &sync.RWMutex{},
+		},
 	}
 }
 
-// add adds a spec to the waiting list and returns true if it was successful.
-func (swl *fakeSpecWaitingList) add(spec *importSpec) bool {
-	swl.lock.Lock()
-	defer swl.lock.Unlock()
+func (m *fakeSyncedWaitingListMap) creator() syncedWaitingListMapCreator {
+	return func() syncedWaitingListMap {
+		return m
+	}
+}
+func (m *fakeSyncedWaitingListMap) overrideGet(
+	key string,
+	value specWaitingList,
+	exists bool,
+) {
+	m.getOverrideLock.Lock()
+	m.getOverrideKey = key
+	m.getOverrideValue = value
+	m.getOverrideExists = exists
+	m.getOverrideLock.Unlock()
+}
+func (m *fakeSyncedWaitingListMap) get(key string) (specWaitingList, bool) {
+	m.getOverrideLock.Lock()
+	if len(m.getOverrideKey) > 0 && m.getOverrideKey == key {
+		m.getOverrideLock.Unlock()
+		return m.getOverrideValue, m.getOverrideExists
+	}
+	m.getOverrideLock.Unlock()
 
-	if swl.cleared {
+	return m.swlm.get(key)
+}
+func (m *fakeSyncedWaitingListMap) setIfAbsent(
+	key string,
+	value specWaitingList,
+) {
+	m.swlm.setIfAbsent(key, value)
+}
+func (m *fakeSyncedWaitingListMap) clear() {
+	m.swlm.clear()
+}
+func (m *fakeSyncedWaitingListMap) each(
+	fn func(string, specWaitingList),
+) syncedWaitingListMap {
+	m.swlm.each(fn)
+	return m
+}
+
+/*************************** FAKE SPEC WAITING LIST ***************************/
+
+type fakeSpecWaitingList struct {
+	wl          specWaitingListImpl
+	sha         string
+	fssm        *fakeSyncedStringMap
+	addOverride *importSpec
+}
+
+func newFakeSpecWaitingList(
+	fssm *fakeSyncedStringMap,
+	sha string,
+) *fakeSpecWaitingList {
+	return &fakeSpecWaitingList{
+		wl: specWaitingListImpl{
+			lock:    &sync.Mutex{},
+			cleared: false,
+		},
+		sha:  sha,
+		fssm: fssm,
+	}
+}
+
+func (swl *fakeSpecWaitingList) creator() specWaitingListCreator {
+	return func(initialSpecs ...*importSpec) specWaitingList {
+		swl.wl.specs = initialSpecs
+		return swl
+	}
+}
+func (swl *fakeSpecWaitingList) overwriteAdd(key *importSpec) {
+	swl.addOverride = key
+}
+func (swl *fakeSpecWaitingList) add(spec *importSpec) bool {
+	// If the catalyst gets hit. Return false (supposed to fail).
+	if swl.addOverride != nil &&
+		spec.filePath == swl.addOverride.filePath &&
+		spec.imports.Path.Value == swl.addOverride.imports.Path.Value {
+		// If there is an fssm, then override its next get.
+		if len(swl.sha) <= 0 {
+			swl.fssm.overrideGet(
+				importPathHashOf(spec.imports.Path.Value),
+				"",
+				false)
+		} else {
+			swl.fssm.overrideGet(
+				importPathHashOf(spec.imports.Path.Value),
+				swl.sha,
+				true)
+		}
+
 		return false
 	}
 
-	swl.specs = append(swl.specs, spec)
-	return true
+	return swl.wl.add(spec)
+}
+func (swl *fakeSpecWaitingList) clear() []*importSpec {
+	return swl.wl.clear()
 }
 
-// clear returns every spec on the waiting list and prevents all future adds from
-// succeeding.
-func (swl *fakeSpecWaitingList) clear() []*importSpec {
-	swl.lock.Lock()
-	defer swl.lock.Unlock()
+/*************************** FAKE SYNCED STRING MAP ***************************/
 
-	specs := swl.specs
-	swl.specs = nil
-	swl.cleared = true
-	return specs
+type fakeSyncedStringMap struct {
+	ssm               syncedStringMapImpl
+	getOverrideKey    string
+	getOverrideLock   sync.Mutex
+	getOverrideValue  string
+	getOverrideExists bool
+}
+
+func newFakeSyncedStringMap() *fakeSyncedStringMap {
+	return &fakeSyncedStringMap{
+		ssm: syncedStringMapImpl{
+			values: make(map[string]string),
+			lock:   &sync.RWMutex{},
+		},
+	}
+}
+
+func (m *fakeSyncedStringMap) creator() syncedStringMapCreator {
+	return func() syncedStringMap {
+		return m
+	}
+}
+func (m *fakeSyncedStringMap) overrideGet(key, value string, exists bool) {
+	m.getOverrideLock.Lock()
+	m.getOverrideKey = key
+	m.getOverrideValue = value
+	m.getOverrideExists = exists
+	m.getOverrideLock.Unlock()
+}
+func (m *fakeSyncedStringMap) get(key string) (string, bool) {
+	m.getOverrideLock.Lock()
+	if len(m.getOverrideKey) > 0 && key == m.getOverrideKey {
+		val, exists := m.getOverrideValue, m.getOverrideExists
+		m.getOverrideLock.Unlock()
+		return val, exists
+	}
+	m.getOverrideLock.Unlock()
+
+	return m.ssm.get(key)
+}
+func (m *fakeSyncedStringMap) set(key, value string) {
+	m.ssm.set(key, value)
+}
+func (m *fakeSyncedStringMap) setIfAbsent(key, value string) {
+	m.ssm.setIfAbsent(key, value)
+}
+func (m *fakeSyncedStringMap) clear() {
+	m.ssm.clear()
+}
+func (m *fakeSyncedStringMap) delete(key string) {
+	m.ssm.delete(key)
+}
+func (m *fakeSyncedStringMap) count() int {
+	return m.ssm.count()
+}
+func (m *fakeSyncedStringMap) each(fn func(string, string)) syncedStringMap {
+	m.ssm.each(fn)
+	return m
 }
