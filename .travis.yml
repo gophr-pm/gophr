@@ -8,7 +8,7 @@ install:
 - go get golang.org/x/tools/cmd/cover
 - go get github.com/mattn/goveralls
 - go get github.com/jinzhu/copier
-- go get ./...
+- go get -v ./...
 go:
 - 1.6
 - 1.7
