@@ -10,11 +10,20 @@ import (
 	"github.com/gophr-pm/gophr/lib/errors"
 )
 
+// goFileParser parses an AST from an go file.
+type goFileParser func(
+	fset *token.FileSet,
+	filename string,
+	src interface{},
+	mode parser.Mode,
+) (f *ast.File, err error)
+
 // parseGoFileArgs is the arguments struct for parseGoFileArgs.
 type parseGoFileArgs struct {
 	errors          *errors.SyncedErrors
 	filePath        string
 	waitGroup       *sync.WaitGroup
+	parseGoFile     goFileParser
 	importCounts    *syncedImportCounts
 	vendorContext   *vendorContext
 	importSpecChan  chan *importSpec
@@ -35,7 +44,7 @@ func parseGoFile(args parseGoFileArgs) {
 	defer args.waitGroup.Done()
 
 	// Parse the imports of the file.
-	if f, err = parser.ParseFile(
+	if f, err = args.parseGoFile(
 		token.NewFileSet(),
 		args.filePath,
 		nil,

@@ -38,15 +38,24 @@ func fetchSHA(args fetchSHAArgs) {
 	} else {
 		// Fetch the most appropriate commit sha for this package given the time
 		// constraint.
-		if sha, err = args.ghSvc.FetchCommitSHA(author, repo, args.packageVersionDate); err != nil {
+		if sha, err = args.ghSvc.FetchCommitSHA(
+			author,
+			repo,
+			args.packageVersionDate,
+		); err != nil {
 			// Don't enqueue errors in the chan since they arent fatal. Just log the
 			// failures.
-			log.Printf("Failed to fetch the commit sha for %s: %v.\n", args.importPath, err)
+			log.Printf(
+				"Failed to fetch the commit sha for %s: %v.\n",
+				args.importPath,
+				err)
 			return
 		} else if len(sha) == 0 {
 			// Don't enqueue errors in the error chan since they arent fatal. Just log
 			// the failures.
-			log.Printf("Failed to fetch the commit sha for %s: came back from Github empty.\n", args.importPath)
+			log.Printf(
+				"Failed to fetch the commit sha for %s: came back from Github empty.\n",
+				args.importPath)
 			return
 		}
 	}

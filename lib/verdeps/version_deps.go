@@ -5,10 +5,13 @@ import (
 	"fmt"
 
 	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 // VersionDepsArgs is the arguments struct for VersionDeps(...).
 type VersionDepsArgs struct {
+	// IO is the input/output interface.
+	IO io.IO
 	// SHA is the sha of the package being versioned.
 	SHA string
 	// Repo is the repo of the package being versioned.
@@ -48,6 +51,7 @@ func VersionDeps(args VersionDepsArgs) error {
 	}
 
 	return processDeps(processDepsArgs{
+		io:                 args.IO,
 		ghSvc:              args.GithubService,
 		packageSHA:         args.SHA,
 		packagePath:        args.Path,

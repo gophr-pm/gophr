@@ -8,10 +8,12 @@ import (
 	"github.com/gophr-pm/gophr/lib/errors"
 
 	errs "github.com/gophr-pm/gophr/lib/errors"
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
+	io                       io.IO
 	errors                   *errs.SyncedErrors
 	importCounts             *syncedImportCounts
 	packageDirPath           string
@@ -25,13 +27,16 @@ type readPackageDirArgs struct {
 // appropriate imports in said package.
 func readPackageDir(args readPackageDirArgs) {
 	// Create a localized error list.
-	errs := errors.NewSyncedErrors()
-	waitGroup := &sync.WaitGroup{}
+	var (
+		errs      = newSyncedErrors()
+		waitGroup = &sync.WaitGroup{}
+	)
 
 	// Traverse the directory tree looking for go files - all the while properly
 	// handling go package vendoring.
 	waitGroup.Add(1)
 	traversePackageDir(traversePackageDirArgs{
+		io:                       args.io,
 		errors:                   errs,
 		dirPath:                  args.packageDirPath,
 		waitGroup:                waitGroup,

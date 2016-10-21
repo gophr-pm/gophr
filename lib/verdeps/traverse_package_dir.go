@@ -2,6 +2,7 @@ package verdeps
 
 import (
 	"fmt"
+	"go/parser"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
 type traversePackageDirArgs struct {
 	errors                   *errors.SyncedErrors
+	io                       io.IO
 	dirPath                  string
 	waitGroup                *sync.WaitGroup
 	subDirPath               string
@@ -46,9 +48,13 @@ func traversePackageDir(args traversePackageDirArgs) {
 		return
 	}
 
-	verdepsHelper := &verdepsHelperArgs{io: io.NewIO()}
 	// Get all relevant pathing information in one fell swoop.
-	vendorDirPath, subDirNames, goFilePaths := verdepsHelper.getPackageDirPaths(files, fullDirPath)
+	vendorDirPath, subDirNames, goFilePaths := getPackageDirPaths(
+		getPackageDirPathsArgs{
+			io:             args.io,
+			files:          files,
+			packageDirPath: fullDirPath,
+		})
 
 	// Record this subpath as a vendored package.
 	if args.inVendorDir &&
@@ -72,12 +78,13 @@ func traversePackageDir(args traversePackageDirArgs) {
 		subErrors := errors.NewSyncedErrors()
 		subImportSpecChan := make(chan *importSpec)
 		subPackageSpecChan := make(chan *packageSpec)
-		traversePackageDirWaitGroup := &sync.WaitGroup{}
 		bufferVendorablesWaitGroup := &sync.WaitGroup{}
+		traversePackageDirWaitGroup := &sync.WaitGroup{}
 
 		// Traverse the vendor dir.
 		traversePackageDirWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
+			io:              args.io,
 			errors:          subErrors,
 			dirPath:         vendorDirPath,
 			waitGroup:       traversePackageDirWaitGroup,
@@ -142,6 +149,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 		subWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
+			io:              args.io,
 			errors:          args.errors,
 			dirPath:         args.dirPath,
 			waitGroup:       subWaitGroup,
@@ -161,6 +169,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 			errors:          args.errors,
 			filePath:        goFilePath,
 			waitGroup:       subWaitGroup,
+			parseGoFile:     parser.ParseFile,
 			importCounts:    args.importCounts,
 			vendorContext:   args.vendorContext,
 			importSpecChan:  args.importSpecChan,
