@@ -505,7 +505,6 @@ func TestProcessDeps(t *testing.T) {
 				importRevStrings[`filepath1:101:117:"gophr.pm/a/b@someshathatdoesnotmatter"`],
 				ShouldBeTrue)
 		})
-
 		Convey("An error not should be raised if a SHA request fails", func() {
 			var (
 				fetchSHA           shaFetcher
@@ -528,6 +527,11 @@ func TestProcessDeps(t *testing.T) {
 				args.outputChan <- newFetchSHAFailure(errors.New("this is an error"))
 			}
 			reviseDeps = func(args reviseDepsArgs) {
+				// Read the input revisions, and record what comes through.
+				for range args.inputChan {
+					// No-op (we don't care about what comes through.)
+				}
+
 				// Don't expect anything to come through - so, just exit.
 				args.revisionWaitGroup.Done()
 			}
