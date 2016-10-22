@@ -38,7 +38,8 @@ func parseImportPath(importPath string) (author string, repo string, subpath str
 	repoStartIndex = i + 1
 
 	// Advance past the current slash to the next one (or the end of the string).
-	for i = repoStartIndex; i < importPathLength && importPath[i] != '/' && importPath[i] != '"'; i++ {
+	for i = repoStartIndex; i < importPathLength &&
+		importPath[i] != '/' && importPath[i] != '"'; i++ {
 	}
 
 	repo = importPath[repoStartIndex:i]
