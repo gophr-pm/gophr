@@ -1,6 +1,7 @@
 package verdeps
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -48,10 +49,6 @@ func TestProcessDeps(t *testing.T) {
 
 			// Create fakes of the worker functions passed into processDeps.
 			fetchSHA = func(args fetchSHAArgs) {
-				// Make sure this bad boy gets decremented *after* using the output
-				// channel.
-				defer args.pendingSHARequests.decrement()
-
 				// Record this invocation of fetchSHA in a synchronized map.
 				shaRequestsLock.Lock()
 				shaRequests[args.importPath] = &args
@@ -60,10 +57,9 @@ func TestProcessDeps(t *testing.T) {
 				// After a pause, signal that this SHA was fetched.
 				introduceRandomLag(0.6, 30)
 
-				args.outputChan <- &importPathSHA{
-					sha:        "thisistheshafor" + args.importPath,
-					importPath: args.importPath,
-				}
+				args.outputChan <- newFetchSHASuccess(
+					args.importPath,
+					"thisistheshafor"+args.importPath)
 			}
 			reviseDeps = func(args reviseDepsArgs) {
 				// Stow the received args for later assertions.
@@ -145,7 +141,6 @@ func TestProcessDeps(t *testing.T) {
 				So(args.packageSHA, ShouldEqual, packageSHA)
 				So(args.packageRepo, ShouldEqual, packageRepo)
 				So(args.packageAuthor, ShouldEqual, packageAuthor)
-				So(args.pendingSHARequests, ShouldNotBeNil)
 				So(args.packageVersionDate, ShouldResemble, packageVersionDate)
 			}
 
@@ -219,12 +214,10 @@ func TestProcessDeps(t *testing.T) {
 				} else {
 					introduceRandomLag(0.5, 30)
 				}
-				args.pendingSHARequests.decrement()
 
-				args.outputChan <- &importPathSHA{
-					sha:        "thisistheshafor" + args.importPath,
-					importPath: args.importPath,
-				}
+				args.outputChan <- newFetchSHASuccess(
+					args.importPath,
+					"thisistheshafor"+args.importPath)
 			}
 			reviseDeps = func(args reviseDepsArgs) {
 				// Stow the received args for later assertions.
@@ -248,7 +241,7 @@ func TestProcessDeps(t *testing.T) {
 
 				args.importCounts.setImportCount("filepath1", 3)
 				introduceRandomLag(0.4, 15)
-				args.importCounts.setImportCount("filepath2", 2)
+				args.importCounts.setImportCount("filepath2", 3)
 				introduceRandomLag(0.4, 15)
 				args.importSpecChan <- generateTestImportSpecWithPos(101, "filepath1", `"github.com/a/b"`)
 				introduceRandomLag(0.4, 15)
@@ -299,7 +292,6 @@ func TestProcessDeps(t *testing.T) {
 				So(args.packageSHA, ShouldEqual, packageSHA)
 				So(args.packageRepo, ShouldEqual, packageRepo)
 				So(args.packageAuthor, ShouldEqual, packageAuthor)
-				So(args.pendingSHARequests, ShouldNotBeNil)
 				So(args.packageVersionDate, ShouldResemble, packageVersionDate)
 			}
 
@@ -377,12 +369,12 @@ func TestProcessDeps(t *testing.T) {
 
 			var (
 				waitingSpecs    = newFakeSyncedWaitingListMap()
-				importPathSHAs  = newFakeSyncedStringMap()
-				specWaitingList = newFakeSpecWaitingList(importPathSHAs, "")
+				fetchSHAResults = newFakeSyncedStringMap()
+				specWaitingList = newFakeSpecWaitingList(fetchSHAResults, "")
 			)
 
 			// Make sure the SHA "doesn't exist yet".
-			importPathSHAs.overrideGet(
+			fetchSHAResults.overrideGet(
 				importPathHashOf(`"github.com/a/b"`),
 				"",
 				false)
@@ -409,7 +401,7 @@ func TestProcessDeps(t *testing.T) {
 				readPackageDir:          readPackageDir,
 				packageVersionDate:      packageVersionDate,
 				newSpecWaitingList:      specWaitingList.creator(),
-				newSyncedStringMap:      importPathSHAs.creator(),
+				newSyncedStringMap:      fetchSHAResults.creator(),
 				newSyncedWaitingListMap: waitingSpecs.creator(),
 			})
 
@@ -468,14 +460,14 @@ func TestProcessDeps(t *testing.T) {
 
 			var (
 				waitingSpecs    = newFakeSyncedWaitingListMap()
-				importPathSHAs  = newFakeSyncedStringMap()
+				fetchSHAResults = newFakeSyncedStringMap()
 				specWaitingList = newFakeSpecWaitingList(
-					importPathSHAs,
+					fetchSHAResults,
 					"someshathatdoesnotmatter")
 			)
 
 			// Make sure the SHA "doesn't exist yet".
-			importPathSHAs.overrideGet(
+			fetchSHAResults.overrideGet(
 				importPathHashOf(`"github.com/a/b"`),
 				"",
 				false)
@@ -502,7 +494,7 @@ func TestProcessDeps(t *testing.T) {
 				readPackageDir:          readPackageDir,
 				packageVersionDate:      packageVersionDate,
 				newSpecWaitingList:      specWaitingList.creator(),
-				newSyncedStringMap:      importPathSHAs.creator(),
+				newSyncedStringMap:      fetchSHAResults.creator(),
 				newSyncedWaitingListMap: waitingSpecs.creator(),
 			})
 
@@ -512,6 +504,67 @@ func TestProcessDeps(t *testing.T) {
 			So(
 				importRevStrings[`filepath1:101:117:"gophr.pm/a/b@someshathatdoesnotmatter"`],
 				ShouldBeTrue)
+		})
+
+		Convey("An error not should be raised if a SHA request fails", func() {
+			var (
+				fetchSHA           shaFetcher
+				reviseDeps         depsReviser
+				readPackageDir     packageDirReader
+				packageVersionDate = time.Date(
+					2016,
+					time.April,
+					8,
+					14,
+					12,
+					0,
+					0,
+					time.UTC)
+			)
+
+			// Create fakes of the worker functions passed into processDeps.
+			fetchSHA = func(args fetchSHAArgs) {
+				introduceRandomLag(0.5, 30)
+				args.outputChan <- newFetchSHAFailure(errors.New("this is an error"))
+			}
+			reviseDeps = func(args reviseDepsArgs) {
+				// Don't expect anything to come through - so, just exit.
+				args.revisionWaitGroup.Done()
+			}
+			readPackageDir = func(args readPackageDirArgs) {
+				args.importCounts.setImportCount("filepath1", 1)
+				introduceRandomLag(0.4, 15)
+				args.importSpecChan <- generateTestImportSpecWithPos(
+					101,
+					"filepath1",
+					`"github.com/a/b"`)
+				introduceRandomLag(0.4, 15)
+				args.packageSpecChan <- generateTestPackageSpec("filepath1", 1)
+
+				// Close both channels once we're done.
+				close(args.importSpecChan)
+				close(args.packageSpecChan)
+			}
+
+			// Execute synchronously to make life easier.
+			err := processDeps(processDepsArgs{
+				io:                      nil,
+				ghSvc:                   nil,
+				fetchSHA:                fetchSHA,
+				reviseDeps:              reviseDeps,
+				packageSHA:              "",
+				packagePath:             "",
+				packageRepo:             "",
+				packageAuthor:           "",
+				readPackageDir:          readPackageDir,
+				packageVersionDate:      packageVersionDate,
+				newSpecWaitingList:      newSpecWaitingList,
+				newSyncedStringMap:      newSyncedStringMap,
+				newSyncedWaitingListMap: newSyncedWaitingListMap,
+			})
+
+			// The error should bubble up.
+			So(err, ShouldBeNil)
 		})
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -60,14 +61,14 @@ func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan             = make(chan *revision)
 		waitingSpecs             = args.newSyncedWaitingListMap()
-		importPathSHAs           = args.newSyncedStringMap()
+		fetchSHAResults          = args.newSyncedStringMap()
 		importSpecChan           = make(chan *importSpec)
 		packageSpecChan          = make(chan *packageSpec)
-		importPathSHAChan        = make(chan *importPathSHA)
+		fetchSHAResultChan       = make(chan *fetchSHAResult)
 		accumulatedErrors        = newSyncedErrors()
 		revisionWaitGroup        = &sync.WaitGroup{}
-		pendingSHARequests       = newSyncedInt()
 		syncedImportCounts       = newSyncedImportCounts()
+		processedImportsCount    = newSyncedInt()
 		generatedInternalDirName = generateInternalDirName()
 	)
 
@@ -91,41 +92,40 @@ func processDeps(args processDepsArgs) error {
 		syncedImportCounts: syncedImportCounts,
 	})
 
-	// Process incoming data from the channels.
 	for {
+		// Process incoming data from the channels.
 		select {
-		case ips, alive := <-importPathSHAChan:
-			// Nil the channel if no longer alive.
-			if !alive {
-				importPathSHAChan = nil
-				break
-			}
+		case result := <-fetchSHAResultChan:
+			// Count this import as processed.
+			processedImportsCount.increment()
 
-			// Create an entry in the map.
-			importPathHash := importPathHashOf(ips.importPath)
-			importPathSHAs.set(importPathHash, ips.sha)
+			// Only continue if an actual importPath-sha mapping came through.
+			if result.successful {
+				// Create an entry in the map.
+				importPathHash := importPathHashOf(result.importPath)
+				fetchSHAResults.set(importPathHash, result.sha)
 
-			// Clear away the waiting specs.
-			if waitingList, exists := waitingSpecs.get(importPathHash); exists {
-				// There is a waiting list, so it needs to be cleared.
-				if specs := waitingList.clear(); specs != nil {
-					for _, spec := range specs {
-						enqueueImportRevision(
-							revisionChan,
-							spec.imports.Path.Value,
-							ips.sha,
-							generatedInternalDirName,
-							spec)
+				// Clear away the waiting specs.
+				if waitingList, exists := waitingSpecs.get(importPathHash); exists {
+					// There is a waiting list, so it needs to be cleared.
+					if specs := waitingList.clear(); specs != nil {
+						for _, spec := range specs {
+							enqueueImportRevision(
+								revisionChan,
+								spec.imports.Path.Value,
+								result.sha,
+								generatedInternalDirName,
+								spec)
+						}
 					}
 				}
-			}
-
-			// Check if this is the last time that an import path sha will come
-			// through. We check this by checking if the spec channel has already
-			// closed, and if there are no pending sha requests. If so, close this
-			// channel.
-			if pendingSHARequests.value() == 0 && importSpecChan == nil {
-				closeImportPathSHAChan(importPathSHAChan, waitingSpecs)
+			} else {
+				// If not successful, log the error (don't return it since it isn't
+				// fatal).
+				log.Printf(
+					`Failed to fetch SHA for import path "%s": %v`,
+					result.sha,
+					result.err)
 			}
 
 		case spec, alive := <-packageSpecChan:
@@ -142,30 +142,13 @@ func processDeps(args processDepsArgs) error {
 			// Nil the channel if no longer alive.
 			if !alive {
 				importSpecChan = nil
-
-				// If there are no pending sha requests, then there never will be since
-				// this channel is closing. Therefore, we can close the sha channel.
-				if shouldCloseImportPathSHAChan(
-					pendingSHARequests,
-					importSpecChan,
-					importPathSHAChan,
-				) {
-					closeImportPathSHAChan(importPathSHAChan, waitingSpecs)
-				}
-
 				break
 			}
-
-			// Signal that a request might be about to begin to prevent race
-			// conditions. This is done regardless of whether a request actually
-			// occurs to prevent pendingSHARequests.value() from being evaluated
-			// between the beginning of the case statement and go args.fetchSHA(...).
-			pendingSHARequests.increment()
 
 			// For each incoming spec, make it wait keyed on the import path hash.
 			importPath := spec.imports.Path.Value
 			importPathHash := importPathHashOf(spec.imports.Path.Value)
-			if sha, exists := importPathSHAs.get(importPathHash); !exists {
+			if sha, exists := fetchSHAResults.get(importPathHash); !exists {
 				// If we don't presently have the sha, then we have to go out and get
 				// it.
 				if specs, exists := waitingSpecs.get(importPathHash); !exists {
@@ -178,24 +161,21 @@ func processDeps(args processDepsArgs) error {
 					// Start the request itself.
 					go args.fetchSHA(fetchSHAArgs{
 						ghSvc:              args.ghSvc,
-						outputChan:         importPathSHAChan,
+						outputChan:         fetchSHAResultChan,
 						importPath:         importPath,
 						packageSHA:         args.packageSHA,
 						packageRepo:        args.packageRepo,
 						packageAuthor:      args.packageAuthor,
-						pendingSHARequests: pendingSHARequests,
 						packageVersionDate: args.packageVersionDate,
 					})
 				} else {
-					// It is now clear that no pending request began here.
-					pendingSHARequests.decrement()
-
 					if ok := specs.add(spec); !ok {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
-						if sha, exists = importPathSHAs.get(importPathHash); !exists {
+						if sha, exists = fetchSHAResults.get(importPathHash); !exists {
 							accumulatedErrors.add(fmt.Errorf(
-								"Could not version dependency %s because the SHA did not yet exist.",
+								"Could not version dependency %s"+
+									" because the SHA did not yet exist.",
 								importPath))
 						} else {
 							enqueueImportRevision(
@@ -206,11 +186,11 @@ func processDeps(args processDepsArgs) error {
 								spec)
 						}
 					}
+
+					// Count this import as processed.
+					processedImportsCount.increment()
 				}
 			} else {
-				// It is now clear that no pending request began here.
-				pendingSHARequests.decrement()
-
 				// If we got here, it means that the sha has already been obtained, so
 				// the new import path exists.
 				enqueueImportRevision(
@@ -219,12 +199,36 @@ func processDeps(args processDepsArgs) error {
 					sha,
 					generatedInternalDirName,
 					spec)
+
+				// Count this import as processed.
+				processedImportsCount.increment()
 			}
+		}
+
+		// Wait until the import spec channel in nil because that means that the
+		// import count total in correct. Thereafter, check if the total number
+		// of processed import path SHAs matches the total number of imports. In
+		// this case, it is time to close the import path SHA channel.
+		if fetchSHAResultChan != nil &&
+			importSpecChan == nil &&
+			processedImportsCount.value() == syncedImportCounts.totalCount() {
+			// Clear all the remaining waiting lists since none of the remaining
+			// import paths will ever be matched to the corresponding SHAs.
+			// TODO(skeswa): find a way to log these.
+			waitingSpecs.
+				each(func(importPath string, waitingList specWaitingList) {
+					waitingList.clear()
+				}).
+				clear()
+
+			// Finally, close the channel.
+			close(fetchSHAResultChan)
+			fetchSHAResultChan = nil
 		}
 
 		// If both of the channels being selected are nil, its time to stop
 		// selecting.
-		if importPathSHAChan == nil &&
+		if fetchSHAResultChan == nil &&
 			packageSpecChan == nil &&
 			importSpecChan == nil {
 			// At this point, the deps chan should be closed since all potential deps
@@ -273,31 +277,6 @@ func enqueueImportRevision(
 // revision channel that (potentially) revises a package statement.
 func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 	revisionChan <- newPackageRevision(spec)
-}
-
-// closeImportPathSHAChan closes the importPathSHAChan and clears all spec
-// waiting list. The waiting lists are cleared because they're waiting for a SHA
-// that will presumably never come.
-func closeImportPathSHAChan(
-	importPathSHAChan chan *importPathSHA,
-	waitingSpecs syncedWaitingListMap) {
-	waitingSpecs.each(func(importPath string, waitingList specWaitingList) {
-		waitingList.clear()
-	}).clear()
-
-	// Finally, close the channel.
-	close(importPathSHAChan)
-}
-
-// shouldCloseImportPathSHAChan returns true if the importPathSHAChan should be
-// closed.
-func shouldCloseImportPathSHAChan(
-	pendingSHARequests *syncedInt,
-	importSpecChan chan *importSpec,
-	importPathSHAChan chan *importPathSHA) bool {
-	return pendingSHARequests.value() == 0 &&
-		importSpecChan == nil &&
-		importPathSHAChan != nil
 }
 
 // concatErrors joins all the accumulated individual errors into one combined
