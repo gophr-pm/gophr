@@ -167,6 +167,7 @@ func TestProcessDeps(t *testing.T) {
 			So(actualReadPackageDirArgs.io, ShouldNotBeNil)
 			So(actualReadPackageDirArgs.packageDirPath, ShouldNotBeEmpty)
 			So(actualReadPackageDirArgs.packageSpecChan, ShouldNotBeNil)
+			So(actualReadPackageDirArgs.traversePackageDir, ShouldNotBeNil)
 
 			// Finally, perform asserts for general outputs.
 			So(err, ShouldBeNil)
@@ -317,6 +318,7 @@ func TestProcessDeps(t *testing.T) {
 			So(actualReadPackageDirArgs.io, ShouldNotBeNil)
 			So(actualReadPackageDirArgs.packageDirPath, ShouldNotBeEmpty)
 			So(actualReadPackageDirArgs.packageSpecChan, ShouldNotBeNil)
+			So(actualReadPackageDirArgs.traversePackageDir, ShouldNotBeNil)
 
 			// Finally, perform asserts for general outputs.
 			So(err, ShouldBeNil)

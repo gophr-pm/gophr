@@ -80,6 +80,7 @@ func processDeps(args processDepsArgs) error {
 		packageDirPath:           args.packagePath,
 		importSpecChan:           importSpecChan,
 		packageSpecChan:          packageSpecChan,
+		traversePackageDir:       traversePackageDir,
 		generatedInternalDirName: generatedInternalDirName,
 	})
 
