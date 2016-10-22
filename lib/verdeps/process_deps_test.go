@@ -777,19 +777,3 @@ func (m *fakeSyncedStringMap) get(key string) (string, bool) {
 func (m *fakeSyncedStringMap) set(key, value string) {
 	m.ssm.set(key, value)
 }
-func (m *fakeSyncedStringMap) setIfAbsent(key, value string) {
-	m.ssm.setIfAbsent(key, value)
-}
-func (m *fakeSyncedStringMap) clear() {
-	m.ssm.clear()
-}
-func (m *fakeSyncedStringMap) delete(key string) {
-	m.ssm.delete(key)
-}
-func (m *fakeSyncedStringMap) count() int {
-	return m.ssm.count()
-}
-func (m *fakeSyncedStringMap) each(fn func(string, string)) syncedStringMap {
-	m.ssm.each(fn)
-	return m
-}
