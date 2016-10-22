@@ -3,12 +3,15 @@ package verdeps
 import (
 	"bytes"
 	"errors"
-	"runtime"
 	"strconv"
 	"sync"
 
 	"github.com/gophr-pm/gophr/lib/io"
 )
+
+// packageDirTraverser is a function type that de-couples verdeps.readPackageDir
+// from verdeps.traversePackageDir.
+type packageDirTraverser func(args traversePackageDirArgs)
 
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
@@ -18,6 +21,7 @@ type readPackageDirArgs struct {
 	packageDirPath           string
 	importSpecChan           chan *importSpec
 	packageSpecChan          chan *packageSpec
+	traversePackageDir       packageDirTraverser
 	generatedInternalDirName string
 }
 
@@ -34,7 +38,7 @@ func readPackageDir(args readPackageDirArgs) {
 	// Traverse the directory tree looking for go files - all the while properly
 	// handling go package vendoring.
 	waitGroup.Add(1)
-	traversePackageDir(traversePackageDirArgs{
+	args.traversePackageDir(traversePackageDirArgs{
 		io:                       args.io,
 		errors:                   errs,
 		dirPath:                  args.packageDirPath,
@@ -75,7 +79,4 @@ func readPackageDir(args readPackageDirArgs) {
 	// We're done. Time to close the output channels.
 	close(args.importSpecChan)
 	close(args.packageSpecChan)
-
-	// Clean up after ourselves (traversal allocates a lot of memory).
-	runtime.GC()
 }
