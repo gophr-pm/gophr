@@ -87,7 +87,9 @@ func processDeps(args processDepsArgs) error {
 	// Revise dependencies in the go source files.
 	revisionWaitGroup.Add(1)
 	go args.reviseDeps(reviseDepsArgs{
+		io:                 args.io,
 		inputChan:          revisionChan,
+		composeBytesDiffs:  composeBytesDiffs,
 		revisionWaitGroup:  revisionWaitGroup,
 		accumulatedErrors:  accumulatedErrors,
 		syncedImportCounts: syncedImportCounts,

@@ -7,12 +7,12 @@ import (
 
 // FakeFileInfo is a struct used to mock os.FileInfo.
 type FakeFileInfo struct {
+	SysProp      interface{}
 	NameProp     string
 	SizeProp     int64
-	FileModeProp os.FileMode
-	ModTimeProp  time.Time
 	IsDirProp    bool
-	SysProp      interface{}
+	ModTimeProp  time.Time
+	FileModeProp os.FileMode
 }
 
 // NewFakeFileInfo creates a new, shallowly defined FakeFileInfo.

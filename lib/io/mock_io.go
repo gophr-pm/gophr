@@ -42,6 +42,22 @@ func (m *MockIO) ReadDir(dirname string) ([]os.FileInfo, error) {
 	return args.Get(0).([]os.FileInfo), args.Error(1)
 }
 
+// ReadFile mocks io.ReadFile.
+func (m *MockIO) ReadFile(filename string) ([]byte, error) {
+	args := m.Called(filename)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
+// WriteFile mocks io.WriteFile.
+func (m *MockIO) WriteFile(
+	filename string,
+	data []byte,
+	perm os.FileMode,
+) error {
+	args := m.Called(filename, data, perm)
+	return args.Error(0)
+}
+
 // NewMockIO creates a new io mock.
 func NewMockIO() *MockIO {
 	return &MockIO{}
