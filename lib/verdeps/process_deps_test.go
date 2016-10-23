@@ -147,6 +147,7 @@ func TestProcessDeps(t *testing.T) {
 			// Now make the asserts for revise deps.
 			So(actualReviseDepsArgs.accumulatedErrors, ShouldNotBeNil)
 			So(actualReviseDepsArgs.inputChan, ShouldNotBeNil)
+			So(actualReviseDepsArgs.io, ShouldNotBeNil)
 			So(actualReviseDepsArgs.revisionWaitGroup, ShouldNotBeNil)
 			So(actualReviseDepsArgs.syncedImportCounts, ShouldNotBeNil)
 			So(importRevStrings[`filepath1:101:119:"gophr.pm/c/d@thisistheshafor"github.com/c/d/e"/e"`], ShouldBeTrue)
@@ -299,6 +300,7 @@ func TestProcessDeps(t *testing.T) {
 			// Now make the asserts for revise deps.
 			So(actualReviseDepsArgs.accumulatedErrors, ShouldNotBeNil)
 			So(actualReviseDepsArgs.inputChan, ShouldNotBeNil)
+			So(actualReviseDepsArgs.io, ShouldNotBeNil)
 			So(actualReviseDepsArgs.revisionWaitGroup, ShouldNotBeNil)
 			So(actualReviseDepsArgs.syncedImportCounts, ShouldNotBeNil)
 			So(importRevStrings[`filepath1:101:117:"gophr.pm/a/b@thisistheshafor"github.com/a/b""`], ShouldBeTrue)

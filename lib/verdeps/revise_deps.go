@@ -2,14 +2,16 @@ package verdeps
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
 	"sync"
+
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 const charDoubleQuote = '"'
 
 type reviseDepsArgs struct {
+	io                 io.IO
 	inputChan          chan *revision
 	revisionWaitGroup  *sync.WaitGroup
 	accumulatedErrors  *syncedErrors
@@ -34,10 +36,14 @@ func reviseDeps(args reviseDepsArgs) {
 		pathRevisionsMap.add(path, rev)
 
 		// Decide whether its time to apply the revs.
-		if pathRevisionsMap.ready(path, args.syncedImportCounts.importCountOf(path)) {
+		if pathRevisionsMap.ready(
+			path,
+			args.syncedImportCounts.importCountOf(path),
+		) {
 			// Apply the revisions now that we have all the appropriate revisions.
 			revisionApplicationWaitGroup.Add(1)
 			go applyRevisions(
+				args.io,
 				path,
 				pathRevisionsMap.getRevs(path),
 				revisionApplicationWaitGroup,
@@ -64,6 +70,7 @@ func reviseDeps(args reviseDepsArgs) {
 		if len(revsSlice) > 0 {
 			revisionApplicationWaitGroup.Add(1)
 			go applyRevisions(
+				args.io,
 				path,
 				revsSlice,
 				revisionApplicationWaitGroup,
@@ -87,6 +94,7 @@ func reviseDeps(args reviseDepsArgs) {
 
 // applyRevisions applies all the provided revisions to the appropriate files.
 func applyRevisions(
+	io io.IO,
 	path string,
 	revs []*revision,
 	waitGroup *sync.WaitGroup,
@@ -102,7 +110,7 @@ func applyRevisions(
 	defer waitGroup.Done()
 
 	// Read the file data at the specified path.
-	if fileData, err = ioutil.ReadFile(path); err != nil {
+	if fileData, err = io.ReadFile(path); err != nil {
 		accumulatedErrors.add(err)
 		return
 	}
@@ -111,7 +119,11 @@ func applyRevisions(
 	for _, rev := range revs {
 		if rev.revisesImport {
 			// Adjust from and to so that they fall on quote bytes.
-			if from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex); err != nil {
+			if from, to, err = findImportPathBoundaries(
+				fileData,
+				rev.fromIndex,
+				rev.toIndex,
+			); err != nil {
 				// Exit if the import path boundaries could not be adjusted.
 				accumulatedErrors.add(err)
 				return
@@ -124,7 +136,10 @@ func applyRevisions(
 			})
 		} else if rev.revisesPackage {
 			// Remove any package import comments that we might find.
-			if from, to = findPackageImportComment(fileData, rev.fromIndex); from >= 0 && to > from {
+			if from, to = findPackageImportComment(
+				fileData,
+				rev.fromIndex,
+			); from >= 0 && to > from {
 				diffs = append(diffs, bytesDiff{
 					bytes:         nil,
 					exclusiveTo:   to,
@@ -142,7 +157,7 @@ func applyRevisions(
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
-	if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
+	if err = io.WriteFile(path, fileData, 0644); err != nil {
 		accumulatedErrors.add(err)
 		return
 	}
