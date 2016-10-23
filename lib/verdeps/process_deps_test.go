@@ -146,6 +146,7 @@ func TestProcessDeps(t *testing.T) {
 
 			// Now make the asserts for revise deps.
 			So(actualReviseDepsArgs.accumulatedErrors, ShouldNotBeNil)
+			So(actualReviseDepsArgs.composeBytesDiffs, ShouldNotBeNil)
 			So(actualReviseDepsArgs.inputChan, ShouldNotBeNil)
 			So(actualReviseDepsArgs.io, ShouldNotBeNil)
 			So(actualReviseDepsArgs.revisionWaitGroup, ShouldNotBeNil)
@@ -299,6 +300,7 @@ func TestProcessDeps(t *testing.T) {
 
 			// Now make the asserts for revise deps.
 			So(actualReviseDepsArgs.accumulatedErrors, ShouldNotBeNil)
+			So(actualReviseDepsArgs.composeBytesDiffs, ShouldNotBeNil)
 			So(actualReviseDepsArgs.inputChan, ShouldNotBeNil)
 			So(actualReviseDepsArgs.io, ShouldNotBeNil)
 			So(actualReviseDepsArgs.revisionWaitGroup, ShouldNotBeNil)

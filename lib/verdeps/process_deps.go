@@ -89,6 +89,7 @@ func processDeps(args processDepsArgs) error {
 	go args.reviseDeps(reviseDepsArgs{
 		io:                 args.io,
 		inputChan:          revisionChan,
+		composeBytesDiffs:  composeBytesDiffs,
 		revisionWaitGroup:  revisionWaitGroup,
 		accumulatedErrors:  accumulatedErrors,
 		syncedImportCounts: syncedImportCounts,

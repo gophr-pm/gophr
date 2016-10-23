@@ -10,9 +10,14 @@ import (
 
 const charDoubleQuote = '"'
 
+// bytesDiffsComposer is a function type that de-couples verdeps.reviseDeps from
+// verdeps.composeBytesDiffs.
+type bytesDiffsComposer func(bytes []byte, diffs []bytesDiff) ([]byte, error)
+
 type reviseDepsArgs struct {
 	io                 io.IO
 	inputChan          chan *revision
+	composeBytesDiffs  bytesDiffsComposer
 	revisionWaitGroup  *sync.WaitGroup
 	accumulatedErrors  *syncedErrors
 	syncedImportCounts *syncedImportCounts
@@ -47,7 +52,8 @@ func reviseDeps(args reviseDepsArgs) {
 				path,
 				pathRevisionsMap.getRevs(path),
 				revisionApplicationWaitGroup,
-				args.accumulatedErrors)
+				args.accumulatedErrors,
+				args.composeBytesDiffs)
 			// Get rids of the revs from the map since we don't need them anymore.
 			pathRevisionsMap.delete(path)
 		}
@@ -74,7 +80,8 @@ func reviseDeps(args reviseDepsArgs) {
 				path,
 				revsSlice,
 				revisionApplicationWaitGroup,
-				args.accumulatedErrors)
+				args.accumulatedErrors,
+				args.composeBytesDiffs)
 		}
 	})
 
@@ -98,7 +105,9 @@ func applyRevisions(
 	path string,
 	revs []*revision,
 	waitGroup *sync.WaitGroup,
-	accumulatedErrors *syncedErrors) {
+	accumulatedErrors *syncedErrors,
+	composeBytesDiffs bytesDiffsComposer,
+) {
 	var (
 		err      error
 		diffs    []bytesDiff
