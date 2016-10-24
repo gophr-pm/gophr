@@ -9,6 +9,8 @@ import (
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
+// goFileASTParser is a function type that de-couples verdeps.traversePackageDir
+// from verdeps.parseGoFile.
 type goFileASTParser func(parseGoFileArgs)
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
