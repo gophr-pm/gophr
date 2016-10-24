@@ -58,6 +58,12 @@ func (m *MockIO) WriteFile(
 	return args.Error(0)
 }
 
+// Rename mocks io.Rename.
+func (m *MockIO) Rename(oldpath, newpath string) error {
+	args := m.Called(oldpath, newpath)
+	return args.Error(0)
+}
+
 // NewMockIO creates a new io mock.
 func NewMockIO() *MockIO {
 	return &MockIO{}

@@ -47,6 +47,11 @@ func (r *ioImpl) WriteFile(
 	return ioutil.WriteFile(filename, data, perm)
 }
 
+// Rename calls os.Rename.
+func (r *ioImpl) Rename(oldpath, newpath string) error {
+	return os.Rename(oldpath, newpath)
+}
+
 // NewIO creates a new IO.
 func NewIO() IO {
 	return &ioImpl{}

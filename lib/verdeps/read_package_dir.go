@@ -44,6 +44,7 @@ func readPackageDir(args readPackageDirArgs) {
 		dirPath:                  args.packageDirPath,
 		waitGroup:                waitGroup,
 		subDirPath:               "",
+		parseGoFile:              parseGoFile,
 		inVendorDir:              false,
 		importCounts:             args.importCounts,
 		vendorContext:            newVendorContext(),

@@ -42,4 +42,9 @@ type IO interface {
 	// exist, WriteFile creates it with permissions perm; otherwise WriteFile
 	// truncates it before writing.
 	WriteFile(filename string, data []byte, perm os.FileMode) error
+	// Rename renames (moves) oldpath to newpath. If newpath already exists,
+	// Rename replaces it. OS-specific restrictions may apply when oldpath and
+	// newpath are in different directories. If there is an error, it will be of
+	// type *LinkError.
+	Rename(oldpath, newpath string) error
 }
