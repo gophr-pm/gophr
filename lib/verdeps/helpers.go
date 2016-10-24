@@ -15,7 +15,9 @@ func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
 }
 
-func parseImportPath(importPath string) (author string, repo string, subpath string) {
+func parseImportPath(
+	importPath string,
+) (author string, repo string, subpath string) {
 	var (
 		i                 int
 		repoStartIndex    int
@@ -117,7 +119,9 @@ type getPackageDirPathsArgs struct {
 // getPackageDirPaths gets the vendor directory path (if one exists), all the
 // sub-directories names, and the go-file paths of the supplied package
 // directory path.
-func getPackageDirPaths(args getPackageDirPathsArgs) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
+func getPackageDirPaths(
+	args getPackageDirPathsArgs,
+) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
 	for _, file := range args.files {
 		if file.IsDir() {
 			if file.Name() == vendorDirName {

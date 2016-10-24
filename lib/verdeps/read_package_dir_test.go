@@ -45,6 +45,7 @@ func TestReadPackageDir(t *testing.T) {
 			So(actualTraversePackageDirArgs.importCounts, ShouldEqual, importCounts)
 			So(actualTraversePackageDirArgs.importSpecChan, ShouldNotBeNil)
 			So(actualTraversePackageDirArgs.packageSpecChan, ShouldNotBeNil)
+			So(actualTraversePackageDirArgs.parseGoFile, ShouldNotBeNil)
 			So(actualTraversePackageDirArgs.subDirPath, ShouldBeEmpty)
 			So(actualTraversePackageDirArgs.waitGroup, ShouldNotBeNil)
 
@@ -89,6 +90,7 @@ func TestReadPackageDir(t *testing.T) {
 			So(actualTraversePackageDirArgs.importCounts, ShouldEqual, importCounts)
 			So(actualTraversePackageDirArgs.importSpecChan, ShouldNotBeNil)
 			So(actualTraversePackageDirArgs.packageSpecChan, ShouldNotBeNil)
+			So(actualTraversePackageDirArgs.parseGoFile, ShouldNotBeNil)
 			So(actualTraversePackageDirArgs.subDirPath, ShouldBeEmpty)
 			So(actualTraversePackageDirArgs.waitGroup, ShouldNotBeNil)
 
