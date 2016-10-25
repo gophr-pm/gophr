@@ -37,7 +37,7 @@ func getGithubRepoDataAsynchronously(
 	ghSvc github.RequestService,
 	author string,
 	repo string,
-	outputRepoData *dtos.GithubRepoDTO,
+	outputRepoData *dtos.GithubRepo,
 	outputError *error,
 	wg *sync.WaitGroup,
 ) {

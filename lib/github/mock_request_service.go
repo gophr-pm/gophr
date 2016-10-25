@@ -30,7 +30,7 @@ func (m *MockRequestService) FetchCommitTimestamp(author string, repo string, sh
 }
 
 // FetchGitHubDataForPackageModel mocks MockRequestService.FetchGitHubDataForPackageModel.
-func (m *MockRequestService) FetchGitHubDataForPackageModel(author string, repo string) (dtos.GithubRepoDTO, error) {
+func (m *MockRequestService) FetchGitHubDataForPackageModel(author string, repo string) (dtos.GithubRepo, error) {
 	args := m.Called(author, repo)
-	return args.Get(0).(dtos.GithubRepoDTO), args.Error(1)
+	return args.Get(0).(dtos.GithubRepo), args.Error(1)
 }

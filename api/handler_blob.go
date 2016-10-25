@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/gophr-pm/gophr/lib/depot"
 	"github.com/gophr-pm/gophr/lib/errors"
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -35,7 +35,11 @@ func BlobHandler() func(http.ResponseWriter, *http.Request) {
 
 		// Request the filepath from depot gitweb.
 		hashedRepoName := depot.BuildHashedRepoName(args.author, args.repo, args.sha)
-		depotBlobURL := fmt.Sprintf("http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master", depot.DepotInternalServiceAddress, hashedRepoName, args.path)
+		depotBlobURL := fmt.Sprintf(
+			"http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master",
+			depot.DepotInternalServiceAddress,
+			hashedRepoName,
+			args.path)
 		depotBlobResp, err := http.Get(depotBlobURL)
 		if err != nil {
 			errors.RespondWithError(w, err)
@@ -71,7 +75,9 @@ func extractBlobRequestArgs(r *http.Request) (blobRequestArgs, error) {
 
 	args.author = vars[blobHandlerURLVarAuthor]
 	if len(args.author) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarAuthor, args.author)
+		return args, NewInvalidURLParameterError(
+			blobHandlerURLVarAuthor,
+			args.author)
 	}
 
 	args.repo = vars[blobHandlerURLVarRepo]

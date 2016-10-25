@@ -19,7 +19,7 @@ func main() {
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
-	r.HandleFunc("/search", SearchHandler(session)).Methods("GET")
+	// r.HandleFunc("/packages/search", SearchHandler(session)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/blob/{%s}/{%s}/{%s}/{%s}",
 		blobHandlerURLVarAuthor,
@@ -27,8 +27,6 @@ func main() {
 		blobHandlerURLVarSHA,
 		blobHandlerURLVarPath),
 		BlobHandler()).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions", urlVarAuthor, urlVarRepo), VersionsHandler(session)).Methods("GET")
-	r.HandleFunc(fmt.Sprintf("/{%s}/{%s}/versions/latest", urlVarAuthor, urlVarRepo), LatestVersionHandler(session)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

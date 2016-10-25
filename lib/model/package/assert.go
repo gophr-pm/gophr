@@ -41,7 +41,7 @@ func AssertExistence(
 		var (
 			wg                 sync.WaitGroup
 			awesome            bool
-			repoData           dtos.GithubRepoDTO
+			repoData           dtos.GithubRepo
 			awesomeCheckError  error
 			repoDataFetchError error
 		)
