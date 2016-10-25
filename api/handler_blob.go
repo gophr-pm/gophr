@@ -10,13 +10,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	blobHandlerURLVarAuthor = "author"
-	blobHandlerURLVarRepo   = "repo"
-	blobHandlerURLVarSHA    = "sha"
-	blobHandlerURLVarPath   = "path"
-)
-
 type blobRequestArgs struct {
 	author string
 	repo   string
@@ -73,26 +66,26 @@ func extractBlobRequestArgs(r *http.Request) (blobRequestArgs, error) {
 	vars := mux.Vars(r)
 	args := blobRequestArgs{}
 
-	args.author = vars[blobHandlerURLVarAuthor]
+	args.author = vars[urlVarAuthor]
 	if len(args.author) < 0 {
 		return args, NewInvalidURLParameterError(
-			blobHandlerURLVarAuthor,
+			urlVarAuthor,
 			args.author)
 	}
 
-	args.repo = vars[blobHandlerURLVarRepo]
+	args.repo = vars[urlVarRepo]
 	if len(args.repo) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarRepo, args.repo)
+		return args, NewInvalidURLParameterError(urlVarRepo, args.repo)
 	}
 
-	args.sha = vars[blobHandlerURLVarSHA]
+	args.sha = vars[urlVarSHA]
 	if len(args.sha) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarSHA, args.sha)
+		return args, NewInvalidURLParameterError(urlVarSHA, args.sha)
 	}
 
-	args.path = vars[blobHandlerURLVarPath]
+	args.path = vars[urlVarPath]
 	if len(args.path) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarPath, args.path)
+		return args, NewInvalidURLParameterError(urlVarPath, args.path)
 	}
 
 	return args, nil

@@ -47,6 +47,10 @@ func (s Summary) ToJSON() ([]byte, error) {
 
 // ToJSON turns summaries into JSON.
 func (s Summaries) ToJSON() ([]byte, error) {
+	if len(s) == 0 {
+		return []byte("[]"), nil
+	}
+
 	dtos := make([]dtos.PackageSummary, len(s))
 
 	for _, summary := range s {

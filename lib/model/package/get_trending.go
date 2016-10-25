@@ -8,7 +8,7 @@ import (
 )
 
 // GetTrending gets up to "limit" of the most trending packages.
-func GetTrending(q query.Queryable, limit int) ([]Summary, error) {
+func GetTrending(q query.Queryable, limit int) (Summaries, error) {
 	if limit < 1 {
 		return nil, errors.New("Limit must be greater than zero")
 	}

@@ -9,7 +9,7 @@ import (
 
 // GetTopX (as in "get top ten") gets the top packages sorted descendingly
 // within the specified time split.
-func GetTopX(q query.Queryable, x int, split TimeSplit) ([]Summary, error) {
+func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
 	if x < 1 {
 		return nil, errors.New("X must be greater than zero")
 	}

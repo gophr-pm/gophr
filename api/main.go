@@ -19,14 +19,28 @@ func main() {
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
+	// TODO(skeswa): add search back into the mix.
 	// r.HandleFunc("/packages/search", SearchHandler(session)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/blob/{%s}/{%s}/{%s}/{%s}",
-		blobHandlerURLVarAuthor,
-		blobHandlerURLVarRepo,
-		blobHandlerURLVarSHA,
-		blobHandlerURLVarPath),
+		urlVarAuthor,
+		urlVarRepo,
+		urlVarSHA,
+		urlVarPath),
 		BlobHandler()).Methods("GET")
+	r.HandleFunc(
+		"/packages/trending",
+		GetTrendingPackagesHandler(session)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf(
+		"/packages/top/{%s}/{%s}",
+		urlVarLimit,
+		urlVarTimeSplit),
+		GetTopPackagesHandler(session)).Methods("GET")
+	r.HandleFunc(fmt.Sprintf(
+		"/packages/{%s}/{%s}",
+		urlVarAuthor,
+		urlVarRepo),
+		GetPackageHandler(session)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)
