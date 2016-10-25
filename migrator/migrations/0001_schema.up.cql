@@ -30,7 +30,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS packages_index
         search_blob: {type: "text"},
         daily_downloads: {type: "bigint"},
         weekly_downloads: {type: "bigint"},
-        monthly_downloads: {type: "bigint"}
+        monthly_downloads: {type: "bigint"},
+        all_time_downloads: {type: "bigint"}
       }
     }'
   };
