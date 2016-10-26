@@ -26,9 +26,9 @@ func GetTrending(q query.Queryable, limit int) (Summaries, error) {
 			packagesColumnNameMonthlyDownloads,
 			packagesColumnNameAllTimeDownloads).
 		From(packagesTableName).
-		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(`{
-      sort: {field: "%s", reverse: true}
-    }`, packagesColumnNameTrendScore))).
+		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(
+			descSortExprTemplate,
+			packagesColumnNameTrendScore))).
 		Limit(limit).
 		Create(q).
 		Iter()

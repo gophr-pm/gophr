@@ -42,9 +42,9 @@ func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
 			packagesColumnNameMonthlyDownloads,
 			packagesColumnNameAllTimeDownloads).
 		From(packagesTableName).
-		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(`{
-      sort: {field: "%s", reverse: true}
-    }`, sortField))).
+		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(
+			descSortExprTemplate,
+			sortField))).
 		Limit(x).
 		Create(q).
 		Iter()

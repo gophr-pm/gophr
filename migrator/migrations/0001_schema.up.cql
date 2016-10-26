@@ -26,7 +26,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS packages_index
     'schema': '{
       default_analyzer: "english",
       fields: {
-        stars: {type: "int"},
+        stars: {type: "integer"},
         trend_score: {type: "float"},
         search_blob: {type: "text"},
         daily_downloads: {type: "bigint"},

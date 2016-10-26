@@ -20,4 +20,6 @@ const (
 	awesomeTableName        = "awesome_packages"
 	awesomeColumnNameRepo   = "repo"
 	awesomeColumnNameAuthor = "author"
+
+	descSortExprTemplate = `{sort:{fields:[{ field: "%s", reverse: true }]}}`
 )
