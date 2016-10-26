@@ -56,15 +56,15 @@ func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
 
 	// Scan into a summary struct. Add it to the list if successful.
 	for iter.Scan(
-		nextSummary.Repo,
-		nextSummary.Stars,
-		nextSummary.Author,
-		nextSummary.Awesome,
-		nextSummary.Description,
-		nextSummary.DailyDownloads,
-		nextSummary.WeeklyDownloads,
-		nextSummary.MonthlyDownloads,
-		nextSummary.AllTimeDownloads) {
+		&nextSummary.Repo,
+		&nextSummary.Stars,
+		&nextSummary.Author,
+		&nextSummary.Awesome,
+		&nextSummary.Description,
+		&nextSummary.DailyDownloads,
+		&nextSummary.WeeklyDownloads,
+		&nextSummary.MonthlyDownloads,
+		&nextSummary.AllTimeDownloads) {
 		summaries = append(summaries, nextSummary)
 	}
 

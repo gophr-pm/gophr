@@ -40,6 +40,7 @@ func GetTrendingPackagesHandler(
 			errors.RespondWithError(w, err)
 			return
 		}
+
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
 			errors.RespondWithError(w, err)

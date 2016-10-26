@@ -53,8 +53,8 @@ func (s Summaries) ToJSON() ([]byte, error) {
 
 	dtos := make([]dtos.PackageSummary, len(s))
 
-	for _, summary := range s {
-		dtos = append(dtos, summary.toDTO())
+	for i, summary := range s {
+		dtos[i] = summary.toDTO()
 	}
 
 	return ffjson.Marshal(dtos)
