@@ -64,14 +64,19 @@ func extractSearchPackagesRequestArgs(
 		searchQuery = r.URL.Query().Get(urlVarSearchQuery)
 	)
 
-	if args.limit, err = strconv.Atoi(limitStr); err != nil {
-		return args, NewInvalidURLParameterError(urlVarLimit, limitStr)
-	} else if args.limit > maxSearchPackagesLimit {
+	if len(limitStr) == 0 {
+		args.limit = maxTrendingPackagesLimit
+	} else if args.limit, err = strconv.Atoi(limitStr); err != nil {
+		return args, NewInvalidQueryStringParameterError(urlVarLimit, limitStr)
+	}
+	if args.limit > maxSearchPackagesLimit {
 		args.limit = maxSearchPackagesLimit
 	}
 
 	if len(searchQuery) < 1 || len(searchQuery) > maxSearchQueryLength {
-		return args, NewInvalidURLParameterError(urlVarSearchQuery, searchQuery)
+		return args, NewInvalidQueryStringParameterError(
+			urlVarSearchQuery,
+			searchQuery)
 	}
 
 	args.searchQuery = searchQuery

@@ -68,8 +68,9 @@ func extractGetTrendingPackagesRequestArgs(
 	}
 
 	if args.limit, err = strconv.Atoi(limitStr); err != nil {
-		return args, NewInvalidURLParameterError(urlVarLimit, limitStr)
-	} else if args.limit > maxTrendingPackagesLimit {
+		return args, NewInvalidQueryStringParameterError(urlVarLimit, limitStr)
+	}
+	if args.limit > maxTrendingPackagesLimit {
 		args.limit = maxTrendingPackagesLimit
 	}
 
