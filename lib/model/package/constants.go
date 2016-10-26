@@ -22,4 +22,14 @@ const (
 	awesomeColumnNameAuthor = "author"
 
 	descSortExprTemplate = `{sort:{fields:[{ field: "%s", reverse: true }]}}`
+	searchExprTemplate   = `{
+		query: { type: "fuzzy", field: "%s", value: "%s" },
+		sort: {
+			fields: [
+				{ field: "%s", reverse: true },
+				{ field: "%s", reverse: true },
+				{ field: "%s", reverse: true }
+			]
+		}
+	}`
 )

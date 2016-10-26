@@ -52,7 +52,7 @@ func GetTrendingPackagesHandler(
 }
 
 // extractGetTrendingPackagesRequestArgs validates and extracts the necessary
-// parameters for a get trensing packages request.
+// parameters for a get trending packages request.
 func extractGetTrendingPackagesRequestArgs(
 	r *http.Request,
 ) (getTrendingPackagesRequestArgs, error) {

@@ -56,10 +56,8 @@ func GetTopPackagesHandler(
 	}
 }
 
-// extractGetPackageArgs validates and extracts the necessary parameters for a
-// get package request.
 // extractGetTopPackagesRequestArgs validates and extracts the necessary
-// parameters for a get trensing packages request.
+// parameters for a get top packages request.
 func extractGetTopPackagesRequestArgs(
 	r *http.Request,
 ) (getTopPackagesRequestArgs, error) {

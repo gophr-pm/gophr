@@ -27,6 +27,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS packages_index
       default_analyzer: "english",
       fields: {
         stars: {type: "integer"},
+        awesome: {type: "boolean"},
         trend_score: {type: "float"},
         search_blob: {type: "text"},
         daily_downloads: {type: "bigint"},

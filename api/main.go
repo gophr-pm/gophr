@@ -19,8 +19,6 @@ func main() {
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
-	// TODO(skeswa): add search back into the mix.
-	// r.HandleFunc("/packages/search", SearchHandler(session)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/blob/{%s}/{%s}/{%s}/{%s}",
 		urlVarAuthor,
@@ -28,6 +26,9 @@ func main() {
 		urlVarSHA,
 		urlVarPath),
 		BlobHandler()).Methods("GET")
+	r.HandleFunc(
+		"/packages/search",
+		SearchPackagesHandler(session)).Methods("GET")
 	r.HandleFunc(
 		"/packages/trending",
 		GetTrendingPackagesHandler(session)).Methods("GET")
