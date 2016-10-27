@@ -58,10 +58,10 @@ func extractGetPackageRequestArgs(
 		args getPackageRequestArgs
 	)
 
-	if args.author = vars[urlVarAuthor]; len(args.author) < 0 {
+	if args.author = vars[urlVarAuthor]; len(args.author) < 1 {
 		return args, NewInvalidURLParameterError(urlVarAuthor, args.author)
 	}
-	if args.repo = vars[urlVarRepo]; len(args.repo) < 0 {
+	if args.repo = vars[urlVarRepo]; len(args.repo) < 1 {
 		return args, NewInvalidURLParameterError(urlVarRepo, args.repo)
 	}
 
