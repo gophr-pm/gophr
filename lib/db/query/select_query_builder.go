@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // SelectQueryBuilder constructs a select query.
@@ -59,7 +59,7 @@ func (qb *SelectQueryBuilder) AllowFiltering() *SelectQueryBuilder {
 }
 
 // Create serializes and creates the query.
-func (qb *SelectQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *SelectQueryBuilder) Create(q db.Queryable) db.Query {
 	var (
 		buffer     bytes.Buffer
 		parameters []interface{}

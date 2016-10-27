@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/model/package"
 )
@@ -23,7 +23,7 @@ type searchPackagesRequestArgs struct {
 // SearchPackagesHandler creates an HTTP request handler that responds to top
 // packages get requests.
 func SearchPackagesHandler(
-	q query.Queryable,
+	q db.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (

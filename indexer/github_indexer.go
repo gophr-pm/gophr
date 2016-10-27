@@ -5,11 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
-	"github.com/gophr-pm/gophr/lib/model"
 )
 
 type packageRepoTuple struct {
@@ -21,7 +20,7 @@ var requestTimeBuffer = 50 * time.Millisecond
 
 // ReIndexPackageGitHubStats is a service dedicated to fetching Github repo metadata
 // for each package in our DB and updating metadata
-func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
+func ReIndexPackageGitHubStats(conf *config.Config, q db.Queryable) {
 	log.Println("Reindexing packageModel github data")
 	packageModels, err := models.ScanAllPackageModels(session)
 	numPackageModels := len(packageModels)
@@ -37,7 +36,7 @@ func ReIndexPackageGitHubStats(conf *config.Config, session *gocql.Session) {
 		github.RequestServiceArgs{
 			ForIndexer: true,
 			Conf:       conf,
-			Session:    session,
+			Queryable:  q,
 		},
 	)
 

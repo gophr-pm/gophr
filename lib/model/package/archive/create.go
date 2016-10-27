@@ -1,13 +1,13 @@
 package archives
 
 import (
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // Create records that an archive of a package version exists.
 func Create(
-	session *gocql.Session,
+	q db.Queryable,
 	author string,
 	repo string,
 	sha string,
@@ -17,7 +17,7 @@ func Create(
 		Value(columnNameAuthor, author).
 		Value(columnNameRepo, repo).
 		Value(columnNameSHA, sha).
-		Create(session).
+		Create(q).
 		Exec(); err != nil {
 		return err
 	}

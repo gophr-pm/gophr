@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/depot"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
@@ -56,7 +56,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 	}
 
 	var (
-		refs            common.Refs
+		refs            lib.Refs
 		matchedSHA      string
 		matchedSHALabel string
 	)
@@ -129,7 +129,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 // packageRequest#respond.
 type respondToPackageRequestArgs struct {
 	io                    io.IO
-	db                    *gocql.Session
+	db                    db.Client
 	res                   http.ResponseWriter
 	conf                  *config.Config
 	creds                 *config.Credentials

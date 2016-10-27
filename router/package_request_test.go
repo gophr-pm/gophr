@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	baseFakeRefs, _ = common.NewRefs([]byte(reflines(
+	baseFakeRefs, _ = lib.NewRefs([]byte(reflines(
 		"00000000000000000000000000000000000hash5 HEAD",
 		"00000000000000000000000000000000000hash5 refs/heads/master",
 		"00000000000000000000000000000000000hash3 refs/tags/v1",
@@ -24,8 +24,8 @@ var (
 		"00000000000000000000000000000000000hash5 refs/tags/v2")[:]))
 )
 
-func fakeRefs(masterRefHash string, candidates []semver.SemverCandidate) common.Refs {
-	newFakeRefs := common.Refs{}
+func fakeRefs(masterRefHash string, candidates []semver.SemverCandidate) lib.Refs {
+	newFakeRefs := lib.Refs{}
 	copier.Copy(&newFakeRefs, &baseFakeRefs)
 	if len(masterRefHash) > 0 {
 		newFakeRefs.MasterRefHash = masterRefHash
@@ -46,8 +46,8 @@ func fakeHTTPRequest(host string, path string, goGet bool) *http.Request {
 	return &http.Request{URL: &url.URL{Path: path, Host: host}, Form: form}
 }
 
-func fakeRefsDownloader(refs common.Refs, err error) refsDownloader {
-	return func(author, repo string) (common.Refs, error) {
+func fakeRefsDownloader(refs lib.Refs, err error) refsDownloader {
+	return func(author, repo string) (lib.Refs, error) {
 		return refs, err
 	}
 }
@@ -68,14 +68,14 @@ func TestNewPackageRequest(t *testing.T) {
 
 	pr, err := newPackageRequest(newPackageRequestArgs{
 		req:          fakeHTTPRequest("testalicious.af", "////", false),
-		downloadRefs: fakeRefsDownloader(common.Refs{}, nil),
+		downloadRefs: fakeRefsDownloader(lib.Refs{}, nil),
 	})
 	assert.Nil(t, pr)
 	assert.NotNil(t, err)
 
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          fakeHTTPRequest("testalicious.af", "/myauthor/myrepo/mysubpath", true),
-		downloadRefs: fakeRefsDownloader(common.Refs{}, errors.New("This is an error.")),
+		downloadRefs: fakeRefsDownloader(lib.Refs{}, errors.New("This is an error.")),
 	})
 	assert.Nil(t, pr)
 	assert.NotNil(t, err)

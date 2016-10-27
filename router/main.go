@@ -12,7 +12,11 @@ import (
 
 func main() {
 	// Get the config, sesh and creds.
-	conf, db := common.Init()
+	conf, client := lib.Init()
+
+	// Ensure that the client is closed eventually.
+	defer client.Close()
+
 	creds, err := config.ReadCredentials(conf)
 	if err != nil {
 		log.Fatalln("Failed to read credentials secret:", err)
@@ -24,11 +28,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// Ensure that the session is closed eventually.
-	defer db.Close()
-
 	// Start serving.
-	http.HandleFunc(wildcardHandlerPattern, RequestHandler(conf, db, creds, newRelicApp))
+	http.HandleFunc(wildcardHandlerPattern, RequestHandler(
+		conf,
+		client,
+		creds,
+		newRelicApp))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
@@ -21,7 +22,7 @@ var (
 // Search (as in "get top ten") gets the top packages sorted descendingly
 // within the specified time split.
 func Search(
-	q query.Queryable,
+	q db.Queryable,
 	searchQuery string,
 	limit int,
 ) (Summaries, error) {

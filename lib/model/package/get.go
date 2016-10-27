@@ -3,12 +3,13 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // Get fetches a single package, matching the author and repo parameters, from
 // the the database.
-func Get(q query.Queryable, author, repo string) (Details, error) {
+func Get(q db.Queryable, author, repo string) (Details, error) {
 	var result Details
 
 	// Create and execute the query, then create in iterator for the results.

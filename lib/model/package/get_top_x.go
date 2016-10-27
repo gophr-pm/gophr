@@ -4,12 +4,13 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // GetTopX (as in "get top ten") gets the top packages sorted descendingly
 // within the specified time split.
-func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
+func GetTopX(q db.Queryable, x int, split TimeSplit) (Summaries, error) {
 	if x < 1 {
 		return nil, errors.New("X must be greater than zero")
 	}

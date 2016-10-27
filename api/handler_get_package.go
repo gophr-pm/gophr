@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/model/package"
 	"github.com/gorilla/mux"
@@ -18,7 +18,7 @@ type getPackageRequestArgs struct {
 // GetPackageHandler creates an HTTP request handler that responds to individual
 // package get requests.
 func GetPackageHandler(
-	q query.Queryable,
+	q db.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (

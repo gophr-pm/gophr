@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // InsertionValueType is the type of value in the InsertQueryBuilder#Value(...).
@@ -68,7 +68,7 @@ func (qb *InsertQueryBuilder) IfNotExists() *InsertQueryBuilder {
 }
 
 // Create serializes and creates the query.
-func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *InsertQueryBuilder) Create(q db.Queryable) db.Query {
 	var (
 		buffer bytes.Buffer
 		params []interface{}

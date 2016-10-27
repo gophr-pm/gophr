@@ -4,11 +4,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // GetTrending gets up to "limit" of the most trending packages.
-func GetTrending(q query.Queryable, limit int) (Summaries, error) {
+func GetTrending(q db.Queryable, limit int) (Summaries, error) {
 	if limit < 1 {
 		return nil, errors.New("Limit must be greater than zero")
 	}

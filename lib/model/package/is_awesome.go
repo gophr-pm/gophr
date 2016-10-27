@@ -3,12 +3,13 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // IsAwesome returns true if the package matching the specified author and repo
 // has been recorded as an "awesome" package in the database.
-func IsAwesome(q query.Queryable, author, repo string) (bool, error) {
+func IsAwesome(q db.Queryable, author, repo string) (bool, error) {
 	var (
 		err   error
 		count int

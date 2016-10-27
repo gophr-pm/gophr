@@ -3,9 +3,6 @@ package main
 import (
 	"log"
 	"sync"
-
-	"github.com/gophr-pm/gophr/lib"
-	"github.com/gophr-pm/gophr/lib/model"
 )
 
 func main() {
