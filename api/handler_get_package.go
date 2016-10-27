@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gophr-pm/gophr/lib/db"
+	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/errors"
-	"github.com/gophr-pm/gophr/lib/model/package"
 	"github.com/gorilla/mux"
 )
 

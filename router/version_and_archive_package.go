@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/git"
-	"github.com/gophr-pm/gophr/lib/model/package/archive"
+	"github.com/gophr-pm/gophr/lib/db/model/package/archive"
 	"github.com/gophr-pm/gophr/lib/verdeps"
 )
 

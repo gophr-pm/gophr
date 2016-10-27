@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/gophr-pm/gophr/lib/model/download"
+	"github.com/gophr-pm/gophr/lib/db/model/download"
 )
 
 // recordPackageDownload is a helper function that records the download of a

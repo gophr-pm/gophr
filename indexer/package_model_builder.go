@@ -5,9 +5,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/gophr-pm/gophr/lib"
-	"github.com/gophr-pm/gophr/lib/model"
 )
 
 func fetchPackageVersions(metadata godocMetadata) ([]string, error) {

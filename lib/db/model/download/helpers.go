@@ -6,7 +6,7 @@ import (
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/github"
-	"github.com/gophr-pm/gophr/lib/model/package"
+	"github.com/gophr-pm/gophr/lib/db/model/package"
 )
 
 // assertPackageExistence is a wrapper around pkg.AssertExistence that puts the
