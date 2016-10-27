@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"log"
 	"sync"
@@ -93,3 +94,4 @@ func ReIndexPackageGitHubStats(conf *config.Config, q db.Queryable) {
 	wg.Wait()
 	log.Println("Finished testing star fetching")
 }
+*/

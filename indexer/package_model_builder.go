@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"log"
 	"sort"
@@ -96,3 +97,4 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 
 	return packageModels, nil
 }
+*/

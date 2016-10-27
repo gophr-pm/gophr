@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"strings"
 
@@ -23,3 +24,4 @@ func fetchAwesomeGoList() (map[string]bool, error) {
 
 	return awesomeGoMap, nil
 }
+*/
