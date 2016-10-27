@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// getPackageRequestArgs is the args struct for get package requests.
 type getPackageRequestArgs struct {
 	repo   string
 	author string

@@ -14,6 +14,7 @@ const (
 	maxSearchPackagesLimit = 20
 )
 
+// searchPackagesRequestArgs is the args struct for package search requests.
 type searchPackagesRequestArgs struct {
 	limit       int
 	searchQuery string

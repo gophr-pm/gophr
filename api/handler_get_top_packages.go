@@ -18,6 +18,7 @@ const (
 	maxTopPackagesLimit = 200
 )
 
+// getTopPackagesRequestArgs is the args struct for get top packages requests.
 type getTopPackagesRequestArgs struct {
 	limit     int
 	timeSplit pkg.TimeSplit

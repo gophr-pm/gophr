@@ -3,6 +3,7 @@ package pkg
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/dtos"
@@ -88,6 +89,7 @@ func AssertExistence(
 			Value(packagesColumnNameAuthor, author).
 			Value(packagesColumnNameAwesome, awesome).
 			Value(packagesColumnNameDescription, repoData.Description).
+			Value(packagesColumnNameDateDiscovered, time.Now()).
 			Value(
 				packagesColumnNameSearchBlob,
 				composeSearchBlob(author, repo, repoData.Description)).

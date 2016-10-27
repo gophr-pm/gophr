@@ -10,6 +10,7 @@ const (
 	packagesColumnNameTrendScore              = "trend_score"
 	packagesColumnNameSearchBlob              = "search_blob"
 	packagesColumnNameDescription             = "description"
+	packagesColumnNameDateDiscovered          = "date_discovered"
 	packagesColumnNameDailyDownloads          = "daily_downloads"
 	packagesColumnNameWeeklyDownloads         = "weekly_downloads"
 	packagesColumnNameDateLastIndexed         = "date_last_indexed"

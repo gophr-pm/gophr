@@ -14,5 +14,6 @@ type PackageDetails struct {
 	Downloads       PackageDownloads `json:"downloads"`
 	TrendScore      float64          `json:"trendScore"`
 	Description     string           `json:"description"`
+	DateDiscovered  time.Time        `json:"dateDiscovered"`
 	DateLastIndexed time.Time        `json:"dateLastIndexed"`
 }

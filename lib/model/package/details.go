@@ -11,6 +11,7 @@ type Details struct {
 	Summary
 
 	TrendScore              float64
+	DateDiscovered          time.Time
 	DateLastIndexed         time.Time
 	AllTimeVersionDownloads map[string]int64
 }
@@ -34,6 +35,7 @@ func (d Details) toDTO() dtos.PackageDetails {
 		Versions:        versions,
 		TrendScore:      d.TrendScore,
 		Description:     d.Description,
+		DateDiscovered:  d.DateDiscovered,
 		DateLastIndexed: d.DateLastIndexed,
 
 		Downloads: dtos.PackageDownloads{

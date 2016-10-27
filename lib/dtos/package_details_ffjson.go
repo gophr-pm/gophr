@@ -7,7 +7,6 @@ package dtos
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
@@ -52,26 +51,45 @@ func (mj *PackageDetails) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 			if i != 0 {
 				buf.WriteString(`,`)
 			}
-			/* Struct fall back. type=dtos.PackageVersion kind=struct */
-			err = buf.Encode(&v)
-			if err != nil {
-				return err
+
+			{
+
+				err = v.MarshalJSONBuf(buf)
+				if err != nil {
+					return err
+				}
+
 			}
 		}
 		buf.WriteString(`]`)
 	} else {
 		buf.WriteString(`null`)
 	}
-	/* Struct fall back. type=dtos.PackageDownloads kind=struct */
 	buf.WriteString(`,"downloads":`)
-	err = buf.Encode(&mj.Downloads)
-	if err != nil {
-		return err
+
+	{
+
+		err = mj.Downloads.MarshalJSONBuf(buf)
+		if err != nil {
+			return err
+		}
+
 	}
 	buf.WriteString(`,"trendScore":`)
 	fflib.AppendFloat(buf, float64(mj.TrendScore), 'g', -1, 64)
 	buf.WriteString(`,"description":`)
 	fflib.WriteJsonString(buf, string(mj.Description))
+	buf.WriteString(`,"dateDiscovered":`)
+
+	{
+
+		obj, err = mj.DateDiscovered.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		buf.Write(obj)
+
+	}
 	buf.WriteString(`,"dateLastIndexed":`)
 
 	{
@@ -107,6 +125,8 @@ const (
 
 	ffj_t_PackageDetails_Description
 
+	ffj_t_PackageDetails_DateDiscovered
+
 	ffj_t_PackageDetails_DateLastIndexed
 )
 
@@ -125,6 +145,8 @@ var ffj_key_PackageDetails_Downloads = []byte("downloads")
 var ffj_key_PackageDetails_TrendScore = []byte("trendScore")
 
 var ffj_key_PackageDetails_Description = []byte("description")
+
+var ffj_key_PackageDetails_DateDiscovered = []byte("dateDiscovered")
 
 var ffj_key_PackageDetails_DateLastIndexed = []byte("dateLastIndexed")
 
@@ -212,6 +234,11 @@ mainparse:
 						state = fflib.FFParse_want_colon
 						goto mainparse
 
+					} else if bytes.Equal(ffj_key_PackageDetails_DateDiscovered, kn) {
+						currentKey = ffj_t_PackageDetails_DateDiscovered
+						state = fflib.FFParse_want_colon
+						goto mainparse
+
 					} else if bytes.Equal(ffj_key_PackageDetails_DateLastIndexed, kn) {
 						currentKey = ffj_t_PackageDetails_DateLastIndexed
 						state = fflib.FFParse_want_colon
@@ -254,6 +281,12 @@ mainparse:
 
 				if fflib.EqualFoldRight(ffj_key_PackageDetails_DateLastIndexed, kn) {
 					currentKey = ffj_t_PackageDetails_DateLastIndexed
+					state = fflib.FFParse_want_colon
+					goto mainparse
+				}
+
+				if fflib.EqualFoldRight(ffj_key_PackageDetails_DateDiscovered, kn) {
+					currentKey = ffj_t_PackageDetails_DateDiscovered
 					state = fflib.FFParse_want_colon
 					goto mainparse
 				}
@@ -346,6 +379,9 @@ mainparse:
 
 				case ffj_t_PackageDetails_Description:
 					goto handle_Description
+
+				case ffj_t_PackageDetails_DateDiscovered:
+					goto handle_DateDiscovered
 
 				case ffj_t_PackageDetails_DateLastIndexed:
 					goto handle_DateLastIndexed
@@ -527,16 +563,17 @@ handle_Versions:
 				/* handler: tmp_uj__Versions type=dtos.PackageVersion kind=struct quoted=false*/
 
 				{
-					/* Falling back. type=dtos.PackageVersion kind=struct */
-					tbuf, err := fs.CaptureField(tok)
-					if err != nil {
-						return fs.WrapErr(err)
+					if tok == fflib.FFTok_null {
+
+						state = fflib.FFParse_after_value
+						goto mainparse
 					}
 
-					err = json.Unmarshal(tbuf, &tmp_uj__Versions)
+					err = tmp_uj__Versions.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 					if err != nil {
-						return fs.WrapErr(err)
+						return err
 					}
+					state = fflib.FFParse_after_value
 				}
 
 				uj.Versions = append(uj.Versions, tmp_uj__Versions)
@@ -554,16 +591,17 @@ handle_Downloads:
 	/* handler: uj.Downloads type=dtos.PackageDownloads kind=struct quoted=false*/
 
 	{
-		/* Falling back. type=dtos.PackageDownloads kind=struct */
-		tbuf, err := fs.CaptureField(tok)
-		if err != nil {
-			return fs.WrapErr(err)
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
 		}
 
-		err = json.Unmarshal(tbuf, &uj.Downloads)
+		err = uj.Downloads.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
 		if err != nil {
-			return fs.WrapErr(err)
+			return err
 		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value
@@ -620,6 +658,32 @@ handle_Description:
 			uj.Description = string(string(outBuf))
 
 		}
+	}
+
+	state = fflib.FFParse_after_value
+	goto mainparse
+
+handle_DateDiscovered:
+
+	/* handler: uj.DateDiscovered type=time.Time kind=struct quoted=false*/
+
+	{
+		if tok == fflib.FFTok_null {
+
+			state = fflib.FFParse_after_value
+			goto mainparse
+		}
+
+		tbuf, err := fs.CaptureField(tok)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+
+		err = uj.DateDiscovered.UnmarshalJSON(tbuf)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
+		state = fflib.FFParse_after_value
 	}
 
 	state = fflib.FFParse_after_value

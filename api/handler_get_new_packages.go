@@ -10,39 +10,37 @@ import (
 )
 
 const (
-	maxTrendingPackagesLimit = 200
+	maxNewPackagesLimit = 200
 )
 
-// getTrendingPackagesRequestArgs is the args struct for get trending packages
-// requests.
-type getTrendingPackagesRequestArgs struct {
+// getNewPackagesRequestArgs is the args struct for new packages requests.
+type getNewPackagesRequestArgs struct {
 	limit int
 }
 
-// GetTrendingPackagesHandler creates an HTTP request handler that responds to
-// top packages get requests.
-func GetTrendingPackagesHandler(
+// GetNewPackagesHandler creates an HTTP request handler that responds to top
+// packages get requests.
+func GetNewPackagesHandler(
 	q query.Queryable,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			err     error
-			args    getTrendingPackagesRequestArgs
+			args    getNewPackagesRequestArgs
 			json    []byte
 			results pkg.Summaries
 		)
 
 		// Parse out the args.
-		if args, err = extractGetTrendingPackagesRequestArgs(r); err != nil {
+		if args, err = extractGetNewPackagesRequestArgs(r); err != nil {
 			errors.RespondWithError(w, err)
 			return
 		}
 		// Get from the database.
-		if results, err = pkg.GetTrending(q, args.limit); err != nil {
+		if results, err = pkg.GetNew(q, args.limit); err != nil {
 			errors.RespondWithError(w, err)
 			return
 		}
-
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
 			errors.RespondWithError(w, err)
@@ -53,27 +51,27 @@ func GetTrendingPackagesHandler(
 	}
 }
 
-// extractGetTrendingPackagesRequestArgs validates and extracts the necessary
-// parameters for a get trending packages request.
-func extractGetTrendingPackagesRequestArgs(
+// extractGetNewPackagesRequestArgs validates and extracts the necessary
+// parameters for a get new packages request.
+func extractGetNewPackagesRequestArgs(
 	r *http.Request,
-) (getTrendingPackagesRequestArgs, error) {
+) (getNewPackagesRequestArgs, error) {
 	var (
 		err      error
-		args     getTrendingPackagesRequestArgs
+		args     getNewPackagesRequestArgs
 		limitStr = r.URL.Query().Get(urlVarLimit)
 	)
 
 	if len(limitStr) == 0 {
-		args.limit = maxTrendingPackagesLimit
+		args.limit = maxNewPackagesLimit
 		return args, nil
 	}
 
 	if args.limit, err = strconv.Atoi(limitStr); err != nil {
 		return args, NewInvalidQueryStringParameterError(urlVarLimit, limitStr)
 	}
-	if args.limit > maxTrendingPackagesLimit {
-		args.limit = maxTrendingPackagesLimit
+	if args.limit > maxNewPackagesLimit {
+		args.limit = maxNewPackagesLimit
 	}
 
 	return args, nil

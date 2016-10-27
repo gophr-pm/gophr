@@ -27,6 +27,9 @@ func main() {
 		urlVarPath),
 		BlobHandler()).Methods("GET")
 	r.HandleFunc(
+		"/packages/new",
+		GetNewPackagesHandler(session)).Methods("GET")
+	r.HandleFunc(
 		"/packages/search",
 		SearchPackagesHandler(session)).Methods("GET")
 	r.HandleFunc(
