@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pquerna/ffjson/ffjson"
 	"github.com/gophr-pm/gophr/lib/dtos"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API
@@ -65,7 +65,7 @@ func parseGitHubCommitLookUpResponseBody(response *http.Response) (time.Time, er
 		return time.Time{}, errors.New("Failed to parse response body")
 	}
 
-	var commitLookUpDTO dtos.GitCommitLookUpDTO
+	var commitLookUpDTO dtos.GithubCommitLookUp
 	err = ffjson.Unmarshal(body, &commitLookUpDTO)
 	if err != nil {
 		return time.Time{}, errors.New("Failed to unmarshal response body")

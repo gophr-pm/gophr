@@ -5,16 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	"github.com/gophr-pm/gophr/lib/depot"
 	"github.com/gophr-pm/gophr/lib/errors"
-)
-
-const (
-	blobHandlerURLVarAuthor = "author"
-	blobHandlerURLVarRepo   = "repo"
-	blobHandlerURLVarSHA    = "sha"
-	blobHandlerURLVarPath   = "path"
+	"github.com/gorilla/mux"
 )
 
 type blobRequestArgs struct {
@@ -35,7 +28,11 @@ func BlobHandler() func(http.ResponseWriter, *http.Request) {
 
 		// Request the filepath from depot gitweb.
 		hashedRepoName := depot.BuildHashedRepoName(args.author, args.repo, args.sha)
-		depotBlobURL := fmt.Sprintf("http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master", depot.DepotInternalServiceAddress, hashedRepoName, args.path)
+		depotBlobURL := fmt.Sprintf(
+			"http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master",
+			depot.DepotInternalServiceAddress,
+			hashedRepoName,
+			args.path)
 		depotBlobResp, err := http.Get(depotBlobURL)
 		if err != nil {
 			errors.RespondWithError(w, err)
@@ -69,24 +66,26 @@ func extractBlobRequestArgs(r *http.Request) (blobRequestArgs, error) {
 	vars := mux.Vars(r)
 	args := blobRequestArgs{}
 
-	args.author = vars[blobHandlerURLVarAuthor]
+	args.author = vars[urlVarAuthor]
 	if len(args.author) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarAuthor, args.author)
+		return args, NewInvalidURLParameterError(
+			urlVarAuthor,
+			args.author)
 	}
 
-	args.repo = vars[blobHandlerURLVarRepo]
+	args.repo = vars[urlVarRepo]
 	if len(args.repo) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarRepo, args.repo)
+		return args, NewInvalidURLParameterError(urlVarRepo, args.repo)
 	}
 
-	args.sha = vars[blobHandlerURLVarSHA]
+	args.sha = vars[urlVarSHA]
 	if len(args.sha) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarSHA, args.sha)
+		return args, NewInvalidURLParameterError(urlVarSHA, args.sha)
 	}
 
-	args.path = vars[blobHandlerURLVarPath]
+	args.path = vars[urlVarPath]
 	if len(args.path) < 0 {
-		return args, NewInvalidURLParameterError(blobHandlerURLVarPath, args.path)
+		return args, NewInvalidURLParameterError(urlVarPath, args.path)
 	}
 
 	return args, nil
