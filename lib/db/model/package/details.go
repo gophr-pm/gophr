@@ -10,7 +10,7 @@ import (
 type Details struct {
 	Summary
 
-	TrendScore              float64
+	TrendScore              float32
 	DateDiscovered          time.Time
 	DateLastIndexed         time.Time
 	AllTimeVersionDownloads map[string]int64
