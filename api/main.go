@@ -11,10 +11,10 @@ import (
 
 func main() {
 	// Initialize the API.
-	config, session := common.Init()
+	config, client := lib.Init()
 
-	// Ensure that the session is closed eventually.
-	defer session.Close()
+	// Ensure that the client is closed eventually.
+	defer client.Close()
 
 	// Register all of the routes.
 	r := mux.NewRouter()
@@ -28,23 +28,23 @@ func main() {
 		BlobHandler()).Methods("GET")
 	r.HandleFunc(
 		"/packages/new",
-		GetNewPackagesHandler(session)).Methods("GET")
+		GetNewPackagesHandler(client)).Methods("GET")
 	r.HandleFunc(
 		"/packages/search",
-		SearchPackagesHandler(session)).Methods("GET")
+		SearchPackagesHandler(client)).Methods("GET")
 	r.HandleFunc(
 		"/packages/trending",
-		GetTrendingPackagesHandler(session)).Methods("GET")
+		GetTrendingPackagesHandler(client)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/top/{%s}/{%s}",
 		urlVarLimit,
 		urlVarTimeSplit),
-		GetTopPackagesHandler(session)).Methods("GET")
+		GetTopPackagesHandler(client)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/{%s}/{%s}",
 		urlVarAuthor,
 		urlVarRepo),
-		GetPackageHandler(session)).Methods("GET")
+		GetPackageHandler(client)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

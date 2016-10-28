@@ -4,11 +4,31 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
-// GetTrending gets up to "limit" of the most trending packages.
-func GetTrending(q query.Queryable, limit int) (Summaries, error) {
+var (
+	// Fill in all of the column name slots.
+	refinedSearchExprTemplate = fmt.Sprintf(
+		searchExprTemplate,
+		packagesColumnNameSearchBlob,
+		"%s",
+		packagesColumnNameStars,
+		packagesColumnNameAwesome,
+		packagesColumnNameAllTimeDownloads)
+)
+
+// Search (as in "get top ten") gets the top packages sorted descendingly
+// within the specified time split.
+func Search(
+	q db.Queryable,
+	searchQuery string,
+	limit int,
+) (Summaries, error) {
+	if len(searchQuery) < 1 {
+		return nil, errors.New("Search query cannot be blank")
+	}
 	if limit < 1 {
 		return nil, errors.New("Limit must be greater than zero")
 	}
@@ -27,8 +47,8 @@ func GetTrending(q query.Queryable, limit int) (Summaries, error) {
 			packagesColumnNameAllTimeDownloads).
 		From(packagesTableName).
 		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(
-			descSortExprTemplate,
-			packagesColumnNameTrendScore))).
+			refinedSearchExprTemplate,
+			searchQuery))).
 		Limit(limit).
 		Create(q).
 		Iter()
@@ -53,9 +73,7 @@ func GetTrending(q query.Queryable, limit int) (Summaries, error) {
 	}
 
 	if err := iter.Close(); err != nil {
-		return nil, fmt.Errorf(
-			`Failed to get trending packages from the db: %v`,
-			err)
+		return nil, fmt.Errorf(`Failed to search for packages in the db: %v`, err)
 	}
 
 	return summaries, nil

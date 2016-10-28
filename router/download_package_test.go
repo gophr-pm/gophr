@@ -36,7 +36,7 @@ func TestDownloadPackage(t *testing.T) {
 		Return(nil)
 	zipResp := &http.Response{
 		StatusCode: 500,
-		Body:       common.NewMockHTTPResponseBody(nil),
+		Body:       lib.NewMockHTTPResponseBody(nil),
 	}
 	deleteWorkDirCalled := false
 	args = packageDownloaderArgs{
@@ -57,7 +57,7 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, deleteWorkDirCalled)
 
 	mockIO = io.NewMockIO()
@@ -66,7 +66,7 @@ func TestDownloadPackage(t *testing.T) {
 		Return(nil)
 	zipResp = &http.Response{
 		StatusCode: 404,
-		Body:       common.NewMockHTTPResponseBody(nil),
+		Body:       lib.NewMockHTTPResponseBody(nil),
 	}
 	deleteWorkDirCalled = false
 	args = packageDownloaderArgs{
@@ -87,7 +87,7 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, deleteWorkDirCalled)
 
 	mockIO = io.NewMockIO()
@@ -99,7 +99,7 @@ func TestDownloadPackage(t *testing.T) {
 		Return((*os.File)(nil), errors.New("oh no"))
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	deleteWorkDirCalled = false
 	args = packageDownloaderArgs{
@@ -120,14 +120,14 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, deleteWorkDirCalled)
 
 	// TODO(skeswa): come up with a mock file to make sure it is closed.
 	mockFile := &os.File{}
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	mockIO = io.NewMockIO()
 	mockIO.
@@ -158,14 +158,14 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, deleteWorkDirCalled)
 
 	// TODO(skeswa): come up with a mock file to make sure it is closed.
 	mockFile = &os.File{}
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	mockIO = io.NewMockIO()
 	mockIO.
@@ -203,7 +203,7 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, unzipArchiveCalled)
 	assert.True(t, deleteWorkDirCalled)
 
@@ -211,7 +211,7 @@ func TestDownloadPackage(t *testing.T) {
 	mockFile = &os.File{}
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	mockIO = io.NewMockIO()
 	mockIO.
@@ -252,7 +252,7 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, unzipArchiveCalled)
 	assert.True(t, deleteWorkDirCalled)
 
@@ -260,7 +260,7 @@ func TestDownloadPackage(t *testing.T) {
 	mockFile = &os.File{}
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	mockIO = io.NewMockIO()
 	mockIO.
@@ -303,7 +303,7 @@ func TestDownloadPackage(t *testing.T) {
 	_, err = downloadPackage(args)
 	assert.NotNil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, unzipArchiveCalled)
 	assert.True(t, deleteWorkDirCalled)
 
@@ -311,7 +311,7 @@ func TestDownloadPackage(t *testing.T) {
 	mockFile = &os.File{}
 	zipResp = &http.Response{
 		StatusCode: 200,
-		Body:       common.NewMockHTTPResponseBody([]byte("this is a zip")),
+		Body:       lib.NewMockHTTPResponseBody([]byte("this is a zip")),
 	}
 	mockIO = io.NewMockIO()
 	mockIO.
@@ -358,7 +358,7 @@ func TestDownloadPackage(t *testing.T) {
 	paths, err := downloadPackage(args)
 	assert.Nil(t, err)
 	mockIO.AssertExpectations(t)
-	assert.True(t, zipResp.Body.(*common.MockHTTPResponseBody).WasClosed())
+	assert.True(t, zipResp.Body.(*lib.MockHTTPResponseBody).WasClosed())
 	assert.True(t, unzipArchiveCalled)
 	assert.False(t, deleteWorkDirCalled)
 	assert.NotEmpty(t, paths.workDirPath)

@@ -4,32 +4,30 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
-var (
-	// Fill in all of the column name slots.
-	refinedSearchExprTemplate = fmt.Sprintf(
-		searchExprTemplate,
-		packagesColumnNameSearchBlob,
-		"%s",
-		packagesColumnNameStars,
-		packagesColumnNameAwesome,
-		packagesColumnNameAllTimeDownloads)
-)
-
-// Search (as in "get top ten") gets the top packages sorted descendingly
+// GetTopX (as in "get top ten") gets the top packages sorted descendingly
 // within the specified time split.
-func Search(
-	q query.Queryable,
-	searchQuery string,
-	limit int,
-) (Summaries, error) {
-	if len(searchQuery) < 1 {
-		return nil, errors.New("Search query cannot be blank")
+func GetTopX(q db.Queryable, x int, split TimeSplit) (Summaries, error) {
+	if x < 1 {
+		return nil, errors.New("X must be greater than zero")
 	}
-	if limit < 1 {
-		return nil, errors.New("Limit must be greater than zero")
+
+	// Turn the split into a field to sort.
+	var sortField string
+	switch split {
+	case Daily:
+		sortField = packagesColumnNameDailyDownloads
+	case Weekly:
+		sortField = packagesColumnNameWeeklyDownloads
+	case Monthly:
+		sortField = packagesColumnNameMonthlyDownloads
+	case AllTime:
+		sortField = packagesColumnNameAllTimeDownloads
+	default:
+		return nil, errors.New("Invalid time split provided")
 	}
 
 	// Create and execute the query, then create in iterator for the results.
@@ -46,9 +44,9 @@ func Search(
 			packagesColumnNameAllTimeDownloads).
 		From(packagesTableName).
 		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(
-			refinedSearchExprTemplate,
-			searchQuery))).
-		Limit(limit).
+			descSortExprTemplate,
+			sortField))).
+		Limit(x).
 		Create(q).
 		Iter()
 
@@ -72,7 +70,10 @@ func Search(
 	}
 
 	if err := iter.Close(); err != nil {
-		return nil, fmt.Errorf(`Failed to search for packages in the db: %v`, err)
+		return nil, fmt.Errorf(
+			`Failed to get top %d packages from the db: %v`,
+			x,
+			err)
 	}
 
 	return summaries, nil

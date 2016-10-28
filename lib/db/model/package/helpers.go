@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"sync"
 
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
 )
@@ -12,7 +12,7 @@ import (
 // checkIfAwesomeAsynchronously is a wrapper around pkg.IsAwesome that makes it
 // easier to place in a go-routine by making the return values pointers instead.
 func checkIfAwesomeAsynchronously(
-	q query.Queryable,
+	q db.Queryable,
 	author string,
 	repo string,
 	outputBool *bool,

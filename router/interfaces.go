@@ -3,10 +3,9 @@ package main
 import (
 	"net/http"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/git"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
@@ -14,7 +13,7 @@ import (
 )
 
 // refsDownloader is responsible for downloading the git refs for a package.
-type refsDownloader func(author, repo string) (common.Refs, error)
+type refsDownloader func(author, repo string) (lib.Refs, error)
 
 // fullSHAFetcher is responsible for fetching a full commit SHA from a short SHA.
 type fullSHAFetcher func(args github.FetchFullSHAArgs) (string, error)
@@ -22,7 +21,7 @@ type fullSHAFetcher func(args github.FetchFullSHAArgs) (string, error)
 // packageDownloadRecorderArgs is the arguments struct for
 // packageDownloadRecorders.
 type packageDownloadRecorderArgs struct {
-	db     *gocql.Session
+	db     db.BatchingQueryable
 	sha    string
 	repo   string
 	ghSvc  github.RequestService
@@ -37,7 +36,7 @@ type packageDownloadRecorder func(args packageDownloadRecorderArgs)
 // packageArchivalArgs is the arguments struct for packageArchivalRecorders and
 // packageArchivalCheckers.
 type packageArchivalRecorderArgs struct {
-	db     *gocql.Session
+	db     db.Queryable
 	sha    string
 	repo   string
 	author string
@@ -51,7 +50,7 @@ type packageArchivalRecorder func(args packageArchivalRecorderArgs)
 // packageArchivalArgs is the arguments struct for packageArchivalRecorders and
 // packageArchivalCheckers.
 type packageArchivalCheckerArgs struct {
-	db                    *gocql.Session
+	db                    db.Queryable
 	sha                   string
 	repo                  string
 	author                string
@@ -68,7 +67,7 @@ type packageArchivalChecker func(args packageArchivalCheckerArgs) (bool, error)
 // packageVersionerArgs is the arguments struct for packageVersioners.
 type packageVersionerArgs struct {
 	io                     io.IO
-	db                     *gocql.Session
+	db                     db.Queryable
 	sha                    string
 	repo                   string
 	conf                   *config.Config
@@ -124,7 +123,7 @@ type packagePusherArgs struct {
 // dbPackageArchivalChecker returns true if a package version matching the
 // parameters exists in the database.
 type dbPackageArchivalChecker func(
-	q query.Queryable,
+	q db.Queryable,
 	author string,
 	repo string,
 	sha string) (bool, error)

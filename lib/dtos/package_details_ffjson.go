@@ -76,7 +76,7 @@ func (mj *PackageDetails) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 
 	}
 	buf.WriteString(`,"trendScore":`)
-	fflib.AppendFloat(buf, float64(mj.TrendScore), 'g', -1, 64)
+	fflib.AppendFloat(buf, float64(mj.TrendScore), 'g', -1, 32)
 	buf.WriteString(`,"description":`)
 	fflib.WriteJsonString(buf, string(mj.Description))
 	buf.WriteString(`,"dateDiscovered":`)
@@ -609,11 +609,11 @@ handle_Downloads:
 
 handle_TrendScore:
 
-	/* handler: uj.TrendScore type=float64 kind=float64 quoted=false*/
+	/* handler: uj.TrendScore type=float32 kind=float32 quoted=false*/
 
 	{
 		if tok != fflib.FFTok_double && tok != fflib.FFTok_integer && tok != fflib.FFTok_null {
-			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for float64", tok))
+			return fs.WrapErr(fmt.Errorf("cannot unmarshal %s into Go value for float32", tok))
 		}
 	}
 
@@ -623,13 +623,13 @@ handle_TrendScore:
 
 		} else {
 
-			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 64)
+			tval, err := fflib.ParseFloat(fs.Output.Bytes(), 32)
 
 			if err != nil {
 				return fs.WrapErr(err)
 			}
 
-			uj.TrendScore = float64(tval)
+			uj.TrendScore = float32(tval)
 
 		}
 	}

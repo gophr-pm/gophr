@@ -1,10 +1,13 @@
 package archives
 
-import "github.com/gophr-pm/gophr/lib/db/query"
+import (
+	"github.com/gophr-pm/gophr/lib/db"
+	"github.com/gophr-pm/gophr/lib/db/query"
+)
 
 // Exists returns true if a package version matching the parameters exists.
 func Exists(
-	q query.Queryable,
+	q db.Queryable,
 	author string,
 	repo string,
 	sha string,

@@ -12,7 +12,7 @@ type PackageDetails struct {
 	Awesome         bool             `json:"awesome"`
 	Versions        []PackageVersion `json:"version"`
 	Downloads       PackageDownloads `json:"downloads"`
-	TrendScore      float64          `json:"trendScore"`
+	TrendScore      float32          `json:"trendScore"`
 	Description     string           `json:"description"`
 	DateDiscovered  time.Time        `json:"dateDiscovered"`
 	DateLastIndexed time.Time        `json:"dateLastIndexed"`

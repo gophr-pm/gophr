@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // ColumnValueAssignment represents a value assignment for a specific column of
@@ -105,13 +105,13 @@ func (qb *UpdateQueryBuilder) compose() (string, []interface{}) {
 }
 
 // Create serializes and creates the query.
-func (qb *UpdateQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *UpdateQueryBuilder) Create(q db.Queryable) db.Query {
 	text, params := qb.compose()
 	return q.Query(text, params...)
 }
 
-// CreateVoid serializes and creates the query with no return.
-func (qb *UpdateQueryBuilder) CreateVoid(q VoidQueryable) {
+// AppendTo serializes and creates the query with no return.
+func (qb *UpdateQueryBuilder) AppendTo(b db.Batch) {
 	text, params := qb.compose()
-	q.Query(text, params...)
+	b.Query(text, params...)
 }

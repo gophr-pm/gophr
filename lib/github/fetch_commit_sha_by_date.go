@@ -32,7 +32,7 @@ func (svc *requestService) FetchCommitSHA(
 	}
 
 	log.Printf("%s \n", err)
-	refs, err := common.FetchRefs(author, repo)
+	refs, err := lib.FetchRefs(author, repo)
 	if err != nil {
 		return refs.MasterRefHash, nil
 	}
