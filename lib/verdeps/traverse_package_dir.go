@@ -1,20 +1,26 @@
 package verdeps
 
 import (
-	"fmt"
-	"io/ioutil"
+	"go/parser"
 	"os"
 	"path/filepath"
 	"sync"
+
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
+// goFileASTParser is a function type that de-couples verdeps.traversePackageDir
+// from verdeps.parseGoFile.
+type goFileASTParser func(parseGoFileArgs)
+
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
 type traversePackageDirArgs struct {
+	io                       io.IO
 	errors                   *syncedErrors
 	dirPath                  string
 	waitGroup                *sync.WaitGroup
 	subDirPath               string
+	parseGoFile              goFileASTParser
 	inVendorDir              bool
 	importCounts             *syncedImportCounts
 	vendorContext            *vendorContext
@@ -39,14 +45,18 @@ func traversePackageDir(args traversePackageDirArgs) {
 	defer args.waitGroup.Done()
 
 	// Read all the files of this directory.
-	if files, err = ioutil.ReadDir(fullDirPath); err != nil {
+	if files, err = args.io.ReadDir(fullDirPath); err != nil {
 		args.errors.add(err)
 		return
 	}
 
-	verdepsHelper := &verdepsHelperArgs{io: io.NewIO()}
 	// Get all relevant pathing information in one fell swoop.
-	vendorDirPath, subDirNames, goFilePaths := verdepsHelper.getPackageDirPaths(files, fullDirPath)
+	vendorDirPath, subDirNames, goFilePaths := getPackageDirPaths(
+		getPackageDirPathsArgs{
+			io:             args.io,
+			files:          files,
+			packageDirPath: fullDirPath,
+		})
 
 	// Record this subpath as a vendored package.
 	if args.inVendorDir &&
@@ -70,21 +80,24 @@ func traversePackageDir(args traversePackageDirArgs) {
 		subErrors := newSyncedErrors()
 		subImportSpecChan := make(chan *importSpec)
 		subPackageSpecChan := make(chan *packageSpec)
-		traversePackageDirWaitGroup := &sync.WaitGroup{}
 		bufferVendorablesWaitGroup := &sync.WaitGroup{}
+		traversePackageDirWaitGroup := &sync.WaitGroup{}
 
 		// Traverse the vendor dir.
 		traversePackageDirWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
-			errors:          subErrors,
-			dirPath:         vendorDirPath,
-			waitGroup:       traversePackageDirWaitGroup,
-			subDirPath:      "",
-			inVendorDir:     true,
-			importCounts:    nil,
-			vendorContext:   currentVendorContext,
-			importSpecChan:  subImportSpecChan,
-			packageSpecChan: subPackageSpecChan,
+			io:                       args.io,
+			errors:                   subErrors,
+			dirPath:                  vendorDirPath,
+			waitGroup:                traversePackageDirWaitGroup,
+			subDirPath:               "",
+			parseGoFile:              args.parseGoFile,
+			inVendorDir:              true,
+			importCounts:             nil,
+			vendorContext:            currentVendorContext,
+			importSpecChan:           subImportSpecChan,
+			packageSpecChan:          subPackageSpecChan,
+			generatedInternalDirName: args.generatedInternalDirName,
 		})
 
 		// The specs must be buffered since vendored packages are self-referencial.
@@ -114,7 +127,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 		// Exit if there were problems.
 		if subErrors.len() > 0 {
-			fmt.Printf("error founds found while traversing %s\n", vendorDirPath)
+			// TODO(skeswa): compose the sub errors together.
 			args.errors.add(subErrors.get()...)
 			return
 		}
@@ -127,7 +140,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 	for _, subDirName := range subDirNames {
 		// Internal directories must be renamed for gophr to function correctly.
 		if subDirName == internalDirName {
-			if err := os.Rename(
+			if err := args.io.Rename(
 				filepath.Join(args.dirPath, args.subDirPath, internalDirName),
 				filepath.Join(args.dirPath, args.subDirPath, args.generatedInternalDirName),
 			); err != nil {
@@ -142,22 +155,26 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 		subWaitGroup.Add(1)
 		go traversePackageDir(traversePackageDirArgs{
-			errors:          args.errors,
-			dirPath:         args.dirPath,
-			waitGroup:       subWaitGroup,
-			subDirPath:      filepath.Join(args.subDirPath, subDirName),
-			inVendorDir:     args.inVendorDir,
-			importCounts:    args.importCounts,
-			vendorContext:   args.vendorContext,
-			importSpecChan:  args.importSpecChan,
-			packageSpecChan: args.packageSpecChan,
+			io:                       args.io,
+			errors:                   args.errors,
+			dirPath:                  args.dirPath,
+			waitGroup:                subWaitGroup,
+			subDirPath:               filepath.Join(args.subDirPath, subDirName),
+			parseGoFile:              args.parseGoFile,
+			inVendorDir:              args.inVendorDir,
+			importCounts:             args.importCounts,
+			vendorContext:            args.vendorContext,
+			importSpecChan:           args.importSpecChan,
+			packageSpecChan:          args.packageSpecChan,
+			generatedInternalDirName: args.generatedInternalDirName,
 		})
 	}
 
 	// Process all of the go files, looking for transformable imports.
 	for _, goFilePath := range goFilePaths {
 		subWaitGroup.Add(1)
-		go parseGoFile(parseGoFileArgs{
+		go args.parseGoFile(parseGoFileArgs{
+			parse:           parser.ParseFile,
 			errors:          args.errors,
 			filePath:        goFilePath,
 			waitGroup:       subWaitGroup,

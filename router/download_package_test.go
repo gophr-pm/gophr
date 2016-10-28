@@ -275,7 +275,7 @@ func TestDownloadPackage(t *testing.T) {
 	mockIO.
 		On("ReadDir", mock.AnythingOfType("string")).
 		Return([]os.FileInfo{
-			io.NewMockFileInfo("archive.zip", 1234),
+			io.NewFakeFileInfo("archive.zip", 1234, false),
 		}, error(nil))
 	unzipArchiveCalled = false
 	deleteWorkDirCalled = false
@@ -326,11 +326,11 @@ func TestDownloadPackage(t *testing.T) {
 	mockIO.
 		On("ReadDir", mock.AnythingOfType("string")).
 		Return([]os.FileInfo{
-			io.NewMockFileInfo("archive.zip", 1234),
-			io.NewMockFileInfo("archive.zip", 1235),
-			io.NewMockFileInfo("archive.zip", 1236),
-			io.NewMockFileInfo("akdjshfgaldfkjhjdfhgaksjhfg", 9999),
-			io.NewMockFileInfo("archive.zip", 1237),
+			io.NewFakeFileInfo("archive.zip", 1234, false),
+			io.NewFakeFileInfo("archive.zip", 1235, false),
+			io.NewFakeFileInfo("archive.zip", 1236, false),
+			io.NewFakeFileInfo("akdjshfgaldfkjhjdfhgaksjhfg", 9999, false),
+			io.NewFakeFileInfo("archive.zip", 1237, false),
 		}, error(nil))
 	unzipArchiveCalled = false
 	deleteWorkDirCalled = false

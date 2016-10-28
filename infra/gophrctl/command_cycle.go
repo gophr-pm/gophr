@@ -70,8 +70,17 @@ func cycleCommand(c *cli.Context) error {
 }
 
 func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
+	// Check to see if the image should be built first.
+	shouldBuildImageFirst := c.Bool(flagNameBuild)
 	// Memorize whether services should be deleted.
 	shouldDeletePersistent := c.Bool(flagNameDeletePersistent)
+
+	// Make sure that the image is built (if forced).
+	if shouldBuildImageFirst {
+		if err := buildModule(c, m, gophrRoot, env); err != nil {
+			return err
+		}
+	}
 
 	// Make sure that volumes exist first.
 	if env == environmentProd && len(m.prodVolumes) > 0 {

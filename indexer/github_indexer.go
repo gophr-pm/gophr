@@ -14,7 +14,7 @@ import (
 
 type packageRepoTuple struct {
 	pkg      *models.PackageModel
-	repoData dtos.GithubRepoDTO
+	repoData dtos.GithubRepo
 }
 
 var requestTimeBuffer = 50 * time.Millisecond

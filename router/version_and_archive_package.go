@@ -46,6 +46,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 
 	// Version lock all of the Github dependencies in the packageModel.
 	if err = args.versionDeps(verdeps.VersionDepsArgs{
+		IO:            args.io,
 		SHA:           args.sha,
 		Repo:          args.repo,
 		Path:          downloadPaths.archiveDirPath,
