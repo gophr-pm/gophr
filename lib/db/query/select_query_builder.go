@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	"github.com/gophr-pm/gophr/lib/db"
@@ -20,6 +21,14 @@ type SelectQueryBuilder struct {
 func Select(columns ...string) *SelectQueryBuilder {
 	return &SelectQueryBuilder{
 		columns: columns,
+	}
+}
+
+// SelectSum starts constructing a select query that sums a specific column of
+// the rows in the result set.
+func SelectSum(column string) *SelectQueryBuilder {
+	return &SelectQueryBuilder{
+		columns: []string{fmt.Sprintf(sumOperatorTemplate, column)},
 	}
 }
 

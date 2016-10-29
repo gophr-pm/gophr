@@ -30,6 +30,28 @@ func (cb *ColumnConditionBuilder) Equals(value interface{}) *Condition {
 	}
 }
 
+// IsLessThanOrEqualTo creates an lte condition.
+func (cb *ColumnConditionBuilder) IsLessThanOrEqualTo(
+	value interface{},
+) *Condition {
+	return &Condition{
+		expression:   cb.column + "<=?",
+		parameter:    value,
+		hasParameter: true,
+	}
+}
+
+// IsGreaterThanOrEqualTo creates an gte condition.
+func (cb *ColumnConditionBuilder) IsGreaterThanOrEqualTo(
+	value interface{},
+) *Condition {
+	return &Condition{
+		expression:   cb.column + ">=?",
+		parameter:    value,
+		hasParameter: true,
+	}
+}
+
 // IndexConditionBuilder helps to build conditions.
 type IndexConditionBuilder struct {
 	index string
