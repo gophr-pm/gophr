@@ -117,11 +117,11 @@ func countHistoricalDownloads(
 	// All-time queries are different since the data is in a different table.
 	if split == allTimeSplit {
 		if err = query.
-			SelectSum(dailyColumnNameTotal).
-			From(dailyTableName).
-			Where(query.Column(dailyColumnNameAuthor).Equals(author)).
-			And(query.Column(dailyColumnNameRepo).Equals(repo)).
-			And(query.Column(dailyColumnNameSHA).Equals("")).
+			Select(allTimeColumnNameTotal).
+			From(allTimeTableName).
+			Where(query.Column(allTimeColumnNameAuthor).Equals(author)).
+			And(query.Column(allTimeColumnNameRepo).Equals(repo)).
+			And(query.Column(allTimeColumnNameSHA).Equals("")).
 			Create(q).
 			Scan(&count); err != nil {
 			resultsChan <- countResult{err: err}
