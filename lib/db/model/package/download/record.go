@@ -20,8 +20,16 @@ func Record(
 ) error {
 	var (
 		// Normalize the day date by setting all the time fields to zero.
-		now         = time.Now()
-		today       = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		now   = time.Now()
+		today = time.Date(
+			now.Year(),
+			now.Month(),
+			now.Day(),
+			0,
+			0,
+			0,
+			0,
+			time.UTC)
 		resultsChan = make(chan error)
 	)
 

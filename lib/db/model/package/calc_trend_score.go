@@ -24,5 +24,5 @@ func CalcTrendScore(
 
 	// How fast the downloads are growing on a day-to-day scale is twice is
 	// important as how fast as its growing on a week-to-week scale.
-	return (2 * weeklyDifferential) * monthlyDifferential
+	return ((2 * weeklyDifferential) + (1 * monthlyDifferential)) / 3
 }
