@@ -80,7 +80,6 @@ CREATE TABLE IF NOT EXISTS daily_downloads (
   day timestamp,
   author text,
   repo text,
-  sha text,
   total counter,
-  PRIMARY KEY ((author, repo), sha, day)
-) WITH CLUSTERING ORDER BY (sha ASC, day DESC);
+  PRIMARY KEY ((author, repo), day)
+) WITH CLUSTERING ORDER BY (day DESC);

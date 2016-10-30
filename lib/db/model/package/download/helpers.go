@@ -4,9 +4,9 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/db"
+	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/github"
-	"github.com/gophr-pm/gophr/lib/db/model/package"
 )
 
 // assertPackageExistence is a wrapper around pkg.AssertExistence that puts the
@@ -38,12 +38,10 @@ func bumpDownloads(
 ) {
 	// Counter batches must be unlogdged (as of Cassandra 2.1).
 	batch := b.NewUnloggedBatch()
-	// Create the update queries for the specific version.
-	addDailyBumpQuery(batch, day, author, repo, sha)
+	// Create and add the update queries.
+	addDailyBumpQuery(batch, day, author, repo)
 	addAllTimeBumpQuery(batch, author, repo, sha)
-	// Create the update queries for the whole package count.
-	addDailyBumpQuery(batch, day, author, repo, "")
-	addAllTimeBumpQuery(batch, author, repo, "")
+	addAllTimeBumpQuery(batch, author, repo, "") // "" represents "all" versions.
 
 	if err := batch.Execute(); err != nil {
 		resultChan <- err
@@ -59,14 +57,12 @@ func addDailyBumpQuery(
 	day time.Time,
 	author string,
 	repo string,
-	sha string,
 ) {
 	query.Update(dailyTableName).
 		Increment(dailyColumnNameTotal, 1).
 		Where(query.Column(dailyColumnNameDay).Equals(day)).
 		And(query.Column(dailyColumnNameAuthor).Equals(author)).
 		And(query.Column(dailyColumnNameRepo).Equals(repo)).
-		And(query.Column(dailyColumnNameSHA).Equals(sha)).
 		AppendTo(b)
 }
 

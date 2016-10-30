@@ -3,7 +3,6 @@ package download
 const (
 	dailyTableName        = "daily_downloads"
 	dailyColumnNameDay    = "day"
-	dailyColumnNameSHA    = "sha"
 	dailyColumnNameRepo   = "repo"
 	dailyColumnNameTotal  = "total"
 	dailyColumnNameAuthor = "author"

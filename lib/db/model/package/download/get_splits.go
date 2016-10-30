@@ -149,7 +149,6 @@ func countHistoricalDownloads(
 		From(dailyTableName).
 		Where(query.Column(dailyColumnNameAuthor).Equals(author)).
 		And(query.Column(dailyColumnNameRepo).Equals(repo)).
-		And(query.Column(dailyColumnNameSHA).Equals("")).
 		And(query.Column(dailyColumnNameDay).IsGreaterThanOrEqualTo(from)).
 		And(query.Column(dailyColumnNameDay).IsLessThanOrEqualTo(today)).
 		Create(q).
