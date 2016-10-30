@@ -1,49 +1,39 @@
-package github
+package githubIndexer
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/gophr-pm/gophr/lib"
-	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
-	"github.com/gophr-pm/gophr/lib/model"
 )
-
-type packageRepoTuple struct {
-	pkg      *models.PackageModel
-	repoData dtos.GithubRepoDTO
-}
-
-var requestTimeBuffer = 50 * time.Millisecond
-
-// TODO(Shikkic): refactor this to not use package models
 
 // Index is a service dedicated to fetching Github repo metadata
 // for each package in our DB and updating metadata.
-func Index() {
-	conf, session := common.Init()
+func Index(args IndexArgs) error {
+	conf, session := args.Init()
 	defer session.Close()
 
-	log.Println("Reindexing packageModel github data")
-	packageModels, err := models.ScanAllPackageModels(session)
+	log.Println("Reindexing github data for packages.")
+	packageModels, err := args.PackageRetriever(session)
 	numPackageModels := len(packageModels)
 	log.Printf("%d packages found", numPackageModels)
 
 	if err != nil || numPackageModels == 0 {
-		log.Println("Error retrieving querying package data")
-		log.Fatalln(err)
+		return fmt.Errorf("Failed to retrieve any packages from the db: %v", err)
 	}
 
-	log.Println("Initializing gitHub component")
-	gitHubRequestService := github.NewRequestService(
+	gitHubRequestService := args.NewGithubRequestService(
 		github.RequestServiceArgs{
 			ForIndexer: true,
 			Conf:       conf,
 			Session:    session,
 		},
 	)
+
+	log.Println("LOL")
+	log.Println(gitHubRequestService)
 
 	var wg sync.WaitGroup
 	nbConcurrentInserts := 20
@@ -59,7 +49,7 @@ func Index() {
 				packageModel.Description = &tuple.repoData.Description
 				packageModel.IndexTime = &indexTime
 				packageModel.Stars = &tuple.repoData.Stars
-				err := models.InsertPackage(session, packageModel)
+				err := args.PackageInserter(session, packageModel)
 				if err != nil {
 					log.Println("Could not insert packageModel, error occured")
 					log.Println(err)
@@ -79,7 +69,7 @@ func Index() {
 			wg.Add(1)
 			go func() {
 				log.Println("Preparing to delete packageModel")
-				models.DeletePackageModel(session, packageModel)
+				args.PackageDeleter(session, packageModel)
 				wg.Done()
 			}()
 		} else if err != nil {
@@ -91,10 +81,12 @@ func Index() {
 			pkg:      packageModel,
 			repoData: packageModelGitHubData,
 		}
-		time.Sleep(requestTimeBuffer)
+		time.Sleep(args.RequestTimeBuffer)
 	}
 
 	close(packageChan)
 	wg.Wait()
 	log.Println("Finished testing star fetching")
+
+	return nil
 }
