@@ -22,6 +22,21 @@ const (
 	allTimeSplit
 )
 
+// countResult is the result of countHistoricalDownloads or
+// countAllTimeDownloads.
+type countResult struct {
+	err   error
+	sha   string
+	count int
+	split splitType
+}
+
+const (
+	// In the database, the empty string SHA value represents the total of all
+	// downloads of that package with any SHA.
+	anySHA = ""
+)
+
 // assertPackageExistence is a wrapper around pkg.AssertExistence that puts the
 // return value in a result channel instead of via a function return.
 func assertPackageExistence(
@@ -54,7 +69,7 @@ func bumpDownloads(
 	// Create and add the update queries.
 	addDailyBumpQuery(batch, day, author, repo)
 	addAllTimeBumpQuery(batch, author, repo, sha)
-	addAllTimeBumpQuery(batch, author, repo, "") // "" represents "all" versions.
+	addAllTimeBumpQuery(batch, author, repo, anySHA)
 
 	if err := batch.Execute(); err != nil {
 		resultChan <- err
@@ -95,13 +110,6 @@ func addAllTimeBumpQuery(
 		AppendTo(b)
 }
 
-// countResult is the result of countHistoricalDownloads.
-type countResult struct {
-	err   error
-	count int
-	split splitType
-}
-
 // countHistoricalDownloads queries the database to count the the number of
 // downloads of a package over a specific split.
 func countHistoricalDownloads(
@@ -120,20 +128,7 @@ func countHistoricalDownloads(
 
 	// All-time queries are different since the data is in a different table.
 	if split == allTimeSplit {
-		if err = query.
-			Select(allTimeColumnNameTotal).
-			From(allTimeTableName).
-			Where(query.Column(allTimeColumnNameAuthor).Equals(author)).
-			And(query.Column(allTimeColumnNameRepo).Equals(repo)).
-			And(query.Column(allTimeColumnNameSHA).Equals("")).
-			Create(q).
-			Scan(&count); err != nil {
-			resultsChan <- countResult{err: err}
-			return
-		}
-
-		// Publish the recently fetched count to the database.
-		resultsChan <- countResult{count: count, split: split}
+		countAllTimeDownloads(q, author, repo, anySHA, resultsChan)
 		return
 	}
 
@@ -161,16 +156,51 @@ func countHistoricalDownloads(
 		return
 	}
 
-	// Publish the recently fetched count to the database.
+	// Publish the recently fetched count to the channel of results.
 	resultsChan <- countResult{count: count, split: split}
+}
+
+// countAllTimeDownloads queries the database to count the the number of
+// downloads of a package that have ever been recorded.
+func countAllTimeDownloads(
+	q db.Queryable,
+	author string,
+	repo string,
+	sha string,
+	resultsChan chan countResult,
+) {
+	var (
+		err   error
+		count int
+	)
+
+	if err = query.
+		Select(allTimeColumnNameTotal).
+		From(allTimeTableName).
+		Where(query.Column(allTimeColumnNameAuthor).Equals(author)).
+		And(query.Column(allTimeColumnNameRepo).Equals(repo)).
+		And(query.Column(allTimeColumnNameSHA).Equals(sha)).
+		Create(q).
+		Scan(&count); err != nil {
+		resultsChan <- countResult{err: err}
+		return
+	}
+
+	// Publish the recently fetched count to the channel of results.
+	resultsChan <- countResult{
+		sha:   sha,
+		count: count,
+		split: allTimeSplit,
+	}
+	return
 }
 
 // TODO(skeswa): this shouldn't need to exist. Get rid of this as soon as
 // @Shikkic merges in his changes.
-func concatGetSplitErrors(errs []error) error {
+func concatErrors(msg string, errs []error) error {
 	var buffer bytes.Buffer
 
-	buffer.WriteString("Failed to read download splits from the database.")
+	buffer.WriteString(msg)
 	buffer.WriteString(" Bumped into ")
 	buffer.WriteString(strconv.Itoa(len(errs)))
 	buffer.WriteString(" problems: [ ")

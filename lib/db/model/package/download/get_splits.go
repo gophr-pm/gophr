@@ -71,7 +71,9 @@ func GetSplits(
 
 	// If there were any errors, return them composed together.
 	if len(errs) > 0 {
-		return splits, concatGetSplitErrors(errs)
+		return splits, concatErrors(
+			"Failed to read download splits from the database.",
+			errs)
 	}
 
 	return splits, nil
