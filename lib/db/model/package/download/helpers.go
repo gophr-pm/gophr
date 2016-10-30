@@ -95,6 +95,13 @@ func addAllTimeBumpQuery(
 		AppendTo(b)
 }
 
+// countResult is the result of countHistoricalDownloads.
+type countResult struct {
+	err   error
+	count int
+	split splitType
+}
+
 // countHistoricalDownloads queries the database to count the the number of
 // downloads of a package over a specific split.
 func countHistoricalDownloads(

@@ -14,13 +14,6 @@ type Splits struct {
 	AllTime int
 }
 
-// countResult is the result of countHistoricalDownloads.
-type countResult struct {
-	err   error
-	count int
-	split splitType
-}
-
 // GetSplits counts and returns the download totals for a package over different
 // lengths of time.
 func GetSplits(
