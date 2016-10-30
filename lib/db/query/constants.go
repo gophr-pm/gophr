@@ -5,8 +5,6 @@ const (
 	DBKeyspaceName = "gophr"
 	// countOperator is the operator that specifies that rows should be counted.
 	countOperator = `count(*)`
-	// Now is the current timestamp.
-	Now = `toTimestamp(now())`
 	// sumOperatorTemplate is the template for the operator that returns an
 	// aggregate of number types.
 	sumOperatorTemplate = `sum(%s)`
