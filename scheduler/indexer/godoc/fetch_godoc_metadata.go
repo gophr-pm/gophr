@@ -1,42 +1,44 @@
 package godoc
 
 import (
+	"log"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-type packageMetadata struct {
-	githubURL   string
-	description string
-	author      string
-	repo        string
-}
-
 const (
 	godocURL      = "https://godoc.org/-/index"
 	gitHubBaseURL = "github.com"
 )
 
-// fetchPackageMetadata converts entries listed in godoc.org/index
+// FetchPackageMetadata converts entries listed in godoc.org/index
 // into a package metadata struct.
-func fetchPackageMetadata() ([]packageMetadata, error) {
+func FetchPackageMetadata(args FetchPackageMetadataArgs) ([]PackageMetadata, error) {
 	var (
-		metadataList  []packageMetadata
-		godocMetadata packageMetadata
+		metadataList  []PackageMetadata
+		godocMetadata PackageMetadata
 	)
 
-	doc, err := goquery.NewDocument(godocURL)
+	doc, err := args.ParseHTML(godocURL)
 	if err != nil {
 		return nil, err
 	}
+	for _, node := range doc.Nodes {
+		log.Println(node)
+	}
+
+	log.Println(doc.Html())
+	sec := doc.Find("tr")
+	log.Println("SEC", sec)
 
 	// Traverse the godoc.org/index html and find every instance of <tr>.
 	// This is because Godoc organizes their packages in tables.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+		log.Println(s)
 		children := s.Children()
-		godocMetadata = packageMetadata{}
+		godocMetadata = PackageMetadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {

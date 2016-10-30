@@ -3,6 +3,7 @@ package godoc
 import (
 	"log"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/gophr-pm/gophr/lib"
 )
 
@@ -13,7 +14,10 @@ func Index() {
 	defer session.Close()
 
 	log.Println("Fetching godoc package metadata.")
-	packageMetadata, err := fetchPackageMetadata()
+	packageMetadata, err := FetchPackageMetadata(
+		FetchPackageMetadataArgs{
+			ParseHTML: goquery.NewDocument,
+		})
 	if err != nil {
 		log.Fatalln(err)
 	}

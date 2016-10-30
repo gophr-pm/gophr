@@ -12,7 +12,7 @@ const (
 )
 
 // persistGodocPackages batch inserts awesome packages to help reduce network traffic.
-func persistGodocPackages(session query.BatchingQueryable, pkgs []packageMetadata) error {
+func persistGodocPackages(session query.BatchingQueryable, pkgs []PackageMetadata) error {
 	var (
 		currentBatch = session.NewBatch(gocql.UnloggedBatch)
 		resultChan   = make(chan error)
