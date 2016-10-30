@@ -163,22 +163,16 @@ func NewPackageModelFromBulkSelect(
 	}, nil
 }
 
-// TODO(Shikkic): Fix func name and attribute naming scheme
-
-// NewPackageModelTest needs to change.
-func NewPackageModelTest(
+// NewPackageModel creates package model without validation.
+func NewPackageModel(
 	author string,
 	repo string,
-	// @Shikkic ಠ_ಠ
-	awesome_go bool,
+	awesomeGo bool,
 	description string,
 	exists bool,
-	// @Shikkic ಠ_ಠ
-	godoc_url string,
-	// @Shikkic ಠ_ಠ
-	index_time time.Time,
-	// @Shikkic ಠ_ಠ
-	search_blob string,
+	godocURL string,
+	indexTime time.Time,
+	searchBlob string,
 	versions []string,
 	stars int,
 ) *PackageModel {
@@ -188,10 +182,10 @@ func NewPackageModelTest(
 		Exists:      &exists,
 		Author:      &author,
 		Versions:    versions,
-		GodocURL:    &godoc_url,
-		IndexTime:   &index_time,
-		AwesomeGo:   &awesome_go,
-		SearchBlob:  &search_blob,
+		GodocURL:    &godocURL,
+		IndexTime:   &indexTime,
+		AwesomeGo:   &awesomeGo,
+		SearchBlob:  &searchBlob,
 		Description: &description,
 	}
 }
@@ -413,7 +407,7 @@ func ScanAllPackageModels(session *gocql.Session) ([]*PackageModel, error) {
 	)
 
 	for iter.Scan(&author, &repo, &awesome_go, &description, &exists, &godoc_url, &index_time, &search_blob, &versions, &stars) {
-		packageModel = NewPackageModelTest(author, repo, awesome_go, description, exists, godoc_url, index_time, search_blob, versions, stars)
+		packageModel = NewPackageModel(author, repo, awesome_go, description, exists, godoc_url, index_time, search_blob, versions, stars)
 		packageModels = append(packageModels, packageModel)
 	}
 
