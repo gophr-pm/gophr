@@ -31,6 +31,20 @@ type IO interface {
 	// ReadDir reads the directory named by dirname and returns a list of
 	// directory entries sorted by filename.
 	ReadDir(dirname string) ([]os.FileInfo, error)
-	// Stat returns the FileInfo of a file 
+	// Stat returns the FileInfo of a file
 	Stat(dirname string) (os.FileInfo, error)
+	// ReadFile reads the file named by filename and returns the contents. A
+	// successful call returns err == nil, not err == EOF. Because ReadFile reads
+	// the whole file, it does not treat an EOF from Read as an error to be
+	// reported.
+	ReadFile(filename string) ([]byte, error)
+	// WriteFile writes data to a file named by filename. If the file does not
+	// exist, WriteFile creates it with permissions perm; otherwise WriteFile
+	// truncates it before writing.
+	WriteFile(filename string, data []byte, perm os.FileMode) error
+	// Rename renames (moves) oldpath to newpath. If newpath already exists,
+	// Rename replaces it. OS-specific restrictions may apply when oldpath and
+	// newpath are in different directories. If there is an error, it will be of
+	// type *LinkError.
+	Rename(oldpath, newpath string) error
 }

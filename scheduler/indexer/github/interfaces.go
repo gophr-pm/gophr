@@ -3,8 +3,8 @@ package githubIndexer
 import (
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/model"
@@ -12,19 +12,19 @@ import (
 
 // Init is responsible for setting up the app configuration and db
 // connection.
-type Init func() (*config.Config, *gocql.Session)
+type Init func() (*config.Config, db.Client)
 
 // githubRequestService lol
 type githubRequestService func(args github.RequestServiceArgs) github.RequestService
 
 // packageRetriever lol
-type packageRetriever func(session *gocql.Session) ([]*models.PackageModel, error)
+type packageRetriever func(session db.Client) ([]*models.PackageModel, error)
 
 // packageInserter lol
-type packageInserter func(session *gocql.Session, packageModel *models.PackageModel) error
+type packageInserter func(session db.Client, packageModel *models.PackageModel) error
 
 // packageDeleter lol
-type packageDeleter func(session *gocql.Session, packageModel *models.PackageModel) error
+type packageDeleter func(session db.Client, packageModel *models.PackageModel) error
 
 // IndexArgs lol
 type IndexArgs struct {
@@ -39,5 +39,5 @@ type IndexArgs struct {
 // packageRepoTuple lol
 type packageRepoTuple struct {
 	pkg      *models.PackageModel
-	repoData dtos.GithubRepoDTO
+	repoData dtos.GithubRepo
 }

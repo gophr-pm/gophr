@@ -47,7 +47,7 @@ func (si *SyncedErrors) Add(errors ...error) {
 func (si *SyncedErrors) Compose(msg string) error {
 	si.lock.RLock()
 	err := ComposeErrors(msg, si.errors)
-	si.lock.Unlock()
+	si.lock.RUnlock()
 
 	return err
 }

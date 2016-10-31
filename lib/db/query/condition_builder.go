@@ -42,8 +42,8 @@ func Index(index string) *IndexConditionBuilder {
 	}
 }
 
-// Query creates an index condition.
-func (cb *IndexConditionBuilder) Query(query string) *Condition {
+// Matches creates an index condition.
+func (cb *IndexConditionBuilder) Matches(query string) *Condition {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("expr(")

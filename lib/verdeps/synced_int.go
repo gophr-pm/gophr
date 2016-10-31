@@ -22,14 +22,20 @@ func (si *syncedInt) value() int {
 	return val
 }
 
-func (si *syncedInt) increment() {
+func (si *syncedInt) increment() int {
 	si.lock.Lock()
-	si.val = si.val + 1
+	newVal := si.val + 1
+	si.val = newVal
 	si.lock.Unlock()
+
+	return newVal
 }
 
-func (si *syncedInt) decrement() {
+func (si *syncedInt) decrement() int {
 	si.lock.Lock()
-	si.val = si.val - 1
+	newVal := si.val - 1
+	si.val = newVal
 	si.lock.Unlock()
+
+	return newVal
 }

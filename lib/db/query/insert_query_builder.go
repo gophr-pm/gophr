@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // InsertionValueType is the type of value in the InsertQueryBuilder#Value(...).
@@ -115,13 +115,13 @@ func (qb *InsertQueryBuilder) compose() (string, []interface{}) {
 }
 
 // Create serializes and creates the query.
-func (qb *InsertQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *InsertQueryBuilder) Create(q db.Queryable) db.Query {
 	text, params := qb.compose()
 	return q.Query(text, params...)
 }
 
-// CreateVoid serializes and creates the query.
-func (qb *InsertQueryBuilder) CreateVoid(q VoidQueryable) {
+// AppendTo serializes and creates the query.
+func (qb *InsertQueryBuilder) AppendTo(q db.Batch) {
 	text, params := qb.compose()
 	q.Query(text, params...)
 }

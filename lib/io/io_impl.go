@@ -33,6 +33,25 @@ func (r *ioImpl) ReadDir(dirname string) ([]os.FileInfo, error) {
 	return ioutil.ReadDir(dirname)
 }
 
+// ReadFile calls ioutil.ReadFile.
+func (r *ioImpl) ReadFile(filename string) ([]byte, error) {
+	return ioutil.ReadFile(filename)
+}
+
+// WriteFile calls ioutil.WriteFile.
+func (r *ioImpl) WriteFile(
+	filename string,
+	data []byte,
+	perm os.FileMode,
+) error {
+	return ioutil.WriteFile(filename, data, perm)
+}
+
+// Rename calls os.Rename.
+func (r *ioImpl) Rename(oldpath, newpath string) error {
+	return os.Rename(oldpath, newpath)
+}
+
 // NewIO creates a new IO.
 func NewIO() IO {
 	return &ioImpl{}

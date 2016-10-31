@@ -12,11 +12,12 @@ import (
 // Index is a service dedicated to fetching Github repo metadata
 // for each package in our DB and updating metadata.
 func Index(args IndexArgs) error {
-	conf, session := args.Init()
-	defer session.Close()
+	conf, client := args.Init()
+	defer client.Close()
 
 	log.Println("Reindexing github data for packages.")
-	packageModels, err := args.PackageRetriever(session)
+	packageModels, err := args.PackageRetriever(client)
+
 	numPackageModels := len(packageModels)
 	log.Printf("%d packages found", numPackageModels)
 
@@ -28,7 +29,7 @@ func Index(args IndexArgs) error {
 		github.RequestServiceArgs{
 			ForIndexer: true,
 			Conf:       conf,
-			Session:    session,
+			Queryable:  client,
 		},
 	)
 
@@ -49,7 +50,7 @@ func Index(args IndexArgs) error {
 				packageModel.Description = &tuple.repoData.Description
 				packageModel.IndexTime = &indexTime
 				packageModel.Stars = &tuple.repoData.Stars
-				err := args.PackageInserter(session, packageModel)
+				err := args.PackageInserter(client, packageModel)
 				if err != nil {
 					log.Println("Could not insert packageModel, error occured")
 					log.Println(err)
@@ -69,7 +70,7 @@ func Index(args IndexArgs) error {
 			wg.Add(1)
 			go func() {
 				log.Println("Preparing to delete packageModel")
-				args.PackageDeleter(session, packageModel)
+				args.PackageDeleter(client, packageModel)
 				wg.Done()
 			}()
 		} else if err != nil {

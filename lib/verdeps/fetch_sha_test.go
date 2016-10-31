@@ -22,19 +22,18 @@ func TestFetchSHA(t *testing.T) {
 		Convey("When the importPath is a subpath of this package, then simply copy the parent package SHA", func() {
 			var (
 				actualOutputSHA        string
+				actualSuccessful       bool
 				actualOutputImportPath string
 
 				mockGhSvc                = github.NewMockRequestService()
-				outputChan               = make(chan *importPathSHA, 1)
+				outputChan               = make(chan *fetchSHAResult, 1)
 				expectedOutputSHA        = packageSHA
-				pendingSHARequests       = newSyncedInt()
 				expectedOutputImportPath = `"github.com/a/b/c"`
 			)
 
 			// Call fetchSHA synchronously for simplicity's sake. This shouldn't lock
 			// despite the fact that fetch sha writes to an output channel, since the
 			// channel is buffered (for test purposes).
-			pendingSHARequests.increment()
 			fetchSHA(fetchSHAArgs{
 				ghSvc:              mockGhSvc,
 				outputChan:         outputChan,
@@ -42,13 +41,13 @@ func TestFetchSHA(t *testing.T) {
 				packageSHA:         packageSHA,
 				packageRepo:        packageRepo,
 				packageAuthor:      packageAuthor,
-				pendingSHARequests: pendingSHARequests,
 				packageVersionDate: packageVersionDate,
 			})
 
 			// There should be exactly one output sha, so break after reading it.
 			for ips := range outputChan {
 				actualOutputSHA = ips.sha
+				actualSuccessful = ips.successful
 				actualOutputImportPath = ips.importPath
 
 				// Close the channel in order to break the loop.
@@ -58,16 +57,15 @@ func TestFetchSHA(t *testing.T) {
 			// Ensure that the github API was not hit with a request.
 			mockGhSvc.AssertNotCalled(t, "FetchCommitSHA", "a", "b")
 
-			So(pendingSHARequests.value(), ShouldEqual, 0)
 			So(actualOutputSHA, ShouldEqual, expectedOutputSHA)
+			So(actualSuccessful, ShouldBeTrue)
 			So(actualOutputImportPath, ShouldEqual, expectedOutputImportPath)
 		})
 
 		Convey("When the SHA request fails, no SHA should be enqueued", func() {
 			var (
-				mockGhSvc          = github.NewMockRequestService()
-				outputChan         = make(chan *importPathSHA, 1)
-				pendingSHARequests = newSyncedInt()
+				mockGhSvc  = github.NewMockRequestService()
+				outputChan = make(chan *fetchSHAResult, 1)
 			)
 
 			// Expect that fetch commit sha is called.
@@ -81,7 +79,6 @@ func TestFetchSHA(t *testing.T) {
 			// Call fetchSHA synchronously for simplicity's sake. This shouldn't lock
 			// despite the fact that fetch sha writes to an output channel, since the
 			// channel is buffered (for test purposes).
-			pendingSHARequests.increment()
 			fetchSHA(fetchSHAArgs{
 				ghSvc:              mockGhSvc,
 				outputChan:         outputChan,
@@ -89,23 +86,22 @@ func TestFetchSHA(t *testing.T) {
 				packageSHA:         packageSHA,
 				packageRepo:        packageRepo,
 				packageAuthor:      packageAuthor,
-				pendingSHARequests: pendingSHARequests,
 				packageVersionDate: packageVersionDate,
 			})
 
 			// Make sure the output channel gets closed.
 			defer close(outputChan)
 
-			So(pendingSHARequests.value(), ShouldEqual, 0)
 			// There should be no SHA in the output chan.
-			So(len(outputChan), ShouldEqual, 0)
+			result := <-outputChan
+			So(result.err, ShouldNotBeNil)
+			So(result.successful, ShouldBeFalse)
 		})
 
 		Convey("When the SHA request returns with an empty SHA, no SHA should be enqueued", func() {
 			var (
-				mockGhSvc          = github.NewMockRequestService()
-				outputChan         = make(chan *importPathSHA, 1)
-				pendingSHARequests = newSyncedInt()
+				mockGhSvc  = github.NewMockRequestService()
+				outputChan = make(chan *fetchSHAResult, 1)
 			)
 
 			// Expect that fetch commit sha is called.
@@ -119,7 +115,6 @@ func TestFetchSHA(t *testing.T) {
 			// Call fetchSHA synchronously for simplicity's sake. This shouldn't lock
 			// despite the fact that fetch sha writes to an output channel, since the
 			// channel is buffered (for test purposes).
-			pendingSHARequests.increment()
 			fetchSHA(fetchSHAArgs{
 				ghSvc:              mockGhSvc,
 				outputChan:         outputChan,
@@ -127,16 +122,16 @@ func TestFetchSHA(t *testing.T) {
 				packageSHA:         packageSHA,
 				packageRepo:        packageRepo,
 				packageAuthor:      packageAuthor,
-				pendingSHARequests: pendingSHARequests,
 				packageVersionDate: packageVersionDate,
 			})
 
 			// Make sure the output channel gets closed.
 			defer close(outputChan)
 
-			So(pendingSHARequests.value(), ShouldEqual, 0)
 			// There should be no SHA in the output chan.
-			So(len(outputChan), ShouldEqual, 0)
+			result := <-outputChan
+			So(result.err, ShouldNotBeNil)
+			So(result.successful, ShouldBeFalse)
 		})
 
 		Convey("When the SHA request suceeds, the SHA should be enqueued", func() {
@@ -145,9 +140,8 @@ func TestFetchSHA(t *testing.T) {
 				actualOutputImportPath string
 
 				mockGhSvc                = github.NewMockRequestService()
-				outputChan               = make(chan *importPathSHA, 1)
+				outputChan               = make(chan *fetchSHAResult, 1)
 				expectedOutputSHA        = "thisistheoutputshathisistheoutputsha!!!!"
-				pendingSHARequests       = newSyncedInt()
 				expectedOutputImportPath = importPath
 			)
 
@@ -162,7 +156,6 @@ func TestFetchSHA(t *testing.T) {
 			// Call fetchSHA synchronously for simplicity's sake. This shouldn't lock
 			// despite the fact that fetch sha writes to an output channel, since the
 			// channel is buffered (for test purposes).
-			pendingSHARequests.increment()
 			fetchSHA(fetchSHAArgs{
 				ghSvc:              mockGhSvc,
 				outputChan:         outputChan,
@@ -170,7 +163,6 @@ func TestFetchSHA(t *testing.T) {
 				packageSHA:         packageSHA,
 				packageRepo:        packageRepo,
 				packageAuthor:      packageAuthor,
-				pendingSHARequests: pendingSHARequests,
 				packageVersionDate: packageVersionDate,
 			})
 
@@ -183,7 +175,6 @@ func TestFetchSHA(t *testing.T) {
 				close(outputChan)
 			}
 
-			So(pendingSHARequests.value(), ShouldEqual, 0)
 			So(actualOutputSHA, ShouldEqual, expectedOutputSHA)
 			So(actualOutputImportPath, ShouldEqual, expectedOutputImportPath)
 		})

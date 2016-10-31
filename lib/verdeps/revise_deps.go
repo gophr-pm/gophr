@@ -2,20 +2,25 @@ package verdeps
 
 import (
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"sync"
 
-	"github.com/gophr-pm/gophr/lib/errors"
+	errs "github.com/gophr-pm/gophr/lib/errors"
+	"github.com/gophr-pm/gophr/lib/io"
 )
 
 const charDoubleQuote = '"'
 
+// bytesDiffsComposer is a function type that de-couples verdeps.reviseDeps from
+// verdeps.composeBytesDiffs.
+type bytesDiffsComposer func(bytes []byte, diffs []bytesDiff) ([]byte, error)
+
 type reviseDepsArgs struct {
+	io                 io.IO
 	inputChan          chan *revision
+	composeBytesDiffs  bytesDiffsComposer
 	revisionWaitGroup  *sync.WaitGroup
-	accumulatedErrors  *errors.SyncedErrors
+	accumulatedErrors  *errs.SyncedErrors
 	syncedImportCounts *syncedImportCounts
 }
 
@@ -27,7 +32,7 @@ func reviseDeps(args reviseDepsArgs) {
 	)
 
 	// Take care of our wait group responsibilities first and foremost.
-	args.revisionWaitGroup.Add(1)
+	defer args.revisionWaitGroup.Done()
 
 	// Process every revision that comes in from the revision channel.
 	for rev := range args.inputChan {
@@ -37,14 +42,19 @@ func reviseDeps(args reviseDepsArgs) {
 		pathRevisionsMap.add(path, rev)
 
 		// Decide whether its time to apply the revs.
-		if pathRevisionsMap.ready(path, args.syncedImportCounts.importCountOf(path)) {
+		if pathRevisionsMap.ready(
+			path,
+			args.syncedImportCounts.importCountOf(path),
+		) {
 			// Apply the revisions now that we have all the appropriate revisions.
 			revisionApplicationWaitGroup.Add(1)
 			go applyRevisions(
+				args.io,
 				path,
 				pathRevisionsMap.getRevs(path),
 				revisionApplicationWaitGroup,
-				args.accumulatedErrors)
+				args.accumulatedErrors,
+				args.composeBytesDiffs)
 			// Get rids of the revs from the map since we don't need them anymore.
 			pathRevisionsMap.delete(path)
 		}
@@ -67,10 +77,12 @@ func reviseDeps(args reviseDepsArgs) {
 		if len(revsSlice) > 0 {
 			revisionApplicationWaitGroup.Add(1)
 			go applyRevisions(
+				args.io,
 				path,
 				revsSlice,
 				revisionApplicationWaitGroup,
-				args.accumulatedErrors)
+				args.accumulatedErrors,
+				args.composeBytesDiffs)
 		}
 	})
 
@@ -86,15 +98,18 @@ func reviseDeps(args reviseDepsArgs) {
 	}
 
 	revisionApplicationWaitGroup.Wait()
-	args.revisionWaitGroup.Done()
 }
 
 // applyRevisions applies all the provided revisions to the appropriate files.
 func applyRevisions(
+	io io.IO,
 	path string,
 	revs []*revision,
 	waitGroup *sync.WaitGroup,
-	accumulatedErrors *errors.SyncedErrors) {
+	accumulatedErrors *errs.SyncedErrors,
+	composeBytesDiffs bytesDiffsComposer,
+) {
+
 	var (
 		err      error
 		diffs    []bytesDiff
@@ -106,7 +121,7 @@ func applyRevisions(
 	defer waitGroup.Done()
 
 	// Read the file data at the specified path.
-	if fileData, err = ioutil.ReadFile(path); err != nil {
+	if fileData, err = io.ReadFile(path); err != nil {
 		accumulatedErrors.Add(err)
 		return
 	}
@@ -115,7 +130,11 @@ func applyRevisions(
 	for _, rev := range revs {
 		if rev.revisesImport {
 			// Adjust from and to so that they fall on quote bytes.
-			if from, to, err = findImportPathBoundaries(fileData, rev.fromIndex, rev.toIndex); err != nil {
+			if from, to, err = findImportPathBoundaries(
+				fileData,
+				rev.fromIndex,
+				rev.toIndex,
+			); err != nil {
 				// Exit if the import path boundaries could not be adjusted.
 				accumulatedErrors.Add(err)
 				return
@@ -128,7 +147,10 @@ func applyRevisions(
 			})
 		} else if rev.revisesPackage {
 			// Remove any package import comments that we might find.
-			if from, to = findPackageImportComment(fileData, rev.fromIndex); from >= 0 && to > from {
+			if from, to = findPackageImportComment(
+				fileData,
+				rev.fromIndex,
+			); from >= 0 && to > from {
 				diffs = append(diffs, bytesDiff{
 					bytes:         nil,
 					exclusiveTo:   to,
@@ -146,7 +168,7 @@ func applyRevisions(
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
-	if err = ioutil.WriteFile(path, fileData, 0644); err != nil {
+	if err = io.WriteFile(path, fileData, 0644); err != nil {
 		accumulatedErrors.Add(err)
 		return
 	}

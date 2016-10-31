@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pquerna/ffjson/ffjson"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/dtos"
+	"github.com/pquerna/ffjson/ffjson"
 )
 
 // FetchCommitSHA Fetches a commitSHA closest to a given timestamp
@@ -32,7 +32,7 @@ func (svc *requestService) FetchCommitSHA(
 	}
 
 	log.Printf("%s \n", err)
-	refs, err := common.FetchRefs(author, repo)
+	refs, err := lib.FetchRefs(author, repo)
 	if err != nil {
 		return refs.MasterRefHash, nil
 	}
@@ -98,7 +98,7 @@ func parseGitHubCommitTimestamp(response *http.Response) (string, error) {
 		return "", errors.New("Failed to parse response body")
 	}
 
-	var commitSHAArray []dtos.GitCommitDTO
+	var commitSHAArray []dtos.GithubCommit
 	err = ffjson.Unmarshal(body, &commitSHAArray)
 	if err != nil {
 		return "", errors.New("Failed to unmarshal response body")

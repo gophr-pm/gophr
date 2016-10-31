@@ -31,6 +31,9 @@ const (
 	flagNameExclude           = "excluded-modules"
 	flagAliasExclude          = "e"
 	flagUsageExclude          = "comma-delimited list of modules to exclude"
+	flagNameBuild             = "build"
+	flagAliasBuild            = "b"
+	flagUsageBuild            = "re-builds the module image first"
 	flagNameIncludeDB         = "include-db"
 	flagUsageIncludeDB        = "includes the db in \"all\""
 	flagNameForeground        = "foreground"
@@ -150,6 +153,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  flagNameDeletePersistent,
 					Usage: flagUsageDeletePersistent,
+				},
+				cli.BoolFlag{
+					Name:  flagNameBuild + "," + flagAliasBuild,
+					Usage: flagUsageBuild,
 				},
 				cli.StringFlag{
 					Name:   flagNameGPI + "," + flagAliasGPI,

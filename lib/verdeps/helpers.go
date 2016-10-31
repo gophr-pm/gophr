@@ -15,7 +15,9 @@ func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
 }
 
-func parseImportPath(importPath string) (author string, repo string, subpath string) {
+func parseImportPath(
+	importPath string,
+) (author string, repo string, subpath string) {
 	var (
 		i                 int
 		repoStartIndex    int
@@ -38,7 +40,8 @@ func parseImportPath(importPath string) (author string, repo string, subpath str
 	repoStartIndex = i + 1
 
 	// Advance past the current slash to the next one (or the end of the string).
-	for i = repoStartIndex; i < importPathLength && importPath[i] != '/' && importPath[i] != '"'; i++ {
+	for i = repoStartIndex; i < importPathLength &&
+		importPath[i] != '/' && importPath[i] != '"'; i++ {
 	}
 
 	repo = importPath[repoStartIndex:i]
@@ -116,7 +119,9 @@ type getPackageDirPathsArgs struct {
 // getPackageDirPaths gets the vendor directory path (if one exists), all the
 // sub-directories names, and the go-file paths of the supplied package
 // directory path.
-func getPackageDirPaths(args getPackageDirPathsArgs) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
+func getPackageDirPaths(
+	args getPackageDirPathsArgs,
+) (vendorDirPath string, subDirNames []string, goFilePaths []string) {
 	for _, file := range args.files {
 		if file.IsDir() {
 			if file.Name() == vendorDirName {

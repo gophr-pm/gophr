@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/model"
@@ -17,10 +17,12 @@ func TestGithubIndex(t *testing.T) {
 	Convey("The github indexer should run", t, func() {
 		Convey("if PackageRetriever fails, we should return an error", func() {
 			err := Index(IndexArgs{
-				Init: func() (*config.Config, *gocql.Session) {
-					return &config.Config{}, &gocql.Session{}
+				Init: func() (*config.Config, db.Client) {
+					s := db.NewMockClient()
+					s.On("Close")
+					return &config.Config{}, s
 				},
-				PackageRetriever: func(session *gocql.Session) ([]*models.PackageModel, error) {
+				PackageRetriever: func(session db.Client) ([]*models.PackageModel, error) {
 					return nil, errors.New("Failed to query package models")
 				},
 			})
@@ -30,10 +32,12 @@ func TestGithubIndex(t *testing.T) {
 
 		Convey("if PackageRetriever returns no models, we should return an error", func() {
 			err := Index(IndexArgs{
-				Init: func() (*config.Config, *gocql.Session) {
-					return &config.Config{}, &gocql.Session{}
+				Init: func() (*config.Config, db.Client) {
+					s := db.NewMockClient()
+					s.On("Close")
+					return &config.Config{}, s
 				},
-				PackageRetriever: func(session *gocql.Session) ([]*models.PackageModel, error) {
+				PackageRetriever: func(session db.Client) ([]*models.PackageModel, error) {
 					var pkgs []*models.PackageModel
 					return pkgs, nil
 				},
@@ -44,22 +48,24 @@ func TestGithubIndex(t *testing.T) {
 
 		Convey("if NewGithubRequestService returns and error, we should return nil", func() {
 			err := Index(IndexArgs{
-				Init: func() (*config.Config, *gocql.Session) {
-					return &config.Config{}, &gocql.Session{}
+				Init: func() (*config.Config, db.Client) {
+					s := db.NewMockClient()
+					s.On("Close")
+					return &config.Config{}, s
 				},
-				PackageDeleter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageDeleter: func(session db.Client, packageModel *models.PackageModel) error {
 					return nil
 				},
-				PackageInserter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageInserter: func(session db.Client, packageModel *models.PackageModel) error {
 					return nil
 				},
-				PackageRetriever: func(session *gocql.Session) ([]*models.PackageModel, error) {
+				PackageRetriever: func(session db.Client) ([]*models.PackageModel, error) {
 					return generateRandomPackageModels(10), nil
 				},
 				RequestTimeBuffer: 0,
 				NewGithubRequestService: func(args github.RequestServiceArgs) github.RequestService {
 					m := github.NewMockRequestService()
-					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepoDTO{}, errors.New("this is an error"))
+					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepo{}, errors.New("this is an error"))
 					return m
 				},
 			})
@@ -69,22 +75,24 @@ func TestGithubIndex(t *testing.T) {
 
 		Convey("if PackageRetriever succeeds, we should return nil", func() {
 			err := Index(IndexArgs{
-				Init: func() (*config.Config, *gocql.Session) {
-					return &config.Config{}, &gocql.Session{}
+				Init: func() (*config.Config, db.Client) {
+					s := db.NewMockClient()
+					s.On("Close")
+					return &config.Config{}, s
 				},
-				PackageDeleter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageDeleter: func(session db.Client, packageModel *models.PackageModel) error {
 					return nil
 				},
-				PackageInserter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageInserter: func(session db.Client, packageModel *models.PackageModel) error {
 					return nil
 				},
-				PackageRetriever: func(session *gocql.Session) ([]*models.PackageModel, error) {
+				PackageRetriever: func(session db.Client) ([]*models.PackageModel, error) {
 					return generateRandomPackageModels(10), nil
 				},
 				RequestTimeBuffer: 0,
 				NewGithubRequestService: func(args github.RequestServiceArgs) github.RequestService {
 					m := github.NewMockRequestService()
-					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepoDTO{}, nil)
+					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepo{}, nil)
 					return m
 				},
 			})
@@ -94,22 +102,24 @@ func TestGithubIndex(t *testing.T) {
 
 		Convey("if PackageIndexer fails, we should return nil", func() {
 			err := Index(IndexArgs{
-				Init: func() (*config.Config, *gocql.Session) {
-					return &config.Config{}, &gocql.Session{}
+				Init: func() (*config.Config, db.Client) {
+					s := db.NewMockClient()
+					s.On("Close")
+					return &config.Config{}, s
 				},
-				PackageDeleter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageDeleter: func(session db.Client, packageModel *models.PackageModel) error {
 					return nil
 				},
-				PackageInserter: func(session *gocql.Session, packageModel *models.PackageModel) error {
+				PackageInserter: func(session db.Client, packageModel *models.PackageModel) error {
 					return errors.New("Failed to insert package")
 				},
-				PackageRetriever: func(session *gocql.Session) ([]*models.PackageModel, error) {
+				PackageRetriever: func(session db.Client) ([]*models.PackageModel, error) {
 					return generateRandomPackageModels(10), nil
 				},
 				RequestTimeBuffer: 0,
 				NewGithubRequestService: func(args github.RequestServiceArgs) github.RequestService {
 					m := github.NewMockRequestService()
-					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepoDTO{}, errors.New("this is an error"))
+					m.On("FetchGitHubDataForPackageModel", mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(dtos.GithubRepo{}, errors.New("this is an error"))
 					return m
 				},
 			})
