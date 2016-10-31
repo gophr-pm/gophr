@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS packages (
   description text,
   trend_score float,
   search_blob text,
+  search_score float,
   date_discovered timestamp,
   daily_downloads bigint,
   weekly_downloads bigint,
@@ -27,10 +28,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS packages_index
     'schema': '{
       default_analyzer: "english",
       fields: {
-        stars: {type: "integer"},
-        awesome: {type: "boolean"},
-        trend_score: {type: "float"},
         search_blob: {type: "text"},
+        search_score: {type: "float"},
         date_discovered: {type: "date"},
         daily_downloads: {type: "bigint"},
         weekly_downloads: {type: "bigint"},

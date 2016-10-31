@@ -9,6 +9,7 @@ const (
 	packagesColumnNameAwesome                 = "awesome"
 	packagesColumnNameTrendScore              = "trend_score"
 	packagesColumnNameSearchBlob              = "search_blob"
+	packagesColumnNameSearchScore             = "search_score"
 	packagesColumnNameDescription             = "description"
 	packagesColumnNameDateDiscovered          = "date_discovered"
 	packagesColumnNameDailyDownloads          = "daily_downloads"
@@ -25,12 +26,6 @@ const (
 	descSortExprTemplate = `{sort:{fields:[{ field: "%s", reverse: true }]}}`
 	searchExprTemplate   = `{
 		query: { type: "fuzzy", field: "%s", value: "%s" },
-		sort: {
-			fields: [
-				{ field: "%s", reverse: true },
-				{ field: "%s", reverse: true },
-				{ field: "%s", reverse: true }
-			]
-		}
+		sort: { fields: [{ field: "%s", reverse: true }] }
 	}`
 )

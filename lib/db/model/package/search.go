@@ -14,9 +14,7 @@ var (
 		searchExprTemplate,
 		packagesColumnNameSearchBlob,
 		"%s",
-		packagesColumnNameStars,
-		packagesColumnNameAwesome,
-		packagesColumnNameAllTimeDownloads)
+		packagesColumnNameSearchScore)
 )
 
 // Search (as in "get top ten") gets the top packages sorted descendingly
