@@ -27,7 +27,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldNotBeNil)
 		})
 
-		Convey("if we fail to persist packages, we should fail", func() {
+		Convey("if we fail to persist packages, we should return an error", func() {
 			err := Index(IndexArgs{
 				Init: func() (*config.Config, db.Client) {
 					c := db.NewMockClient()
@@ -45,7 +45,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldNotBeNil)
 		})
 
-		Convey("if we successfully retrieve 10, we should persist every package and return nil", func() {
+		Convey("if we successfully retrieve 10 packages, we should persist every package and return nil", func() {
 			var (
 				pkgs    = generateRandomAwesomePackages(10)
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
@@ -93,7 +93,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
-		Convey("if we successfully retrieve 50, we should persist every package and return nil", func() {
+		Convey("if we successfully retrieve 50 packages, we should persist every package and return nil", func() {
 			var (
 				pkgs    = generateRandomAwesomePackages(50)
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
@@ -141,7 +141,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
-		Convey("if we successfully retrieve 51, we should persist every package and return nil", func() {
+		Convey("if we successfully retrieve 51 packages, we should persist every package and return nil", func() {
 			var (
 				pkgs    = generateRandomAwesomePackages(51)
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
@@ -189,7 +189,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
-		Convey("if we successfully retrieve 107, we should persist every package and return nil", func() {
+		Convey("if we successfully retrieve 107 packages, we should persist every package and return nil", func() {
 			var (
 				pkgs    = generateRandomAwesomePackages(107)
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
@@ -237,7 +237,7 @@ func TestAwesomeIndex(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
-		Convey("if we succeed retrieve 201, we should persist every package and return nil", func() {
+		Convey("if we succeed retrieve 201 packages, we should persist every package and return nil", func() {
 			var (
 				pkgs    = generateRandomAwesomePackages(201)
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
