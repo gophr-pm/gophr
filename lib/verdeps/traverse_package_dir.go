@@ -1,11 +1,13 @@
 package verdeps
 
 import (
+	"fmt"
 	"go/parser"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
@@ -15,8 +17,8 @@ type goFileASTParser func(parseGoFileArgs)
 
 // traversePackageDir is the arguments struct for traversePackageDirArgs.
 type traversePackageDirArgs struct {
+	errors                   *errors.SyncedErrors
 	io                       io.IO
-	errors                   *syncedErrors
 	dirPath                  string
 	waitGroup                *sync.WaitGroup
 	subDirPath               string
@@ -46,7 +48,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 	// Read all the files of this directory.
 	if files, err = args.io.ReadDir(fullDirPath); err != nil {
-		args.errors.add(err)
+		args.errors.Add(err)
 		return
 	}
 
@@ -77,7 +79,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 
 		// Explore the new vendor directory synchronously since it needs to be
 		// traversed before every other directory.
-		subErrors := newSyncedErrors()
+		subErrors := errors.NewSyncedErrors()
 		subImportSpecChan := make(chan *importSpec)
 		subPackageSpecChan := make(chan *packageSpec)
 		bufferVendorablesWaitGroup := &sync.WaitGroup{}
@@ -126,9 +128,8 @@ func traversePackageDir(args traversePackageDirArgs) {
 		bufferVendorablesWaitGroup.Wait()
 
 		// Exit if there were problems.
-		if subErrors.len() > 0 {
-			// TODO(skeswa): compose the sub errors together.
-			args.errors.add(subErrors.get()...)
+		if subErrors.Len() > 0 {
+			args.errors.Add(subErrors.Compose(fmt.Sprintf("Found issues while traversing %s", vendorDirPath)))
 			return
 		}
 	}
@@ -145,7 +146,7 @@ func traversePackageDir(args traversePackageDirArgs) {
 				filepath.Join(args.dirPath, args.subDirPath, args.generatedInternalDirName),
 			); err != nil {
 				// If there was a problem performing the rename, exit immediately.
-				args.errors.add(err)
+				args.errors.Add(err)
 				return
 			}
 

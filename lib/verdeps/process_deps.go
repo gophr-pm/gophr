@@ -1,14 +1,13 @@
 package verdeps
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
+
 	"log"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
 )
@@ -61,13 +60,13 @@ func processDeps(args processDepsArgs) error {
 	var (
 		revisionChan             = make(chan *revision)
 		waitingSpecs             = args.newSyncedWaitingListMap()
-		fetchSHAResults          = args.newSyncedStringMap()
 		importSpecChan           = make(chan *importSpec)
+		fetchSHAResults          = args.newSyncedStringMap()
 		packageSpecChan          = make(chan *packageSpec)
-		fetchSHAResultChan       = make(chan *fetchSHAResult)
-		accumulatedErrors        = newSyncedErrors()
+		accumulatedErrors        = errors.NewSyncedErrors()
 		revisionWaitGroup        = &sync.WaitGroup{}
 		syncedImportCounts       = newSyncedImportCounts()
+		fetchSHAResultChan       = make(chan *fetchSHAResult)
 		processedImportsCount    = newSyncedInt()
 		generatedInternalDirName = generateInternalDirName()
 	)
@@ -176,7 +175,7 @@ func processDeps(args processDepsArgs) error {
 						// If the add failed, assume that it is because the the sha was
 						// obtained after we last checked.
 						if sha, exists = fetchSHAResults.get(importPathHash); !exists {
-							accumulatedErrors.add(fmt.Errorf(
+							accumulatedErrors.Add(fmt.Errorf(
 								"Could not version dependency %s"+
 									" because the SHA did not yet exist.",
 								importPath))
@@ -248,8 +247,8 @@ func processDeps(args processDepsArgs) error {
 	}
 
 	// If there were any errors, compose all the errors into on error.
-	if accumulatedErrors.len() > 0 {
-		return concatErrors(accumulatedErrors)
+	if accumulatedErrors.Len() > 0 {
+		return accumulatedErrors.Compose("Failed to process dependencies")
 	}
 
 	// Otherwise, return without a hitch.
@@ -280,26 +279,4 @@ func enqueueImportRevision(
 // revision channel that (potentially) revises a package statement.
 func enqueuePackageRevision(revisionChan chan *revision, spec *packageSpec) {
 	revisionChan <- newPackageRevision(spec)
-}
-
-// concatErrors joins all the accumulated individual errors into one combined
-// error.
-func concatErrors(accumulatedErrors *syncedErrors) error {
-	errs := accumulatedErrors.get()
-	buffer := bytes.Buffer{}
-
-	buffer.WriteString("Failed to process dependencies. Bumped into ")
-	buffer.WriteString(strconv.Itoa(len(errs)))
-	buffer.WriteString(" problems: [ ")
-
-	for i, err := range errs {
-		if i > 0 {
-			buffer.WriteString(", ")
-		}
-		buffer.WriteString(err.Error())
-	}
-
-	buffer.WriteString(" ].")
-
-	return errors.New(buffer.String())
 }

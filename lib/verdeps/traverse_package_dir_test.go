@@ -1,7 +1,6 @@
 package verdeps
 
 import (
-	"errors"
 	"fmt"
 	stdio "io"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -19,7 +19,7 @@ func TestTraversePackageDir(t *testing.T) {
 		Convey("All go files should be parsed in order", func() {
 			var (
 				fio                      = &fakeIO{root: generateTestFSTree()}
-				errs                     = newSyncedErrors()
+				errs                     = errors.NewSyncedErrors()
 				parse                    goFileASTParser
 				dirPath                  = "root"
 				waitGroup                = &sync.WaitGroup{}
@@ -71,7 +71,7 @@ func TestTraversePackageDir(t *testing.T) {
 				So(arg.waitGroup, ShouldNotBeNil)
 			}
 
-			So(errs.len(), ShouldEqual, 0)
+			So(errs.Len(), ShouldEqual, 0)
 			So(parsedGoFiles[`root/vendor/golang.org/x/snapper/tastes_good/fish.go`], ShouldBeTrue)
 			So(parsedGoFiles[`root/cli/command_c.go`], ShouldBeTrue)
 			So(parsedGoFiles[`root/cli/command_a.go`], ShouldBeTrue)
@@ -98,7 +98,7 @@ func TestTraversePackageDir(t *testing.T) {
 					forceRenameFailure: true,
 				}
 
-				errs                     = newSyncedErrors()
+				errs                     = errors.NewSyncedErrors()
 				parse                    goFileASTParser
 				dirPath                  = "root"
 				waitGroup                = &sync.WaitGroup{}
@@ -133,7 +133,7 @@ func TestTraversePackageDir(t *testing.T) {
 			waitGroup.Wait()
 
 			// There are two renames that should fail.
-			So(errs.len(), ShouldEqual, 2)
+			So(errs.Len(), ShouldEqual, 2)
 		})
 
 		Convey("If a directory read operation fails, it should bubble up", func() {
@@ -143,7 +143,7 @@ func TestTraversePackageDir(t *testing.T) {
 					forceReadDirFailure: true,
 				}
 
-				errs                     = newSyncedErrors()
+				errs                     = errors.NewSyncedErrors()
 				parse                    goFileASTParser
 				dirPath                  = "root"
 				waitGroup                = &sync.WaitGroup{}
@@ -177,7 +177,7 @@ func TestTraversePackageDir(t *testing.T) {
 			})
 			waitGroup.Wait()
 
-			So(errs.len(), ShouldEqual, 1)
+			So(errs.Len(), ShouldEqual, 1)
 		})
 	})
 }

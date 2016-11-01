@@ -1,35 +1,41 @@
-package main
+package godoc
 
-/*
 import (
+	"log"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
-type godocMetadata struct {
-	githubURL   string
-	description string
-	author      string
-	repo        string
-}
+const (
+	godocURL      = "https://godoc.org/-/index"
+	gitHubBaseURL = "github.com"
+)
 
-func fetchGodocMetadata() ([]godocMetadata, error) {
-	doc, err := goquery.NewDocument("https://godoc.org/-/index")
+// FetchPackageMetadata converts entries listed in godoc.org/index
+// into a package metadata struct.
+func FetchPackageMetadata(args FetchPackageMetadataArgs) ([]PackageMetadata, error) {
+	var (
+		metadataList  []PackageMetadata
+		godocMetadata PackageMetadata
+	)
+
+	doc, err := args.ParseHTML(godocURL)
 	if err != nil {
 		return nil, err
 	}
 
-	var godocMetadataList []godocMetadata
-
+	// Traverse the godoc.org/index html and find every instance of <tr>.
+	// This is because Godoc organizes their packages in tables.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		children := s.Children()
-		godocMetadata := godocMetadata{}
+		log.Println(children)
+		godocMetadata = PackageMetadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {
 			childURL, childURLexists := s.Find("a").Attr("href")
+			log.Println(childURL)
 			childDescription := s.Text()
 
 			if childURLexists == true {
@@ -45,33 +51,14 @@ func fetchGodocMetadata() ([]godocMetadata, error) {
 
 		githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
 
-		if len(githubURLTokens) == 3 && githubURLTokens[0] == "github.com" {
+		if len(githubURLTokens) == 3 && githubURLTokens[0] == gitHubBaseURL {
 			githubURLTokens := strings.Split(godocMetadata.githubURL, "/")
 			godocMetadata.author = githubURLTokens[1]
 			godocMetadata.repo = githubURLTokens[2]
 
-			godocMetadataList = append(godocMetadataList, godocMetadata)
+			metadataList = append(metadataList, godocMetadata)
 		}
 	})
 
-	return godocMetadataList, nil
+	return metadataList, nil
 }
-
-func sanitizeUTF8String(str string) string {
-	if !utf8.ValidString(str) {
-		v := make([]rune, 0, len(str))
-		for i, r := range str {
-			if r == utf8.RuneError {
-				_, size := utf8.DecodeRuneInString(str[i:])
-				if size == 1 {
-					continue
-				}
-			}
-			v = append(v, r)
-		}
-		return string(v)
-	}
-
-	return str
-}
-*/

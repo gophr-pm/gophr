@@ -7,9 +7,10 @@ import (
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/lib/model/package/awesome"
 )
 
-// checkIfAwesomeAsynchronously is a wrapper around pkg.IsAwesome that makes it
+// checkIfAwesomeAsynchronously is a wrapper around awesome.IncludesPackage that makes it
 // easier to place in a go-routine by making the return values pointers instead.
 func checkIfAwesomeAsynchronously(
 	q db.Queryable,
@@ -19,7 +20,7 @@ func checkIfAwesomeAsynchronously(
 	outputError *error,
 	wg *sync.WaitGroup,
 ) {
-	awesome, err := IsAwesome(q, author, repo)
+	awesome, err := awesome.IncludesPackage(q, author, repo)
 	if err != nil {
 		*outputError = err
 		wg.Done()

@@ -1,7 +1,6 @@
 package verdeps
 
 import (
-	"errors"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -9,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -18,7 +18,7 @@ func TestParseGoFile(t *testing.T) {
 
 		Convey("If the go file parser returns an error, it should be added to the errors list", func() {
 			var (
-				errs            = newSyncedErrors()
+				errs            = errors.NewSyncedErrors()
 				parse           goFileParser
 				filePath        = fakeGoFilePath
 				waitGroup       = sync.WaitGroup{}
@@ -69,8 +69,8 @@ func TestParseGoFile(t *testing.T) {
 			close(importSpecChan)
 			close(packageSpecChan)
 
-			So(errs.len(), ShouldEqual, 1)
-			So(errs.get()[0].Error(), ShouldEqual, expectedError.Error())
+			So(errs.Len(), ShouldEqual, 1)
+			So(errs.Get()[0].Error(), ShouldEqual, expectedError.Error())
 			So(parseArgSrc, ShouldBeNil)
 			So(parseArgMode, ShouldEqual, parser.ImportsOnly)
 			So(parseArgFset, ShouldNotBeNil)
@@ -79,7 +79,7 @@ func TestParseGoFile(t *testing.T) {
 
 		Convey("When import specs aren't vendored, then none should be ignored", func() {
 			var (
-				errs            = newSyncedErrors()
+				errs            = errors.NewSyncedErrors()
 				parse           goFileParser
 				filePath        = fakeGoFilePath
 				waitGroup       = sync.WaitGroup{}
@@ -172,7 +172,7 @@ func TestParseGoFile(t *testing.T) {
 				}
 			}
 
-			So(errs.len(), ShouldEqual, 0)
+			So(errs.Len(), ShouldEqual, 0)
 			So(parseArgSrc, ShouldBeNil)
 			So(parseArgMode, ShouldEqual, parser.ImportsOnly)
 			So(parseArgFset, ShouldNotBeNil)
@@ -186,7 +186,7 @@ func TestParseGoFile(t *testing.T) {
 
 		Convey("When import specs are vendored, they should be ignored", func() {
 			var (
-				errs            = newSyncedErrors()
+				errs            = errors.NewSyncedErrors()
 				parse           goFileParser
 				filePath        = fakeGoFilePath
 				waitGroup       = sync.WaitGroup{}
@@ -283,7 +283,7 @@ func TestParseGoFile(t *testing.T) {
 				}
 			}
 
-			So(errs.len(), ShouldEqual, 0)
+			So(errs.Len(), ShouldEqual, 0)
 			So(parseArgSrc, ShouldBeNil)
 			So(parseArgMode, ShouldEqual, parser.ImportsOnly)
 			So(parseArgFset, ShouldNotBeNil)

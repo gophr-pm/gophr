@@ -5,6 +5,7 @@ import (
 	"log"
 	"sync"
 
+	errs "github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
@@ -19,7 +20,7 @@ type reviseDepsArgs struct {
 	inputChan          chan *revision
 	composeBytesDiffs  bytesDiffsComposer
 	revisionWaitGroup  *sync.WaitGroup
-	accumulatedErrors  *syncedErrors
+	accumulatedErrors  *errs.SyncedErrors
 	syncedImportCounts *syncedImportCounts
 }
 
@@ -105,9 +106,10 @@ func applyRevisions(
 	path string,
 	revs []*revision,
 	waitGroup *sync.WaitGroup,
-	accumulatedErrors *syncedErrors,
+	accumulatedErrors *errs.SyncedErrors,
 	composeBytesDiffs bytesDiffsComposer,
 ) {
+
 	var (
 		err      error
 		diffs    []bytesDiff
@@ -120,7 +122,7 @@ func applyRevisions(
 
 	// Read the file data at the specified path.
 	if fileData, err = io.ReadFile(path); err != nil {
-		accumulatedErrors.add(err)
+		accumulatedErrors.Add(err)
 		return
 	}
 
@@ -134,7 +136,7 @@ func applyRevisions(
 				rev.toIndex,
 			); err != nil {
 				// Exit if the import path boundaries could not be adjusted.
-				accumulatedErrors.add(err)
+				accumulatedErrors.Add(err)
 				return
 			}
 
@@ -160,14 +162,14 @@ func applyRevisions(
 
 	// Combine the diffs and the file data.
 	if fileData, err = composeBytesDiffs(fileData, diffs); err != nil {
-		accumulatedErrors.add(err)
+		accumulatedErrors.Add(err)
 		return
 	}
 
 	// After the file data has been adequately tampered with. Write back to the
 	// file.
 	if err = io.WriteFile(path, fileData, 0644); err != nil {
-		accumulatedErrors.add(err)
+		accumulatedErrors.Add(err)
 		return
 	}
 }

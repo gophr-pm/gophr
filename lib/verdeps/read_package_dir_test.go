@@ -1,9 +1,9 @@
 package verdeps
 
 import (
-	"errors"
 	"testing"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -13,7 +13,7 @@ func TestReadPackageDir(t *testing.T) {
 		Convey("When there are no errors in traversal, no errors should be returned", func() {
 			var (
 				io                           = io.NewMockIO()
-				errors                       = newSyncedErrors()
+				errors                       = errors.NewSyncedErrors()
 				importCounts                 = newSyncedImportCounts()
 				packageDirPath               = "/this/is/a/package/dir"
 				importSpecChan               = make(chan *importSpec)
@@ -49,13 +49,13 @@ func TestReadPackageDir(t *testing.T) {
 			So(actualTraversePackageDirArgs.subDirPath, ShouldBeEmpty)
 			So(actualTraversePackageDirArgs.waitGroup, ShouldNotBeNil)
 
-			So(actualTraversePackageDirArgs.errors.len(), ShouldEqual, 0)
+			So(actualTraversePackageDirArgs.errors.Len(), ShouldEqual, 0)
 		})
 
 		Convey("When there are errors in traversal, an error should be returned", func() {
 			var (
 				io                           = io.NewMockIO()
-				errs                         = newSyncedErrors()
+				errs                         = errors.NewSyncedErrors()
 				importCounts                 = newSyncedImportCounts()
 				packageDirPath               = "/this/is/a/package/dir"
 				importSpecChan               = make(chan *importSpec)
@@ -67,9 +67,9 @@ func TestReadPackageDir(t *testing.T) {
 
 			traversePackageDir = func(args traversePackageDirArgs) {
 				actualTraversePackageDirArgs = args
-				args.errors.add(errors.New("error1"))
-				args.errors.add(errors.New("error2"))
-				args.errors.add(errors.New("error3"))
+				args.errors.Add(errors.New("error1"))
+				args.errors.Add(errors.New("error2"))
+				args.errors.Add(errors.New("error3"))
 				args.waitGroup.Done()
 			}
 
@@ -94,8 +94,8 @@ func TestReadPackageDir(t *testing.T) {
 			So(actualTraversePackageDirArgs.subDirPath, ShouldBeEmpty)
 			So(actualTraversePackageDirArgs.waitGroup, ShouldNotBeNil)
 
-			So(errs.len(), ShouldEqual, 1)
-			errStr := (errs.get()[0]).Error()
+			So(errs.Len(), ShouldEqual, 1)
+			errStr := (errs.Get()[0]).Error()
 			So(errStr, ShouldContainSubstring, "error1")
 			So(errStr, ShouldContainSubstring, "error2")
 			So(errStr, ShouldContainSubstring, "error3")

@@ -1,7 +1,6 @@
 package verdeps
 
 import (
-	"errors"
 	"go/ast"
 	"go/token"
 	"os"
@@ -9,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/mock"
@@ -21,7 +21,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 			)
 
@@ -90,7 +90,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 0)
+			So(accumulatedErrors.Len(), ShouldEqual, 0)
 			io.AssertExpectations(t)
 		})
 
@@ -99,7 +99,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 			)
 
@@ -139,7 +139,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 0)
+			So(accumulatedErrors.Len(), ShouldEqual, 0)
 			io.AssertExpectations(t)
 		})
 
@@ -148,7 +148,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 			)
 
@@ -187,7 +187,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 1)
+			So(accumulatedErrors.Len(), ShouldEqual, 1)
 		})
 
 		Convey("Errors while writing files should bubble up", func() {
@@ -195,7 +195,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 			)
 
@@ -239,7 +239,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 1)
+			So(accumulatedErrors.Len(), ShouldEqual, 1)
 		})
 
 		Convey("Errors while finding import path indicies should bubble up", func() {
@@ -247,7 +247,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 			)
 
@@ -290,7 +290,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 1)
+			So(accumulatedErrors.Len(), ShouldEqual, 1)
 		})
 
 		Convey("Errors while composing bytes diffs should bubble up", func() {
@@ -298,7 +298,7 @@ func TestReviseDeps(t *testing.T) {
 				io                = io.NewMockIO()
 				inputChan         = make(chan *revision)
 				importCounts      = newSyncedImportCounts()
-				accumulatedErrors = newSyncedErrors()
+				accumulatedErrors = errors.NewSyncedErrors()
 				revisionWaitGroup = &sync.WaitGroup{}
 				composeBytesDiffs = func(
 					bytes []byte,
@@ -341,7 +341,7 @@ func TestReviseDeps(t *testing.T) {
 
 			// Assert that there were no issues, and that files have been updated
 			// correctly.
-			So(accumulatedErrors.len(), ShouldEqual, 1)
+			So(accumulatedErrors.Len(), ShouldEqual, 1)
 		})
 	})
 }

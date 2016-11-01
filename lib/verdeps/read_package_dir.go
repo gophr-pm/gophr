@@ -1,11 +1,11 @@
 package verdeps
 
 import (
-	"bytes"
-	"errors"
-	"strconv"
+	"fmt"
+
 	"sync"
 
+	errs "github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/io"
 )
 
@@ -16,7 +16,7 @@ type packageDirTraverser func(args traversePackageDirArgs)
 // readPackageDirArgs is the arguments struct for readPackageDirArgsArgs.
 type readPackageDirArgs struct {
 	io                       io.IO
-	errors                   *syncedErrors
+	errors                   *errs.SyncedErrors
 	importCounts             *syncedImportCounts
 	packageDirPath           string
 	importSpecChan           chan *importSpec
@@ -31,7 +31,7 @@ type readPackageDirArgs struct {
 func readPackageDir(args readPackageDirArgs) {
 	// Create a localized error list.
 	var (
-		errs      = newSyncedErrors()
+		errs      = errs.NewSyncedErrors()
 		waitGroup = &sync.WaitGroup{}
 	)
 
@@ -57,24 +57,8 @@ func readPackageDir(args readPackageDirArgs) {
 	waitGroup.Wait()
 
 	// Compose any errors that there may be into one error.
-	if errs.len() > 0 {
-		var buffer bytes.Buffer
-		buffer.WriteString("Failed to read package directory \"")
-		buffer.WriteString(args.packageDirPath)
-		buffer.WriteString("\" due to ")
-		buffer.WriteString(strconv.Itoa(errs.len()))
-		buffer.WriteString(" error(s) with file system traversal: [ ")
-		rawErrors := errs.errors
-		for i, err := range rawErrors {
-			if i > 0 {
-				buffer.WriteString(", ")
-			}
-
-			buffer.WriteString(err.Error())
-		}
-		buffer.WriteString(" ]")
-
-		args.errors.add(errors.New(buffer.String()))
+	if errs.Len() > 0 {
+		args.errors.Add(errs.Compose(fmt.Sprintf("Failed to read package directory \"%s\"", args.packageDirPath)))
 	}
 
 	// We're done. Time to close the output channels.
