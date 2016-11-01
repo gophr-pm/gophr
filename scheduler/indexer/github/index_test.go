@@ -1,5 +1,6 @@
 package githubIndexer
 
+/*
 import (
 	"errors"
 	"testing"
@@ -128,3 +129,5 @@ func TestGithubIndex(t *testing.T) {
 		})
 	})
 }
+
+*/

@@ -10,7 +10,7 @@ import (
 // Index is responsible for looking up every package in godoc.org/Index
 // and persisting the packages.
 func Index() {
-	_, session := common.Init()
+	_, session := lib.Init()
 	defer session.Close()
 
 	log.Println("Fetching godoc package metadata.")

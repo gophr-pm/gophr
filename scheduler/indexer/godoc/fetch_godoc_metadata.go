@@ -1,6 +1,5 @@
 package godoc
 
-/*
 import (
 	"log"
 	"strings"
@@ -88,4 +87,3 @@ func sanitizeUTF8String(str string) string {
 
 	return str
 }
-*/

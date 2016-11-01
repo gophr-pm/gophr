@@ -1,9 +1,8 @@
 package awesome
 
 import (
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // IndexArgs is the args struct for indexing awesome-go packages.
@@ -17,7 +16,7 @@ type IndexArgs struct {
 
 // Init is responsible for setting up the app configuration and db
 // connection.
-type Init func() (*config.Config, *gocql.Session)
+type Init func() (*config.Config, db.Client)
 
 // httpGetter executes an HTTP get to the specified URL and returns the
 // corresponding response.
@@ -25,7 +24,7 @@ type httpGetter func(url string) ([]byte, error)
 
 // BatchExecutor executes a batch cassandra query and returns errors via
 // an error channel.
-type BatchExecutor func(query.BatchingQueryable, *gocql.Batch, chan error)
+type BatchExecutor func(batch db.Batch, resultChan chan error)
 
 // PackageFetcher is responsible for fetching packages found on awesome-go.
 type PackageFetcher func(FetchAwesomeGoListArgs) ([]PackageTuple, error)
@@ -47,11 +46,11 @@ type PackageTuple struct {
 
 // PersistAwesomePackagesArgs is the args struct for PersistAwesomePackages.
 type PersistAwesomePackagesArgs struct {
-	Session         *gocql.Session
+	Session         db.BatchingQueryable
 	NewBatchCreator newBatch
 	BatchExecutor   BatchExecutor
 	PackageTuples   []PackageTuple
 }
 
 // newBatch returns a new cqlBatch query.
-type newBatch func(batchType gocql.BatchType) *gocql.Batch
+type newBatch func() db.Batch

@@ -1,5 +1,6 @@
 package githubIndexer
 
+/*
 import (
 	"time"
 
@@ -7,7 +8,6 @@ import (
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
-	"github.com/gophr-pm/gophr/lib/model"
 )
 
 // Init is responsible for setting up the app configuration and db
@@ -41,3 +41,4 @@ type packageRepoTuple struct {
 	pkg      *models.PackageModel
 	repoData dtos.GithubRepo
 }
+*/

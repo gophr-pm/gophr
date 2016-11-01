@@ -1,8 +1,7 @@
 package godoc
 
 import (
-	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/model/package/godoc"
 )
@@ -12,9 +11,9 @@ const (
 )
 
 // persistGodocPackages batch inserts awesome packages to help reduce network traffic.
-func persistGodocPackages(session query.BatchingQueryable, pkgs []PackageMetadata) error {
+func persistGodocPackages(session db.BatchingQueryable, pkgs []PackageMetadata) error {
 	var (
-		currentBatch = session.NewBatch(gocql.UnloggedBatch)
+		currentBatch = session.NewUnloggedBatch()
 		resultChan   = make(chan error)
 		numBatches   = 0
 		resultCount  = 0
@@ -25,9 +24,9 @@ func persistGodocPackages(session query.BatchingQueryable, pkgs []PackageMetadat
 		godoc.AppendAddPackageQuery(currentBatch, pkg.author, pkg.repo, pkg.description)
 		if last := i == len(pkgs)-1; i%numPackagesPerBatch == 0 && i > 0 || last {
 			numBatches++
-			go execBatch(session, currentBatch, resultChan)
+			go execBatch(currentBatch, resultChan)
 			if !last {
-				currentBatch = session.NewBatch(gocql.UnloggedBatch)
+				currentBatch = session.NewUnloggedBatch()
 			}
 		}
 	}
@@ -48,10 +47,9 @@ func persistGodocPackages(session query.BatchingQueryable, pkgs []PackageMetadat
 }
 
 func execBatch(
-	session query.BatchingQueryable,
-	batch *gocql.Batch,
+	batch db.Batch,
 	resultChan chan error,
 ) {
-	err := session.ExecuteBatch(batch)
+	err := batch.Execute()
 	resultChan <- err
 }

@@ -21,7 +21,7 @@ func Index(args IndexArgs) error {
 		PersistAwesomePackagesArgs{
 			Session:         session,
 			PackageTuples:   packageTuples,
-			NewBatchCreator: session.NewBatch,
+			NewBatchCreator: session.NewUnloggedBatch,
 			BatchExecutor:   args.BatchExecutor,
 		},
 	); err != nil {

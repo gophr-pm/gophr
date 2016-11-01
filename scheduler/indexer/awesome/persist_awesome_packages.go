@@ -1,7 +1,6 @@
 package awesome
 
 import (
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/model/package/awesome"
 )
@@ -13,7 +12,7 @@ const (
 // PersistAwesomePackages batch inserts awesome packages to help reduce network traffic.
 func PersistAwesomePackages(args PersistAwesomePackagesArgs) error {
 	var (
-		currentBatch = args.NewBatchCreator(gocql.UnloggedBatch)
+		currentBatch = args.NewBatchCreator()
 		resultChan   = make(chan error)
 		numBatches   = 0
 		resultCount  = 0
@@ -24,9 +23,9 @@ func PersistAwesomePackages(args PersistAwesomePackagesArgs) error {
 		awesome.AppendAddPackageQuery(currentBatch, pkg.author, pkg.repo)
 		if last := i == len(args.PackageTuples)-1; i%numPackagesPerBatch == 0 && i > 0 || last {
 			numBatches++
-			go args.BatchExecutor(args.Session, currentBatch, resultChan)
+			go args.BatchExecutor(currentBatch, resultChan)
 			if !last {
-				currentBatch = args.NewBatchCreator(gocql.UnloggedBatch)
+				currentBatch = args.NewBatchCreator()
 			}
 		}
 	}

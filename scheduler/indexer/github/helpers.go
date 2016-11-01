@@ -1,12 +1,6 @@
 package githubIndexer
 
-import (
-	"math/rand"
-	"time"
-
-	"github.com/gophr-pm/gophr/lib/model"
-)
-
+/*
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 // randStringRunes generates a random string n runes long.
@@ -47,3 +41,4 @@ func generateRandomPackageModels(numPackages int) []*models.PackageModel {
 	}
 	return pkgModels
 }
+*/

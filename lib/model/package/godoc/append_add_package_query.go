@@ -1,10 +1,13 @@
 package godoc
 
-import "github.com/gophr-pm/gophr/lib/db/query"
+import (
+	"github.com/gophr-pm/gophr/lib/db"
+	"github.com/gophr-pm/gophr/lib/db/query"
+)
 
 // AppendAddPackageQuery records that an archive of a package version exists.
 func AppendAddPackageQuery(
-	session query.VoidQueryable,
+	b db.Batch,
 	author,
 	repo,
 	description string,
@@ -13,5 +16,5 @@ func AppendAddPackageQuery(
 		Value(columnNameAuthor, author).
 		Value(columnNameRepo, repo).
 		Value(columnNameDescription, description).
-		CreateVoid(session)
+		AppendTo(b)
 }

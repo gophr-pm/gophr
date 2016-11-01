@@ -1,5 +1,6 @@
 package githubIndexer
 
+/*
 import (
 	"fmt"
 	"log"
@@ -91,3 +92,4 @@ func Index(args IndexArgs) error {
 
 	return nil
 }
+*/
