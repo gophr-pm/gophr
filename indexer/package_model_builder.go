@@ -1,13 +1,11 @@
 package main
 
+/*
 import (
 	"log"
 	"sort"
 	"sync"
 	"time"
-
-	"github.com/gophr-pm/gophr/lib"
-	"github.com/gophr-pm/gophr/lib/model"
 )
 
 func fetchPackageVersions(metadata godocMetadata) ([]string, error) {
@@ -99,3 +97,4 @@ func buildPackageModels(godocMetadataList []godocMetadata, awesomeGoIndex map[st
 
 	return packageModels, nil
 }
+*/

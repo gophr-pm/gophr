@@ -4,29 +4,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
-// GetTopX (as in "get top ten") gets the top packages sorted descendingly
-// within the specified time split.
-func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
-	if x < 1 {
-		return nil, errors.New("X must be greater than zero")
-	}
-
-	// Turn the split into a field to sort.
-	var sortField string
-	switch split {
-	case Daily:
-		sortField = packagesColumnNameDailyDownloads
-	case Weekly:
-		sortField = packagesColumnNameWeeklyDownloads
-	case Monthly:
-		sortField = packagesColumnNameMonthlyDownloads
-	case AllTime:
-		sortField = packagesColumnNameAllTimeDownloads
-	default:
-		return nil, errors.New("Invalid time split provided")
+// GetTrending gets up to "limit" of the most trending packages.
+func GetTrending(q db.Queryable, limit int) (Summaries, error) {
+	if limit < 1 {
+		return nil, errors.New("Limit must be greater than zero")
 	}
 
 	// Create and execute the query, then create in iterator for the results.
@@ -44,8 +29,8 @@ func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
 		From(packagesTableName).
 		Where(query.Index(packagesIndexName).Matches(fmt.Sprintf(
 			descSortExprTemplate,
-			sortField))).
-		Limit(x).
+			packagesColumnNameTrendScore))).
+		Limit(limit).
 		Create(q).
 		Iter()
 
@@ -70,8 +55,7 @@ func GetTopX(q query.Queryable, x int, split TimeSplit) (Summaries, error) {
 
 	if err := iter.Close(); err != nil {
 		return nil, fmt.Errorf(
-			`Failed to get top %d packages from the db: %v`,
-			x,
+			`Failed to get trending packages from the db: %v`,
 			err)
 	}
 

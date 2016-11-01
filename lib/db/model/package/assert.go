@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/dtos"
 	"github.com/gophr-pm/gophr/lib/github"
@@ -12,7 +13,7 @@ import (
 
 // AssertExistence asserts that a package exists.
 func AssertExistence(
-	q query.Queryable,
+	q db.Queryable,
 	author string,
 	repo string,
 	ghSvc github.RequestService,

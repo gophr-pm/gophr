@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"strconv"
 
-	"github.com/gocql/gocql"
+	"github.com/gophr-pm/gophr/lib/db"
 )
 
 // KeyspaceQueryBuilder constructs an create keyspace query.
@@ -33,7 +33,7 @@ func (qb *KeyspaceQueryBuilder) WithReplication(class string, factor int) *Keysp
 }
 
 // Create serializes and creates the query.
-func (qb *KeyspaceQueryBuilder) Create(q Queryable) *gocql.Query {
+func (qb *KeyspaceQueryBuilder) Create(q db.Queryable) db.Query {
 	var buffer bytes.Buffer
 
 	buffer.WriteString("create keyspace if not exists ")

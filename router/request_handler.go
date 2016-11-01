@@ -3,9 +3,9 @@ package main
 import (
 	"net/http"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
@@ -26,7 +26,7 @@ var (
 // router requests.
 func RequestHandler(
 	conf *config.Config,
-	session *gocql.Session,
+	client db.Client,
 	creds *config.Credentials,
 	newRelicApp newrelic.Application,
 ) func(http.ResponseWriter, *http.Request) {
@@ -37,7 +37,7 @@ func RequestHandler(
 	// package requests.
 	ghSvc := github.NewRequestService(github.RequestServiceArgs{
 		Conf:       conf,
-		Session:    session,
+		Queryable:  client,
 		ForIndexer: false,
 	})
 
@@ -65,7 +65,7 @@ func RequestHandler(
 		// Create a new package request.
 		if pr, err = newPackageRequest(newPackageRequestArgs{
 			req:          r,
-			downloadRefs: common.FetchRefs,
+			downloadRefs: lib.FetchRefs,
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
@@ -80,7 +80,7 @@ func RequestHandler(
 		// Use the package request to respond.
 		if err = pr.respond(respondToPackageRequestArgs{
 			io:                    io,
-			db:                    session,
+			db:                    client,
 			res:                   w,
 			conf:                  conf,
 			creds:                 creds,

@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/github"
 )
 
 // Record records a single download of specific package version.
 func Record(
-	q query.BatchingQueryable,
+	q db.BatchingQueryable,
 	author string,
 	repo string,
 	sha string,

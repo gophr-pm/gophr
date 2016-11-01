@@ -5,20 +5,19 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gocql/gocql"
-	"github.com/gophr-pm/gophr/lib/db/query"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestIsPackageArchived(t *testing.T) {
-	db := &gocql.Session{}
+	client := db.NewMockClient()
 
 	args := packageArchivalCheckerArgs{
-		db:     db,
+		db:     client,
 		sha:    "mysha",
 		repo:   "myrepo",
 		author: "myauthor",
-		isPackageArchivedInDB: func(q query.Queryable, author string, repo string, sha string) (bool, error) {
+		isPackageArchivedInDB: func(q db.Queryable, author string, repo string, sha string) (bool, error) {
 			return false, errors.New("this is an error of some kind")
 		},
 	}
@@ -27,11 +26,11 @@ func TestIsPackageArchived(t *testing.T) {
 	assert.Equal(t, false, archived)
 
 	args = packageArchivalCheckerArgs{
-		db:     db,
+		db:     client,
 		sha:    "mysha",
 		repo:   "myrepo",
 		author: "myauthor",
-		isPackageArchivedInDB: func(q query.Queryable, author string, repo string, sha string) (bool, error) {
+		isPackageArchivedInDB: func(q db.Queryable, author string, repo string, sha string) (bool, error) {
 			return true, nil
 		},
 	}
@@ -40,15 +39,15 @@ func TestIsPackageArchived(t *testing.T) {
 	assert.Equal(t, true, archived)
 
 	args = packageArchivalCheckerArgs{
-		db:     db,
+		db:     client,
 		sha:    "mysha",
 		repo:   "myrepo",
 		author: "myauthor",
-		isPackageArchivedInDB: func(q query.Queryable, author string, repo string, sha string) (bool, error) {
+		isPackageArchivedInDB: func(q db.Queryable, author string, repo string, sha string) (bool, error) {
 			assert.Equal(t, "myauthor", author)
 			assert.Equal(t, "myrepo", repo)
 			assert.Equal(t, "mysha", sha)
-			assert.Equal(t, db, q)
+			assert.Equal(t, client, q)
 			return false, nil
 		},
 		packageExistsInDepot: func(author, repo, sha string) (bool, error) {
@@ -63,15 +62,15 @@ func TestIsPackageArchived(t *testing.T) {
 	assert.Equal(t, false, archived)
 
 	args = packageArchivalCheckerArgs{
-		db:     db,
+		db:     client,
 		sha:    "mysha",
 		repo:   "myrepo",
 		author: "myauthor",
-		isPackageArchivedInDB: func(q query.Queryable, author string, repo string, sha string) (bool, error) {
+		isPackageArchivedInDB: func(q db.Queryable, author string, repo string, sha string) (bool, error) {
 			assert.Equal(t, "myauthor", author)
 			assert.Equal(t, "myrepo", repo)
 			assert.Equal(t, "mysha", sha)
-			assert.Equal(t, db, q)
+			assert.Equal(t, client, q)
 			return false, nil
 		},
 		packageExistsInDepot: func(author, repo, sha string) (bool, error) {
@@ -88,15 +87,15 @@ func TestIsPackageArchived(t *testing.T) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	args = packageArchivalCheckerArgs{
-		db:     db,
+		db:     client,
 		sha:    "mysha",
 		repo:   "myrepo",
 		author: "myauthor",
-		isPackageArchivedInDB: func(q query.Queryable, author string, repo string, sha string) (bool, error) {
+		isPackageArchivedInDB: func(q db.Queryable, author string, repo string, sha string) (bool, error) {
 			assert.Equal(t, "myauthor", author)
 			assert.Equal(t, "myrepo", repo)
 			assert.Equal(t, "mysha", sha)
-			assert.Equal(t, db, q)
+			assert.Equal(t, client, q)
 			return false, nil
 		},
 		packageExistsInDepot: func(author, repo, sha string) (bool, error) {
@@ -109,7 +108,7 @@ func TestIsPackageArchived(t *testing.T) {
 			assert.Equal(t, "myauthor", args.author)
 			assert.Equal(t, "myrepo", args.repo)
 			assert.Equal(t, "mysha", args.sha)
-			assert.Equal(t, db, args.db)
+			assert.Equal(t, client, args.db)
 			wg.Done()
 		},
 	}

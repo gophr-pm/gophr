@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
@@ -15,7 +16,7 @@ var (
 )
 
 // GetNew gets up to "limit" of the most recently discovered packages.
-func GetNew(q query.Queryable, limit int) (Summaries, error) {
+func GetNew(q db.Queryable, limit int) (Summaries, error) {
 	if limit < 1 {
 		return nil, errors.New("Limit must be greater than zero")
 	}

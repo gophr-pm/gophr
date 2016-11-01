@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 	"github.com/gophr-pm/gophr/lib/errors"
 )
@@ -34,7 +34,7 @@ type APIKeyChain struct {
 // and instantiates all available keys in the db as APIKeyModels
 func NewAPIKeyChain(args RequestServiceArgs) *APIKeyChain {
 	newGitHubAPIKeyChain := APIKeyChain{}
-	gitHubAPIKeys, err := scanAllGitHubKey(args.Conf, args.Session, args.ForIndexer)
+	gitHubAPIKeys, err := scanAllGitHubKey(args.Conf, args.Queryable, args.ForIndexer)
 	if err != nil {
 		// TODO(skeswa): [NOISY] return an error instead of logging about it.
 		log.Println("Could not scan github keys, fatal error occurred")
@@ -119,7 +119,11 @@ func setRequestTimout(apiKeyModel APIKeyModel) {
 	time.Sleep(sleepTime)
 }
 
-func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool) ([]string, error) {
+func scanAllGitHubKey(
+	conf *config.Config,
+	q db.Queryable,
+	indexer bool,
+) ([]string, error) {
 	var (
 		err           error
 		gitHubAPIKey  string
@@ -129,7 +133,7 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 
 	iter := query.Select(columnNameGithubAPIKeyKey, columnNameIndexer).
 		From(tableNameGithubAPIKey).
-		Create(session).
+		Create(q).
 		Iter()
 
 	for iter.Scan(&gitHubAPIKey, &forIndexer) {
@@ -151,7 +155,7 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 	// If there are no keys in the database, then add the ones from the secret
 	// file (if it exists).
 	if len(gitHubAPIKeys) < 1 && len(conf.SecretsPath) > 0 {
-		gitHubAPIKeys, err = readGithubKeysFromSecret(conf, session)
+		gitHubAPIKeys, err = readGithubKeysFromSecret(conf, q)
 		if err != nil {
 			log.Printf("Failed to read keys from secret: %v.", err)
 		}
@@ -160,7 +164,10 @@ func scanAllGitHubKey(conf *config.Config, session *gocql.Session, indexer bool)
 	return gitHubAPIKeys, nil
 }
 
-func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]string, error) {
+func readGithubKeysFromSecret(
+	conf *config.Config,
+	q db.Queryable,
+) ([]string, error) {
 	log.Println("There were no keys in the database. Attempting to load from the github keys secret.")
 
 	var filePath string
@@ -204,7 +211,7 @@ func readGithubKeysFromSecret(conf *config.Config, session *gocql.Session) ([]st
 		if err = query.InsertInto(tableNameGithubAPIKey).
 			Value(columnNameGithubAPIKeyKey, key.Key).
 			Value(columnNameIndexer, key.ForIndexer).
-			Create(session).
+			Create(q).
 			Exec(); err != nil {
 			return nil, err
 		}

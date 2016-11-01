@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 )
 
@@ -55,6 +55,6 @@ func NewRequestService(args RequestServiceArgs) RequestService {
 // Also can dictate whether request service is being used by indexer.
 type RequestServiceArgs struct {
 	Conf       *config.Config
-	Session    *gocql.Session
+	Queryable  db.Queryable
 	ForIndexer bool
 }

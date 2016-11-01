@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"strings"
 	"unicode/utf8"
@@ -73,3 +74,4 @@ func sanitizeUTF8String(str string) string {
 
 	return str
 }
+*/

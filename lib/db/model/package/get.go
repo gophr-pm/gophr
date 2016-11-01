@@ -3,12 +3,13 @@ package pkg
 import (
 	"fmt"
 
+	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
 )
 
 // Get fetches a single package, matching the author and repo parameters, from
 // the the database.
-func Get(q query.Queryable, author, repo string) (Details, error) {
+func Get(q db.Queryable, author, repo string) (Details, error) {
 	var result Details
 
 	// Create and execute the query, then create in iterator for the results.
@@ -20,6 +21,7 @@ func Get(q query.Queryable, author, repo string) (Details, error) {
 			packagesColumnNameAwesome,
 			packagesColumnNameTrendScore,
 			packagesColumnNameDescription,
+			packagesColumnNameDateDiscovered,
 			packagesColumnNameDailyDownloads,
 			packagesColumnNameWeeklyDownloads,
 			packagesColumnNameDateLastIndexed,
@@ -32,18 +34,19 @@ func Get(q query.Queryable, author, repo string) (Details, error) {
 		Limit(1).
 		Create(q).
 		Scan(
-			result.Repo,
-			result.Stars,
-			result.Author,
-			result.Awesome,
-			result.TrendScore,
-			result.Description,
-			result.DailyDownloads,
-			result.WeeklyDownloads,
-			result.DateLastIndexed,
-			result.MonthlyDownloads,
-			result.AllTimeDownloads,
-			result.AllTimeVersionDownloads); err != nil {
+			&result.Repo,
+			&result.Stars,
+			&result.Author,
+			&result.Awesome,
+			&result.TrendScore,
+			&result.Description,
+			&result.DateDiscovered,
+			&result.DailyDownloads,
+			&result.WeeklyDownloads,
+			&result.DateLastIndexed,
+			&result.MonthlyDownloads,
+			&result.AllTimeDownloads,
+			&result.AllTimeVersionDownloads); err != nil {
 		return result, fmt.Errorf(
 			`Failed to get package %s/%s from the db: %v`,
 			author,
