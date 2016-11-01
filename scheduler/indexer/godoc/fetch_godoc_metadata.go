@@ -3,7 +3,6 @@ package godoc
 import (
 	"log"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -25,24 +24,18 @@ func FetchPackageMetadata(args FetchPackageMetadataArgs) ([]PackageMetadata, err
 	if err != nil {
 		return nil, err
 	}
-	for _, node := range doc.Nodes {
-		log.Println(node)
-	}
-
-	log.Println(doc.Html())
-	sec := doc.Find("tr")
-	log.Println("SEC", sec)
 
 	// Traverse the godoc.org/index html and find every instance of <tr>.
 	// This is because Godoc organizes their packages in tables.
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
-		log.Println(s)
 		children := s.Children()
+		log.Println(children)
 		godocMetadata = PackageMetadata{}
 
 		// For each child in the tr element
 		children.Each(func(i int, s2 *goquery.Selection) {
 			childURL, childURLexists := s.Find("a").Attr("href")
+			log.Println(childURL)
 			childDescription := s.Text()
 
 			if childURLexists == true {
@@ -68,22 +61,4 @@ func FetchPackageMetadata(args FetchPackageMetadataArgs) ([]PackageMetadata, err
 	})
 
 	return metadataList, nil
-}
-
-func sanitizeUTF8String(str string) string {
-	if !utf8.ValidString(str) {
-		v := make([]rune, 0, len(str))
-		for i, r := range str {
-			if r == utf8.RuneError {
-				_, size := utf8.DecodeRuneInString(str[i:])
-				if size == 1 {
-					continue
-				}
-			}
-			v = append(v, r)
-		}
-		return string(v)
-	}
-
-	return str
 }

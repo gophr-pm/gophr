@@ -3,6 +3,7 @@ package godoc
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"log"
 	"testing"
 
@@ -24,25 +25,15 @@ func TestFetchGoDocList(t *testing.T) {
 			So(actualOutput, ShouldBeNil)
 		})
 
-		var godocHTMLString = "<tr><td><a href='/9fans.net/go/acme'>9fans.net/go/acme</a></td><td>Package acme is a simple interface for interacting with acme windows.</td></tr>"
+		var godocHTMLString = `<table><tr><td><a href='/github.com/gophr-pm/gophr'>github.com/gophr-pm/gophr</a></td><td>Best Package Manager in the world.</td></tr></table>`
 
-		Convey("If fetching package metadata ", func() {
+		Convey("If it retrieves a package successfully, it should return that package as a list of PackageMetadata", func() {
 			actualOutput, err := FetchPackageMetadata(FetchPackageMetadataArgs{
 				ParseHTML: func(url string) (*goquery.Document, error) {
-					/*
-						htmlNode, err := html.Parse(strings.NewReader(godocHTMLString))
-						if err != nil {
-							log.Println(err)
-						}
-						goquery.NewDocumentFromNode(htmlNode)
-						return , nil
-					*/
-					reader := bytes.NewBufferString(godocHTMLString)
-					log.Println("READER")
-					log.Println(reader)
-					doc, err := goquery.NewDocumentFromReader(reader)
+					buf := bytes.NewBufferString(godocHTMLString)
+					doc, err := goquery.NewDocumentFromReader(buf)
 					if err != nil {
-						log.Println(err)
+						fmt.Println(err)
 					}
 					return doc, err
 				},
@@ -50,7 +41,15 @@ func TestFetchGoDocList(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			log.Println(actualOutput)
-			//So(actualOutput, ShouldNotBeNil)
+			expectedOutput := []PackageMetadata{
+				PackageMetadata{
+					githubURL:   "github.com/gophr-pm/gophr",
+					description: "Best Package Manager in the world.",
+					author:      "gophr-pm",
+					repo:        "gophr",
+				},
+			}
+			So(actualOutput, ShouldResemble, expectedOutput)
 		})
 	})
 }
