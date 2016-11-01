@@ -1,5 +1,5 @@
 
-# Gophr - go package management
+# Gophr - golang package management
 [![Go Report Card](https://goreportcard.com/badge/github.com/gophr-pm/gophr)](https://goreportcard.com/report/github.com/gophr-pm/gophr)
 [![GoDoc](https://godoc.org/github.com/gophr-pm/gophr/lib?status.svg)](https://godoc.org/github.com/gophr-pm/gophr/lib)
 [![Build Status](https://travis-ci.org/gophr-pm/gophr.svg?branch=master)](https://travis-ci.org/gophr-pm/gophr)
@@ -11,7 +11,7 @@ An end-to-end package management solution for Go. **No manifest or lock file and
 gophr.pm/author/repo@(semver or SHA)
 `
 
-#### Native go dependency management
+#### Native golang dependency management
 `go get` can only retrieve the current master branch. If you ever need to re-download your dependency it could be totally different each time.
 ```go
   import (
@@ -38,10 +38,10 @@ Gophr allows you to version lock your dependencies by semver or SHA.
   )
 ```
 
-### The problem with native Go dependency management
-Go has **no** ability to version a specific SHA or tag for a repo. Anytime you pull down an import it grabs the current master branch. This not only bad practice but it could potentially silently break your code without you ever knowing why.
+### The problem with native Golang dependency management
+Golang has **no** ability to version a specific SHA or tag for a repo. Anytime you pull down an import it grabs the current master branch. This not only bad practice but it could potentially silently break your code without you ever knowing why.
 
-### There are plenty of Go versioning tools. What makes Gophr special?
+### There are plenty of Golang versioning tools. What makes Gophr special?
 
 Gophr doesn't require you to install _any_ tooling to use. Simply place the versioned url `gophr.pm/author/repo@(semver or SHA)` in your import path and you're done.
 
@@ -63,4 +63,4 @@ We also **fully** version the entire dependency graph. Meaning, we version lock 
 - [Our Microservices](https://github.com/gophr-pm/gophr/wiki/Our-Microservices)
 - [Setting up dev environment](https://github.com/gophr-pm/gophr/wiki/Setting-up-dev-environment)
 
-Questions, comments, concerns? Feel free to open an issue or reach out on [slack](http://gophrpm.slack.com) @shikkic or @skeswa or @ZacharyThomas__
+Questions, comments, concerns? Feel free to open an issue or reach out on [slack](http://gophrpm.slack.com) [@shikkic](https://github.com/shikkic) or [@skeswa](https://github.com/skeswa) [@ZacharyThomas](https://github.com/ZacharyThomas)
