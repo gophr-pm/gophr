@@ -13,13 +13,23 @@ func randStringRunes(n int) string {
 	return string(b)
 }
 
+func generateMapOfAwesomePackages(pkgs []PackageTuple) map[string]PackageTuple {
+	m := make(map[string]PackageTuple)
+	for _, pkg := range pkgs {
+		key := pkg.author + "/" + pkg.repo
+		m[key] = pkg
+	}
+
+	return m
+}
+
 func generateRandomAwesomePackages(numPackages int) []PackageTuple {
 	var PackageTuples []PackageTuple
-	for i := 1; i < numPackages; i++ {
+	for i := 0; i < numPackages; i++ {
 		PackageTuples = append(PackageTuples,
 			PackageTuple{
-				author: randStringRunes(i),
-				repo:   randStringRunes(i),
+				author: randStringRunes(26),
+				repo:   randStringRunes(26),
 			},
 		)
 	}
