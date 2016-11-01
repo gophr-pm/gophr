@@ -15,6 +15,8 @@ type versionDownloadsGetter func(
 	shaVersions map[string]string,
 ) (map[string]int, error)
 
+// getVersionDownloadsWrapperArgs is the results struct for
+// getVersionDownloadsWrapper.
 type getVersionDownloadsWrapperArgs struct {
 	q                   db.Queryable
 	wg                  *sync.WaitGroup
@@ -25,11 +27,15 @@ type getVersionDownloadsWrapperArgs struct {
 	getVersionDownloads versionDownloadsGetter
 }
 
+// getVersionDownloadsWrapperResult is the results struct for
+// getVersionDownloadsWrapper.
 type getVersionDownloadsWrapperResult struct {
 	err              error
 	versionDownloads map[string]int
 }
 
+// getVersionDownloadsWrapper wraps the getVersionDownloads function and
+// formats the outputs for use by packageUpdater.
 func getVersionDownloadsWrapper(args getVersionDownloadsWrapperArgs) {
 	var (
 		err              error

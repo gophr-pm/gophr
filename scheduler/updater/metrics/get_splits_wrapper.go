@@ -13,11 +13,13 @@ type downloadSplitGetter func(
 	repo string,
 ) (download.Splits, error)
 
+// getSplitsWrapperArgs is the reuslts struct for getSplitsWrapper.
 type getSplitsWrapperResult struct {
 	err    error
 	splits download.Splits
 }
 
+// getSplitsWrapperArgs is the arguments struct for getSplitsWrapper.
 type getSplitsWrapperArgs struct {
 	q         db.Queryable
 	wg        *sync.WaitGroup
@@ -27,6 +29,8 @@ type getSplitsWrapperArgs struct {
 	getSplits downloadSplitGetter
 }
 
+// getSplitsWrapper wraps the getSplits function and formats the outputs for use
+// by packageUpdater.
 func getSplitsWrapper(args getSplitsWrapperArgs) {
 	var result getSplitsWrapperResult
 

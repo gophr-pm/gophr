@@ -8,7 +8,7 @@ import (
 )
 
 // Update reads every package from the database and updates the metrics of each.
-func Update(q db.Queryable, jobID string, numWorkers int) {
+func Update(q db.Queryable, numWorkers int) {
 	var (
 		wg        sync.WaitGroup
 		errs      = make(chan error)
@@ -16,7 +16,7 @@ func Update(q db.Queryable, jobID string, numWorkers int) {
 	)
 
 	// Start reading packages.
-	go logErrors(jobID, errs)
+	go logErrors(errs)
 	go pkg.ReadAll(q, summaries, errs)
 
 	// Create all of the update workers, then wait for them.

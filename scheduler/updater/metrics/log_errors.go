@@ -1,14 +1,23 @@
 package metrics
 
-import "log"
+import (
+	"log"
+	"time"
+)
 
-func logErrors(jobID string, errs chan error) {
+// logErrors logs everything that goes wrong.
+func logErrors(errs chan error) {
 	// TODO(skeswa): standardize scheduler job logging.
-	errorCount := 1
+	var (
+		startTime  = time.Now().Format(time.RFC3339)
+		errorCount = 1
+	)
+
+	// Log every error that comes through the channel til it closes.
 	for err := range errs {
 		log.Printf(
-			`[scheduler:job:%s][updater:metrics] Encountered error #%d: %v`,
-			jobID,
+			`[updater:metrics:%s] Encountered error #%d: %v`,
+			startTime,
 			errorCount,
 			err)
 
