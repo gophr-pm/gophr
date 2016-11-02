@@ -14,7 +14,7 @@ func UpdateHandler(
 	q db.Queryable,
 	numWorkers int,
 ) func(http.ResponseWriter, *http.Request) {
-	return func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			wg        sync.WaitGroup
 			errs      = make(chan error)

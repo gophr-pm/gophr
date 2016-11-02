@@ -7,6 +7,9 @@ import (
 	"runtime"
 
 	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/scheduler/worker/indexer/awesome"
+	"github.com/gophr-pm/gophr/scheduler/worker/indexer/gosearch"
+	"github.com/gophr-pm/gophr/scheduler/worker/updater/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/updater/metrics"
 	"github.com/gorilla/mux"
 )
@@ -28,6 +31,15 @@ func main() {
 	r.HandleFunc(
 		"/update/metrics",
 		metrics.UpdateHandler(client, updateMetricsWorkerThreads)).Methods("GET")
+	r.HandleFunc(
+		"/update/github",
+		github.UpdateHandler(client)).Methods("GET")
+	r.HandleFunc(
+		"/index/awesome",
+		awesome.IndexHandler(client)).Methods("GET")
+	r.HandleFunc(
+		"/index/go-search",
+		gosearch.IndexHandler(client)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)
