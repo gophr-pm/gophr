@@ -6,6 +6,7 @@ import (
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
 // packageUpdaterArgs is the arguments struct for packageUpdater.
@@ -15,6 +16,7 @@ type packageUpdaterArgs struct {
 	// TODO(skeswa): synced errors go here.
 	errs      chan error
 	ghSvc     github.RequestService
+	logger    common.JobLogger
 	summaries chan pkg.Summary
 }
 
@@ -28,6 +30,11 @@ func packageUpdater(args packageUpdaterArgs) {
 
 	// For each package summary, attempt an update in the database.
 	for summary := range args.summaries {
+		args.logger.Infof(
+			"Now updating package %s/%s\n",
+			summary.Author,
+			summary.Repo)
+
 		metrics, err := getPackageMetrics(args.q, args.ghSvc, summary)
 		if err != nil {
 			args.errs <- err

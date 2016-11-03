@@ -6,20 +6,16 @@ type job struct {
 }
 
 var (
-	updateGithubMetadata = job{
-		name: "updateGithubMetadata",
-		path: "/update/github",
-	}
 	updatePackageMetrics = job{
 		name: "updatePackageMetrics",
-		path: "/update/metrics",
+		path: "update/metrics",
 	}
 	indexAwesomePackages = job{
 		name: "indexAwesomePackages",
-		path: "/index/awesome",
+		path: "index/awesome",
 	}
 	indexGoSearchPackages = job{
 		name: "indexGoSearchPackages",
-		path: "/index/go-search",
+		path: "index/go-search",
 	}
 )
