@@ -7,20 +7,27 @@ import (
 	"runtime"
 
 	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/awesome"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/gosearch"
-	"github.com/gophr-pm/gophr/scheduler/worker/updater/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/updater/metrics"
 	"github.com/gorilla/mux"
 )
 
-var (
-	updateMetricsWorkerThreads = runtime.NumCPU() * 2
-)
+// updateMetricsWorkerThreads is the number of go routines elected to process
+// packages in the database.
+var updateMetricsWorkerThreads = runtime.NumCPU() * 2
 
 func main() {
-	// Initialize the API.
-	config, client := lib.Init()
+	// Initialize the db client and github service.
+	var (
+		config, client = lib.Init()
+		ghSvc          = github.NewRequestService(github.RequestServiceArgs{
+			Conf:       config,
+			Queryable:  client,
+			ForIndexer: true,
+		})
+	)
 
 	// Ensure that the client is closed eventually.
 	defer client.Close()
@@ -30,10 +37,10 @@ func main() {
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
 	r.HandleFunc(
 		"/update/metrics",
-		metrics.UpdateHandler(client, updateMetricsWorkerThreads)).Methods("GET")
-	r.HandleFunc(
-		"/update/github",
-		github.UpdateHandler(client)).Methods("GET")
+		metrics.UpdateHandler(
+			client,
+			ghSvc,
+			updateMetricsWorkerThreads)).Methods("GET")
 	r.HandleFunc(
 		"/index/awesome",
 		awesome.IndexHandler(client)).Methods("GET")
