@@ -265,7 +265,7 @@ func enqueueImportRevision(
 	generatedInternalDirName string,
 	spec *importSpec,
 ) {
-	author, repo, subpath := ParseImportPath(importPath)
+	author, repo, subpath := parseImportPath(importPath)
 	newImportPath := composeNewImportPath(
 		author,
 		repo,

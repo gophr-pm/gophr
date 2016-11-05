@@ -28,6 +28,7 @@ func index(args indexArgs) {
 		err                  error
 		errs                 = make(chan error)
 		newPackages          = make(chan packageSetEntry)
+		insertPackagesWG     sync.WaitGroup
 		goSearchPackages     *packageSet
 		existingPackages     = make(chan pkg.Summary)
 		packageInsertions    = make(chan pkg.InsertArgs)
@@ -58,7 +59,9 @@ func index(args indexArgs) {
 	}
 
 	if goSearchPackages.len() > 0 {
-		args.logger.Infof("Inserting %d new packages into the database.")
+		args.logger.Infof(
+			"Inserting %d new packages into the database.",
+			goSearchPackages.len())
 
 		// Pipe all of the remaining packages into a channel.
 		go goSearchPackages.stream(newPackages)
@@ -79,8 +82,23 @@ func index(args indexArgs) {
 			})
 		}
 
+		// Start executing the resulting package insertions.
+		insertPackagesWG.Add(1)
+		go insertPackages(insertPackagesArgs{
+			q:                 args.q,
+			wg:                &insertPackagesWG,
+			errs:              errs,
+			packageInsertions: packageInsertions,
+		})
+
 		// Wait for the insertion factories to finish up.
 		insertionFactoryWG.Wait()
+
+		// Once the factories finish, close the insertions channel.
+		close(packageInsertions)
+
+		// Then wait for insert packages to exit.
+		insertPackagesWG.Wait()
 	} else {
 		args.logger.Infof("No new packages found.")
 	}

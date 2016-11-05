@@ -56,5 +56,11 @@ func IndexHandler(
 			logger: logger,
 			packageInsertionFactoryCount: numWorkers,
 		})
+
+		// There cannot be any more errors, so kill the errors channel.
+		close(errs)
+
+		// Wait for the error logging to finish.
+		loggerWG.Wait()
 	}
 }

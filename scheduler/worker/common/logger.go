@@ -50,7 +50,7 @@ func newJobLoggerImpl(
 
 	return &jobLoggerImpl{
 		logPrefix: fmt.Sprintf(
-			`[scheduler:job:%s (id: %s)][started @ %s] `,
+			`[scheduler:job:%s (id: %s, started: %s)] `,
 			jobName,
 			jobID,
 			jobStartTime.Format(time.RFC3339)),

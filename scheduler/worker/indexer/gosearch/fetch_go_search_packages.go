@@ -5,25 +5,30 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/gophr-pm/gophr/lib/verdeps"
+	"regexp"
 )
 
 // httpGetter executes an HTTP get to the specified URL and returns the
 // corresponding response.
 type httpGetter func(url string) (*http.Response, error)
 
-// go-search.org API endpoint that returns a list of every package that it has
-// ever seen.
-const goSearchAPIPackagesEndpoint = "http://go-search.org/api?action=packages"
+const (
+	// go-search.org API endpoint that returns a list of every package that it has
+	// ever seen.
+	goSearchAPIPackagesEndpoint = "http://go-search.org/api?action=packages"
+	// noPackageLimit is the value of the limit parameter of fetchGoSearchPackages
+	// that indicates that there is no limit.
+	noPackageLimit = -1
+	// devPackageLimit is the value of the limit parameter of fetchGoSearchPackages
+	// when in the dev environment.
+	devPackageLimit = 250
+)
 
-// noPackageLimit is the value of the limit parameter of fetchGoSearchPackages
-// that indicates that there is no limit.
-const noPackageLimit = -1
-
-// devPackageLimit is the value of the limit parameter of fetchGoSearchPackages
-// when in the dev environment.
-const devPackageLimit = 1000
+var (
+	// githubImportPathRegex matches the import paths from go-search that
+	// gophr supports. It has two capture groups: (1) author, (2) repo.
+	githubImportPathRegex = regexp.MustCompile(`^github\.com/([^/]+)/([^/]+)`)
+)
 
 // fetchGoSearchPackages fetches the set of all packages of which go-search.org
 // is aware.
@@ -58,9 +63,13 @@ func fetchGoSearchPackages(
 		}
 
 		// Get the important bits out of the import path and throw them into the
-		// set.
-		author, repo, _ := verdeps.ParseImportPath(packageImportPath)
-		packages.add(author, repo)
+		// set. Only continue, however, if the import path is one supported by
+		// gophr.
+		if parts := githubImportPathRegex.FindStringSubmatch(
+			packageImportPath,
+		); parts != nil {
+			packages.add(parts[1], parts[2])
+		}
 	}
 
 	return packages, nil

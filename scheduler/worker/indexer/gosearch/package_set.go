@@ -57,9 +57,8 @@ func (ps *packageSet) stream(packageSetEntries chan packageSetEntry) {
 			}
 		}
 	}
-	ps.lock.RUnlock()
-
 	close(packageSetEntries)
+	ps.lock.RUnlock()
 }
 
 // contains returns true if the set contains the specified author-repo
