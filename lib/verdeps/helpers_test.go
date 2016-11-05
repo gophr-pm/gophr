@@ -36,7 +36,7 @@ func TestIsSubPackage(t *testing.T) {
 func TestParseImportPath_validAuthor(t *testing.T) {
 	t.Parallel()
 	expectedAuthor, expectedRepo, expectedSubpath := author, "", ""
-	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/")
+	actualAuthor, actualRepo, actualSubpath := ParseImportPath(githubPrefix + author + "/")
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
 	assert.Equal(t, expectedSubpath, actualSubpath)
@@ -45,7 +45,7 @@ func TestParseImportPath_validAuthor(t *testing.T) {
 func TestParseImportPath_invalidAuthor(t *testing.T) {
 	t.Parallel()
 	expectedAuthor, expectedRepo, expectedSubpath := "IdontEndInAForwardSlashSoIWillBeMissingACha", "", ""
-	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + "IdontEndInAForwardSlashSoIWillBeMissingAChar")
+	actualAuthor, actualRepo, actualSubpath := ParseImportPath(githubPrefix + "IdontEndInAForwardSlashSoIWillBeMissingAChar")
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
 	assert.Equal(t, expectedSubpath, actualSubpath)
@@ -54,7 +54,7 @@ func TestParseImportPath_invalidAuthor(t *testing.T) {
 func TestParseImportPath_validRepo(t *testing.T) {
 	t.Parallel()
 	expectedAuthor, expectedRepo, expectedSubpath := author, repo, ""
-	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/" + repo)
+	actualAuthor, actualRepo, actualSubpath := ParseImportPath(githubPrefix + author + "/" + repo)
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
 	assert.Equal(t, expectedSubpath, actualSubpath)
@@ -63,7 +63,7 @@ func TestParseImportPath_validRepo(t *testing.T) {
 func TestParseImportPath_validSubpath(t *testing.T) {
 	t.Parallel()
 	expectedAuthor, expectedRepo, expectedSubpath := author, repo, subpath
-	actualAuthor, actualRepo, actualSubpath := parseImportPath(githubPrefix + author + "/" + repo + subpath)
+	actualAuthor, actualRepo, actualSubpath := ParseImportPath(githubPrefix + author + "/" + repo + subpath)
 	assert.Equal(t, expectedAuthor, actualAuthor)
 	assert.Equal(t, expectedRepo, actualRepo)
 	assert.Equal(t, expectedSubpath, actualSubpath)

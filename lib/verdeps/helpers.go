@@ -15,7 +15,8 @@ func isSubPackage(depAuthor, packageAuthor, depRepo, packageRepo string) bool {
 	return depAuthor == packageAuthor && depRepo == packageRepo
 }
 
-func parseImportPath(
+// ParseImportPath splits a github import path into author, repo and subpath.
+func ParseImportPath(
 	importPath string,
 ) (author string, repo string, subpath string) {
 	var (
@@ -99,7 +100,7 @@ func composeNewImportPath(
 }
 
 func importPathHashOf(importPath string) string {
-	author, repo, _ := parseImportPath(importPath)
+	author, repo, _ := ParseImportPath(importPath)
 
 	buffer := bytes.Buffer{}
 	buffer.WriteString(author)

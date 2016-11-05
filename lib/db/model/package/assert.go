@@ -3,7 +3,6 @@ package pkg
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/query"
@@ -84,24 +83,15 @@ func AssertExistence(
 		}
 
 		// Now that we have all the requisite data, insert the new package.
-		if err = query.InsertInto(packagesTableName).
-			Value(packagesColumnNameRepo, repo).
-			Value(packagesColumnNameStars, repoData.Stars).
-			Value(packagesColumnNameAuthor, author).
-			Value(packagesColumnNameAwesome, awesome).
-			Value(packagesColumnNameDescription, repoData.Description).
-			Value(packagesColumnNameDateDiscovered, time.Now()).
-			Value(
-				packagesColumnNameSearchBlob,
-				composeSearchBlob(author, repo, repoData.Description)).
-			IfNotExists().
-			Create(q).
-			Exec(); err != nil {
-			return fmt.Errorf(
-				"Failed to insert package %s/%s: %v",
-				author,
-				repo,
-				err)
+		if err = Insert(InsertArgs{
+			Repo:        repo,
+			Stars:       repoData.Stars,
+			Author:      author,
+			Awesome:     awesome,
+			Queryable:   q,
+			Description: repoData.Description,
+		}); err != nil {
+			return err
 		}
 	}
 

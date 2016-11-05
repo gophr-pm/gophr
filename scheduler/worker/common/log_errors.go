@@ -1,10 +1,13 @@
-package metrics
+package common
 
-import "github.com/gophr-pm/gophr/scheduler/worker/common"
+import "sync"
 
-// logErrors logs everything that goes wrong.
-func logErrors(logger common.JobLogger, errs chan error) {
+// LogErrors logs everything that goes wrong.
+func LogErrors(logger JobLogger, wg *sync.WaitGroup, errs chan error) {
 	errorCount := 1
+
+	// Make sure the waitgroup is notified on exit.
+	defer wg.Done()
 
 	// Log every error that comes through the channel til it closes.
 	for err := range errs {

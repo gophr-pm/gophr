@@ -12,6 +12,7 @@ type UpdateMetricsArgs struct {
 	Repo                    string
 	Stars                   int
 	Author                  string
+	Awesome                 bool
 	Queryable               db.Queryable
 	TrendScore              float32
 	SearchScore             float32
@@ -28,6 +29,7 @@ func UpdateMetrics(args UpdateMetricsArgs) error {
 	return query.
 		Update(packagesTableName).
 		Set(packagesColumnNameStars, args.Stars).
+		Set(packagesColumnNameAwesome, args.Awesome).
 		Set(packagesColumnNameTrendScore, args.TrendScore).
 		Set(packagesColumnNameSearchScore, args.SearchScore).
 		Set(packagesColumnNameDescription, args.Description).

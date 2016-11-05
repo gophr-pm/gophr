@@ -26,7 +26,7 @@ func fetchSHA(args fetchSHAArgs) {
 	)
 
 	// Parse out the author and the repo.
-	author, repo, _ = parseImportPath(args.importPath)
+	author, repo, _ = ParseImportPath(args.importPath)
 
 	// If the dep is a sub-package. If it is, don't fetch the commit sha.
 	if isSubPackage(author, args.packageAuthor, repo, args.packageRepo) {

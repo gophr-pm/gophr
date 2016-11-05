@@ -4,20 +4,20 @@ FROM golang:alpine
 RUN set -ex && apk add --update 'git' && apk add 'bash'
 
 # Copy in requisite files.
+COPY ./scheduler/worker /go/src/github.com/gophr-pm/gophr/scheduler/worker
 COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
 COPY ./lib /go/src/github.com/gophr-pm/gophr/lib
-COPY ./indexer /go/src/github.com/gophr-pm/gophr/indexer
 
 # Build source and move things around.
-RUN cd /go/src/github.com/gophr-pm/gophr/indexer \
+RUN cd /go/src/github.com/gophr-pm/gophr/scheduler/worker \
     && echo -e "\nFetching dependencies...\n" \
     && go get -d -v \
     && echo -e "\nBuilding the binary...\n" \
-    && go build -v -o gophr-indexer-binary \
-    && chmod +x ./gophr-indexer-binary \
+    && go build -v -o gophr-scheduler-worker-binary \
+    && chmod +x ./gophr-scheduler-worker-binary \
     && echo -e "\nMoving things around...\n" \
     && mkdir /gophr \
-    && mv ./gophr-indexer-binary /gophr/gophr-indexer-binary \
+    && mv ./gophr-scheduler-worker-binary /gophr/gophr-scheduler-worker-binary \
     && mv ../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
     && cd /gophr \
     && rm -rf /go
@@ -36,5 +36,7 @@ VOLUME ["/secrets"]
 # Set the generated directory as the work directory.
 WORKDIR /gophr
 
-COPY ./infra/docker/indexer/scripts/root /var/spool/cron/crontabs/root
-CMD crond -l 2 -f
+# Wait for db:9042 with no timeout, then start the binary.
+CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
+    -- \
+    ./gophr-scheduler-worker-binary --port "$PORT"

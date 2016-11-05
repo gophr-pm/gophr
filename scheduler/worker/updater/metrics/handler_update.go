@@ -22,8 +22,9 @@ func UpdateHandler(
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			wg        sync.WaitGroup
 			errs      = make(chan error)
+			loggerWG  sync.WaitGroup
+			updaterWG sync.WaitGroup
 			summaries = make(chan pkg.Summary)
 		)
 
@@ -43,25 +44,29 @@ func UpdateHandler(
 		defer logger.Finish()
 
 		// Start reading packages.
-		go logErrors(logger, errs)
+		loggerWG.Add(1)
+		go common.LogErrors(logger, &loggerWG, errs)
 		go pkg.ReadAll(q, summaries, errs)
 
 		// Create all of the update workers, then wait for them.
-		wg.Add(numWorkers)
+		updaterWG.Add(numWorkers)
 		logger.Infof("Spinning up %d workers.\n", numWorkers)
 		for i := 0; i < numWorkers; i++ {
 			go packageUpdater(packageUpdaterArgs{
 				q:         q,
-				wg:        &wg,
+				wg:        &updaterWG,
 				errs:      errs,
 				ghSvc:     ghSvc,
 				logger:    logger,
 				summaries: summaries,
 			})
 		}
-		wg.Wait()
+		updaterWG.Wait()
 
 		// Close the errors channel since nothing else will ever go through.
 		close(errs)
+
+		// Wait for the logger to exit.
+		loggerWG.Wait()
 	}
 }
