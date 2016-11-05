@@ -14,9 +14,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// updateMetricsWorkerThreads is the number of go routines elected to process
-// packages in the database.
-var updateMetricsWorkerThreads = runtime.NumCPU() * 2
+var (
+	// updateMetricsWorkerThreads is the number of go routines elected to process
+	// packages in the database.
+	updateMetricsWorkerThreads = runtime.NumCPU() * 2
+	// indexGoSearchWorkerThreads is the number of go routines elected to index
+	// packages from go-search.org.
+	indexGoSearchWorkerThreads = runtime.NumCPU() * 2
+)
 
 func main() {
 	// Initialize the db client and github service.
@@ -46,7 +51,11 @@ func main() {
 		awesome.IndexHandler(client)).Methods("GET")
 	r.HandleFunc(
 		"/index/go-search",
-		gosearch.IndexHandler(client)).Methods("GET")
+		gosearch.IndexHandler(
+			client,
+			config,
+			ghSvc,
+			indexGoSearchWorkerThreads)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

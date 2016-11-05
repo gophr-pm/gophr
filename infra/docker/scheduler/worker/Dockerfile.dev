@@ -18,7 +18,7 @@ RUN cd /go/src/github.com/gophr-pm/gophr/scheduler/worker \
     && echo -e "\nMoving things around...\n" \
     && mkdir /gophr \
     && mv ./gophr-scheduler-worker-binary /gophr/gophr-scheduler-worker-binary \
-    && mv ../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
+    && mv ../../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
     && cd /gophr \
     && rm -rf /go
 
