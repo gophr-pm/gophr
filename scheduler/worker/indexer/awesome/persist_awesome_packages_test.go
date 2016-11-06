@@ -6,15 +6,26 @@ import (
 
 	"github.com/gophr-pm/gophr/lib/db"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPersistAwesomeGoPackage(t *testing.T) {
 	Convey("Given a set of awesome packages", t, func() {
 
 		Convey("if batch executor fails, it should return an error", func() {
+			batch := db.NewMockBatch()
+			client := db.NewMockClient()
+
+			batch.On(
+				"Query",
+				"insert into gophr.awesome_packages (author,repo) values (?,?)",
+				mock.AnythingOfType("string"),
+				mock.AnythingOfType("string"))
+			client.On("NewLoggedBatch").Return(batch)
+
 			err := persistAwesomePackages(
 				persistAwesomePackagesArgs{
-					q: db.NewMockClient(),
+					q: client,
 					batchExecutor: func(
 						currentBatch db.Batch,
 						resultsError chan error,
@@ -29,9 +40,19 @@ func TestPersistAwesomeGoPackage(t *testing.T) {
 		})
 
 		Convey("if batch executor completes with a package number divisable by 50, since the url failed to return", func() {
+			batch := db.NewMockBatch()
+			client := db.NewMockClient()
+
+			batch.On(
+				"Query",
+				"insert into gophr.awesome_packages (author,repo) values (?,?)",
+				mock.AnythingOfType("string"),
+				mock.AnythingOfType("string"))
+			client.On("NewLoggedBatch").Return(batch)
+
 			err := persistAwesomePackages(
 				persistAwesomePackagesArgs{
-					q: db.NewMockClient(),
+					q: client,
 					batchExecutor: func(
 						currentBatch db.Batch,
 						resultsError chan error,
@@ -46,9 +67,19 @@ func TestPersistAwesomeGoPackage(t *testing.T) {
 		})
 
 		Convey("if batch executors pass with a package number not divisable by 50, since the url failed to return", func() {
+			batch := db.NewMockBatch()
+			client := db.NewMockClient()
+
+			batch.On(
+				"Query",
+				"insert into gophr.awesome_packages (author,repo) values (?,?)",
+				mock.AnythingOfType("string"),
+				mock.AnythingOfType("string"))
+			client.On("NewLoggedBatch").Return(batch)
+
 			err := persistAwesomePackages(
 				persistAwesomePackagesArgs{
-					q: db.NewMockClient(),
+					q: client,
 					batchExecutor: func(
 						currentBatch db.Batch,
 						resultsError chan error,
