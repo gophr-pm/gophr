@@ -45,5 +45,10 @@ func packageUpdater(args packageUpdaterArgs) {
 		if err != nil {
 			args.errs <- err
 		}
+
+		args.logger.Infof(
+			"Finished updating package %s/%s\n",
+			summary.Author,
+			summary.Repo)
 	}
 }

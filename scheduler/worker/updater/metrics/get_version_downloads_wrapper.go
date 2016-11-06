@@ -54,20 +54,23 @@ func getVersionDownloadsWrapper(args getVersionDownloadsWrapperArgs) {
 		return
 	}
 
-	// Compile a map of version SHAs to version names.
-	for _, candidate := range refs.Candidates {
-		// candidate.String() is the stringified semver version.
-		shaVersions[candidate.GitRefHash] = candidate.String()
-	}
+	// If some candidates exist, then get the version downloads.
+	if len(refs.Candidates) > 0 {
+		// Compile a map of version SHAs to version names.
+		for _, candidate := range refs.Candidates {
+			// candidate.String() is the stringified semver version.
+			shaVersions[candidate.GitRefHash] = candidate.String()
+		}
 
-	// shaVersions -> versionDownloads.
-	if versionDownloads, err = args.getVersionDownloads(
-		args.q,
-		args.author,
-		args.repo,
-		shaVersions); err != nil {
-		*args.result = getVersionDownloadsWrapperResult{err: err}
-		return
+		// shaVersions -> versionDownloads.
+		if versionDownloads, err = args.getVersionDownloads(
+			args.q,
+			args.author,
+			args.repo,
+			shaVersions); err != nil {
+			*args.result = getVersionDownloadsWrapperResult{err: err}
+			return
+		}
 	}
 
 	// Operation was successful, return.

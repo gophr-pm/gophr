@@ -62,8 +62,8 @@ func getPackageMetrics(
 		fetchRefs:           lib.FetchRefs,
 		getVersionDownloads: download.GetForVersions,
 	})
-
 	wg.Wait()
+
 	if getSplitsResult.err != nil {
 		return pkg.UpdateMetricsArgs{}, fmt.Errorf(
 			`Failed to get downloads for package "%s/%s": Failed to get splits: %v`,

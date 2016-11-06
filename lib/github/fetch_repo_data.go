@@ -19,7 +19,6 @@ func (svc *requestService) FetchGitHubDataForPackageModel(
 	repo string,
 ) (dtos.GithubRepo, error) {
 	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
-	log.Println(APIKeyModel)
 	githubURL := buildGitHubRepoDataAPIURL(author, repo, *APIKeyModel)
 	log.Printf("Fetching GitHub data for %s \n", githubURL)
 

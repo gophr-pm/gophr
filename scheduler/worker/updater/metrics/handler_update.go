@@ -43,14 +43,17 @@ func UpdateHandler(
 		logger.Start()
 		defer logger.Finish()
 
-		// Start reading packages.
+		// Spin up the error logger.
 		loggerWG.Add(1)
 		go common.LogErrors(logger, &loggerWG, errs)
+
+		// Start reading packages.
+		logger.Info("Reading all packages from the database.")
 		go pkg.ReadAll(q, summaries, errs)
 
 		// Create all of the update workers, then wait for them.
 		updaterWG.Add(numWorkers)
-		logger.Infof("Spinning up %d workers.\n", numWorkers)
+		logger.Infof("Spinning up %d package updaters.\n", numWorkers)
 		for i := 0; i < numWorkers; i++ {
 			go packageUpdater(packageUpdaterArgs{
 				q:         q,

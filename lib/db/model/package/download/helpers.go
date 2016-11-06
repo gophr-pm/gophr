@@ -152,6 +152,14 @@ func countHistoricalDownloads(
 		And(query.Column(dailyColumnNameDay).IsLessThanOrEqualTo(today)).
 		Create(q).
 		Scan(&count); err != nil {
+		// Check to see if the daily download simply does not exist. If so, just
+		// return 0.
+		if db.IsErrNotFound(err) {
+			resultsChan <- countResult{count: 0, split: split}
+			return
+		}
+
+		// If some kind of other error,
 		resultsChan <- countResult{err: err}
 		return
 	}
@@ -182,6 +190,14 @@ func countAllTimeDownloads(
 		And(query.Column(allTimeColumnNameSHA).Equals(sha)).
 		Create(q).
 		Scan(&count); err != nil {
+		// Check to see if the daily download simply does not exist. If so, just
+		// return 0.
+		if db.IsErrNotFound(err) {
+			resultsChan <- countResult{count: 0, sha: sha, split: allTimeSplit}
+			return
+		}
+
+		// If some kind of other error,
 		resultsChan <- countResult{err: err}
 		return
 	}
