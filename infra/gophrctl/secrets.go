@@ -50,15 +50,15 @@ func encryptSecret(secretFilePath string, keyFilePath string) ([]byte, error) {
 	return encryptedSecret, nil
 }
 
-func generateDecryptedSecret(secretFilePath string, keyFilePath string) (string, error) {
+func decryptSecret(secretFilePath string, keyFilePath string) ([]byte, error) {
 	// Read the keyfile and secret.
 	keyFileData, err := ioutil.ReadFile(keyFilePath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	secret, err := ioutil.ReadFile(secretFilePath)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Split up the data in the key file.
@@ -66,15 +66,21 @@ func generateDecryptedSecret(secretFilePath string, keyFilePath string) (string,
 	// Use the key to create a cipher.
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	// Create the gcm agent.
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+
 	// Decrypt the secret.
-	decryptedSecret, err := aesgcm.Open(nil, nonce, secret, nil)
+	return aesgcm.Open(nil, nonce, secret, nil)
+}
+
+func generateDecryptedSecret(secretFilePath string, keyFilePath string) (string, error) {
+	// Decrypt the secret.
+	decryptedSecret, err := decryptSecret(secretFilePath, keyFilePath)
 	if err != nil {
 		return "", err
 	}

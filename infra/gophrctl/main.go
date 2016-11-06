@@ -37,6 +37,9 @@ const (
 	flagNameIncludeDB         = "include-db"
 	flagUsageIncludeDB        = "includes the db in \"all\""
 	flagNameForeground        = "foreground"
+	flagNameOutputFile        = "output-file"
+	flagAliasOutputFile       = "o"
+	flagUsageOutputFile       = "the path to the output file"
 	flagNameK8SProdContext    = "k8s-context"
 	flagAliasK8SProdContext   = "c"
 	flagUsageK8SProdContext   = "the kubernetes production context"
@@ -62,6 +65,9 @@ const (
 	commandNameSecretsCycle       = "cycle"
 	commandDescSecretsCycle       = "Cycles all recorded secrets"
 	commandArgsUsageSecretsCycle  = "[flags...] [secret filepath]"
+	commandNameSecretsReveal      = "reveal"
+	commandDescSecretsReveal      = "Reveals a secret"
+	commandArgsUsageSecretsReveal = "-o [output filepath] [secret filepath]"
 	commandNameSSH                = "ssh"
 	commandDescSSH                = "Starts a shell session within a module's container"
 	commandNameStop               = "stop"
@@ -253,6 +259,24 @@ func main() {
 							Name:   flagNameKeyPath + "," + flagAliasKeyPath,
 							Usage:  flagUsageKeyPath,
 							EnvVar: envVarKeyPath,
+						},
+					},
+				},
+				{
+					Name:      commandNameSecretsReveal,
+					Usage:     commandDescSecretsReveal,
+					Action:    secretsRevealCommand,
+					ArgsUsage: commandArgsUsageSecretsReveal,
+
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:   flagNameKeyPath + "," + flagAliasKeyPath,
+							Usage:  flagUsageKeyPath,
+							EnvVar: envVarKeyPath,
+						},
+						cli.StringFlag{
+							Name:  flagNameOutputFile + "," + flagAliasOutputFile,
+							Usage: flagUsageOutputFile,
 						},
 					},
 				},

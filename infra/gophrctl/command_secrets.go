@@ -170,3 +170,56 @@ func secretsCycleCommand(c *cli.Context) error {
 
 	return nil
 }
+
+func secretsRevealCommand(c *cli.Context) error {
+	var (
+		err            error
+		keyFilePath    string
+		secretFilePath string
+		outputFilePath string
+	)
+
+	printInfo("Recording a new secret")
+	keyFilePath = c.String(flagNameKeyPath)
+	if len(keyFilePath) < 1 {
+		exit(exitCodeRevealSecretFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
+	}
+	keyFilePath, err = filepath.Abs(keyFilePath)
+	if err != nil {
+		exit(exitCodeRevealSecretFailed, nil, "", err)
+	}
+
+	outputFilePath = c.String(flagNameOutputFile)
+	if len(outputFilePath) < 1 {
+		exit(exitCodeRevealSecretFailed, nil, "", fmt.Errorf("Invalid output file path: \"%s\".", outputFilePath))
+	}
+	outputFilePath, err = filepath.Abs(outputFilePath)
+	if err != nil {
+		exit(exitCodeRevealSecretFailed, nil, "", err)
+	}
+
+	secretFilePath = c.Args().First()
+	if len(secretFilePath) < 1 {
+		exit(exitCodeRevealSecretFailed, nil, "", fmt.Errorf("Invalid secret file path: \"%s\".", secretFilePath))
+	}
+	secretFilePath, err = filepath.Abs(secretFilePath)
+	if err != nil {
+		exit(exitCodeRevealSecretFailed, nil, "", err)
+	}
+
+	decryptedSecret, err := decryptSecret(secretFilePath, keyFilePath)
+	if err != nil {
+		exit(exitCodeRevealSecretFailed, nil, "", err)
+	}
+
+	if err = ioutil.WriteFile(
+		outputFilePath,
+		decryptedSecret,
+		0644,
+	); err != nil {
+		exit(exitCodeRecordSecretFailed, nil, "", err)
+	}
+
+	printSuccess(fmt.Sprintf("Secret revealed at \"%s\".", outputFilePath))
+	return nil
+}
