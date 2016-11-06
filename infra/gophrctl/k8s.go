@@ -168,6 +168,13 @@ func runInK8S(c *cli.Context, fn func() error) error {
 		}
 	}
 
+	// Make sure that minikube is up if in dev.
+	if env == environmentDev {
+		if err = assertMinikubeRunning(); err != nil {
+			return err
+		}
+	}
+
 	// Switch the kubernetes context before continuing.
 	if oldK8SContext, mustSwitchK8SContextBack, err = switchK8SContext(k8sContext, false); err != nil {
 		return err

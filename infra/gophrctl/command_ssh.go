@@ -18,12 +18,6 @@ func sshCommand(c *cli.Context) error {
 
 		moduleName = c.Args().First()
 		if m, exists = modules[moduleName]; exists {
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
-
 			if err = sshModule(m, moduleName, env); err != nil {
 				return err
 			}

@@ -26,12 +26,6 @@ func updateCommand(c *cli.Context) error {
 		if len(moduleName) == 0 {
 			// Means "all modules".
 			printInfo("Updating all modules")
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
-
 			for _, m = range modules {
 				// Check for db inclusion.
 				if m.name == "db" && !c.Bool(flagNameIncludeDB) {
@@ -45,12 +39,6 @@ func updateCommand(c *cli.Context) error {
 			printSuccess("All modules were updated successfully")
 		} else if m, exists = modules[moduleName]; exists {
 			printInfo(fmt.Sprintf("Updating module \"%s\"", moduleName))
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
-
 			if err = updateModule(c, m, gophrRoot, env); err != nil {
 				return err
 			}

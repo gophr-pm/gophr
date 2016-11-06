@@ -27,12 +27,6 @@ func cycleCommand(c *cli.Context) error {
 		if len(moduleName) == 0 {
 			// Means "all modules".
 			printInfo("Cycling all modules")
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
-
 			for _, m = range modules {
 				// Check for db inclusion.
 				if m.name == "db" && !c.Bool(flagNameIncludeDB) {
@@ -46,11 +40,6 @@ func cycleCommand(c *cli.Context) error {
 			printSuccess("All modules were cycled successfully")
 		} else if m, exists = modules[moduleName]; exists {
 			printInfo(fmt.Sprintf("Cycling module \"%s\"", moduleName))
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
 
 			if err = cycleModule(c, m, gophrRoot, env); err != nil {
 				return err

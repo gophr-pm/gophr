@@ -102,7 +102,6 @@ func secretsCycleCommand(c *cli.Context) error {
 	if err := runInK8S(c, func() error {
 		var (
 			err                  error
-			env                  = readEnvironment(c)
 			gophrRoot            string
 			keyFilePath          string
 			secretFilePath       string
@@ -123,13 +122,6 @@ func secretsCycleCommand(c *cli.Context) error {
 		if err != nil {
 			exit(exitCodeCycleSecretsFailed, nil, "", err)
 		}
-
-		if env == environmentDev {
-			if err = assertMinikubeRunning(); err != nil {
-				return err
-			}
-		}
-
 		secretFiles, err := ioutil.ReadDir(filepath.Join(gophrRoot, secretsDir))
 		if err != nil {
 			return err

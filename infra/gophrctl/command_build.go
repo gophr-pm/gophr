@@ -34,12 +34,6 @@ func buildCommand(c *cli.Context) error {
 		moduleName = c.Args().First()
 		if len(moduleName) == 0 {
 			// Means "all modules".
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
-
 			for _, m = range modules {
 				// Check for db inclusion.
 				if m.name == "db" && !c.Bool(flagNameIncludeDB) {
@@ -53,11 +47,6 @@ func buildCommand(c *cli.Context) error {
 			printSuccess("All modules were built successfully")
 		} else if m, exists = modules[moduleName]; exists {
 			printInfo(fmt.Sprintf("Building module \"%s\"", moduleName))
-			if env == environmentDev {
-				if err = assertMinikubeRunning(); err != nil {
-					return err
-				}
-			}
 
 			if err = buildModule(c, m, gophrRoot, env); err != nil {
 				return err
