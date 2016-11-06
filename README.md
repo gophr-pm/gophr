@@ -63,4 +63,4 @@ We also **fully** version the entire dependency graph. Meaning, we version lock 
 - [Our Microservices](https://github.com/gophr-pm/gophr/wiki/Our-Microservices)
 - [Setting up dev environment](https://github.com/gophr-pm/gophr/wiki/Setting-up-dev-environment)
 
-Questions, comments, concerns? Feel free to open an issue or reach out on [slack](http://gophrpm.slack.com) [@shikkic](https://github.com/shikkic) or [@skeswa](https://github.com/skeswa)
+Questions, comments, concerns? Feel free to open an issue or reach out on [slack](http://gophrpm.slack.com) [@shikkic](https://github.com/shikkic), [@skeswa](https://github.com/skeswa) or [@ZacharyThomas](https://github.com/ZacharyThomas)
