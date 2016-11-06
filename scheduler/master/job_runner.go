@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	jobEndpointTemplate = "http://scheduler-worker-svc:3000/%s?jobID=%s&startTime=%s"
+	jobEndpointTemplate = "http://scheduler-worker-svc/%s?jobID=%s&startTime=%s"
 )
 
 // httpGetter executes an HTTP get.

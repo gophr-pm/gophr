@@ -26,7 +26,7 @@ type indexArgs struct {
 }
 
 // index is responsible for finding all go awesome packages and persisting them
-// in `awsome_packages` table for later look up.
+// in `awesome_packages` table for later look up.
 func index(args indexArgs) {
 	args.logger.Info("Fetching awesome go list.")
 	packageTuples, err := args.packageFetcher(fetchAwesomeGoListArgs{
