@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: scheduler-master-rc
+  labels:
+    module: scheduler-master
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: scheduler-master
+  template:
+    metadata:
+      labels:
+        module: scheduler-master
+      namespace: gophr
+    spec:
+      containers:
+      - name: scheduler-master
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-scheduler-master:1.0.0"
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

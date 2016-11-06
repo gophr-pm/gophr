@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler-worker-svc
+  labels:
+    module: scheduler-worker
+  namespace: gophr
+spec:
+  type: NodePort
+  ports:
+    - name: http
+      port: 80
+      nodePort: 30310
+      targetPort: 3000
+  selector:
+    module: scheduler-worker

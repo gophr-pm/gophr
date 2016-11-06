@@ -1,0 +1,42 @@
+FROM golang:alpine
+
+# We need git for pulling dependencies and bash for debugging.
+RUN set -ex && apk add --update 'git' && apk add 'bash'
+
+# Copy in requisite files.
+COPY ./scheduler/worker /go/src/github.com/gophr-pm/gophr/scheduler/worker
+COPY ./infra /go/src/github.com/gophr-pm/gophr/infra
+COPY ./lib /go/src/github.com/gophr-pm/gophr/lib
+
+# Build source and move things around.
+RUN cd /go/src/github.com/gophr-pm/gophr/scheduler/worker \
+    && echo -e "\nFetching dependencies...\n" \
+    && go get -d -v \
+    && echo -e "\nBuilding the binary...\n" \
+    && go build -v -o gophr-scheduler-worker-binary \
+    && chmod +x ./gophr-scheduler-worker-binary \
+    && echo -e "\nMoving things around...\n" \
+    && mkdir /gophr \
+    && mv ./gophr-scheduler-worker-binary /gophr/gophr-scheduler-worker-binary \
+    && mv ../../infra/scripts/wait-for-it.sh /gophr/wait-for-it.sh \
+    && cd /gophr \
+    && rm -rf /go
+
+# Since its no longer necessary, remove git.
+RUN set -ex && apk del git
+
+# Set the environment variables
+ENV PORT="3000"
+ENV GOPHR_ENV="dev"
+ENV GOPHR_DB_ADDR="db-svc"
+ENV GOPHR_SECRETS_PATH="/secrets"
+
+VOLUME ["/secrets"]
+
+# Set the generated directory as the work directory.
+WORKDIR /gophr
+
+# Wait for db:9042 with no timeout, then start the binary.
+CMD ./wait-for-it.sh -h "$GOPHR_DB_ADDR" -p 9042 -t 0 \
+    -- \
+    ./gophr-scheduler-worker-binary --port "$PORT"

@@ -67,8 +67,8 @@ func (qb *InsertQueryBuilder) IfNotExists() *InsertQueryBuilder {
 	return qb
 }
 
-// Create serializes and creates the query.
-func (qb *InsertQueryBuilder) Create(q db.Queryable) db.Query {
+// compose serializes the builder into the parts of a query.
+func (qb *InsertQueryBuilder) compose() (string, []interface{}) {
 	var (
 		buffer bytes.Buffer
 		params []interface{}
@@ -112,5 +112,17 @@ func (qb *InsertQueryBuilder) Create(q db.Queryable) db.Query {
 		buffer.WriteString(strconv.FormatUint(uint64(qb.ttl/time.Microsecond), 10))
 	}
 
-	return q.Query(buffer.String(), params...)
+	return buffer.String(), params
+}
+
+// Create serializes and creates the query.
+func (qb *InsertQueryBuilder) Create(q db.Queryable) db.Query {
+	text, params := qb.compose()
+	return q.Query(text, params...)
+}
+
+// AppendTo serializes and creates the query.
+func (qb *InsertQueryBuilder) AppendTo(q db.Batch) {
+	text, params := qb.compose()
+	q.Query(text, params...)
 }

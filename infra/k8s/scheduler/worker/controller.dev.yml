@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: scheduler-worker-rc
+  labels:
+    module: scheduler-worker
+  namespace: gophr
+spec:
+  replicas: 1
+  selector:
+    module: scheduler-worker
+  template:
+    metadata:
+      labels:
+        module: scheduler-worker
+      namespace: gophr
+    spec:
+      containers:
+      - name: scheduler-worker
+        image: gophr-scheduler-worker-dev:v1
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - mountPath: /secrets
+          name: secrets
+      volumes:
+      - name: secrets
+        secret:
+          secretName: gophr-secrets

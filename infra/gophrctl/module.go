@@ -5,7 +5,7 @@ import "bytes"
 const (
 	gophrVolumePrefix   = "gophr-volume-"
 	dbVolumeCapacity    = 120 // In gb.
-	depotVolumeCapacity = 300 // In gb.
+	depotVolumeCapacity = 500 // In gb.
 	depotVolumeName     = "gophr-volume-depot"
 )
 
@@ -65,19 +65,6 @@ var modules = map[string]*module{
 		},
 		dockerfile:   "./infra/docker/migrator/Dockerfile",
 		versionfile:  "./infra/docker/migrator/Versionfile.prod",
-		buildContext: ".",
-	},
-	"indexer": &module{
-		name: "indexer",
-		deps: []string{"db", "migrator"},
-		devK8SFiles: []string{
-			"./infra/k8s/indexer/controller.dev.yml",
-		},
-		prodK8SFiles: []string{
-			"./infra/k8s/indexer/controller.prod.template.yml",
-		},
-		dockerfile:   "./infra/docker/indexer/Dockerfile",
-		versionfile:  "./infra/docker/indexer/Versionfile.prod",
 		buildContext: ".",
 	},
 	"depot-vol": &module{
@@ -178,6 +165,34 @@ var modules = map[string]*module{
 		},
 		dockerfile:   "./infra/docker/web/Dockerfile",
 		versionfile:  "./infra/docker/web/Versionfile.prod",
+		buildContext: ".",
+	},
+	"scheduler-worker": &module{
+		name: "scheduler-worker",
+		deps: []string{"db"},
+		devK8SFiles: []string{
+			"./infra/k8s/scheduler/worker/controller.dev.yml",
+			"./infra/k8s/scheduler/worker/service.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/scheduler/worker/controller.prod.template.yml",
+			"./infra/k8s/scheduler/worker/service.prod.yml",
+		},
+		dockerfile:   "./infra/docker/scheduler/worker/Dockerfile",
+		versionfile:  "./infra/docker/scheduler/worker/Versionfile.prod",
+		buildContext: ".",
+	},
+	"scheduler-master": &module{
+		name: "scheduler-master",
+		deps: []string{"scheduler-master"},
+		devK8SFiles: []string{
+			"./infra/k8s/scheduler/master/controller.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/scheduler/master/controller.prod.template.yml",
+		},
+		dockerfile:   "./infra/docker/scheduler/master/Dockerfile",
+		versionfile:  "./infra/docker/scheduler/master/Versionfile.prod",
 		buildContext: ".",
 	},
 }

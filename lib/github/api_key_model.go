@@ -53,8 +53,3 @@ func (apiKey *APIKeyModel) prime() {
 func (apiKey *APIKeyModel) reset() {
 	apiKey.RemainingUses = 5000
 }
-
-// TODO(skeswa): Unnecessary helper function.
-func (apiKey *APIKeyModel) print() {
-	log.Printf("%+v", apiKey)
-}

@@ -34,7 +34,9 @@ var (
 type RequestService interface {
 	FetchCommitSHA(string, string, time.Time) (string, error)
 	FetchCommitTimestamp(string, string, string) (time.Time, error)
-	FetchGitHubDataForPackageModel(author string, repo string) (dtos.GithubRepo, error)
+	FetchGitHubDataForPackageModel(
+		author string,
+		repo string) (dtos.GithubRepo, error)
 }
 
 // requestService is the library responsible for managing all outbound

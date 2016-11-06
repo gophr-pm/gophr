@@ -2,6 +2,7 @@ package query
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	"github.com/gophr-pm/gophr/lib/db"
@@ -11,7 +12,7 @@ import (
 // a row.
 type columnValueAssignment struct {
 	column        string
-	value         string
+	value         interface{}
 	parameterized bool
 }
 
@@ -19,6 +20,7 @@ type columnValueAssignment struct {
 type UpdateQueryBuilder struct {
 	valueAssignments []columnValueAssignment
 	conditions       []*Condition
+	ifExists         bool
 	table            string
 }
 
@@ -30,7 +32,10 @@ func Update(table string) *UpdateQueryBuilder {
 }
 
 // Set adds a value assignment to the update query.
-func (qb *UpdateQueryBuilder) Set(column string, value string) *UpdateQueryBuilder {
+func (qb *UpdateQueryBuilder) Set(
+	column string,
+	value interface{},
+) *UpdateQueryBuilder {
 	qb.valueAssignments = append(qb.valueAssignments, columnValueAssignment{
 		column:        column,
 		value:         value,
@@ -40,7 +45,10 @@ func (qb *UpdateQueryBuilder) Set(column string, value string) *UpdateQueryBuild
 }
 
 // Increment increases the value of a counter by a specified amount.
-func (qb *UpdateQueryBuilder) Increment(column string, amount int) *UpdateQueryBuilder {
+func (qb *UpdateQueryBuilder) Increment(
+	column string,
+	amount int,
+) *UpdateQueryBuilder {
 	qb.valueAssignments = append(qb.valueAssignments, columnValueAssignment{
 		column:        column,
 		value:         (column + "+" + strconv.Itoa(amount)),
@@ -58,6 +66,12 @@ func (qb *UpdateQueryBuilder) Where(condition *Condition) *UpdateQueryBuilder {
 // And is an alias for UpdateQueryBuilder.Where(condition).
 func (qb *UpdateQueryBuilder) And(condition *Condition) *UpdateQueryBuilder {
 	return qb.Where(condition)
+}
+
+// IfExists signals that this query should only be applied to existing rows.
+func (qb *UpdateQueryBuilder) IfExists() *UpdateQueryBuilder {
+	qb.ifExists = true
+	return qb
 }
 
 // compose composes the text and parameters for this query.
@@ -83,7 +97,7 @@ func (qb *UpdateQueryBuilder) compose() (string, []interface{}) {
 			buffer.WriteByte('?')
 			parameters = append(parameters, valueAssignment.value)
 		} else {
-			buffer.WriteString(valueAssignment.value)
+			buffer.WriteString(fmt.Sprint(valueAssignment.value))
 		}
 	}
 	if qb.conditions != nil {
@@ -99,6 +113,9 @@ func (qb *UpdateQueryBuilder) compose() (string, []interface{}) {
 
 			buffer.WriteString(cond.expression)
 		}
+	}
+	if qb.ifExists {
+		buffer.WriteString(" if exists")
 	}
 
 	return buffer.String(), parameters
