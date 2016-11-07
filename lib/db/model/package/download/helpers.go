@@ -135,11 +135,11 @@ func countHistoricalDownloads(
 	// Change the date boundary depending on the split.
 	switch split {
 	case dailySplit:
-		from = now.AddDate(0, 0, -1)
+		from = now.AddDate(0, 0, -1) // months, days, hours.
 	case weeklySplit:
-		from = now.AddDate(0, 0, -7)
+		from = now.AddDate(0, 0, -7) // months, days, hours.
 	case monthlySplit:
-		from = now.AddDate(0, -1, 0)
+		from = now.AddDate(0, -1, 0) // months, days, hours.
 	}
 
 	// Run the query using the recently calculated date boundary.
