@@ -28,10 +28,10 @@ func main() {
 	c.AddFunc("0 5 * * 7 *", newJobRunner(indexAwesomePackages, http.Get))
 	// Index go-search packages on the 1st of every month at 3am in the morning.
 	c.AddFunc("0 3 1 * * *", newJobRunner(indexGoSearchPackages, http.Get))
-	// Update package metrics everyday at 10pm at night.
-	c.AddFunc("0 22 * * * *", newJobRunner(updatePackageMetrics, http.Get))
 	// Delete old hourly downloads everyday at midnight.
 	c.AddFunc("0 0 * * * *", newJobRunner(deleteOldDownloadsPackages, http.Get))
+	// Update package metrics three times a day.
+	c.AddFunc("0 7,14,21 * * * *", newJobRunner(updatePackageMetrics, http.Get))
 
 	// Start the cron process.
 	log.Println("Scheduler now waiting for scheduled jobs.")
