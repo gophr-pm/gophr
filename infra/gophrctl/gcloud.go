@@ -9,7 +9,7 @@ import (
 const (
 	gcloud = "gcloud"
 	// TODO(skeswa): this should be configurable.
-	gcloudVolumeZone = "us-central1-b"
+	gcloudVolumeZone = "us-central1-a"
 )
 
 type gCloudVolume struct {

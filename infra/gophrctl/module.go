@@ -4,7 +4,7 @@ import "bytes"
 
 const (
 	gophrVolumePrefix   = "gophr-volume-"
-	dbVolumeCapacity    = 120 // In gb.
+	dbVolumeCapacity    = 50  // In gb.
 	depotVolumeCapacity = 500 // In gb.
 	depotVolumeName     = "gophr-volume-depot"
 )
