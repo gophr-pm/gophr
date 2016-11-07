@@ -53,7 +53,7 @@ const (
 
 var (
 	httpClient      = &http.Client{Timeout: 10 * time.Second}
-	versionRefRegex = regexp.MustCompile(`^refs\/(?:tags|heads)\/(v?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:\-([a-zA-Z0-9\-_]+))?(?:\.([0-9]+))?)(?:\^\{\})?`)
+	versionRefRegex = regexp.MustCompile(`^refs\/(?:tags|heads)\/(v?([0-9]+)(?:\.([0-9]+))?(?:\.([0-9]+))?(?:\-([a-zA-Z0-9\-_]+))?(?:\.([0-9]+))?)(?:\^\{\})?$`)
 )
 
 // Refs collects information about git references for one specific repository.

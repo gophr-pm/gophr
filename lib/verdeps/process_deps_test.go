@@ -44,7 +44,7 @@ func TestProcessDeps(t *testing.T) {
 					12,
 					0,
 					0,
-					time.UTC)
+					time.Local)
 			)
 
 			// Create fakes of the worker functions passed into processDeps.
@@ -201,7 +201,7 @@ func TestProcessDeps(t *testing.T) {
 					12,
 					0,
 					0,
-					time.UTC)
+					time.Local)
 			)
 
 			// Create fakes of the worker functions passed into processDeps.
@@ -342,7 +342,7 @@ func TestProcessDeps(t *testing.T) {
 					12,
 					0,
 					0,
-					time.UTC)
+					time.Local)
 			)
 
 			reviseDeps = func(args reviseDepsArgs) {
@@ -433,7 +433,7 @@ func TestProcessDeps(t *testing.T) {
 					12,
 					0,
 					0,
-					time.UTC)
+					time.Local)
 			)
 
 			reviseDeps = func(args reviseDepsArgs) {
@@ -524,7 +524,7 @@ func TestProcessDeps(t *testing.T) {
 					12,
 					0,
 					0,
-					time.UTC)
+					time.Local)
 			)
 
 			// Create fakes of the worker functions passed into processDeps.

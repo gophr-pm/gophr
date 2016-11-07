@@ -8,6 +8,7 @@ import (
 
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/github"
+	"github.com/gophr-pm/gophr/scheduler/worker/deleter/downloads"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/awesome"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/gosearch"
 	"github.com/gophr-pm/gophr/scheduler/worker/updater/metrics"
@@ -21,6 +22,9 @@ var (
 	// indexGoSearchWorkerThreads is the number of go routines elected to index
 	// packages from go-search.org.
 	indexGoSearchWorkerThreads = runtime.NumCPU() * 2
+	// deleteOldDownloadsWorkerThreads is the number of go routines elected to
+	// delete old downloads in the database.
+	deleteOldDownloadsWorkerThreads = runtime.NumCPU()
 )
 
 func main() {
@@ -56,6 +60,11 @@ func main() {
 			config,
 			ghSvc,
 			indexGoSearchWorkerThreads)).Methods("GET")
+	r.HandleFunc(
+		"/delete/old-downloads",
+		downloads.DeleteHandler(
+			client,
+			deleteOldDownloadsWorkerThreads)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

@@ -29,23 +29,13 @@ func GetSplits(
 		resultsChan  = make(chan countResult)
 		resultsCount = 0
 		resultsTotal = 4 // is called countHistoricalDownloads 4 times.
-
-		today = time.Date(
-			now.Year(),
-			now.Month(),
-			now.Day(),
-			0,
-			0,
-			0,
-			0,
-			time.UTC)
 	)
 
 	// Execute the first update query. Exit if it fails.
-	go countHistoricalDownloads(q, author, repo, today, dailySplit, resultsChan)
-	go countHistoricalDownloads(q, author, repo, today, weeklySplit, resultsChan)
-	go countHistoricalDownloads(q, author, repo, today, monthlySplit, resultsChan)
-	go countHistoricalDownloads(q, author, repo, today, allTimeSplit, resultsChan)
+	go countHistoricalDownloads(q, author, repo, now, dailySplit, resultsChan)
+	go countHistoricalDownloads(q, author, repo, now, weeklySplit, resultsChan)
+	go countHistoricalDownloads(q, author, repo, now, monthlySplit, resultsChan)
+	go countHistoricalDownloads(q, author, repo, now, allTimeSplit, resultsChan)
 
 	// Read all of the results, then exit when we run out.
 	for result := range resultsChan {

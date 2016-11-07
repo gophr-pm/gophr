@@ -26,6 +26,10 @@ func Insert(args InsertArgs) error {
 		Value(packagesColumnNameStars, args.Stars).
 		Value(packagesColumnNameAuthor, args.Author).
 		Value(packagesColumnNameAwesome, args.Awesome).
+		Value(packagesColumnNameTrendScore, 0).
+		Value(
+			packagesColumnNameSearchScore,
+			CalcSearchScore(args.Stars, 0, args.Awesome, 0)).
 		Value(packagesColumnNameDescription, args.Description).
 		Value(packagesColumnNameDateDiscovered, time.Now()).
 		Value(

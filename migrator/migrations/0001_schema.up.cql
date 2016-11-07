@@ -73,12 +73,12 @@ CREATE TABLE IF NOT EXISTS all_time_downloads (
   PRIMARY KEY ((author, repo), sha)
 ) WITH CLUSTERING ORDER BY (sha ASC);
 
----------------------------- DAILY DOWNLOADS TABLE -----------------------------
+---------------------------- HOURLY DOWNLOADS TABLE ----------------------------
 
-CREATE TABLE IF NOT EXISTS daily_downloads (
-  day timestamp,
+CREATE TABLE IF NOT EXISTS hourly_downloads (
+  hour timestamp,
   author text,
   repo text,
   total counter,
-  PRIMARY KEY ((author, repo), day)
-) WITH CLUSTERING ORDER BY (day DESC);
+  PRIMARY KEY ((author, repo), hour)
+) WITH CLUSTERING ORDER BY (hour DESC);
