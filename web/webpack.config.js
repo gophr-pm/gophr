@@ -1,6 +1,18 @@
 var rucksack = require('rucksack-css')
 var webpack = require('webpack')
 var path = require('path')
+var execSync = require('child_process').execSync
+
+var minikubeIP, gophrWebPort = 30443
+
+// First, grab the minikube ip.
+try {
+  console.log('Attempting to get minikube IP address...')
+  minikubeIP = execSync('minikube ip', { encoding: 'utf8' }).trim()
+} catch(err) {
+  console.error(`Failed to read the minikube IP address: ${err}.`)
+  process.exit(1)
+}
 
 module.exports = {
   context: path.join(__dirname, './client'),
@@ -69,7 +81,7 @@ module.exports = {
     hot: true,
     proxy: {
       '/api/*': {
-        target: 'http://gauntlet-api',
+        target: `https://${minikubeIP}:${gophrWebPort}`,
         secure: false
       }
     }
