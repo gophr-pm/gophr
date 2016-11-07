@@ -11,9 +11,8 @@ import (
 
 // packageUpdaterArgs is the arguments struct for packageUpdater.
 type packageUpdaterArgs struct {
-	q  db.Queryable
-	wg *sync.WaitGroup
-	// TODO(skeswa): synced errors go here.
+	q         db.Queryable
+	wg        *sync.WaitGroup
 	errs      chan error
 	ghSvc     github.RequestService
 	logger    common.JobLogger

@@ -11,9 +11,8 @@ import (
 
 // downloadDeleterArgs is the arguments struct for downloadDeleter.
 type downloadDeleterArgs struct {
-	q  db.Queryable
-	wg *sync.WaitGroup
-	// TODO(skeswa): synced errors go here.
+	q         db.Queryable
+	wg        *sync.WaitGroup
 	errs      chan error
 	logger    common.JobLogger
 	summaries chan pkg.Summary
