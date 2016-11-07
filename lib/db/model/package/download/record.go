@@ -19,22 +19,22 @@ func Record(
 	ghSvc github.RequestService,
 ) error {
 	var (
-		// Normalize the day date by setting all the time fields to zero.
-		now   = time.Now()
-		today = time.Date(
+		// Normalize the hourly date by setting all lesser time fields to zero.
+		now      = time.Now()
+		thisHour = time.Date(
 			now.Year(),
 			now.Month(),
 			now.Day(),
-			0,
-			0,
-			0,
-			0,
-			time.UTC)
+			now.Hour(),
+			0, // minutes
+			0, // seconds
+			0, // nanoseconds
+			time.Local)
 		resultsChan = make(chan error)
 	)
 
 	// Execute the first update query. Exit if it fails.
-	go bumpDownloads(q, today, author, repo, sha, resultsChan)
+	go bumpDownloads(q, thisHour, author, repo, sha, resultsChan)
 	go assertPackageExistence(q, author, repo, ghSvc, resultsChan)
 
 	var (

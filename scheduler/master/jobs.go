@@ -18,4 +18,8 @@ var (
 		name: "indexGoSearchPackages",
 		path: "index/go-search",
 	}
+	deleteOldDownloadsPackages = job{
+		name: "deleteOldDownloadsPackages",
+		path: "delete/old-downloads",
+	}
 )

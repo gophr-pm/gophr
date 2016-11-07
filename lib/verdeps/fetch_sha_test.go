@@ -16,7 +16,7 @@ func TestFetchSHA(t *testing.T) {
 			packageSHA         = "1234123412341234123412341234123412341234"
 			packageRepo        = "b"
 			packageAuthor      = "a"
-			packageVersionDate = time.Date(2016, time.April, 8, 14, 12, 0, 0, time.UTC)
+			packageVersionDate = time.Date(2016, time.April, 8, 14, 12, 0, 0, time.Local)
 		)
 
 		Convey("When the importPath is a subpath of this package, then simply copy the parent package SHA", func() {

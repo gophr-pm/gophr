@@ -38,7 +38,7 @@ func GetSplits(
 			0,
 			0,
 			0,
-			time.UTC)
+			time.Local)
 	)
 
 	// Execute the first update query. Exit if it fails.

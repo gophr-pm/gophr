@@ -67,7 +67,7 @@ func bumpDownloads(
 	// Counter batches must be unlogdged (as of Cassandra 2.1).
 	batch := b.NewUnloggedBatch()
 	// Create and add the update queries.
-	addDailyBumpQuery(batch, day, author, repo)
+	addHourlyBumpQuery(batch, day, author, repo)
 	addAllTimeBumpQuery(batch, author, repo, sha)
 	addAllTimeBumpQuery(batch, author, repo, anySHA)
 
@@ -79,18 +79,18 @@ func bumpDownloads(
 	resultChan <- nil
 }
 
-// addDailyBumpQuery adds a daily download total increment query to a batch.
-func addDailyBumpQuery(
+// addHourlyBumpQuery adds a daily download total increment query to a batch.
+func addHourlyBumpQuery(
 	b db.Batch,
-	day time.Time,
+	hour time.Time,
 	author string,
 	repo string,
 ) {
-	query.Update(dailyTableName).
-		Increment(dailyColumnNameTotal, 1).
-		Where(query.Column(dailyColumnNameDay).Equals(day)).
-		And(query.Column(dailyColumnNameAuthor).Equals(author)).
-		And(query.Column(dailyColumnNameRepo).Equals(repo)).
+	query.Update(hourlyTableName).
+		Increment(hourlyColumnNameTotal, 1).
+		Where(query.Column(hourlyColumnNameHour).Equals(hour)).
+		And(query.Column(hourlyColumnNameAuthor).Equals(author)).
+		And(query.Column(hourlyColumnNameRepo).Equals(repo)).
 		AppendTo(b)
 }
 
@@ -116,7 +116,7 @@ func countHistoricalDownloads(
 	q db.Queryable,
 	author string,
 	repo string,
-	today time.Time,
+	now time.Time,
 	split splitType,
 	resultsChan chan countResult,
 ) {
@@ -135,21 +135,21 @@ func countHistoricalDownloads(
 	// Change the date boundary depending on the split.
 	switch split {
 	case dailySplit:
-		from = today
+		from = now.AddDate(0, 0, -1)
 	case weeklySplit:
-		from = today.AddDate(0, 0, -7)
+		from = now.AddDate(0, 0, -7)
 	case monthlySplit:
-		from = today.AddDate(0, -1, 0)
+		from = now.AddDate(0, -1, 0)
 	}
 
 	// Run the query using the recently calculated date boundary.
 	if err = query.
-		SelectSum(dailyColumnNameTotal).
-		From(dailyTableName).
-		Where(query.Column(dailyColumnNameAuthor).Equals(author)).
-		And(query.Column(dailyColumnNameRepo).Equals(repo)).
-		And(query.Column(dailyColumnNameDay).IsGreaterThanOrEqualTo(from)).
-		And(query.Column(dailyColumnNameDay).IsLessThanOrEqualTo(today)).
+		SelectSum(hourlyColumnNameTotal).
+		From(hourlyTableName).
+		Where(query.Column(hourlyColumnNameAuthor).Equals(author)).
+		And(query.Column(hourlyColumnNameRepo).Equals(repo)).
+		And(query.Column(hourlyColumnNameHour).IsGreaterThanOrEqualTo(from)).
+		And(query.Column(hourlyColumnNameHour).IsLessThanOrEqualTo(now)).
 		Create(q).
 		Scan(&count); err != nil {
 		// Check to see if the daily download simply does not exist. If so, just
