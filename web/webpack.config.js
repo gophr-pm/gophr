@@ -9,8 +9,11 @@ var minikubeIP, gophrWebPort = 30443
 try {
   console.log('Attempting to get minikube IP address...')
   minikubeIP = execSync('minikube ip', { encoding: 'utf8' }).trim()
+  console.log('Got minikube IP address, now starting webpack...')
 } catch(err) {
-  console.error(`Failed to read the minikube IP address: ${err}.`)
+  console.error(
+    `Failed to read the minikube IP address. ` +
+    `Make sure the gophr development environment is running: ${err}.`)
   process.exit(1)
 }
 

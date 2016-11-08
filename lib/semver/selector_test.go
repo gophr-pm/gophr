@@ -12,22 +12,22 @@ var (
 	selectorRegex = regexp.MustCompile(
 		fmt.Sprintf(
 			`([%c%c]?)([0-9]+)\.(?:([0-9]+|%c))(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+[a-zA-Z0-9])(?:\.([0-9]+|%c))?)?([%c%c]?)`,
-			SemverSelectorTildeChar,
-			SemverSelectorCaratChar,
-			SemverSelectorWildcardChar,
-			SemverSelectorWildcardChar,
-			SemverSelectorWildcardChar,
-			SemverSelectorLessThanChar,
-			SemverSelectorGreaterThanChar,
+			SelectorTildeChar,
+			SelectorCaratChar,
+			SelectorWildcardChar,
+			SelectorWildcardChar,
+			SelectorWildcardChar,
+			SelectorLessThanChar,
+			SelectorGreaterThanChar,
 		),
 	)
 
 	candidateRegex = regexp.MustCompile(
 		fmt.Sprintf(
 			`([0-9]+)\.(?:([0-9]+|%c))(?:\.([0-9]+|%c))?(?:\-([a-zA-Z0-9\-_]+)(?:\.([0-9]+|%c))?)?`,
-			SemverSelectorWildcardChar,
-			SemverSelectorWildcardChar,
-			SemverSelectorWildcardChar,
+			SelectorWildcardChar,
+			SelectorWildcardChar,
+			SelectorWildcardChar,
 		),
 	)
 
@@ -97,9 +97,9 @@ var (
 type semverMatchTuple struct {
 	correct           bool
 	selector          string
-	compiledSelector  SemverSelector
+	compiledSelector  Selector
 	candidate         string
-	compiledCandidate SemverCandidate
+	compiledCandidate Candidate
 }
 
 func selector(selector string) *semverMatchTuple {
@@ -121,7 +121,7 @@ func (tuple *semverMatchTuple) doesntBound(candidate string) *semverMatchTuple {
 func (tuple *semverMatchTuple) compile() {
 	matches := selectorRegex.FindStringSubmatch(tuple.selector)
 	if matches != nil {
-		compiledSelector, err := NewSemverSelector(
+		compiledSelector, err := NewSelector(
 			matches[1],
 			matches[2],
 			matches[3],
@@ -142,7 +142,7 @@ func (tuple *semverMatchTuple) compile() {
 
 	matches = candidateRegex.FindStringSubmatch(tuple.candidate)
 	if matches != nil {
-		compiledCandidate, err := NewSemverCandidate(
+		compiledCandidate, err := NewCandidate(
 			"fakeHash",
 			"fakeName",
 			"fakeLabel",
@@ -163,97 +163,97 @@ func (tuple *semverMatchTuple) compile() {
 	}
 }
 
-func TestNewSemverSelector(t *testing.T) {
+func TestNewSelector(t *testing.T) {
 	var (
 		err    error
-		semver SemverSelector
+		semver Selector
 	)
 
-	semver, err = NewSemverSelector("6", "1", "", "", "", "", "")
+	semver, err = NewSelector("6", "1", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail on illegal prefixes")
 
-	semver, err = NewSemverSelector("", "1", "", "", "", "", "?")
+	semver, err = NewSelector("", "1", "", "", "", "", "?")
 	assert.NotNil(t, err, "should fail on illegal suffixes")
 
-	semver, err = NewSemverSelector("", "c", "", "", "", "", "")
+	semver, err = NewSelector("", "c", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail on illegal major segment")
 
-	semver, err = NewSemverSelector("", "", "", "", "", "", "")
+	semver, err = NewSelector("", "", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail on no major segment provided")
 
-	semver, err = NewSemverSelector("", "1", "", "1", "", "", "")
+	semver, err = NewSelector("", "1", "", "1", "", "", "")
 	assert.NotNil(t, err, "should fail on gap between version segments")
 
-	semver, err = NewSemverSelector("", "1", "z", "", "", "", "")
+	semver, err = NewSelector("", "1", "z", "", "", "", "")
 	assert.NotNil(t, err, "should fail on illegal minor segment")
 
-	semver, err = NewSemverSelector("", "1", "x", "1", "", "", "")
+	semver, err = NewSelector("", "1", "x", "1", "", "", "")
 	assert.NotNil(t, err, "should fail on an segment trailing a wildcard")
 
-	semver, err = NewSemverSelector("", "1", "x", "x", "", "", "")
+	semver, err = NewSelector("", "1", "x", "x", "", "", "")
 	assert.NotNil(t, err, "should fail on an segment trailing a wildcard")
 
-	semver, err = NewSemverSelector("~", "1", "x", "", "", "", "")
+	semver, err = NewSelector("~", "1", "x", "", "", "", "")
 	assert.NotNil(t, err, "should fail when prefix is mixed with minor wildcard")
 
-	semver, err = NewSemverSelector("~", "1", "1", "x", "", "", "")
+	semver, err = NewSelector("~", "1", "1", "x", "", "", "")
 	assert.NotNil(t, err, "should fail when prefix is mixed with patch wildcard")
 
-	semver, err = NewSemverSelector("", "1", "1", "x", "alpha", "", "")
+	semver, err = NewSelector("", "1", "1", "x", "alpha", "", "")
 	assert.NotNil(t, err, "should fail on an segment trailing a wildcard")
 
-	semver, err = NewSemverSelector("~", "1", "1", "z", "", "", "")
+	semver, err = NewSelector("~", "1", "1", "z", "", "", "")
 	assert.NotNil(t, err, "should fail on illegal patch segment")
 
-	semver, err = NewSemverSelector("~", "1", "1", "", "alpha", "", "")
+	semver, err = NewSelector("~", "1", "1", "", "alpha", "", "")
 	assert.NotNil(t, err, "should fail on gap between version segments")
 
-	semver, err = NewSemverSelector("~", "1", "1", "1", "alpha", "x", "")
+	semver, err = NewSelector("~", "1", "1", "1", "alpha", "x", "")
 	assert.NotNil(t, err, "should fail when prefix is mixed with prerelease wildcard")
 
-	semver, err = NewSemverSelector("~", "1", "1", "", "", "x", "")
+	semver, err = NewSelector("~", "1", "1", "", "", "x", "")
 	assert.NotNil(t, err, "should fail on gap between version segments")
 
-	semver, err = NewSemverSelector("~", "1", "1", "1", "alpha", "z", "")
+	semver, err = NewSelector("~", "1", "1", "1", "alpha", "z", "")
 	assert.NotNil(t, err, "should fail on illegal prelease segment")
 
-	semver, err = NewSemverSelector("~", "1", "2", "", "", "", "+")
+	semver, err = NewSelector("~", "1", "2", "", "", "", "+")
 	assert.NotNil(t, err, "should fail when prefix is mixed with suffix")
 
-	semver, err = NewSemverSelector("", "1", "2", "x", "", "", "+")
+	semver, err = NewSelector("", "1", "2", "x", "", "", "+")
 	assert.NotNil(t, err, "should fail when wildcard is mixed with suffix")
 
-	semver, err = NewSemverSelector("", "1", "2", "x", "", "", "x")
+	semver, err = NewSelector("", "1", "2", "x", "", "", "x")
 	assert.NotNil(t, err, "should fail when wildcard is mixed with suffix")
 
-	// semver, err = NewSemverSelector("~", "1", "", "", "", "", "")
+	// semver, err = NewSelector("~", "1", "", "", "", "", "")
 	// assert.NotNil(t, err)
 
-	semver, err = NewSemverSelector("", "1", "", "", "", "", "")
+	semver, err = NewSelector("", "1", "", "", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
-	semver, err = NewSemverSelector("", "2", "", "", "", "", "-")
+	semver, err = NewSelector("", "2", "", "", "", "", "-")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 2, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.MinorVersion.Type, "minor should be type number")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, SemverSelectorSuffixLessThan, semver.Suffix, "suffix should be less than")
+	assert.Equal(t, SelectorSuffixLessThan, semver.Suffix, "suffix should be less than")
 
-	semver, err = NewSemverSelector("~", "1", "2", "", "", "", "")
+	semver, err = NewSelector("~", "1", "2", "", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixTilde, semver.Prefix, "prefix should be a tilde")
+	assert.Equal(t, SelectorPrefixTilde, semver.Prefix, "prefix should be a tilde")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
@@ -261,11 +261,11 @@ func TestNewSemverSelector(t *testing.T) {
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PatchVersion.Type, "patch should be type unspecified")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
-	semver, err = NewSemverSelector("^", "1", "2", "3", "", "", "")
+	semver, err = NewSelector("^", "1", "2", "3", "", "", "")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixCarat, semver.Prefix, "prefix should be a carat")
+	assert.Equal(t, SelectorPrefixCarat, semver.Prefix, "prefix should be a carat")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
@@ -274,11 +274,11 @@ func TestNewSemverSelector(t *testing.T) {
 	assert.Equal(t, 3, semver.PatchVersion.Number, "patch should be the correct number")
 	assert.Equal(t, "", semver.PrereleaseLabel, "prerelease label should be empty")
 	assert.Equal(t, SemverSegmentTypeUnspecified, semver.PrereleaseVersion.Type, "prerelease should be type unspecified")
-	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
-	semver, err = NewSemverSelector("", "1", "2", "3", "alpha", "x", "")
+	semver, err = NewSelector("", "1", "2", "3", "alpha", "x", "")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
@@ -287,11 +287,11 @@ func TestNewSemverSelector(t *testing.T) {
 	assert.Equal(t, 3, semver.PatchVersion.Number, "patch should be the correct number")
 	assert.Equal(t, "alpha", semver.PrereleaseLabel, "prerelease label should be alpha")
 	assert.Equal(t, SemverSegmentTypeWildcard, semver.PrereleaseVersion.Type, "prerelease should be type wildcard")
-	assert.Equal(t, SemverSelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
+	assert.Equal(t, SelectorSuffixNone, semver.Suffix, "suffix should be unspecified")
 
-	semver, err = NewSemverSelector("", "1", "2", "3", "beta", "43", "+")
+	semver, err = NewSelector("", "1", "2", "3", "beta", "43", "+")
 	assert.Nil(t, err)
-	assert.Equal(t, SemverSelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
+	assert.Equal(t, SelectorPrefixNone, semver.Prefix, "prefix should be unspecified")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MajorVersion.Type, "major should be type number")
 	assert.Equal(t, 1, semver.MajorVersion.Number, "major should be the correct number")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.MinorVersion.Type, "minor should be type number")
@@ -301,7 +301,7 @@ func TestNewSemverSelector(t *testing.T) {
 	assert.Equal(t, "beta", semver.PrereleaseLabel, "prerelease label should be alpha")
 	assert.Equal(t, SemverSegmentTypeNumber, semver.PrereleaseVersion.Type, "prerelease should be type number")
 	assert.Equal(t, 43, semver.PrereleaseVersion.Number, "prerelease should the correct number")
-	assert.Equal(t, SemverSelectorSuffixGreaterThan, semver.Suffix, "suffix should be greater than")
+	assert.Equal(t, SelectorSuffixGreaterThan, semver.Suffix, "suffix should be greater than")
 }
 
 func TestSemverMatches(t *testing.T) {
@@ -334,47 +334,47 @@ func TestSemverMatches(t *testing.T) {
 
 func TestSemverString(t *testing.T) {
 	var (
-		semver SemverSelector
+		semver Selector
 	)
 
-	semver, _ = NewSemverSelector("", "1", "", "", "", "", "")
+	semver, _ = NewSelector("", "1", "", "", "", "", "")
 	assert.Equal(t, "1", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("~", "1", "", "", "", "", "")
+	semver, _ = NewSelector("~", "1", "", "", "", "", "")
 	assert.Equal(t, "~1", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("^", "1", "", "", "", "", "")
+	semver, _ = NewSelector("^", "1", "", "", "", "", "")
 	assert.Equal(t, "^1", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("~", "1", "2", "", "", "", "")
+	semver, _ = NewSelector("~", "1", "2", "", "", "", "")
 	assert.Equal(t, "~1.2", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "", "", "")
+	semver, _ = NewSelector("", "1", "2", "3", "", "", "")
 	assert.Equal(t, "1.2.3", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "x", "", "", "", "")
+	semver, _ = NewSelector("", "1", "x", "", "", "", "")
 	assert.Equal(t, "1.x", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "x", "", "", "")
+	semver, _ = NewSelector("", "1", "2", "x", "", "", "")
 	assert.Equal(t, "1.2.x", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "alpha", "", "")
+	semver, _ = NewSelector("", "1", "2", "3", "alpha", "", "")
 	assert.Equal(t, "1.2.3-alpha", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "alpha", "x", "")
+	semver, _ = NewSelector("", "1", "2", "3", "alpha", "x", "")
 	assert.Equal(t, "1.2.3-alpha.x", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "alpha", "4", "")
+	semver, _ = NewSelector("", "1", "2", "3", "alpha", "4", "")
 	assert.Equal(t, "1.2.3-alpha.4", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "alpha", "4", "+")
+	semver, _ = NewSelector("", "1", "2", "3", "alpha", "4", "+")
 	assert.Equal(t, "1.2.3-alpha.4+", semver.String(), "serialized semver should match expectations")
 
-	semver, _ = NewSemverSelector("", "1", "2", "3", "alpha", "4", "-")
+	semver, _ = NewSelector("", "1", "2", "3", "alpha", "4", "-")
 	assert.Equal(t, "1.2.3-alpha.4-", semver.String(), "serialized semver should match expectations")
 
-	semver = SemverSelector{
-		MajorVersion: SemverSelectorSegment{
+	semver = Selector{
+		MajorVersion: SelectorSegment{
 			Type: SemverSegmentTypeWildcard,
 		},
 	}
@@ -382,8 +382,8 @@ func TestSemverString(t *testing.T) {
 		_ = semver.String()
 	}, "semver serialization should fail since major segment in an incorrect type")
 
-	semver = SemverSelector{
-		MajorVersion: SemverSelectorSegment{
+	semver = Selector{
+		MajorVersion: SelectorSegment{
 			Type: SemverSegmentTypeUnspecified,
 		},
 	}

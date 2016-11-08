@@ -25,13 +25,13 @@ var (
 	// version selectors.
 	semverSelectorRegex = regexp.MustCompile(fmt.Sprintf(
 		semverSelectorRegexTemplate,
-		semver.SemverSelectorTildeChar,
-		semver.SemverSelectorCaratChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorWildcardChar,
-		semver.SemverSelectorLessThanChar,
-		semver.SemverSelectorGreaterThanChar,
+		semver.SelectorTildeChar,
+		semver.SelectorCaratChar,
+		semver.SelectorWildcardChar,
+		semver.SelectorWildcardChar,
+		semver.SelectorWildcardChar,
+		semver.SelectorLessThanChar,
+		semver.SelectorGreaterThanChar,
 	))
 )
 
@@ -44,7 +44,7 @@ type packageRequestParts struct {
 	subpath               string
 	selector              string
 	shaSelector           string
-	semverSelector        semver.SemverSelector
+	semverSelector        semver.Selector
 	hasFullSHASelector    bool
 	hasShortSHASelector   bool
 	semverSelectorDefined bool
@@ -151,7 +151,7 @@ func readPackageRequestParts(req *http.Request) (*packageRequestParts, error) {
 
 		selector              string
 		shaSelector           string
-		semverSelector        semver.SemverSelector
+		semverSelector        semver.Selector
 		semverSelectorDefined bool
 	)
 
@@ -295,10 +295,10 @@ func isShortSHASelector(selector string) bool {
 }
 
 // isSemverSelector converts a semver selector string into a semver selector.
-func readSemverSelector(selector string) (semver.SemverSelector, error) {
+func readSemverSelector(selector string) (semver.Selector, error) {
 	match := semverSelectorRegex.FindStringSubmatch(selector)
 	if match == nil {
-		return semver.SemverSelector{}, fmt.Errorf("Invalid version selector \"%s\"", selector)
+		return semver.Selector{}, fmt.Errorf("Invalid version selector \"%s\"", selector)
 	}
 
 	semverSelector, err := semver.NewSemverSelector(
@@ -311,7 +311,7 @@ func readSemverSelector(selector string) (semver.SemverSelector, error) {
 		match[7], // Suffix
 	)
 	if err != nil {
-		return semver.SemverSelector{}, err
+		return semver.Selector{}, err
 	}
 
 	return semverSelector, nil

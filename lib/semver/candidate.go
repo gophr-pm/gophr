@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-// SemverCandidate is a semver version that has been confirmed to exist for a
+// Candidate is a semver version that has been confirmed to exist for a
 // given package. It carries versioning metadata, but it also has git ref info
 // so that the commit of the version can be isolated.
-type SemverCandidate struct {
+type Candidate struct {
 	GitRefHash              string
 	GitRefName              string
 	GitRefLabel             string
@@ -22,9 +22,9 @@ type SemverCandidate struct {
 	PrereleaseVersionExists bool
 }
 
-// NewSemverCandidate creates a new instance of a SemverCandidate from a variety
+// NewCandidate creates a new instance of a Candidate from a variety
 // of data points about a specific version-related git ref.
-func NewSemverCandidate(
+func NewCandidate(
 	gitRefHash string,
 	gitRefName string,
 	gitRefLabel string,
@@ -33,7 +33,7 @@ func NewSemverCandidate(
 	patchVersion string,
 	prereleaseLabel string,
 	prereleaseVersion string,
-) (SemverCandidate, error) {
+) (Candidate, error) {
 	var (
 		err                     error
 		majorVersionNumber      int
@@ -43,24 +43,24 @@ func NewSemverCandidate(
 	)
 
 	if len(gitRefHash) == 0 {
-		return SemverCandidate{}, errors.New("Git ref hash is required")
+		return Candidate{}, errors.New("Git ref hash is required")
 	} else if len(gitRefName) == 0 {
-		return SemverCandidate{}, errors.New("Git ref name is required")
+		return Candidate{}, errors.New("Git ref name is required")
 	}
 
 	if len(majorVersion) > 0 {
 		majorVersionNumber, err = strconv.Atoi(majorVersion)
 		if err != nil {
-			return SemverCandidate{}, err
+			return Candidate{}, err
 		}
 	} else {
-		return SemverCandidate{}, errors.New("Major version is required")
+		return Candidate{}, errors.New("Major version is required")
 	}
 
 	if len(minorVersion) > 0 {
 		minorVersionNumber, err = strconv.Atoi(minorVersion)
 		if err != nil {
-			return SemverCandidate{}, err
+			return Candidate{}, err
 		}
 	} else {
 		minorVersionNumber = 0
@@ -69,7 +69,7 @@ func NewSemverCandidate(
 	if len(patchVersion) > 0 {
 		patchVersionNumber, err = strconv.Atoi(patchVersion)
 		if err != nil {
-			return SemverCandidate{}, err
+			return Candidate{}, err
 		}
 	} else {
 		patchVersionNumber = 0
@@ -78,13 +78,13 @@ func NewSemverCandidate(
 	if len(prereleaseVersion) > 0 {
 		prereleaseVersionNumber, err = strconv.Atoi(prereleaseVersion)
 		if err != nil {
-			return SemverCandidate{}, err
+			return Candidate{}, err
 		}
 	} else {
 		prereleaseVersionNumber = 0
 	}
 
-	return SemverCandidate{
+	return Candidate{
 		GitRefHash:              gitRefHash,
 		GitRefName:              gitRefName,
 		GitRefLabel:             gitRefLabel,
@@ -101,7 +101,7 @@ func NewSemverCandidate(
 // number indicating the relationship between the two. -1 means this candidate
 // is lower than the other. 1 implies the opposite. 0 means that the candidates
 // are functionally equivalent.
-func (candidate SemverCandidate) CompareTo(other SemverCandidate) int {
+func (candidate Candidate) CompareTo(other Candidate) int {
 	if candidate.MajorVersion > other.MajorVersion {
 		return 1
 	} else if candidate.MajorVersion < other.MajorVersion {
@@ -134,24 +134,24 @@ func (candidate SemverCandidate) CompareTo(other SemverCandidate) int {
 	return 0
 }
 
-// String returns a string-serialized version of the SemverCandidate. The git
+// String returns a string-serialized version of the Candidate. The git
 // ref metadata is excluded such that the output of this function resembles a
 // semver-compliant version string.
-func (candidate SemverCandidate) String() string {
+func (candidate Candidate) String() string {
 	var buffer bytes.Buffer
 
 	buffer.WriteString(strconv.Itoa(candidate.MajorVersion))
-	buffer.WriteByte(SemverSelectorSeparatorChar)
+	buffer.WriteByte(SelectorSeparatorChar)
 	buffer.WriteString(strconv.Itoa(candidate.MinorVersion))
-	buffer.WriteByte(SemverSelectorSeparatorChar)
+	buffer.WriteByte(SelectorSeparatorChar)
 	buffer.WriteString(strconv.Itoa(candidate.PatchVersion))
 
 	if len(candidate.PrereleaseLabel) > 0 {
-		buffer.WriteByte(SemverSelectorPrereleaseLabelPrefixChar)
+		buffer.WriteByte(SelectorPrereleaseLabelPrefixChar)
 		buffer.WriteString(candidate.PrereleaseLabel)
 
 		if candidate.PrereleaseVersion > 0 {
-			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteByte(SelectorSeparatorChar)
 			buffer.WriteString(strconv.Itoa(candidate.PrereleaseVersion))
 		}
 	}
@@ -159,27 +159,27 @@ func (candidate SemverCandidate) String() string {
 	return buffer.String()
 }
 
-// SemverCandidateList is an abstraction for a slice of SemverCandidates with
-// some useful properties; namely, a SemverCandidateList is sortable and knows
+// CandidateList is an abstraction for a slice of Candidates with
+// some useful properties; namely, a CandidateList is sortable and knows
 // how to reduce itself to only matches that are relevant.
-type SemverCandidateList []SemverCandidate
+type CandidateList []Candidate
 
-func (list SemverCandidateList) Len() int {
+func (list CandidateList) Len() int {
 	return len(list)
 }
 
-func (list SemverCandidateList) Swap(i, j int) {
+func (list CandidateList) Swap(i, j int) {
 	list[i], list[j] = list[j], list[i]
 }
 
-func (list SemverCandidateList) Less(i, j int) bool {
+func (list CandidateList) Less(i, j int) bool {
 	return list[i].CompareTo(list[j]) < 0
 }
 
-// Match returns a new SemverCandidateList with only candidates that match the
+// Match returns a new CandidateList with only candidates that match the
 // specified selector.
-func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateList {
-	var newList []SemverCandidate
+func (list CandidateList) Match(selector Selector) CandidateList {
+	var newList []Candidate
 
 	for _, candidate := range list {
 		if selector.Matches(candidate) {
@@ -192,7 +192,7 @@ func (list SemverCandidateList) Match(selector SemverSelector) SemverCandidateLi
 
 // Lowest returns the candidate that appaeared first in the list (which is by
 // default the lowest).
-func (list SemverCandidateList) Lowest() *SemverCandidate {
+func (list CandidateList) Lowest() *Candidate {
 	listLength := len(list)
 	if listLength < 1 {
 		return nil
@@ -203,7 +203,7 @@ func (list SemverCandidateList) Lowest() *SemverCandidate {
 
 // Highest returns the candidate that appaeared last in the list (which is by
 // default the highest).
-func (list SemverCandidateList) Highest() *SemverCandidate {
+func (list CandidateList) Highest() *Candidate {
 	listLength := len(list)
 	if listLength < 1 {
 		return nil
@@ -214,7 +214,7 @@ func (list SemverCandidateList) Highest() *SemverCandidate {
 
 // Best returns the best version available in the candidate list according to
 // the specified selector.
-func (list SemverCandidateList) Best(selector SemverSelector) *SemverCandidate {
+func (list CandidateList) Best(selector Selector) *Candidate {
 	var (
 		matches    = list.Match(selector)
 		matchesLen = len(matches)
@@ -228,7 +228,7 @@ func (list SemverCandidateList) Best(selector SemverSelector) *SemverCandidate {
 		return &matches[0]
 	} else {
 		var (
-			selectorHasLessThan  = selector.Suffix == SemverSelectorSuffixLessThan
+			selectorHasLessThan  = selector.Suffix == SelectorSuffixLessThan
 			selectorHasWildcards = selector.MinorVersion.Type == SemverSegmentTypeWildcard ||
 				selector.PatchVersion.Type == SemverSegmentTypeWildcard ||
 				selector.PrereleaseVersion.Type == SemverSegmentTypeWildcard

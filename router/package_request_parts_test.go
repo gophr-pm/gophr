@@ -74,7 +74,7 @@ func TestReadPackageRequestParts(t *testing.T) {
 		subpath:               "",
 		selector:              "",
 		shaSelector:           "",
-		semverSelector:        semver.SemverSelector{},
+		semverSelector:        semver.Selector{},
 		semverSelectorDefined: false,
 	}
 	actualParts, err := readPackageRequestParts(req)
@@ -111,7 +111,7 @@ func TestReadPackageRequestParts(t *testing.T) {
 		subpath:               "",
 		selector:              "123456abcd123456abcd123456abcd123456abcd",
 		shaSelector:           "123456abcd123456abcd123456abcd123456abcd",
-		semverSelector:        semver.SemverSelector{},
+		semverSelector:        semver.Selector{},
 		hasShortSHASelector:   false,
 		hasFullSHASelector:    true,
 		semverSelectorDefined: false,
@@ -131,7 +131,7 @@ func TestReadPackageRequestParts(t *testing.T) {
 		subpath:               "/ghi",
 		selector:              "",
 		shaSelector:           "",
-		semverSelector:        semver.SemverSelector{},
+		semverSelector:        semver.Selector{},
 		semverSelectorDefined: false,
 	}
 	actualParts, err = readPackageRequestParts(req)
@@ -168,7 +168,7 @@ func TestReadPackageRequestParts(t *testing.T) {
 		subpath:               "/ghi",
 		selector:              "123456abcd123456abcd123456abcd123456abcd",
 		shaSelector:           "123456abcd123456abcd123456abcd123456abcd",
-		semverSelector:        semver.SemverSelector{},
+		semverSelector:        semver.Selector{},
 		semverSelectorDefined: false,
 		hasFullSHASelector:    true,
 	}

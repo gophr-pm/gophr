@@ -62,7 +62,7 @@ type Refs struct {
 	DataStr              string
 	DataLen              int
 	DataStrLen           int
-	Candidates           semver.SemverCandidateList
+	Candidates           semver.CandidateList
 	MasterRefHash        string
 	IndexHeadLineEnd     int
 	IndexHeadLineStart   int
@@ -83,7 +83,7 @@ func NewRefs(data []byte) (Refs, error) {
 		indexNameStart, indexNameEnd                  int
 		indexHeadLineStart, indexHeadLineEnd          int
 		indexMasterLineStart, indexMasterLineEnd      int
-		versionCandidates, sanitizedVersionCandidates []semver.SemverCandidate
+		versionCandidates, sanitizedVersionCandidates []semver.Candidate
 	)
 
 	for i, j := 0, 0; i < dataLen; i = j {
@@ -188,11 +188,11 @@ func NewRefs(data []byte) (Refs, error) {
 
 	if versionCandidates != nil && len(versionCandidates) > 0 {
 		// First attach the sortable type to the slice of candidates.
-		versionCandidatesList := semver.SemverCandidateList(versionCandidates)
+		versionCandidatesList := semver.CandidateList(versionCandidates)
 		// Sort the list of candidates.
 		sort.Sort(versionCandidatesList)
 		// Remove duplicates by adding them to a new slice altogether.
-		var lastInsertedCandidate semver.SemverCandidate
+		var lastInsertedCandidate semver.Candidate
 		for i, versionCandidate := range versionCandidatesList {
 			if i == 0 || versionCandidate.CompareTo(lastInsertedCandidate) != 0 {
 				sanitizedVersionCandidates = append(sanitizedVersionCandidates, versionCandidate)
