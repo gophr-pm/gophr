@@ -1,0 +1,43 @@
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.eot');
+    src: local('Roboto Regular'), local('Roboto-Regular'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.eot?#iefix') format('embedded-opentype'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.woff2') format('woff2'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.woff') format('woff'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.ttf') format('truetype'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Regular.svg#Roboto') format('svg');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.eot');
+    src: local('Roboto Bold'), local('Roboto-Bold'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.eot?#iefix') format('embedded-opentype'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.woff2') format('woff2'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.woff') format('woff'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.ttf') format('truetype'), url('../node_modules/roboto-fontface/fonts/Roboto/Roboto-Bold.svg#Roboto') format('svg');
+    font-weight: 900;
+    font-style: normal;
+}
+
+html {
+  box-sizing: border-box;
+  font-family: 'Roboto', 'Helvetica Neue', 'Helvetica', sans-serif;
+  font-size: 62.5%; /* 62.5% of 16px = 10px */
+}
+
+body {
+  font-size: 1.4rem;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#root {
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}

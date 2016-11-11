@@ -33,6 +33,7 @@ module.exports = {
   },
   output: {
     path: path.join(__dirname, './static'),
+    publicPath: '/static/',
     filename: 'bundle.js',
   },
   module: {
@@ -40,6 +41,10 @@ module.exports = {
       {
         test: /\.html$/,
         loader: 'file?name=[name].[ext]'
+      },
+      {
+        test: /\.(svg|eot|ttf|woff|woff2)$/,
+        loader: 'url-loader?limit=100000'
       },
       {
         test: /\.css$/,

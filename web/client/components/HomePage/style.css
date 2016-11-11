@@ -1,0 +1,42 @@
+
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  left: 0;
+  right: 0;
+  padding: 3rem;
+  position: fixed;
+  top: 0;
+}
+
+.left, .right {
+  align-items: center;
+  display: flex;
+}
+
+.logo {
+  background: url(../../resources/images/logo.svg) no-repeat;
+  display: block;
+  height: 4rem;
+  margin-right: 2rem;
+  width: 4rem;
+}
+
+.splash {
+  align-items: center;
+  background: #98DADB;
+  display: flex;
+  height: 60rem;
+  height: 100vh;
+  justify-content: center;
+}
+
+.heroMessage {
+  font-size: 6rem;
+}
+
+.section {
+  background: tan;
+  height: 20rem;
+}
