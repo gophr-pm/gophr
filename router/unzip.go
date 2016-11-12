@@ -3,16 +3,12 @@ package main
 import (
 	"archive/zip"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 )
 
 // unzipArchive unzips a zip archive into the target directory.
 func unzipArchive(archive, target string) error {
-	// TODO(skeswa): get rid of noisy logs.
-	log.Println("archive = ", archive)
-	log.Println("target = ", target)
 	reader, err := zip.OpenReader(archive)
 	if err != nil {
 		return err
