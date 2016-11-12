@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gorilla/mux"
 )
 
@@ -16,6 +17,12 @@ func main() {
 	// Ensure that the client is closed eventually.
 	defer client.Close()
 
+	// Initialize datadog client.
+	datadogClient, err := datadog.NewClient(config, "api.")
+	if err != nil {
+		log.Println(err)
+	}
+
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
@@ -25,7 +32,7 @@ func main() {
 		urlVarRepo,
 		urlVarSHA,
 		urlVarPath),
-		BlobHandler()).Methods("GET")
+		BlobHandler(datadogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/new",
 		GetNewPackagesHandler(client)).Methods("GET")
