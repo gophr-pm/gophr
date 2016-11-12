@@ -5,9 +5,17 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gorilla/mux"
 )
+
+// DepotRequestHandlerArgs lol
+type DepotRequestHandlerArgs struct {
+	config        *config.Config
+	datadogClient *statsd.Client
+}
 
 func main() {
 	var (
@@ -20,12 +28,18 @@ func main() {
 			urlVarSHA)
 	)
 
+	// Initialize datadog client.
+	datadogClient, err := datadog.NewClient(conf, "depot.")
+	if err != nil {
+		log.Println(err)
+	}
+
 	// Register the status route.
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
 	// Register all the remaining routes for the main endpoint.
-	r.HandleFunc(endpoint, RepoExistsHandler(conf)).Methods("GET")
-	r.HandleFunc(endpoint, CreateRepoHandler(conf)).Methods("POST")
-	r.HandleFunc(endpoint, DeleteRepoHandler(conf)).Methods("DELETE")
+	r.HandleFunc(endpoint, RepoExistsHandler(conf, datadogClient)).Methods("GET")
+	r.HandleFunc(endpoint, CreateRepoHandler(conf, datadogClient)).Methods("POST")
+	r.HandleFunc(endpoint, DeleteRepoHandler(conf, datadogClient)).Methods("DELETE")
 
 	// Start tailing the nginx logs.
 	if err := tailNginxLogs(); err != nil {
