@@ -7,7 +7,7 @@ import (
 
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
-	"github.com/gophr-pm/gophr/lib/newrelic"
+	"github.com/gophr-pm/gophr/lib/datadog"
 )
 
 func main() {
@@ -22,10 +22,9 @@ func main() {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
-	// Create new relic app for monitoring.
-	newRelicApp, err := nr.CreateNewRelicApp(conf)
+	datadogClient, err := datadog.NewClient(conf, "router.")
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 
 	// Start serving.
@@ -33,7 +32,7 @@ func main() {
 		conf,
 		client,
 		creds,
-		newRelicApp))
+		datadogClient))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

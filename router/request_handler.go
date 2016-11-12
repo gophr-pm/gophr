@@ -2,15 +2,16 @@ package main
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
-	"github.com/gophr-pm/gophr/lib/newrelic"
-	"github.com/newrelic/go-agent"
 )
 
 const (
@@ -28,7 +29,7 @@ func RequestHandler(
 	conf *config.Config,
 	client db.Client,
 	creds *config.Credentials,
-	newRelicApp newrelic.Application,
+	datadogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	// Instantiate the IO module for use in package downloading and versioning.
 	io := io.NewIO()
@@ -42,11 +43,19 @@ func RequestHandler(
 	})
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Log this transaction in new relic if in production.
-		var nrTxn newrelic.Transaction
-		if !conf.IsDev {
-			nrTxn = nr.CreateNewRelicTxn(newRelicApp, &w, r)
-			defer nrTxn.End()
+		trackingArgs := datadog.TrackTranscationArgs{
+			Tags: []string{
+				"package-download",
+				"external",
+			},
+			Client:    datadogClient,
+			StartTime: time.Now(),
+			EventInfo: []string{
+				r.URL.Path, r.UserAgent(),
+			},
+			MetricName:      "request.duration",
+			CreateEvent:     statsd.NewEvent,
+			CustomEventName: "package.download",
 		}
 
 		// Make sure that this isn't a simple health check before getting more
@@ -69,10 +78,9 @@ func RequestHandler(
 			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
 			doHTTPHead:   github.DoHTTPHeadReq,
 		}); err != nil {
-			if nrTxn != nil {
-				nr.ReportNewRelicError(nrTxn, err)
-			}
-
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -90,12 +98,14 @@ func RequestHandler(
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
-			if nrTxn != nil {
-				nr.ReportNewRelicError(nrTxn, err)
-			}
-
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
+
+		trackingArgs.AlertType = datadog.Success
+		defer datadog.TrackTranscation(trackingArgs)
 	}
 }
