@@ -15,6 +15,13 @@
     font-style: normal;
 }
 
+@font-face {
+  font-family: 'Bitter';
+  src: local('Bitter-Regular'), url('./resources/fonts/Bitter/Bitter-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 html {
   box-sizing: border-box;
   font-family: 'Roboto', 'Helvetica Neue', 'Helvetica', sans-serif;

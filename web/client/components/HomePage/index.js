@@ -9,7 +9,14 @@ import SearchBox from '../SearchBox'
 
 class HomePage extends Component {
   state = {
-    searchQuery: ''
+    searchQuery:                  '',
+    heroMessageHighlightsVisible: false
+  }
+
+  componentDidMount() {
+    setTimeout(() => this.setState({
+      heroMessageHighlightsVisible: true,
+    }), 500)
   }
 
   onSearchQueryChanged(searchQuery) {
@@ -17,7 +24,11 @@ class HomePage extends Component {
   }
 
   render() {
-    const { searchQuery } = this.state
+    const { searchQuery, heroMessageHighlightsVisible } = this.state
+
+    const heroMessageHighlightClasses = classNames(style.heroMessageHighlight, {
+      [style.heroMessageHighlight__visible]: heroMessageHighlightsVisible
+    })
 
     return (
       <div className={style.main}>
@@ -35,11 +46,25 @@ class HomePage extends Component {
         <div className={style.splash}>
           <div className={style.hero}>
             <div className={style.heroMessage}>
-              gophr is for gophers.
+              <a
+                href="https://github.com/gophr-pm/gophr"
+                target="_blank"
+                className={heroMessageHighlightClasses}>gophr</a>
+              <span>&nbsp;is the package manager that&nbsp;</span>
+              <a
+                href="https://golang.org"
+                target="_blank"
+                className={heroMessageHighlightClasses}>Go</a>
+              <span>&nbsp;deserves.</span>
             </div>
-            <SearchBox
-              query={searchQuery}
-              onQueryChanged={::this.onSearchQueryChanged} />
+            <div className={style.heroButtons}>
+              <div
+                style={{ backgroundColor: '#5bbb8d' }}
+                className={style.heroButton}>Learn More</div>
+              <div
+                style={{ backgroundColor: '#4b7a7b' }}
+                className={style.heroButton}>Find Packages</div>
+            </div>
           </div>
         </div>
         <div className={style.section}>
