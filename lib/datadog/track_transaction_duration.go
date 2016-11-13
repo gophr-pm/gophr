@@ -13,9 +13,9 @@ import (
 // This can be internal requests, or external user-facing requests.
 // It will always report the transaction duration and optionally an
 // associated event.
-func TrackTransaction(args TrackTranscationArgs) {
+func TrackTransaction(args TrackTransactionArgs) {
 	// Calculate the total request duration.
-	reqDuration := float64(time.Since(args.StartTime))
+	reqDuration := float64(time.Since(args.StartTime) / time.Millisecond)
 	log.Println("Transaction duration = ", reqDuration)
 
 	// Then send a guage for the request metric.

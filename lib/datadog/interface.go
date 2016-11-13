@@ -7,7 +7,7 @@ import (
 )
 
 // Constants used to references against statsd's unexported
-// AlertType.
+// `alertType`.
 const (
 	Error   = "error"
 	Info    = "info"
@@ -18,15 +18,15 @@ const (
 // and responsible - Google Search for creating new metric events.
 type EventCreator func(title, text string) *statsd.Event
 
-// TrackTranscationArgs is the args structs for tracking transactions
+// TrackTransactionArgs is the args structs for tracking transactions
 // to DataDog.
-type TrackTranscationArgs struct {
+type TrackTransactionArgs struct {
 	Tags            []string
-	MetricName      string
 	Client          *statsd.Client
 	StartTime       time.Time
 	AlertType       string
 	EventInfo       []string
+	MetricName      string
 	CreateEvent     EventCreator
 	CustomEventName string
 }
