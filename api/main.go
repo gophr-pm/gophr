@@ -18,7 +18,7 @@ func main() {
 	defer client.Close()
 
 	// Initialize datadog client.
-	datadogClient, err := datadog.NewClient(config, "api.")
+	dataDogClient, err := datadog.NewClient(config, "api.")
 	if err != nil {
 		log.Println(err)
 	}
@@ -32,26 +32,26 @@ func main() {
 		urlVarRepo,
 		urlVarSHA,
 		urlVarPath),
-		BlobHandler(datadogClient)).Methods("GET")
+		BlobHandler(dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/new",
-		GetNewPackagesHandler(client)).Methods("GET")
+		GetNewPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/search",
-		SearchPackagesHandler(client)).Methods("GET")
+		SearchPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/trending",
-		GetTrendingPackagesHandler(client)).Methods("GET")
+		GetTrendingPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/top/{%s}/{%s}",
 		urlVarLimit,
 		urlVarTimeSplit),
-		GetTopPackagesHandler(client)).Methods("GET")
+		GetTopPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/{%s}/{%s}",
 		urlVarAuthor,
 		urlVarRepo),
-		GetPackageHandler(client)).Methods("GET")
+		GetPackageHandler(client, dataDogClient)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
-	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
+	"github.com/gophr-pm/gophr/lib/errors"
 )
 
 const (
@@ -22,6 +26,7 @@ type getNewPackagesRequestArgs struct {
 // packages get requests.
 func GetNewPackagesHandler(
 	q db.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -31,22 +36,51 @@ func GetNewPackagesHandler(
 			results pkg.Summaries
 		)
 
+		trackingArgs := datadog.TrackTransactionArgs{
+			Tags: []string{
+				"api-get-new-packages",
+				"external",
+			},
+			Client:          dataDogClient,
+			StartTime:       time.Now(),
+			EventInfo:       []string{},
+			MetricName:      "request.duration",
+			CreateEvent:     statsd.NewEvent,
+			CustomEventName: "api.get.new.packages",
+		}
+
+		defer datadog.TrackTransaction(trackingArgs)
+
 		// Parse out the args.
 		if args, err = extractGetNewPackagesRequestArgs(r); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
+		// Track request metadata.
+		trackingArgs.EventInfo = append(
+			trackingArgs.EventInfo,
+			fmt.Sprintf("%v", args),
+		)
+
 		// Get from the database.
 		if results, err = pkg.GetNew(q, args.limit); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 
+		trackingArgs.AlertType = datadog.Success
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, string(json))
 		respondWithJSON(w, json)
 	}
 }

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/errors"
@@ -24,6 +28,7 @@ type searchPackagesRequestArgs struct {
 // packages get requests.
 func SearchPackagesHandler(
 	q db.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -33,22 +38,50 @@ func SearchPackagesHandler(
 			results pkg.Summaries
 		)
 
+		trackingArgs := datadog.TrackTransactionArgs{
+			Tags: []string{
+				"api-get-trending-packages",
+				"external",
+			},
+			Client:          dataDogClient,
+			StartTime:       time.Now(),
+			EventInfo:       []string{},
+			MetricName:      "request.duration",
+			CreateEvent:     statsd.NewEvent,
+			CustomEventName: "api.get.trending.packages",
+		}
+
+		defer datadog.TrackTransaction(trackingArgs)
+
 		// Parse out the args.
 		if args, err = extractSearchPackagesRequestArgs(r); err != nil {
 			errors.RespondWithError(w, err)
 			return
 		}
+
+		// Track request metadata.
+		trackingArgs.EventInfo = append(
+			trackingArgs.EventInfo,
+			fmt.Sprintf("%v", args),
+		)
+
 		// Get from the database.
 		if results, err = pkg.Search(q, args.searchQuery, args.limit); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 
+		trackingArgs.AlertType = datadog.Success
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, string(json))
 		respondWithJSON(w, json)
 	}
 }

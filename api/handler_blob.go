@@ -21,20 +21,22 @@ type blobRequestArgs struct {
 }
 
 // BlobHandler creates an HTTP request handler that responds to filepath lookups.
-func BlobHandler(datadogClient *statsd.Client) func(http.ResponseWriter, *http.Request) {
+func BlobHandler(dataDogClient *statsd.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		trackingArgs := datadog.TrackTranscationArgs{
+		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
 				"repo-blob",
 				"external",
 			},
-			Client:          datadogClient,
+			Client:          dataDogClient,
 			StartTime:       time.Now(),
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "repo.blob",
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Get request metadata.
 		args, err := extractBlobRequestArgs(r)
@@ -46,7 +48,6 @@ func BlobHandler(datadogClient *statsd.Client) func(http.ResponseWriter, *http.R
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -62,7 +63,6 @@ func BlobHandler(datadogClient *statsd.Client) func(http.ResponseWriter, *http.R
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -71,7 +71,6 @@ func BlobHandler(datadogClient *statsd.Client) func(http.ResponseWriter, *http.R
 		if depotBlobResp.StatusCode == 404 {
 			trackingArgs.AlertType = datadog.Info
 			trackingArgs.Tags = append(trackingArgs.Tags, "404")
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusNotFound)
 			w.Write([]byte{})
 		}
@@ -80,14 +79,12 @@ func BlobHandler(datadogClient *statsd.Client) func(http.ResponseWriter, *http.R
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
 
 		depotBlobResp.Body.Close()
 		trackingArgs.AlertType = datadog.Success
-		defer datadog.TrackTranscation(trackingArgs)
 
 		if len(body) > 0 {
 			w.WriteHeader(http.StatusOK)
