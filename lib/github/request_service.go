@@ -1,22 +1,13 @@
 package github
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/config"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
-)
-
-// GitHubGophrPackageOrgName is the  Github organization name for all versioned packages
-const (
-	GitHubGophrPackageOrgName = "gophr-packages"
-)
-
-// GitHubBaseAPIURL is the base Github API
-const (
-	GitHubBaseAPIURL = "https://api.github.com"
 )
 
 const (
@@ -42,21 +33,26 @@ type RequestService interface {
 // requestService is the library responsible for managing all outbound
 // requests to GitHub
 type requestService struct {
-	APIKeyChain *APIKeyChain
-}
-
-// NewRequestService initialies a new GitHubrequestService and APIKeyChain
-func NewRequestService(args RequestServiceArgs) RequestService {
-	svc := requestService{}
-	svc.APIKeyChain = NewAPIKeyChain(args)
-
-	return &svc
+	keyChain *apiKeyChain
 }
 
 // RequestServiceArgs passes import Kubernetes configuration and secrets.
 // Also can dictate whether request service is being used by indexer.
 type RequestServiceArgs struct {
-	Conf       *config.Config
-	Queryable  db.Queryable
-	ForIndexer bool
+	Conf             *config.Config
+	Queryable        db.BatchingQueryable
+	ForScheduledJobs bool
+}
+
+// NewRequestService initialies a new GitHubrequestService and APIKeyChain
+func NewRequestService(args RequestServiceArgs) (RequestService, error) {
+	keyChain, err := newAPIKeyChain(args)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Could not create new Github request service: %v.",
+			err)
+	}
+
+	svc := &requestService{keyChain: keyChain}
+	return svc, nil
 }

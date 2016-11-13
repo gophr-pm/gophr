@@ -41,7 +41,7 @@ type packageRequest struct {
 // newPackageRequestArgs is the arguments struct for newPackageRequest.
 type newPackageRequestArgs struct {
 	req          *http.Request
-	doHTTPHead   github.HTTPHeadReq
+	DoHTTPHeadReq   github.HTTPHeadReq
 	fetchFullSHA fullSHAFetcher
 	downloadRefs refsDownloader
 }
@@ -71,7 +71,7 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 						Author:     parts.author,
 						Repo:       parts.repo,
 						ShortSHA:   parts.shaSelector,
-						DoHTTPHead: args.doHTTPHead,
+						DoHTTPHead: args.DoHTTPHeadReq,
 					},
 				)
 				if err != nil {

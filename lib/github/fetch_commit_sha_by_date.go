@@ -14,24 +14,36 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
-// FetchCommitSHA Fetches a commitSHA closest to a given timestamp
+// FetchCommitSHA Fetches a commitSHA closest to a given timestamp.
 func (svc *requestService) FetchCommitSHA(
 	author string,
 	repo string,
 	timestamp time.Time,
 ) (string, error) {
-	commitSHA, err := svc.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsUntilParameter)
+	log.Printf(`Fetching Github commit SHA of "%s/%s" for timestamp %s.
+`, author, repo, timestamp.String())
+
+	// Fetch commits chronologically before the timestamp.
+	commitSHA, err := svc.fetchCommitSHAByTimeSelector(
+		author,
+		repo,
+		timestamp,
+		commitsUntilParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
-	log.Printf("%s \n", err)
-	commitSHA, err = svc.fetchCommitSHAByTimeSelector(author, repo, timestamp, commitsAfterParameter)
+	// Fetch commits chronologically after the timestamp.
+	commitSHA, err = svc.fetchCommitSHAByTimeSelector(
+		author,
+		repo,
+		timestamp,
+		commitsAfterParameter)
 	if err == nil {
 		return commitSHA, nil
 	}
 
-	log.Printf("%s \n", err)
+	// Before and after failed somehow. Just take the latest.
 	refs, err := lib.FetchRefs(author, repo)
 	if err != nil {
 		return refs.MasterRefHash, nil
@@ -46,29 +58,47 @@ func (svc *requestService) fetchCommitSHAByTimeSelector(
 	timestamp time.Time,
 	timeSelector string,
 ) (string, error) {
-	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
-	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
+	resp, err := svc.keyChain.acquireKey().getFromGithub(
+		buildGitHubRepoCommitsFromTimestampAPIURL(
+			author,
+			repo,
+			timestamp,
+			timeSelector))
 
-	githubURL := buildGitHubRepoCommitsFromTimestampAPIURL(author, repo, *APIKeyModel, timestamp, timeSelector)
-	log.Printf("Fetching GitHub data for %s \n", githubURL)
-
-	resp, err := http.Get(githubURL)
+	// Make sure that the response body gets closed eventually.
 	defer resp.Body.Close()
 
 	if err != nil {
-		return "", errors.New("Request error.")
+		return "", fmt.Errorf(
+			`Failed to get commit SHA for "%s/%s" by time selector: %v.`,
+			author,
+			repo,
+			err)
 	}
 
+	// Handle all kinds of failures.
 	if resp.StatusCode == 404 {
-		log.Println("PackageModel was not found on Github")
-		return "", nil
+		return "", fmt.Errorf(
+			`Failed to get commit SHA for "%s/%s" by time selector: `+
+				`package not found.`,
+			author,
+			repo)
+	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
+		return "", fmt.Errorf(
+			`Failed to get commit SHA for "%s/%s" by time selector: `+
+				`bumped into a status code %d.`,
+			author,
+			repo,
+			resp.StatusCode)
 	}
-
-	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
 
 	commitSHA, err := parseGitHubCommitTimestamp(resp)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf(
+			`Failed to parse commit SHA for "%s/%s" by time selector: %v.`,
+			author,
+			repo,
+			err)
 	}
 
 	return commitSHA, nil
@@ -77,18 +107,16 @@ func (svc *requestService) fetchCommitSHAByTimeSelector(
 func buildGitHubRepoCommitsFromTimestampAPIURL(
 	author string,
 	repo string,
-	APIKeyModel APIKeyModel,
 	timestamp time.Time,
 	timeSelector string,
 ) string {
-	url := fmt.Sprintf("%s/repos/%s/%s/commits?%s=%s&access_token=%s",
-		GitHubBaseAPIURL,
+	url := fmt.Sprintf(
+		"https://api.github.com/repos/%s/%s/commits?%s=%s",
 		author,
 		repo,
 		timeSelector,
-		strings.Replace(timestamp.String(), " ", "", -1),
-		APIKeyModel.Key,
-	)
+		strings.Replace(timestamp.String(), " ", "", -1))
+
 	return url
 }
 
