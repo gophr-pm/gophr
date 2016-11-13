@@ -35,6 +35,8 @@ spec:
           - name: cgroups
             mountPath: /host/sys/fs/cgroup
             readOnly: true
+          - name: secrets
+            mountPath: /secrets
       volumes:
         - hostPath:
             path: /var/run/docker.sock
@@ -45,3 +47,6 @@ spec:
         - hostPath:
             path: /sys/fs/cgroup
           name: cgroups
+          - name: secrets
+            secret:
+              secretName: gophr-secrets
