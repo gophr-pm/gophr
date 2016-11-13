@@ -25,3 +25,9 @@ PASSWORD=`readJson ${SECRETS_DIR} password` || exit 1;
 
 echo "USERNAME=$USER" >> ~/.bashrc
 echo "PASSWORD=$PASSWORD" >> ~/.bashrc
+
+echo "Replacing \"{{USER}}\" in /conf.d/cassandra.yaml with username."
+sed -i "s/{{USER}}/${USER}/g;" /etc/dd-agent/conf.d/cassandra.yaml
+
+echo "Replacing \"{{PASSWORD}}\" in /conf.d/cassandra.yaml with password."
+sed -i "s/{{PASSWORD}}/${PASSWORD}/g;" /etc/dd-agent/conf.d/cassandra.yaml

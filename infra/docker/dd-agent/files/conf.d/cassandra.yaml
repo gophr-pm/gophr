@@ -1,8 +1,8 @@
 instances:
    -    host: db-svc
         port: 7199
-        user: {{username}}
-        password: {{password}}
+        user: {{USER}}
+        password: {{PASSWORD}}
         cassandra_aliasing: true
 
 # List of metrics to be collected by the integration

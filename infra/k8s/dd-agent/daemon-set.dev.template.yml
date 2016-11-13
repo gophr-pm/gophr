@@ -47,6 +47,6 @@ spec:
         - hostPath:
             path: /sys/fs/cgroup
           name: cgroups
-          - name: secrets
-            secret:
-              secretName: gophr-secrets
+        - name: secrets
+          secret:
+            secretName: gophr-secrets

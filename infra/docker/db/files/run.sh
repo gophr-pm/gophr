@@ -54,6 +54,10 @@ done
 #echo "JVM_OPTS=\"\$JVM_OPTS -Djava.rmi.server.hostname=$IP\"" >> $CASSANDRA_CONFIG/cassandra-env.sh
 #
 
+cp /secrets/jmxremote.password /etc/cassandra/jmxremote.password
+chmod 400 /etc/cassandra/jmxremote.password
+cp /secrets/jmxremote.password /etc/java-8-openjdk/management/jmxremote.password
+
 # FIXME create README for these args
 echo "Starting Cassandra on $POD_IP"
 echo CASSANDRA_RPC_ADDRESS ${CASSANDRA_RPC_ADDRESS}
