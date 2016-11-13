@@ -35,6 +35,7 @@ ENV DEBUG true
 ENV CASSANDRA_SERVICE db-svc
 ENV CASSANDRA_CLUSTER_NAME gophr-cassandra-cluster
 ENV CASSANDRA_AUTO_BOOTSTRAP false
+ENV LOCAL_JMX no
 
 # Install Cassandra and clean up after.
 RUN mv /cassandra.list /etc/apt/sources.list.d/cassandra.list \
@@ -74,6 +75,11 @@ RUN mv /cassandra.list /etc/apt/sources.list.d/cassandra.list \
         /usr/share/doc-base/ \
         /usr/share/man/ \
         /tmp/*
+
+# We need this to enable JMX monitoring for Datadog agent
+COPY ./infra/docker/db/files/jmxremote.password /etc/cassandra/jmxremote.password
+RUN chmod 400 /etc/cassandra/jmxremote.password
+COPY ./infra/docker/db/files/jmxremote.password /etc/java-8-openjdk/management/jmxremote.password
 
 # Install the Lucene plugin.
 RUN mv /cassandra-lucene-plugin-3.7.1/* /usr/share/cassandra/lib/ \
