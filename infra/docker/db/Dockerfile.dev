@@ -76,11 +76,6 @@ RUN mv /cassandra.list /etc/apt/sources.list.d/cassandra.list \
         /usr/share/man/ \
         /tmp/*
 
-# We need this to enable JMX monitoring for Datadog agent
-#COPY ./infra/docker/db/files/jmxremote.password /etc/cassandra/jmxremote.password
-#RUN chmod 400 /etc/cassandra/jmxremote.password
-#COPY ./infra/docker/db/files/jmxremote.password /etc/java-8-openjdk/management/jmxremote.password
-
 # Install the Lucene plugin.
 RUN mv /cassandra-lucene-plugin-3.7.1/* /usr/share/cassandra/lib/ \
   && rm -rf /cassandra-lucene-plugin-3.7.1
