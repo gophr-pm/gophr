@@ -22,7 +22,7 @@ func main() {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
-	datadogClient, err := datadog.NewClient(conf, "router.")
+	dataDogClient, err := datadog.NewClient(conf, "router.")
 	if err != nil {
 		log.Println(err)
 	}
@@ -32,7 +32,7 @@ func main() {
 		conf,
 		client,
 		creds,
-		datadogClient))
+		dataDogClient))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

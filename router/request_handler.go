@@ -29,7 +29,7 @@ func RequestHandler(
 	conf *config.Config,
 	client db.Client,
 	creds *config.Credentials,
-	datadogClient *statsd.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	// Instantiate the IO module for use in package downloading and versioning.
 	io := io.NewIO()
@@ -43,12 +43,12 @@ func RequestHandler(
 	})
 
 	return func(w http.ResponseWriter, r *http.Request) {
-		trackingArgs := datadog.TrackTranscationArgs{
+		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
 				"package-download",
 				"external",
 			},
-			Client:    datadogClient,
+			Client:    dataDogClient,
 			StartTime: time.Now(),
 			EventInfo: []string{
 				r.URL.Path, r.UserAgent(),
@@ -57,6 +57,8 @@ func RequestHandler(
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "package.download",
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
@@ -80,7 +82,6 @@ func RequestHandler(
 		}); err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -100,12 +101,10 @@ func RequestHandler(
 		}); err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			errors.RespondWithError(w, err)
 			return
 		}
 
 		trackingArgs.AlertType = datadog.Success
-		defer datadog.TrackTranscation(trackingArgs)
 	}
 }
