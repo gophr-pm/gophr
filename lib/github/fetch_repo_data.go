@@ -11,10 +11,9 @@ import (
 	"github.com/gophr-pm/gophr/lib/dtos"
 )
 
-// FetchGitHubDataForPackageModel fetches current repo data of a given
+// FetchRepoData fetches the Github repository metadata for the specified
 // package.
-// TODO optimize this with FFJSON models
-func (svc *requestService) FetchGitHubDataForPackageModel(
+func (svc *requestServiceImpl) FetchRepoData(
 	author string,
 	repo string,
 ) (dtos.GithubRepo, error) {

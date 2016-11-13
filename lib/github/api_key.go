@@ -26,6 +26,7 @@ type apiKey struct {
 	rateLimitResetTime time.Time
 }
 
+// newAPIKey creates a new Github API key.
 func newAPIKey(token string) (*apiKey, error) {
 	newKey := &apiKey{token: token}
 	if err := newKey.updateByRequest(); err != nil {
@@ -48,10 +49,12 @@ func (key *apiKey) getFromGithub(url string) (*http.Response, error) {
 
 	// This is to make sure that only one request at a time happens on this token.
 	key.requestLock.Lock()
-	defer key.requestLock.Unlock()
-
 	// Make the request, then update accordingly.
 	resp, err := http.Get(url)
+	// Allow other requests to go through on this key.
+	key.requestLock.Unlock()
+
+	// Attempt to update the key.
 	if resp != nil {
 		key.update(resp.Header)
 	}
@@ -60,6 +63,8 @@ func (key *apiKey) getFromGithub(url string) (*http.Response, error) {
 }
 
 // TODO:(Shikkic) consider revising how we parse the values from header
+// update modifies the usage metadata for this API key using the header of a
+// Github API response.
 func (key *apiKey) update(header http.Header) *apiKey {
 	// TODO(skeswa): spell check.
 	remaingRequests := header.Get(httpHeaderRequestsRemaining)
@@ -83,6 +88,7 @@ func (key *apiKey) update(header http.Header) *apiKey {
 	return key
 }
 
+// canBeUsed returns true if this key has remaining usages.
 func (key *apiKey) canBeUsed() bool {
 	key.dataLock.RLock()
 	hasRemainingRequests := key.remainingUses < 1
@@ -91,6 +97,7 @@ func (key *apiKey) canBeUsed() bool {
 	return hasRemainingRequests
 }
 
+// waitUntilUseful blocks until this key can be used.
 func (key *apiKey) waitUntilUseful() {
 	key.dataLock.RLock()
 	resetTime := key.rateLimitResetTime
@@ -101,6 +108,7 @@ func (key *apiKey) waitUntilUseful() {
 	time.Sleep(sleepTime)
 }
 
+// updateByRequest updates usage metadata by calling the Github API.
 func (key *apiKey) updateByRequest() error {
 	resp, err := http.Get(fmt.Sprintf(githubAPIUsageEndpointTemplate, key.token))
 	if err != nil {

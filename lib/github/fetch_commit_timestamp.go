@@ -13,7 +13,7 @@ import (
 )
 
 // FetchCommitTimestamp fetches the timestamp of a commit from Github API.
-func (svc *requestService) FetchCommitTimestamp(
+func (svc *requestServiceImpl) FetchCommitTimestamp(
 	author string,
 	repo string,
 	sha string,

@@ -17,7 +17,16 @@ func NewMockRequestService() *MockRequestService {
 	return &MockRequestService{}
 }
 
-// FetchCommitSHA mocks MockRequestService.FetchCommitSHA.
+// FetchRepoData mocks RequestService.FetchCommitSHA.
+func (m *MockRequestService) FetchRepoData(
+	author string,
+	repo string,
+) (dtos.GithubRepo, error) {
+	args := m.Called(author, repo)
+	return args.Get(0).(dtos.GithubRepo), args.Error(1)
+}
+
+// FetchCommitSHA mocks RequestService.FetchCommitSHA.
 func (m *MockRequestService) FetchCommitSHA(
 	author string,
 	repo string,
@@ -27,7 +36,15 @@ func (m *MockRequestService) FetchCommitSHA(
 	return args.String(0), args.Error(1)
 }
 
-// FetchCommitTimestamp mocks MockRequestService.FetchCommitTimestamp.
+// ExpandPartialSHA mocks RequestService.ExpandPartialSHA.
+func (m *MockRequestService) ExpandPartialSHA(
+	args ExpandPartialSHAArgs,
+) (string, error) {
+	a := m.Called(args)
+	return a.String(0), a.Error(1)
+}
+
+// FetchCommitTimestamp mocks RequestService.FetchCommitTimestamp.
 func (m *MockRequestService) FetchCommitTimestamp(
 	author string,
 	repo string,
@@ -35,14 +52,4 @@ func (m *MockRequestService) FetchCommitTimestamp(
 ) (time.Time, error) {
 	args := m.Called(author, repo, sha)
 	return args.Get(0).(time.Time), args.Error(1)
-}
-
-// FetchGitHubDataForPackageModel mocks
-// MockRequestService.FetchGitHubDataForPackageModel.
-func (m *MockRequestService) FetchGitHubDataForPackageModel(
-	author string,
-	repo string,
-) (dtos.GithubRepo, error) {
-	args := m.Called(author, repo)
-	return args.Get(0).(dtos.GithubRepo), args.Error(1)
 }

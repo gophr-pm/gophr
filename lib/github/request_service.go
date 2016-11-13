@@ -21,18 +21,32 @@ var (
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 )
 
-// RequestService is the external interface of the internal requestService.
+// RequestService is an abstraction that enables reliable communication with the
+// Github REST API.
 type RequestService interface {
-	FetchCommitSHA(string, string, time.Time) (string, error)
-	FetchCommitTimestamp(string, string, string) (time.Time, error)
-	FetchGitHubDataForPackageModel(
+	// FetchRepoData fetches the Github repository metadata for the specified
+	// package.
+	FetchRepoData(author string, repo string) (dtos.GithubRepo, error)
+	// FetchCommitSHA fetches the commit SHA that is chronologically closest to a
+	// given timestamp.
+	FetchCommitSHA(
 		author string,
-		repo string) (dtos.GithubRepo, error)
+		repo string,
+		timeStamp time.Time) (string, error)
+	// ExpandPartialSHA is responsible for fetching a full commit SHA from a short
+	// SHA. This works by sending a HEAD request to the git archive endpoint with
+	// a short SHA. The request returns a full SHA of the archive in the `Etag`
+	// of the request header that is sent back.
+	ExpandPartialSHA(args ExpandPartialSHAArgs) (string, error)
+	// FetchCommitTimestamp fetches the timestamp of a commit from Github API.
+	FetchCommitTimestamp(
+		author string,
+		repo string,
+		sha string) (time.Time, error)
 }
 
-// requestService is the library responsible for managing all outbound
-// requests to GitHub
-type requestService struct {
+// requestServiceImpl is the implementation of the RequestService.
+type requestServiceImpl struct {
 	keyChain *apiKeyChain
 }
 
@@ -53,6 +67,6 @@ func NewRequestService(args RequestServiceArgs) (RequestService, error) {
 			err)
 	}
 
-	svc := &requestService{keyChain: keyChain}
+	svc := &requestServiceImpl{keyChain: keyChain}
 	return svc, nil
 }

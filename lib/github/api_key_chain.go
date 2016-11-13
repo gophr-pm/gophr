@@ -7,6 +7,7 @@ import (
 	"log"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/gophr-pm/gophr/lib/config"
 	"github.com/gophr-pm/gophr/lib/db"
@@ -14,6 +15,7 @@ import (
 )
 
 const (
+	keyRefreshDaemonInterval  = 1 * time.Hour
 	devAPIKeysSecretFileName  = "github-api-keys.dev.json"
 	prodAPIKeysSecretFileName = "github-api-keys.prod.json"
 )
@@ -22,7 +24,7 @@ const (
 // and cycling through keys that hit their request limit
 type apiKeyChain struct {
 	q                db.BatchingQueryable
-	lock             sync.Mutex
+	lock             sync.RWMutex
 	keys             []*apiKey
 	conf             *config.Config
 	cursor           int
@@ -45,9 +47,31 @@ func newAPIKeyChain(args RequestServiceArgs) (*apiKeyChain, error) {
 			err)
 	}
 
+	// Start refreshing keys in a fixed interval.
+	go keyChain.runKeyRefreshDaemon()
+
 	return &keyChain, nil
 }
 
+// runKeyRefreshDaemon calls refreshKeys every so often to keep the keys in
+// sync with those in the database.
+func (chain *apiKeyChain) runKeyRefreshDaemon() {
+	for {
+		log.Printf(
+			"Refreshing Github API keys in at %s.\n",
+			time.Now().Add(keyRefreshDaemonInterval).String())
+
+		time.Sleep(keyRefreshDaemonInterval)
+		if err := chain.refreshKeys(); err != nil {
+			log.Printf("Failed to refresh Github API keys: %v\n.", err)
+		} else {
+			log.Println("Github API keys refreshed successfully.")
+		}
+	}
+}
+
+// refreshKeys reads keys from the database, and adds the new ones to the in
+// memory collection of keys.
 func (chain *apiKeyChain) refreshKeys() error {
 	// Read keys from the database.
 	keyStrings, err := apikey.GetAll(chain.q, chain.forScheduledJobs)
@@ -67,26 +91,45 @@ func (chain *apiKeyChain) refreshKeys() error {
 		}
 	}
 
-	// Turn the key strings into fully-qualified keys.
-	var keys []*apiKey
-	for _, keyString := range keyStrings {
-		// TODO(skeswa): make this parallel instead of blocking on each "newAPIKey".
-		key, err := newAPIKey(keyString)
-		if err != nil {
-			return err
-		}
-
-		keys = append(keys, key)
+	// Only change keys if there are now more keys.
+	chain.lock.Lock()
+	if len(chain.keys) <= len(keyStrings) {
+		chain.lock.Unlock()
+		return nil
 	}
 
-	// Change over the keys.
+	// Put the existing keys in a set for easy lookups.
+	oldKeysSet := make(map[string]bool)
+	for _, oldKey := range chain.keys {
+		oldKeysSet[oldKey.token] = true
+	}
+	chain.lock.Unlock()
+
+	// Turn the new key strings into new fully-qualified keys.
+	var newKeys []*apiKey
+	for _, keyString := range keyStrings {
+		if !oldKeysSet[keyString] {
+			// TODO(skeswa): make this parallel instead of blocking on each
+			// "newAPIKey".
+			newKey, err := newAPIKey(keyString)
+			if err != nil {
+				return err
+			}
+
+			newKeys = append(newKeys, newKey)
+		}
+	}
+
+	// Append the old keys to the new keys.
 	chain.lock.Lock()
-	chain.keys = keys
+	chain.keys = append(newKeys, chain.keys...)
 	chain.lock.Unlock()
 
 	return nil
 }
 
+// acquireKey employs a round-robin policy to find the next Github API key. If
+// no usable keys are found, it blocks until a key is available.
 func (chain *apiKeyChain) acquireKey() *apiKey {
 	chain.lock.Lock()
 	keys := chain.keys
@@ -111,6 +154,7 @@ func (chain *apiKeyChain) acquireKey() *apiKey {
 	return key
 }
 
+// readGithubKeysFromSecret reads Github API keys from a secrets file.
 func readGithubKeysFromSecret(
 	conf *config.Config,
 	q db.BatchingQueryable,
@@ -141,22 +185,22 @@ func readGithubKeysFromSecret(
 			"Now unmarshalling json.")
 
 	// Create the struct for unmarshalling.
-	type unmarshalledAPIKey struct {
+	type marshalledAPIKey struct {
 		Key              string `json:"key"`
 		ForScheduledJobs bool   `json:"forScheduledJobs"`
 	}
 
 	// Create the slice for unmarshalling.
-	unmarshalledAPIKeys := []unmarshalledAPIKey{}
-	if err = json.Unmarshal(apiKeysJSON, &unmarshalledAPIKeys); err != nil {
+	marshalledAPIKeys := []marshalledAPIKey{}
+	if err = json.Unmarshal(apiKeysJSON, &marshalledAPIKeys); err != nil {
 		return nil, err
-	} else if len(unmarshalledAPIKeys) < 1 {
+	} else if len(marshalledAPIKeys) < 1 {
 		return nil, fmt.Errorf("There were no keys in the secret!")
 	}
 
-	// Turn the unmarshalledAPIKeys into insertion tuples.
+	// Turn the marshalledAPIKeys into insertion tuples.
 	var insertionTuples []apikey.InsertionTuple
-	for _, uak := range unmarshalledAPIKeys {
+	for _, uak := range marshalledAPIKeys {
 		insertionTuples = append(insertionTuples, apikey.InsertionTuple{
 			Key:              uak.Key,
 			ForScheduledJobs: uak.ForScheduledJobs,
@@ -177,7 +221,7 @@ func readGithubKeysFromSecret(
 			"Returning the keys in string form.")
 
 	var keyStrings []string
-	for _, key := range unmarshalledAPIKeys {
+	for _, key := range marshalledAPIKeys {
 		keyStrings = append(keyStrings, key.Key)
 	}
 

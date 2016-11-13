@@ -2,6 +2,8 @@ package github
 
 import "net/http"
 
+// TODO(skeswa): this should be migrated to lib/http @Shikkic.
+
 // DoHTTPHeadReq makes a HEAD request and returns the corresponding
 // response header.
 func DoHTTPHeadReq(url string) (*http.Header, error) {
