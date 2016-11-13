@@ -13,21 +13,23 @@ import (
 // RepoExistsHandler returns a 200 if the repo exists, or 404 if it doesn't.
 func RepoExistsHandler(
 	conf *config.Config,
-	datadogClient *statsd.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		trackingArgs := datadog.TrackTranscationArgs{
+		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
 				"repo-exists",
 				"internal",
 			},
-			Client:          datadogClient,
+			Client:          dataDogClient,
 			StartTime:       time.Now(),
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "repo.exists",
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Get request metadata.
 		vars, err := readURLVars(r)
@@ -39,7 +41,6 @@ func RepoExistsHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -53,7 +54,6 @@ func RepoExistsHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -62,14 +62,12 @@ func RepoExistsHandler(
 		if !exists {
 			trackingArgs.AlertType = datadog.Info
 			trackingArgs.Tags = append(trackingArgs.Tags, "404")
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 
 		// Otherwise, the repo exists.
 		trackingArgs.AlertType = datadog.Success
-		defer datadog.TrackTranscation(trackingArgs)
 		w.WriteHeader(http.StatusOK)
 		return
 	}

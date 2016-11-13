@@ -14,7 +14,7 @@ import (
 // DepotRequestHandlerArgs lol
 type DepotRequestHandlerArgs struct {
 	config        *config.Config
-	datadogClient *statsd.Client
+	dataDogClient *statsd.Client
 }
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 	)
 
 	// Initialize datadog client.
-	datadogClient, err := datadog.NewClient(conf, "depot.")
+	dataDogClient, err := datadog.NewClient(conf, "depot.")
 	if err != nil {
 		log.Println(err)
 	}
@@ -37,9 +37,9 @@ func main() {
 	// Register the status route.
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
 	// Register all the remaining routes for the main endpoint.
-	r.HandleFunc(endpoint, RepoExistsHandler(conf, datadogClient)).Methods("GET")
-	r.HandleFunc(endpoint, CreateRepoHandler(conf, datadogClient)).Methods("POST")
-	r.HandleFunc(endpoint, DeleteRepoHandler(conf, datadogClient)).Methods("DELETE")
+	r.HandleFunc(endpoint, RepoExistsHandler(conf, dataDogClient)).Methods("GET")
+	r.HandleFunc(endpoint, CreateRepoHandler(conf, dataDogClient)).Methods("POST")
+	r.HandleFunc(endpoint, DeleteRepoHandler(conf, dataDogClient)).Methods("DELETE")
 
 	// Start tailing the nginx logs.
 	if err := tailNginxLogs(); err != nil {

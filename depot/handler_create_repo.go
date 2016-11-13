@@ -13,21 +13,23 @@ import (
 // CreateRepoHandler creates a new repository in the depot.
 func CreateRepoHandler(
 	conf *config.Config,
-	datadogClient *statsd.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		trackingArgs := datadog.TrackTranscationArgs{
+		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
 				"create-repo",
 				"internal",
 			},
-			Client:          datadogClient,
+			Client:          dataDogClient,
 			StartTime:       time.Now(),
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "create.repo",
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Get request metadata.
 		vars, err := readURLVars(r)
@@ -38,7 +40,6 @@ func CreateRepoHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -52,7 +53,6 @@ func CreateRepoHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -60,14 +60,12 @@ func CreateRepoHandler(
 		// If the repo already existed, then return a 304.
 		if alreadyExisted {
 			trackingArgs.AlertType = datadog.Info
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
 
 		// Otherwise, the repo was created successfully.
 		trackingArgs.AlertType = datadog.Success
-		defer datadog.TrackTranscation(trackingArgs)
 		w.WriteHeader(http.StatusOK)
 		return
 	}

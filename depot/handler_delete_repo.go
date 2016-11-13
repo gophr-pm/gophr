@@ -13,21 +13,23 @@ import (
 // DeleteRepoHandler creates a new repository in the depot.
 func DeleteRepoHandler(
 	conf *config.Config,
-	datadogClient *statsd.Client,
+	dataDogClient *statsd.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		trackingArgs := datadog.TrackTranscationArgs{
+		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
 				"repo-delete",
 				"internal",
 			},
-			Client:          datadogClient,
+			Client:          dataDogClient,
 			StartTime:       time.Now(),
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "repo.delete",
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Get request metadata.
 		vars, err := readURLVars(r)
@@ -39,7 +41,6 @@ func DeleteRepoHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(err.Error()))
 			return
@@ -53,7 +54,6 @@ func DeleteRepoHandler(
 		if err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-			defer datadog.TrackTranscation(trackingArgs)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte(err.Error()))
 			return
@@ -61,7 +61,6 @@ func DeleteRepoHandler(
 
 		// Otherwise, the repo was deleted successfully.
 		trackingArgs.AlertType = datadog.Success
-		defer datadog.TrackTranscation(trackingArgs)
 		w.WriteHeader(http.StatusOK)
 		return
 	}
