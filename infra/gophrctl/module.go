@@ -195,6 +195,15 @@ var modules = map[string]*module{
 		versionfile:  "./infra/docker/scheduler/master/Versionfile.prod",
 		buildContext: ".",
 	},
+	"dd-agent": &module{
+		name: "dd-agent",
+		devK8SFiles: []string{
+			"./infra/k8s/dd-agent/daemon-set.dev.template.yml",
+			"./infra/k8s/dd-agent/service.dev.yml",
+		},
+		dockerfile:  "./infra/docker/dd-agent/Dockerfile",
+		versionfile: "./infra/docker/dd-agent/Versionfile.prod",
+	},
 }
 
 func modulesToString() string {
