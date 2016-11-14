@@ -91,7 +91,7 @@ func (key *apiKey) update(header http.Header) *apiKey {
 // canBeUsed returns true if this key has remaining usages.
 func (key *apiKey) canBeUsed() bool {
 	key.dataLock.RLock()
-	hasRemainingRequests := key.remainingUses < 1
+	hasRemainingRequests := key.remainingUses > 0
 	key.dataLock.RUnlock()
 
 	return hasRemainingRequests

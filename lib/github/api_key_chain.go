@@ -104,7 +104,7 @@ func (chain *apiKeyChain) refreshKeys() error {
 
 	// Only change keys if there are now more keys.
 	chain.lock.Lock()
-	if len(chain.keys) <= len(keyStrings) {
+	if len(keyStrings) <= len(chain.keys) {
 		chain.lock.Unlock()
 		return nil
 	}
