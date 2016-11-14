@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"errors"
 	"fmt"
@@ -168,24 +169,13 @@ func secretsRevealCommand(c *cli.Context) error {
 		err            error
 		keyFilePath    string
 		secretFilePath string
-		outputFilePath string
 	)
 
-	printInfo("Recording a new secret")
 	keyFilePath = c.String(flagNameKeyPath)
 	if len(keyFilePath) < 1 {
 		exit(exitCodeRevealSecretFailed, nil, "", fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath))
 	}
 	keyFilePath, err = filepath.Abs(keyFilePath)
-	if err != nil {
-		exit(exitCodeRevealSecretFailed, nil, "", err)
-	}
-
-	outputFilePath = c.String(flagNameOutputFile)
-	if len(outputFilePath) < 1 {
-		exit(exitCodeRevealSecretFailed, nil, "", fmt.Errorf("Invalid output file path: \"%s\".", outputFilePath))
-	}
-	outputFilePath, err = filepath.Abs(outputFilePath)
 	if err != nil {
 		exit(exitCodeRevealSecretFailed, nil, "", err)
 	}
@@ -204,14 +194,6 @@ func secretsRevealCommand(c *cli.Context) error {
 		exit(exitCodeRevealSecretFailed, nil, "", err)
 	}
 
-	if err = ioutil.WriteFile(
-		outputFilePath,
-		decryptedSecret,
-		0644,
-	); err != nil {
-		exit(exitCodeRecordSecretFailed, nil, "", err)
-	}
-
-	printSuccess(fmt.Sprintf("Secret revealed at \"%s\".", outputFilePath))
+	bytes.NewBuffer(decryptedSecret).WriteTo(os.Stdout)
 	return nil
 }
