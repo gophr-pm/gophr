@@ -16,7 +16,7 @@ import (
 type refsDownloader func(author, repo string) (lib.Refs, error)
 
 // fullSHAFetcher is responsible for fetching a full commit SHA from a short SHA.
-type fullSHAFetcher func(args github.FetchFullSHAArgs) (string, error)
+type fullSHAFetcher func(args github.RequestService) (string, error)
 
 // packageDownloadRecorderArgs is the arguments struct for
 // packageDownloadRecorders.

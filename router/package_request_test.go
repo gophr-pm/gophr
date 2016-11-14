@@ -8,11 +8,12 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/jinzhu/copier"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/semver"
+	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var (
@@ -149,27 +150,37 @@ func TestNewPackageRequest(t *testing.T) {
 	assert.Equal(t, "", pr.matchedSHALabel)
 
 	// Tests Short SHA with no errors
+	ghSvc := github.NewMockRequestService()
+	ghSvc.
+		On(
+			"ExpandPartialSHA",
+			mock.AnythingOfType("github.ExpandPartialSHAArgs")).
+		Return("1234567891011121314151617181920212223242", nil)
+
 	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@123456", true)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
+		ghSvc:        ghSvc,
 		downloadRefs: fakeRefsDownloader(fakeRefs("somemasterhash", nil), nil),
-		fetchFullSHA: func(args github.FetchFullSHAArgs) (string, error) {
-			return args.ShortSHA, nil
-		},
 	})
 	assert.NotNil(t, pr)
 	assert.Nil(t, err)
-	assert.Equal(t, "123456", pr.matchedSHA)
+	assert.Equal(t, "1234567891011121314151617181920212223242", pr.matchedSHA)
 	assert.Equal(t, "", pr.matchedSHALabel)
 
 	// Test Short SHA with error
+	ghSvc = github.NewMockRequestService()
+	ghSvc.
+		On(
+			"ExpandPartialSHA",
+			mock.AnythingOfType("github.ExpandPartialSHAArgs")).
+		Return("", errors.New("error occured"))
+
 	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@123456", true)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
+		ghSvc:        ghSvc,
 		downloadRefs: fakeRefsDownloader(fakeRefs("somemasterhash", nil), nil),
-		fetchFullSHA: func(args github.FetchFullSHAArgs) (string, error) {
-			return "", errors.New("error occured")
-		},
 	})
 	assert.NotNil(t, err)
 	assert.Nil(t, pr)

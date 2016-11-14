@@ -40,10 +40,10 @@ type packageRequest struct {
 
 // newPackageRequestArgs is the arguments struct for newPackageRequest.
 type newPackageRequestArgs struct {
-	req          *http.Request
-	DoHTTPHeadReq   github.HTTPHeadReq
-	fetchFullSHA fullSHAFetcher
-	downloadRefs refsDownloader
+	req           *http.Request
+	ghSvc         github.RequestService
+	DoHTTPHeadReq github.HTTPHeadReq
+	downloadRefs  refsDownloader
 }
 
 // newPackageRequest parses and simplifies the information in a package version
@@ -66,14 +66,13 @@ func newPackageRequest(args newPackageRequestArgs) (*packageRequest, error) {
 		if parts.hasSHASelector() {
 			// If we have a short SHA selector convert it to a full SHA.
 			if parts.hasShortSHASelector {
-				matchedSHA, err = args.fetchFullSHA(
-					github.FetchFullSHAArgs{
+				matchedSHA, err = args.ghSvc.ExpandPartialSHA(
+					github.ExpandPartialSHAArgs{
 						Author:     parts.author,
 						Repo:       parts.repo,
 						ShortSHA:   parts.shaSelector,
 						DoHTTPHead: args.DoHTTPHeadReq,
-					},
-				)
+					})
 				if err != nil {
 					return nil, err
 				}

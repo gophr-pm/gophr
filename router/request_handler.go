@@ -56,8 +56,8 @@ func RequestHandler(
 		// Create a new package request.
 		if pr, err = newPackageRequest(newPackageRequestArgs{
 			req:           r,
+			ghSvc:         ghSvc,
 			downloadRefs:  lib.FetchRefs,
-			fetchFullSHA:  github.FetchFullSHAFromPartialSHA,
 			DoHTTPHeadReq: github.DoHTTPHeadReq,
 		}); err != nil {
 			if nrTxn != nil {
