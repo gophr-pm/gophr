@@ -58,7 +58,7 @@ func newAPIKeyChain(args RequestServiceArgs) (*apiKeyChain, error) {
 func (chain *apiKeyChain) runKeyRefreshDaemon() {
 	for {
 		log.Printf(
-			"Refreshing Github API keys in at %s.\n",
+			"Refreshing Github API keys again at %s.\n",
 			time.Now().Add(keyRefreshDaemonInterval).String())
 
 		time.Sleep(keyRefreshDaemonInterval)
@@ -83,11 +83,22 @@ func (chain *apiKeyChain) refreshKeys() error {
 
 	// If there aren't any keys, go out and get some.
 	if len(keyStrings) < 1 {
-		keyStrings, err = readGithubKeysFromSecret(chain.conf, chain.q)
+		keyStrings, err = readGithubKeysFromSecret(
+			chain.conf,
+			chain.q,
+			chain.forScheduledJobs)
+
 		if err != nil {
 			return fmt.Errorf(
 				"Failed to get Github API keys from secrets for new key chain: %v.",
 				err)
+		}
+
+		// If there still aren't enough keys, exit with an error.
+		if len(keyStrings) < 1 {
+			return fmt.Errorf(
+				"Failed to get Github API keys from secrets for new key chain: " +
+					"there weren't enough keys in the secret.")
 		}
 	}
 
@@ -158,6 +169,7 @@ func (chain *apiKeyChain) acquireKey() *apiKey {
 func readGithubKeysFromSecret(
 	conf *config.Config,
 	q db.BatchingQueryable,
+	forScheduledJobs bool,
 ) ([]string, error) {
 	log.Println(
 		"There were no keys in the database. " +
@@ -222,7 +234,9 @@ func readGithubKeysFromSecret(
 
 	var keyStrings []string
 	for _, key := range marshalledAPIKeys {
-		keyStrings = append(keyStrings, key.Key)
+		if key.ForScheduledJobs == forScheduledJobs {
+			keyStrings = append(keyStrings, key.Key)
+		}
 	}
 
 	return keyStrings, nil
