@@ -62,28 +62,28 @@ func (key *apiKey) getFromGithub(url string) (*http.Response, error) {
 	return resp, err
 }
 
-// TODO:(Shikkic) consider revising how we parse the values from header
 // update modifies the usage metadata for this API key using the header of a
 // Github API response.
 func (key *apiKey) update(header http.Header) *apiKey {
-	// TODO(skeswa): spell check.
-	remaingRequests := header.Get(httpHeaderRequestsRemaining)
-	rateLimitResetTime := header.Get(httpHeaderResetTime)
+	var (
+		rawRemainingRequests  = header.Get(httpHeaderRequestsRemaining)
+		rawRateLimitResetTime = header.Get(httpHeaderResetTime)
+	)
 
-	remainingRequestsInt, _ := strconv.Atoi(remaingRequests)
-	rateLimitResetInt, _ := strconv.ParseInt(rateLimitResetTime, 0, 64)
-	rateLimitResetTimestamp := time.Unix(rateLimitResetInt, 0)
+	var (
+		remainingRequests, _    = strconv.Atoi(rawRemainingRequests)
+		rateLimitResetTimeMS, _ = strconv.ParseInt(rawRateLimitResetTime, 10, 64)
+		rateLimitResetTimeStamp = time.Unix(rateLimitResetTimeMS, 0)
+	)
 
 	key.dataLock.Lock()
-	key.remainingUses = remainingRequestsInt
-	key.rateLimitResetTime = rateLimitResetTimestamp
+	key.remainingUses = remainingRequests
+	key.rateLimitResetTime = rateLimitResetTimeStamp
 	key.dataLock.Unlock()
 
-	if remainingRequestsInt < 1000 {
-		// TODO(Shikkic): add a monitoring alert for stuff like this.
-		log.Printf("Github rate limit reset time %s\n", rateLimitResetTime)
-		log.Printf("Github rate limit remaining requests %s\n", remaingRequests)
-	}
+	log.Printf(
+		"Recently used Github API key now has %d remaining requests.\n",
+		remainingRequests)
 
 	return key
 }
