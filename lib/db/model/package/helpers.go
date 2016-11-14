@@ -41,7 +41,7 @@ func getGithubRepoDataAsynchronously(
 	outputError *error,
 	wg *sync.WaitGroup,
 ) {
-	repoData, err := ghSvc.FetchGitHubDataForPackageModel(author, repo)
+	repoData, err := ghSvc.FetchRepoData(author, repo)
 	if err != nil {
 		*outputError = err
 		wg.Done()

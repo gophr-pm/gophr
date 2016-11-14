@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS package_archive_records (
 ----------------------------- GITHUB API KEY TABLE -----------------------------
 
 CREATE TABLE IF NOT EXISTS github_api_key (
-  for_indexer boolean,
-  key text PRIMARY KEY,
+  for_scheduled_jobs boolean,
+  key text PRIMARY KEY
 );
 
 --------------------------- ALL-TIME DOWNLOADS TABLE ---------------------------

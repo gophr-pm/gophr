@@ -12,54 +12,77 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 )
 
-// FetchCommitTimestamp fetches the timestamp of a commit from Github API
-func (svc *requestService) FetchCommitTimestamp(
+// FetchCommitTimestamp fetches the timestamp of a commit from Github API.
+func (svc *requestServiceImpl) FetchCommitTimestamp(
 	author string,
 	repo string,
-	sha string) (time.Time, error) {
-	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
-	log.Printf("Determining APIKey %s \n", APIKeyModel.Key)
+	sha string,
+) (time.Time, error) {
+	log.Printf(`Fetching Github commit timestamp for "%s/%s@%s".
+`, author, repo, sha)
 
-	githubURL := buildGitHubCommitTimestampAPIURL(*APIKeyModel, author, repo, sha)
-	log.Printf("Fetching commit timestamp for %s \n", githubURL)
+	resp, err := svc.keyChain.acquireKey().getFromGithub(
+		buildGitHubCommitTimestampAPIURL(
+			author,
+			repo,
+			sha))
 
-	resp, err := http.Get(githubURL)
+	// Make sure that the response body gets closed eventually.
 	defer resp.Body.Close()
 
 	if err != nil {
-		return time.Time{}, errors.New("Request error.")
+		return time.Time{}, fmt.Errorf(
+			`Failed to get timestamp for commit "%s/%s%s": %v.`,
+			author,
+			repo,
+			sha,
+			err)
 	}
 
+	// Handle all kinds of failures.
 	if resp.StatusCode == 404 {
-		log.Println("PackageModel was not found on Github")
-		return time.Time{}, nil
+		return time.Time{}, fmt.Errorf(
+			`Failed to get timestamp for commit "%s/%s%s": package not found.`,
+			author,
+			repo,
+			sha)
+	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
+		return time.Time{}, fmt.Errorf(
+			`Failed to get timestamp for commit "%s/%s%s": `+
+				`bumped into a status code %d.`,
+			author,
+			repo,
+			sha,
+			resp.StatusCode)
 	}
 
-	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
-
-	timestamp, err := parseGitHubCommitLookUpResponseBody(resp)
+	timeStamp, err := parseGitHubCommitLookUpResponseBody(resp)
 	if err != nil {
-		return time.Time{}, err
+		return time.Time{}, fmt.Errorf(
+			`Failed to parse timestamp for commit "%s/%s%s": %v.`,
+			author,
+			repo,
+			sha,
+			err)
 	}
 
-	return timestamp, nil
+	return timeStamp, nil
 }
 
 func buildGitHubCommitTimestampAPIURL(
-	APIKeyModel APIKeyModel,
 	author string,
 	repo string,
 	sha string) string {
-	return fmt.Sprintf("%s/repos/%s/%s/commits/%s?&access_token=%s",
-		GitHubBaseAPIURL,
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/%s",
 		author,
 		repo,
 		sha,
-		APIKeyModel.Key,
 	)
 }
 
-func parseGitHubCommitLookUpResponseBody(response *http.Response) (time.Time, error) {
+func parseGitHubCommitLookUpResponseBody(
+	response *http.Response,
+) (time.Time, error) {
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return time.Time{}, errors.New("Failed to parse response body")

@@ -28,18 +28,21 @@ var (
 )
 
 func main() {
-	// Initialize the db client and github service.
-	var (
-		config, client = lib.Init()
-		ghSvc          = github.NewRequestService(github.RequestServiceArgs{
-			Conf:       config,
-			Queryable:  client,
-			ForIndexer: true,
-		})
-	)
+	// Initialize the db client and configuration.
+	config, client := lib.Init()
 
 	// Ensure that the client is closed eventually.
 	defer client.Close()
+
+	// Create an instance of the github request service.
+	ghSvc, err := github.NewRequestService(github.RequestServiceArgs{
+		Conf:             config,
+		Queryable:        client,
+		ForScheduledJobs: true,
+	})
+	if err != nil {
+		log.Fatalln("Failed to create the Github request service:", err)
+	}
 
 	// Register all of the routes.
 	r := mux.NewRouter()

@@ -6,169 +6,174 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/config"
 	"github.com/gophr-pm/gophr/lib/db"
-	"github.com/gophr-pm/gophr/lib/db/query"
-	"github.com/gophr-pm/gophr/lib/errors"
+	"github.com/gophr-pm/gophr/lib/db/model/github/apikey"
 )
 
-// Database string constants.
 const (
-	tableNameGithubAPIKey     = "github_api_key"
+	keyRefreshDaemonInterval  = 1 * time.Hour
 	devAPIKeysSecretFileName  = "github-api-keys.dev.json"
 	prodAPIKeysSecretFileName = "github-api-keys.prod.json"
-	columnNameGithubAPIKeyKey = "key"
-	columnNameIndexer         = "for_indexer"
 )
 
 // APIKeyChain is responsible for managing GitHubAPIKeymodels
 // and cycling through keys that hit their request limit
-type APIKeyChain struct {
-	GitHubAPIKeys []APIKeyModel
-	CurrentKey    APIKeyModel
+type apiKeyChain struct {
+	q                db.BatchingQueryable
+	lock             sync.RWMutex
+	keys             []*apiKey
+	conf             *config.Config
+	cursor           int
+	forScheduledJobs bool
 }
 
-// NewAPIKeyChain intializes and returns a new GitHubAPIKeyChain
-// and instantiates all available keys in the db as APIKeyModels
-func NewAPIKeyChain(args RequestServiceArgs) *APIKeyChain {
-	newGitHubAPIKeyChain := APIKeyChain{}
-	gitHubAPIKeys, err := scanAllGitHubKey(args.Conf, args.Queryable, args.ForIndexer)
+// newAPIKeyChain intializes and returns a new GitHubAPIKeyChain
+// and instantiates all available keys in the db as apiKeyModels
+func newAPIKeyChain(args RequestServiceArgs) (*apiKeyChain, error) {
+	keyChain := apiKeyChain{
+		q:                args.Queryable,
+		conf:             args.Conf,
+		forScheduledJobs: args.ForScheduledJobs,
+	}
+
+	// Go out an get keys for the first time.
+	if err := keyChain.refreshKeys(); err != nil {
+		return nil, fmt.Errorf(
+			"Failed to perform initial key refresh to create new chain: %v.",
+			err)
+	}
+
+	// Start refreshing keys in a fixed interval.
+	go keyChain.runKeyRefreshDaemon()
+
+	return &keyChain, nil
+}
+
+// runKeyRefreshDaemon calls refreshKeys every so often to keep the keys in
+// sync with those in the database.
+func (chain *apiKeyChain) runKeyRefreshDaemon() {
+	for {
+		log.Printf(
+			"Refreshing Github API keys again at %s.\n",
+			time.Now().Add(keyRefreshDaemonInterval).String())
+
+		time.Sleep(keyRefreshDaemonInterval)
+		if err := chain.refreshKeys(); err != nil {
+			log.Printf("Failed to refresh Github API keys: %v\n.", err)
+		} else {
+			log.Println("Github API keys refreshed successfully.")
+		}
+	}
+}
+
+// refreshKeys reads keys from the database, and adds the new ones to the in
+// memory collection of keys.
+func (chain *apiKeyChain) refreshKeys() error {
+	// Read keys from the database.
+	keyStrings, err := apikey.GetAll(chain.q, chain.forScheduledJobs)
 	if err != nil {
-		// TODO(skeswa): [NOISY] return an error instead of logging about it.
-		log.Println("Could not scan github keys, fatal error occurred")
-		log.Fatal(err)
-	}
-	log.Printf("Found %d keys %s \n", len(gitHubAPIKeys), gitHubAPIKeys)
-
-	newGitHubAPIKeyChain.GitHubAPIKeys = initializeGitHubAPIKeyModels(gitHubAPIKeys)
-	newGitHubAPIKeyChain.setCurrentKey()
-	// TODO (Shikkic): Optimize sort and choose algo for keys
-
-	return &newGitHubAPIKeyChain
-}
-
-func initializeGitHubAPIKeyModels(keys []string) []APIKeyModel {
-	var gitHubAPIKeyModels = make([]APIKeyModel, 0)
-
-	for _, key := range keys {
-		gitHubAPIKeyModel := APIKeyModel{
-			string(key),
-			5000,
-			5000,
-			time.Time{},
-		}
-		gitHubAPIKeyModel.prime()
-		gitHubAPIKeyModels = append(gitHubAPIKeyModels, gitHubAPIKeyModel)
+		return fmt.Errorf(
+			"Failed to get Github API keys from the database for key chain: %v.",
+			err)
 	}
 
-	return gitHubAPIKeyModels
-}
+	// If there aren't any keys, go out and get some.
+	if len(keyStrings) < 1 {
+		keyStrings, err = readGithubKeysFromSecret(
+			chain.conf,
+			chain.q,
+			chain.forScheduledJobs)
 
-func (gitHubAPIKeyChain *APIKeyChain) getAPIKeyModel() *APIKeyModel {
-	if gitHubAPIKeyChain.CurrentKey.RemainingUses > 0 {
-		return &gitHubAPIKeyChain.CurrentKey
-	}
-
-	log.Println("Current key has hit maxium limit, needs to be swaped")
-	gitHubAPIKeyChain.shuffleKeys()
-	gitHubAPIKeyChain.setCurrentKey()
-	gitHubAPIKeyChain.CurrentKey.prime()
-
-	if gitHubAPIKeyChain.CurrentKey.RemainingUses <= 0 {
-		setRequestTimout(gitHubAPIKeyChain.CurrentKey)
-	}
-
-	return &gitHubAPIKeyChain.CurrentKey
-}
-
-func (gitHubAPIKeyChain *APIKeyChain) shuffleKeys() {
-	var newGitHubAPIKeys = make([]APIKeyModel, 0)
-	var firstAPIModelInArray APIKeyModel
-
-	for index, APIKeyModel := range gitHubAPIKeyChain.GitHubAPIKeys {
-		if index == 0 {
-			firstAPIModelInArray = APIKeyModel
-		} else {
-			newGitHubAPIKeys = append(newGitHubAPIKeys, APIKeyModel)
-		}
-	}
-	newGitHubAPIKeys = append(newGitHubAPIKeys, firstAPIModelInArray)
-
-	gitHubAPIKeyChain.GitHubAPIKeys = newGitHubAPIKeys
-}
-
-// TODO(skeswa): this breaks when there are no keys in the database. @Shikkic,
-// investigate this.
-func (gitHubAPIKeyChain *APIKeyChain) setCurrentKey() {
-	if len(gitHubAPIKeyChain.GitHubAPIKeys) == 0 {
-		gitHubAPIKeyChain.CurrentKey = APIKeyModel{}
-	}
-
-	gitHubAPIKeyChain.CurrentKey = gitHubAPIKeyChain.GitHubAPIKeys[0]
-}
-
-func setRequestTimout(apiKeyModel APIKeyModel) {
-	timeNow := time.Now()
-	log.Printf("The current time is %s. \n", timeNow)
-	resetTime := apiKeyModel.RateLimitResetTime
-	log.Printf("APIKey Reset time is %s. \n", resetTime)
-	sleepTime := resetTime.Sub(timeNow)
-	log.Printf("Indexer will sleep for %s. \n", sleepTime)
-	time.Sleep(sleepTime)
-}
-
-func scanAllGitHubKey(
-	conf *config.Config,
-	q db.Queryable,
-	indexer bool,
-) ([]string, error) {
-	var (
-		err           error
-		gitHubAPIKey  string
-		forIndexer    bool
-		gitHubAPIKeys []string
-	)
-
-	iter := query.Select(columnNameGithubAPIKeyKey, columnNameIndexer).
-		From(tableNameGithubAPIKey).
-		Create(q).
-		Iter()
-
-	for iter.Scan(&gitHubAPIKey, &forIndexer) {
-		if indexer {
-			if forIndexer == true {
-				gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
-			}
-		} else {
-			if forIndexer != true {
-				gitHubAPIKeys = append(gitHubAPIKeys, gitHubAPIKey)
-			}
-		}
-	}
-
-	if err = iter.Close(); err != nil {
-		return nil, errors.NewQueryScanError(nil, err)
-	}
-
-	// If there are no keys in the database, then add the ones from the secret
-	// file (if it exists).
-	if len(gitHubAPIKeys) < 1 && len(conf.SecretsPath) > 0 {
-		gitHubAPIKeys, err = readGithubKeysFromSecret(conf, q)
 		if err != nil {
-			log.Printf("Failed to read keys from secret: %v.", err)
+			return fmt.Errorf(
+				"Failed to get Github API keys from secrets for new key chain: %v.",
+				err)
+		}
+
+		// If there still aren't enough keys, exit with an error.
+		if len(keyStrings) < 1 {
+			return fmt.Errorf(
+				"Failed to get Github API keys from secrets for new key chain: " +
+					"there weren't enough keys in the secret.")
 		}
 	}
 
-	return gitHubAPIKeys, nil
+	// Only change keys if there are now more keys.
+	chain.lock.Lock()
+	if len(keyStrings) <= len(chain.keys) {
+		chain.lock.Unlock()
+		return nil
+	}
+
+	// Put the existing keys in a set for easy lookups.
+	oldKeysSet := make(map[string]bool)
+	for _, oldKey := range chain.keys {
+		oldKeysSet[oldKey.token] = true
+	}
+	chain.lock.Unlock()
+
+	// Turn the new key strings into new fully-qualified keys.
+	var newKeys []*apiKey
+	for _, keyString := range keyStrings {
+		if !oldKeysSet[keyString] {
+			// TODO(skeswa): make this parallel instead of blocking on each
+			// "newAPIKey".
+			newKey, err := newAPIKey(keyString)
+			if err != nil {
+				return err
+			}
+
+			newKeys = append(newKeys, newKey)
+		}
+	}
+
+	// Append the old keys to the new keys.
+	chain.lock.Lock()
+	chain.keys = append(newKeys, chain.keys...)
+	chain.lock.Unlock()
+
+	return nil
 }
 
+// acquireKey employs a round-robin policy to find the next Github API key. If
+// no usable keys are found, it blocks until a key is available.
+func (chain *apiKeyChain) acquireKey() *apiKey {
+	chain.lock.Lock()
+	keys := chain.keys
+	cursor := chain.cursor
+	chain.cursor++
+	chain.lock.Unlock()
+
+	if key := keys[cursor%len(keys)]; key.canBeUsed() {
+		return key
+	}
+
+	// This key is spent. Gotta find another one.
+	for i := 0; i < len(keys); i++ {
+		if key := keys[(i+cursor)%len(keys)]; key.canBeUsed() {
+			return key
+		}
+	}
+
+	// There are no keys presently available. Wait for the original one.
+	key := keys[cursor%len(keys)]
+	key.waitUntilUseful()
+	return key
+}
+
+// readGithubKeysFromSecret reads Github API keys from a secrets file.
 func readGithubKeysFromSecret(
 	conf *config.Config,
-	q db.Queryable,
+	q db.BatchingQueryable,
+	forScheduledJobs bool,
 ) ([]string, error) {
-	log.Println("There were no keys in the database. Attempting to load from the github keys secret.")
+	log.Println(
+		"There were no keys in the database. " +
+			"Attempting to load from the github keys secret.")
 
 	var filePath string
 	if conf.IsDev {
@@ -187,41 +192,51 @@ func readGithubKeysFromSecret(
 		return nil, err
 	}
 
-	log.Println("Loaded the data from the keys secret file successfully. Now unmarshalling json.")
+	log.Println(
+		"Loaded the data from the keys secret file successfully. " +
+			"Now unmarshalling json.")
 
 	// Create the struct for unmarshalling.
-	type apiKey struct {
-		Key                string `json:"key"`
-		HasAdminPrivileges bool   `json:"hasAdminPrivileges"`
-		ForIndexer         bool   `json:"forIndexer"`
+	type marshalledAPIKey struct {
+		Key              string `json:"key"`
+		ForScheduledJobs bool   `json:"forScheduledJobs"`
 	}
 
 	// Create the slice for unmarshalling.
-	keys := []apiKey{}
-	if err = json.Unmarshal(apiKeysJSON, &keys); err != nil {
+	marshalledAPIKeys := []marshalledAPIKey{}
+	if err = json.Unmarshal(apiKeysJSON, &marshalledAPIKeys); err != nil {
 		return nil, err
-	} else if len(keys) < 1 {
+	} else if len(marshalledAPIKeys) < 1 {
 		return nil, fmt.Errorf("There were no keys in the secret!")
 	}
 
-	log.Println("Unmarshalled keys from the secret successfully. Now inserting into the database.")
-
-	// Execute the insert queries.
-	for _, key := range keys {
-		if err = query.InsertInto(tableNameGithubAPIKey).
-			Value(columnNameGithubAPIKeyKey, key.Key).
-			Value(columnNameIndexer, key.ForIndexer).
-			Create(q).
-			Exec(); err != nil {
-			return nil, err
-		}
+	// Turn the marshalledAPIKeys into insertion tuples.
+	var insertionTuples []apikey.InsertionTuple
+	for _, uak := range marshalledAPIKeys {
+		insertionTuples = append(insertionTuples, apikey.InsertionTuple{
+			Key:              uak.Key,
+			ForScheduledJobs: uak.ForScheduledJobs,
+		})
 	}
 
-	log.Println("Inserted keys into the database successfully. Returning the keys in string form.")
+	log.Println(
+		"Unmarshalled keys from the secret successfully. " +
+			"Now inserting into the database.")
+
+	// Execute the insert queries.
+	if err = apikey.InsertAll(q, insertionTuples); err != nil {
+		return nil, fmt.Errorf("Failed to read github keys from secret: %v.", err)
+	}
+
+	log.Println(
+		"Inserted keys into the database successfully. " +
+			"Returning the keys in string form.")
 
 	var keyStrings []string
-	for _, key := range keys {
-		keyStrings = append(keyStrings, key.Key)
+	for _, key := range marshalledAPIKeys {
+		if key.ForScheduledJobs == forScheduledJobs {
+			keyStrings = append(keyStrings, key.Key)
+		}
 	}
 
 	return keyStrings, nil

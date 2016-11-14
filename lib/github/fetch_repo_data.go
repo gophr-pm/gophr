@@ -11,54 +11,68 @@ import (
 	"github.com/gophr-pm/gophr/lib/dtos"
 )
 
-// FetchGitHubDataForPackageModel fetches current repo data of a given
+// FetchRepoData fetches the Github repository metadata for the specified
 // package.
-// TODO optimize this with FFJSON models
-func (svc *requestService) FetchGitHubDataForPackageModel(
+func (svc *requestServiceImpl) FetchRepoData(
 	author string,
 	repo string,
 ) (dtos.GithubRepo, error) {
-	APIKeyModel := svc.APIKeyChain.getAPIKeyModel()
-	githubURL := buildGitHubRepoDataAPIURL(author, repo, *APIKeyModel)
-	log.Printf("Fetching GitHub data for %s \n", githubURL)
+	log.Printf(`Fetching Github repository data for "%s/%s".
+`, author, repo)
 
-	resp, err := http.Get(githubURL)
+	resp, err := svc.keyChain.acquireKey().getFromGithub(
+		buildGitHubRepoDataAPIURL(
+			author,
+			repo))
+
+	// Make sure that the response body gets closed eventually.
 	defer resp.Body.Close()
 
 	if err != nil {
-		return dtos.GithubRepo{}, errors.New("Request error.")
+		return dtos.GithubRepo{}, fmt.Errorf(
+			`Failed to get repo data for "%s/%s": %v.`,
+			author,
+			repo,
+			err)
 	}
 
+	// Handle all kinds of failures.
 	if resp.StatusCode == 404 {
-		log.Println("PackageModel was not found on Github")
-		return dtos.GithubRepo{}, nil
+		return dtos.GithubRepo{}, fmt.Errorf(
+			`Failed to get repo data for "%s/%s": package not found.`,
+			author,
+			repo)
+	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
+		return dtos.GithubRepo{}, fmt.Errorf(
+			`Failed to get repo data for "%s/%s": bumped into a status code %d.`,
+			author,
+			repo,
+			resp.StatusCode)
 	}
 
-	APIKeyModel.incrementUsageFromResponseHeader(resp.Header)
-
-	responseBodyMap, err := parseGitHubRepoDataResponseBody(resp)
+	repoData, err := parseGitHubRepoDataResponseBody(resp)
 	if err != nil {
-		return dtos.GithubRepo{}, err
+		return dtos.GithubRepo{}, fmt.Errorf(
+			`Failed to parse repo data for "%s/%s": %v.`,
+			author,
+			repo,
+			err)
 	}
 
-	return responseBodyMap, nil
+	return repoData, nil
 }
 
 func buildGitHubRepoDataAPIURL(
 	author string,
 	repo string,
-	keyModel APIKeyModel,
 ) string {
 	url := fmt.Sprintf(
-		"%s/repos/%s/%s?access_token=%s",
-		GitHubBaseAPIURL,
+		"https://api.github.com/repos/%s/%s",
 		author,
-		repo,
-		keyModel.Key)
+		repo)
 	return url
 }
 
-// TODO Optimize this with ffjson struct!
 func parseGitHubRepoDataResponseBody(
 	response *http.Response,
 ) (dtos.GithubRepo, error) {

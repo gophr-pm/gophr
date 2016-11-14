@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gophr-pm/gophr/lib/git"
 	"github.com/gophr-pm/gophr/lib/db/model/package/archive"
+	"github.com/gophr-pm/gophr/lib/git"
 	"github.com/gophr-pm/gophr/lib/verdeps"
 )
 
 const (
-	// archiveExistenceCheckDelay is the time gap between existence check
+	// defaultArchiveExistenceCheckDelay is the time gap between existence check
 	// attempts.
-	archiveExistenceCheckDelay = 3000
+	defaultArchiveExistenceCheckDelay = 3000
 	// archiveExistenceCheckAttemptsLimit sets the cap on how many times an archive
 	// existence check is attempted before the an error is recorded.
 	archiveExistenceCheckAttemptsLimit = 5
@@ -24,7 +24,18 @@ const (
 // in a chronologically accurate way, and archives it in depot to be queried
 // later.
 func versionAndArchivePackage(args packageVersionerArgs) error {
-	log.Printf("Preparing to sub-version %s/%s@%s \n", args.author, args.repo, args.sha)
+	log.Printf(
+		"Preparing to sub-version %s/%s@%s \n",
+		args.author,
+		args.repo,
+		args.sha)
+
+	// If args.archiveExistenceCheckDelay was left unspecified, then use the
+	// default.
+	archiveExistenceCheckDelay := args.archiveExistenceCheckDelay
+	if archiveExistenceCheckDelay < 1 {
+		archiveExistenceCheckDelay = defaultArchiveExistenceCheckDelay
+	}
 
 	// Download the package in the construction zone.
 	downloadPaths, err := args.downloadPackage(packageDownloaderArgs{
@@ -71,7 +82,7 @@ func versionAndArchivePackage(args packageVersionerArgs) error {
 			// Enforce a time delay between attempts so as to allow for archival to
 			// occur.
 			if attempts > 0 {
-				time.Sleep(archiveExistenceCheckDelay * time.Millisecond)
+				time.Sleep(time.Duration(archiveExistenceCheckDelay) * time.Millisecond)
 			}
 
 			if archived, archiveCheckErr := args.isPackageArchived(packageArchivalCheckerArgs{

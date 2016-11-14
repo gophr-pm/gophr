@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/gophr-pm/gophr/lib/verdeps"
 	"github.com/stretchr/testify/assert"
@@ -203,9 +204,19 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return false, nil
 		},
+		archiveExistenceCheckDelay: 30,
 	}
+	startTime := time.Now()
 	err = versionAndArchivePackage(args)
+	actualExecutionDuration := time.Since(startTime)
+	expectedExecutionDuration := time.Duration(
+		30*(archiveExistenceCheckAttemptsLimit-1)) * time.Millisecond
 	assert.NotNil(t, err)
+	assert.True(
+		t,
+		actualExecutionDuration >= expectedExecutionDuration,
+		"Multiple attempts should have been made "+
+			"to check if the package was archived")
 
 	args = packageVersionerArgs{
 		sha:    "mysha",
