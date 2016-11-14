@@ -51,7 +51,7 @@ func getPackageMetrics(
 		repo:          summary.Repo,
 		author:        summary.Author,
 		result:        &fetchRepoDataResult,
-		fetchRepoData: ghSvc.FetchGitHubDataForPackageModel,
+		fetchRepoData: ghSvc.FetchRepoData,
 	})
 	go getVersionDownloadsWrapper(getVersionDownloadsWrapperArgs{
 		q:                   q,
