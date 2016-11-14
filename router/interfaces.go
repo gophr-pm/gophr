@@ -66,23 +66,24 @@ type packageArchivalChecker func(args packageArchivalCheckerArgs) (bool, error)
 
 // packageVersionerArgs is the arguments struct for packageVersioners.
 type packageVersionerArgs struct {
-	io                     io.IO
-	db                     db.Queryable
-	sha                    string
-	repo                   string
-	conf                   *config.Config
-	creds                  *config.Credentials
-	ghSvc                  github.RequestService
-	author                 string
-	pushToDepot            packagePusher
-	versionDeps            depsVersioner
-	createDepotRepo        depotRepoCreator
-	downloadPackage        packageDownloader
-	destroyDepotRepo       depotRepoDestroyer
-	isPackageArchived      packageArchivalChecker
-	constructionZonePath   string
-	recordPackageArchival  packageArchivalRecorder
-	attemptWorkDirDeletion workDirDeletionAttempter
+	io                         io.IO
+	db                         db.Queryable
+	sha                        string
+	repo                       string
+	conf                       *config.Config
+	creds                      *config.Credentials
+	ghSvc                      github.RequestService
+	author                     string
+	pushToDepot                packagePusher
+	versionDeps                depsVersioner
+	createDepotRepo            depotRepoCreator
+	downloadPackage            packageDownloader
+	destroyDepotRepo           depotRepoDestroyer
+	isPackageArchived          packageArchivalChecker
+	constructionZonePath       string
+	recordPackageArchival      packageArchivalRecorder
+	attemptWorkDirDeletion     workDirDeletionAttempter
+	archiveExistenceCheckDelay int
 }
 
 // packageVersioner is responsible for versioning a downloaded package.
