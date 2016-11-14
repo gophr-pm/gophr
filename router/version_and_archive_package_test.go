@@ -204,13 +204,13 @@ func TestVersionAndArchivePackage(t *testing.T) {
 			assert.Equal(t, "mysha", args.sha)
 			return false, nil
 		},
-		archiveExistenceCheckDelay: 100,
+		archiveExistenceCheckDelay: 30,
 	}
 	startTime := time.Now()
 	err = versionAndArchivePackage(args)
 	actualExecutionDuration := time.Since(startTime)
 	expectedExecutionDuration := time.Duration(
-		100*(archiveExistenceCheckAttemptsLimit-1)) * time.Millisecond
+		30*(archiveExistenceCheckAttemptsLimit-1)) * time.Millisecond
 	assert.NotNil(t, err)
 	assert.True(
 		t,
