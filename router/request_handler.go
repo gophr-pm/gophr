@@ -26,22 +26,13 @@ var (
 // RequestHandler creates an HTTP request handler that responds to all incoming
 // router requests.
 func RequestHandler(
+	io io.IO,
 	conf *config.Config,
-	client db.Client,
 	creds *config.Credentials,
+	ghSvc github.RequestService,
+	client db.Client,
 	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
-	// Instantiate the IO module for use in package downloading and versioning.
-	io := io.NewIO()
-
-	// Instantiate the the github request service to pass into new
-	// package requests.
-	ghSvc := github.NewRequestService(github.RequestServiceArgs{
-		Conf:       conf,
-		Queryable:  client,
-		ForIndexer: false,
-	})
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
@@ -76,10 +67,10 @@ func RequestHandler(
 
 		// Create a new package request.
 		if pr, err = newPackageRequest(newPackageRequestArgs{
-			req:          r,
-			downloadRefs: lib.FetchRefs,
-			fetchFullSHA: github.FetchFullSHAFromPartialSHA,
-			doHTTPHead:   github.DoHTTPHeadReq,
+			req:           r,
+			ghSvc:         ghSvc,
+			downloadRefs:  lib.FetchRefs,
+			DoHTTPHeadReq: github.DoHTTPHeadReq,
 		}); err != nil {
 			trackingArgs.AlertType = datadog.Error
 			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())

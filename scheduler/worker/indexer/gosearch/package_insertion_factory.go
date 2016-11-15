@@ -42,7 +42,7 @@ func packageInsertionFactory(args packageInsertionFactoryArgs) {
 
 	for newPackage := range args.newPackages {
 		// Fetch metadata for this project from github.
-		if repoData, err = args.ghSvc.FetchGitHubDataForPackageModel(
+		if repoData, err = args.ghSvc.FetchRepoData(
 			newPackage.author,
 			newPackage.repo,
 		); err != nil {
