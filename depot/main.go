@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/DataDog/datadog-go/statsd"
 	"github.com/gophr-pm/gophr/lib/config"
 	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gorilla/mux"
