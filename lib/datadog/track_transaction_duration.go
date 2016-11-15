@@ -16,7 +16,6 @@ import (
 func TrackTransaction(args TrackTransactionArgs) {
 	// Calculate the total request duration.
 	reqDuration := float64(time.Since(args.StartTime) / time.Millisecond)
-	log.Println("Transaction duration = ", reqDuration)
 
 	// Then send a guage for the request metric.
 	if err := args.Client.Gauge(

@@ -13,7 +13,7 @@ import (
 // CreateRepoHandler creates a new repository in the depot.
 func CreateRepoHandler(
 	conf *config.Config,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{

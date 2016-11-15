@@ -13,7 +13,7 @@ import (
 // RepoExistsHandler returns a 200 if the repo exists, or 404 if it doesn't.
 func RepoExistsHandler(
 	conf *config.Config,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{

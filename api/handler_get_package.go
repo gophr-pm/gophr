@@ -23,7 +23,7 @@ type getPackageRequestArgs struct {
 // package get requests.
 func GetPackageHandler(
 	q db.Client,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (

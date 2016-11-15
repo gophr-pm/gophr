@@ -14,7 +14,11 @@ const (
 
 // NewClient returns a new statsd DataDog client for sending metrics to the
 // DataDog agent.
-func NewClient(conf *config.Config, nameSpace string) (*statsd.Client, error) {
+func NewClient(conf *config.Config, nameSpace string) (Client, error) {
+	if conf.IsDev {
+		return NewFakeDataDogClient(), nil
+	}
+
 	c, err := statsd.New(
 		fmt.Sprintf("%s:%s", datadogServiceName, datadogServicePort),
 	)

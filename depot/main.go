@@ -14,7 +14,7 @@ import (
 // DepotRequestHandlerArgs lol
 type DepotRequestHandlerArgs struct {
 	config        *config.Config
-	dataDogClient *statsd.Client
+	dataDogClient datadog.Client
 }
 
 func main() {

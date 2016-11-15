@@ -21,7 +21,7 @@ type blobRequestArgs struct {
 }
 
 // BlobHandler creates an HTTP request handler that responds to filepath lookups.
-func BlobHandler(dataDogClient *statsd.Client) func(http.ResponseWriter, *http.Request) {
+func BlobHandler(dataDogClient datadog.Client) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{

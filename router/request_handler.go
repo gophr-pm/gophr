@@ -29,7 +29,7 @@ func RequestHandler(
 	conf *config.Config,
 	client db.Client,
 	creds *config.Credentials,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	// Instantiate the IO module for use in package downloading and versioning.
 	io := io.NewIO()
@@ -56,6 +56,7 @@ func RequestHandler(
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
 			CustomEventName: "package.download",
+			AlertType:       datadog.Success,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)
@@ -104,7 +105,5 @@ func RequestHandler(
 			errors.RespondWithError(w, err)
 			return
 		}
-
-		trackingArgs.AlertType = datadog.Success
 	}
 }

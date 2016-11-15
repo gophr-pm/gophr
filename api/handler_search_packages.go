@@ -28,7 +28,7 @@ type searchPackagesRequestArgs struct {
 // packages get requests.
 func SearchPackagesHandler(
 	q db.Client,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (

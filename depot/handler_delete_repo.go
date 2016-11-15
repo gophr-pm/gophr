@@ -13,7 +13,7 @@ import (
 // DeleteRepoHandler creates a new repository in the depot.
 func DeleteRepoHandler(
 	conf *config.Config,
-	dataDogClient *statsd.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{
