@@ -3,18 +3,20 @@ var webpack = require('webpack')
 var path = require('path')
 var execSync = require('child_process').execSync
 
-var minikubeIP, gophrWebPort = 30443
+var minikubeIP = '127.0.0.1', gophrWebPort = 30443
 
-// First, grab the minikube ip.
-try {
-  console.log('Attempting to get minikube IP address...')
-  minikubeIP = execSync('minikube ip', { encoding: 'utf8' }).trim()
-  console.log('Got minikube IP address, now starting webpack...')
-} catch(err) {
-  console.error(
-    `Failed to read the minikube IP address. ` +
-    `Make sure the gophr development environment is running: ${err}.`)
-  process.exit(1)
+// First, grab the minikube ip if not in production.
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    console.log('Attempting to get minikube IP address...')
+    minikubeIP = execSync('minikube ip', { encoding: 'utf8' }).trim()
+    console.log('Got minikube IP address, now starting webpack...')
+  } catch(err) {
+    console.error(
+      `Failed to read the minikube IP address. ` +
+      `Make sure the gophr development environment is running: ${err}.`)
+    process.exit(1)
+  }
 }
 
 module.exports = {
