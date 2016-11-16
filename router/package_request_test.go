@@ -25,7 +25,7 @@ var (
 		"00000000000000000000000000000000000hash5 refs/tags/v2")[:]))
 )
 
-func fakeRefs(masterRefHash string, candidates []semver.Candidate) lib.Refs {
+func fakeRefs(masterRefHash string, candidates []semver.SemverCandidate) lib.Refs {
 	newFakeRefs := lib.Refs{}
 	copier.Copy(&newFakeRefs, &baseFakeRefs)
 	if len(masterRefHash) > 0 {
@@ -94,7 +94,7 @@ func TestNewPackageRequest(t *testing.T) {
 	req = fakeHTTPRequest("testalicious.af", "/myauthor/myrepo@1.x/mysubpath", true)
 	pr, err = newPackageRequest(newPackageRequestArgs{
 		req:          req,
-		downloadRefs: fakeRefsDownloader(fakeRefs("mymasterhash", []semver.Candidate{}), nil),
+		downloadRefs: fakeRefsDownloader(fakeRefs("mymasterhash", []semver.SemverCandidate{}), nil),
 	})
 	assert.Nil(t, pr)
 	assert.NotNil(t, err)
@@ -114,8 +114,8 @@ func TestNewPackageRequest(t *testing.T) {
 		req: req,
 		downloadRefs: fakeRefsDownloader(fakeRefs(
 			"mymasterhash",
-			[]semver.Candidate{
-				semver.Candidate{
+			[]semver.SemverCandidate{
+				semver.SemverCandidate{
 					GitRefHash:   "GitRefHash1GitRefHash1GitRefHash1GitRefH",
 					GitRefName:   "GitRefName1",
 					GitRefLabel:  "GitRefLabel1",
@@ -123,7 +123,7 @@ func TestNewPackageRequest(t *testing.T) {
 					MinorVersion: 2,
 					PatchVersion: 0,
 				},
-				semver.Candidate{
+				semver.SemverCandidate{
 					GitRefHash:   "GitRefHash2GitRefHash2GitRefHash2GitRefH",
 					GitRefName:   "GitRefName2",
 					GitRefLabel:  "GitRefLabel2",
