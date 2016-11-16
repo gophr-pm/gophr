@@ -35,14 +35,15 @@ func TrackTransaction(args TrackTransactionArgs) {
 			strings.Join(args.EventInfo[:], ","),
 		)
 
+		// Pass the metric tags into the event tags.
+		event.Tags = args.Tags
+
 		// Identify the event alert type.
 		switch args.AlertType {
 		case "success":
 			event.AlertType = statsd.Success
-			//  count for error
 		case "error":
 			event.AlertType = statsd.Error
-			// send cound for error
 		default:
 			event.AlertType = statsd.Info
 		}
