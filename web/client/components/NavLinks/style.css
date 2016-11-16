@@ -1,0 +1,21 @@
+
+.main {
+  display: flex;
+}
+
+.link {
+  background-color: rgba(0, 0, 0, 0);
+  border-radius: 4px;
+  color: #ffffff;
+  letter-spacing: 0.14rem;
+  font-size: 1.4rem;
+  font-weight: 900;
+  margin-left: 1rem;
+  padding: 1.05rem 1.4rem;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: 200ms background-color;
+}
+.link:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}

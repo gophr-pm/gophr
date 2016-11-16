@@ -1,0 +1,65 @@
+.main {
+  background: #ffffff;
+  border-radius: 4px;
+  cursor: text;
+  height: 4rem;
+  padding: 1rem 1.2rem;
+  padding-right: 3rem;
+  position: relative;
+  width: 30rem;
+}
+
+.main::after {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 300ms ease-in-out;
+}
+
+.main__focused .hint {
+  opacity: 0;
+}
+
+.main__focused .main::after {
+
+}
+
+.input {
+  border: none;
+  color: #444444;
+  display: block;
+  font-family: inherit;
+  font-size: 1.5rem;
+  outline: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.hint {
+  color: #444444;
+  font-size: 1.5rem;
+  left: 1.2rem;
+  opacity: 0.6;
+  pointer-events: none;
+  position: absolute;
+  top: 1rem;
+  transition: 200ms opacity;
+}
+.hint__hidden {
+  opacity: 0;
+}
+
+.icon {
+  right: 1rem;
+  top: 1rem;
+  position: absolute;
+}
+
+.iconImage {
+  fill: #444444;
+  height: 2rem;
+  opacity: 0.6;
+  transition: 200ms opacity;
+}
+.iconImage__highlighted {
+  opacity: 1;
+}

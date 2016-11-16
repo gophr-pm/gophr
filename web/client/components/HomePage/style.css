@@ -1,0 +1,128 @@
+
+/*
+.header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  left: 0;
+  right: 0;
+  padding: 3rem;
+  position: fixed;
+  top: 0;
+}
+
+.left, .right {
+  align-items: center;
+  display: flex;
+}
+*/
+
+.logo {
+  background: url(../../resources/images/logo.svg) no-repeat;
+  background-position-y: 0rem;
+  flex: 0 0 auto;
+  height: 16rem;
+  position: relative;
+  width: 14rem;
+}
+
+.splash {
+  align-items: center;
+  background: #98DADB;
+  display: flex;
+  flex-direction: column;
+  height: 60rem;
+  height: 100vh;
+  justify-content: center;
+  padding: 0 3rem;
+}
+
+.logoLabel {
+  background: #e25451;
+  border-radius: 2px;
+  bottom: 1rem;
+  color: #fff;
+  font-weight: 900;
+  padding: 0.4rem;
+  position: absolute;
+  right: 0;
+  text-transform: uppercase;
+  width: auto;
+}
+
+.heroMessage {
+  color: #4b7a7b;
+  font-family: 'Bitter', serif;
+  font-size: 6rem;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.heroMessageHighlight {
+  color: inherit;
+  text-decoration: none;
+  transition: color 500ms;
+}
+.heroMessageHighlight__visible {
+  color: #ffffff;
+}
+
+.heroButtons {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.siteComingSoon {
+  color: #4b7a7b;
+  font-size: 1.2rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  right: 1.5rem;
+  opacity: 0.6;
+  position: fixed;
+  text-shadow: 1px 1px #b9e5e6;
+  text-transform: uppercase;
+  top: 1.5rem;
+}
+
+.heroButton {
+  border-radius: 4px;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.1rem;
+  margin-right: 2rem;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  width: 14rem;
+}
+/*
+.aboutSection {
+  background: #def8f9;
+  height: 20rem;
+}
+
+.findSection {
+  background: #294546;
+  padding: 7rem;
+}
+
+.findSectionSplitTitle {
+  color: #ffffff;
+  font-family: 'Bitter', serif;
+  font-size: 3rem;
+}
+
+.findSectionSplitPackages {
+  padding-top: 2rem;
+}
+
+.footer {
+  background: #222222;
+  padding: 1rem 0;
+}
+*/
