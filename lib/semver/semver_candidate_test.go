@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"sort"
-
 	"github.com/stretchr/testify/assert"
+	"sort"
 )
 
 var inequalityTuples = []*semverInequalityTuple{
@@ -47,7 +46,7 @@ var inequalityTuples = []*semverInequalityTuple{
 type semverInequalityTuple struct {
 	expected                        int
 	subject, object                 string
-	compiledSubject, compiledObject Candidate
+	compiledSubject, compiledObject SemverCandidate
 }
 
 func version(subject string) *semverInequalityTuple {
@@ -75,7 +74,7 @@ func (tuple *semverInequalityTuple) isLessThanVersion(object string) *semverIneq
 func (tuple *semverInequalityTuple) compile() {
 	matches := candidateRegex.FindStringSubmatch(tuple.subject)
 	if matches != nil {
-		compiledSubject, err := NewCandidate(
+		compiledSubject, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
 			"fakeLabel",
@@ -97,7 +96,7 @@ func (tuple *semverInequalityTuple) compile() {
 
 	matches = candidateRegex.FindStringSubmatch(tuple.object)
 	if matches != nil {
-		compiledObject, err := NewCandidate(
+		compiledObject, err := NewSemverCandidate(
 			"fakeHash",
 			"fakeName",
 			"fakeLabel",
@@ -118,34 +117,34 @@ func (tuple *semverInequalityTuple) compile() {
 	}
 }
 
-func TestNewCandidate(t *testing.T) {
+func TestNewSemverCandidate(t *testing.T) {
 	var (
 		err       error
-		candidate Candidate
+		candidate SemverCandidate
 	)
 
-	candidate, err = NewCandidate("", "b", "", "", "", "", "", "")
+	candidate, err = NewSemverCandidate("", "b", "", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid ref hash")
 
-	candidate, err = NewCandidate("a", "", "", "", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "", "", "", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid ref name")
 
-	candidate, err = NewCandidate("a", "b", "", "1asdlkj", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1asdlkj", "", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid major")
 
-	candidate, err = NewCandidate("a", "b", "", "", "2", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "", "2", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid major")
 
-	candidate, err = NewCandidate("a", "b", "", "1", "uds", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "uds", "", "", "")
 	assert.NotNil(t, err, "should fail for invalid minor")
 
-	candidate, err = NewCandidate("a", "b", "", "1", "2", "asdjhak", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "asdjhak", "", "")
 	assert.NotNil(t, err, "should fail for invalid patch")
 
-	candidate, err = NewCandidate("a", "b", "", "1", "2", "3", "whatever", "kjdahkdjsh")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "3", "whatever", "kjdahkdjsh")
 	assert.NotNil(t, err, "should fail for invalid prerelease")
 
-	candidate, err = NewCandidate("a", "b", "", "1", "", "", "", "")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "", "", "", "")
 	assert.Nil(t, err, "should not return an error in simple cases")
 	assert.Equal(t, "a", candidate.GitRefHash, "hash should match")
 	assert.Equal(t, "b", candidate.GitRefName, "name should match")
@@ -156,7 +155,7 @@ func TestNewCandidate(t *testing.T) {
 	assert.Equal(t, 0, candidate.PrereleaseVersion, "prerelease version should match")
 	assert.Equal(t, false, candidate.PrereleaseVersionExists, "prerelease version should not exist")
 
-	candidate, err = NewCandidate("a", "b", "", "1", "2", "3", "alpha", "4")
+	candidate, err = NewSemverCandidate("a", "b", "", "1", "2", "3", "alpha", "4")
 	assert.Nil(t, err, "should not return an error in simple cases")
 	assert.Equal(t, "a", candidate.GitRefHash, "hash should match")
 	assert.Equal(t, "b", candidate.GitRefName, "name should match")
@@ -168,7 +167,7 @@ func TestNewCandidate(t *testing.T) {
 	assert.Equal(t, true, candidate.PrereleaseVersionExists, "prerelease version should exist")
 }
 
-func TestCandidateCompareTo(t *testing.T) {
+func TestSemverCandidateCompareTo(t *testing.T) {
 	// Compile all the things first
 	for _, tuple := range inequalityTuples {
 		tuple.compile()
@@ -190,8 +189,8 @@ func TestCandidateCompareTo(t *testing.T) {
 	}
 }
 
-func TestCandidateString(t *testing.T) {
-	c1, _ := NewCandidate(
+func TestSemverCandidateString(t *testing.T) {
+	c1, _ := NewSemverCandidate(
 		"someHash",
 		"someRef",
 		"someLabel",
@@ -202,7 +201,7 @@ func TestCandidateString(t *testing.T) {
 		"",
 	)
 
-	c2, _ := NewCandidate(
+	c2, _ := NewSemverCandidate(
 		"someHash",
 		"someRef",
 		"someLabel",
@@ -213,7 +212,7 @@ func TestCandidateString(t *testing.T) {
 		"",
 	)
 
-	c3, _ := NewCandidate(
+	c3, _ := NewSemverCandidate(
 		"someHash",
 		"someRef",
 		"someLabel",
@@ -229,37 +228,37 @@ func TestCandidateString(t *testing.T) {
 	assert.Equal(t, "1.2.3-beta.4", c3.String(), "Candidates with a pre-release label and a pre-release version should show in full")
 }
 
-func TestCandidateList(t *testing.T) {
+func TestSemverCandidateList(t *testing.T) {
 	var (
-		list                               CandidateList
-		c, expectedLowest, expectedHighest Candidate
+		list                               SemverCandidateList
+		c, expectedLowest, expectedHighest SemverCandidate
 	)
 
-	c, _ = NewCandidate("a", "b", "c", "1", "2", "3", "", "")
+	c, _ = NewSemverCandidate("a", "b", "c", "1", "2", "3", "", "")
 	list = append(list, c)
-	c, _ = NewCandidate("a", "b", "c", "2", "3", "4", "", "")
+	c, _ = NewSemverCandidate("a", "b", "c", "2", "3", "4", "", "")
 	list = append(list, c)
-	expectedLowest, _ = NewCandidate("a", "b", "c", "1", "2", "3", "alpha", "2")
+	expectedLowest, _ = NewSemverCandidate("a", "b", "c", "1", "2", "3", "alpha", "2")
 	list = append(list, expectedLowest)
-	c, _ = NewCandidate("a", "b", "c", "2", "1", "1", "", "")
+	c, _ = NewSemverCandidate("a", "b", "c", "2", "1", "1", "", "")
 	list = append(list, c)
-	expectedHighest, _ = NewCandidate("a", "b", "c", "3", "5", "6", "", "")
+	expectedHighest, _ = NewSemverCandidate("a", "b", "c", "3", "5", "6", "", "")
 	list = append(list, expectedHighest)
 
 	sort.Sort(list)
-
+	
 	lowest := list.Lowest()
 	highest := list.Highest()
-
+	
 	assert.Equal(t, 0, lowest.CompareTo(expectedLowest), "The lowest candidate should be correct")
 	assert.Equal(t, 0, highest.CompareTo(expectedHighest), "The highest candidate should be correct")
 
-	selector, err := NewSelector("", "1", "x", "", "", "", "")
+	selector, err := NewSemverSelector("", "1", "x", "", "", "", "")
 	matchedList := list.Match(selector)
 	assert.Nil(t, err, "Match should always work for normal candidate lists")
 	assert.Equal(t, 2, len(matchedList), "Match should return the correct number of elements")
 
-	list = []Candidate{}
+	list = []SemverCandidate{}
 	assert.Nil(t, list.Lowest(), "Lowset should return nil when there are no elements to sort")
 	assert.Nil(t, list.Highest(), "Highest should return nil when there are no elements to sort")
 }

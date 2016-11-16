@@ -9,57 +9,57 @@ import (
 )
 
 const (
-	// SelectorTildeChar is the character that represents flexible patch
+	// SemverSelectorTildeChar is the character that represents flexible patch
 	// version selection.
-	SelectorTildeChar = '~'
-	// SelectorCaratChar is the character that represents flexible minor &
+	SemverSelectorTildeChar = '~'
+	// SemverSelectorCaratChar is the character that represents flexible minor &
 	// patch version selection.
-	SelectorCaratChar = '^'
-	// SelectorWildcardChar is the character that represents variable major,
+	SemverSelectorCaratChar = '^'
+	// SemverSelectorWildcardChar is the character that represents variable major,
 	// minor, patch or pre-release version selection.
-	SelectorWildcardChar = 'x'
-	// SelectorLessThanChar is the character that represents the less-than
+	SemverSelectorWildcardChar = 'x'
+	// SemverSelectorLessThanChar is the character that represents the less-than
 	// version inequality.
-	SelectorLessThanChar = '-'
-	// SelectorSeparatorChar is the character that separates segements of a
+	SemverSelectorLessThanChar = '-'
+	// SemverSelectorSeparatorChar is the character that separates segements of a
 	// semver version.
-	SelectorSeparatorChar = '.'
-	// SelectorGreaterThanChar is the character that represents the
+	SemverSelectorSeparatorChar = '.'
+	// SemverSelectorGreaterThanChar is the character that represents the
 	// greater-than version inequality.
-	SelectorGreaterThanChar = '+'
-	// SelectorPrereleaseLabelPrefixChar is the character that separates the
+	SemverSelectorGreaterThanChar = '+'
+	// SemverSelectorPrereleaseLabelPrefixChar is the character that separates the
 	// patch version segment and the pre-release label.
-	SelectorPrereleaseLabelPrefixChar = '-'
+	SemverSelectorPrereleaseLabelPrefixChar = '-'
 )
 
 const (
 	errorSemverParseFailureInvalidSegment                  = "Invalid semver %s specified: %s"
 	errorSemverParseFailureVersionTerminated               = "Could not parse the %s segment because the version was already complete"
-	errorSemverParseFailureMissingMajorVersion             = "Selector major segment was unspecified"
+	errorSemverParseFailureMissingMajorVersion             = "SemverSelector major segment was unspecified"
 	errorSemverParseFailurePrefixMixedWithWildcard         = "Version prefixes cannot be mixed with version wildcards"
 	errorSemverParseFailureSuffixMixedWithPrefixOrWildcard = "Version suffixes cannot be mixed with version wildcards or prefixes"
 )
 
 const (
-	// SelectorPrefixNone is the prefix enum value for an unspecified
+	// SemverSelectorPrefixNone is the prefix enum value for an unspecified
 	// prefix.
-	SelectorPrefixNone = iota
-	// SelectorPrefixTilde is the prefix enum value for a tilde prefix.
-	SelectorPrefixTilde = iota
-	// SelectorPrefixCarat is the prefix enum value for a carat prefix.
-	SelectorPrefixCarat = iota
+	SemverSelectorPrefixNone = iota
+	// SemverSelectorPrefixTilde is the prefix enum value for a tilde prefix.
+	SemverSelectorPrefixTilde = iota
+	// SemverSelectorPrefixCarat is the prefix enum value for a carat prefix.
+	SemverSelectorPrefixCarat = iota
 )
 
 const (
-	// SelectorSuffixNone is the suffix enum value for an unspecified
+	// SemverSelectorSuffixNone is the suffix enum value for an unspecified
 	// suffix.
-	SelectorSuffixNone = iota
-	// SelectorSuffixLessThan is the suffix enum value for a less-than
+	SemverSelectorSuffixNone = iota
+	// SemverSelectorSuffixLessThan is the suffix enum value for a less-than
 	// suffix.
-	SelectorSuffixLessThan = iota
-	// SelectorSuffixGreaterThan is the suffix enum value for a greater-than
+	SemverSelectorSuffixLessThan = iota
+	// SemverSelectorSuffixGreaterThan is the suffix enum value for a greater-than
 	// suffix.
-	SelectorSuffixGreaterThan = iota
+	SemverSelectorSuffixGreaterThan = iota
 )
 
 const (
@@ -89,47 +89,47 @@ const (
 	SemverSegmentNameSuffix = "suffix"
 )
 
-// SelectorSegment is the atomic unit of a semver version.
-type SelectorSegment struct {
+// SemverSelectorSegment is the atomic unit of a semver version.
+type SemverSelectorSegment struct {
 	Type   int
 	Number int
 }
 
-// Selector is a semver version selector. It can either specify a range of
+// SemverSelector is a semver version selector. It can either specify a range of
 // versions that it matches or refer to one specific version.
-type Selector struct {
+type SemverSelector struct {
 	Prefix            int
 	Suffix            int
 	IsFlexible        bool
-	MajorVersion      SelectorSegment
-	MinorVersion      SelectorSegment
-	PatchVersion      SelectorSegment
+	MajorVersion      SemverSelectorSegment
+	MinorVersion      SemverSelectorSegment
+	PatchVersion      SemverSelectorSegment
 	PrereleaseLabel   string
-	PrereleaseVersion SelectorSegment
+	PrereleaseVersion SemverSelectorSegment
 }
 
-// NewSelector creates a new semver version from the version selector
+// NewSemverSelector creates a new semver version from the version selector
 // regular expression capture groups.
-func NewSelector(
+func NewSemverSelector(
 	prefix string,
 	majorVersion string,
 	minorVersion string,
 	patchVersion string,
 	prereleaseLabel string,
 	prereleaseVersion string,
-	suffix string) (Selector, error) {
+	suffix string) (SemverSelector, error) {
 	// TODO(skeswa): implement this with full validation
 	var (
-		semver           Selector
+		semver           SemverSelector
 		versionCompleted = false
 	)
 
 	if len(prefix) > 0 {
-		if prefix[0] == SelectorTildeChar {
-			semver.Prefix = SelectorPrefixTilde
+		if prefix[0] == SemverSelectorTildeChar {
+			semver.Prefix = SemverSelectorPrefixTilde
 			semver.IsFlexible = true
-		} else if prefix[0] == SelectorCaratChar {
-			semver.Prefix = SelectorPrefixCarat
+		} else if prefix[0] == SemverSelectorCaratChar {
+			semver.Prefix = SemverSelectorPrefixCarat
 			semver.IsFlexible = true
 		} else {
 			return semver, fmt.Errorf(
@@ -138,7 +138,7 @@ func NewSelector(
 				prefix)
 		}
 	} else {
-		semver.Prefix = SelectorPrefixNone
+		semver.Prefix = SemverSelectorPrefixNone
 	}
 
 	if len(majorVersion) > 0 {
@@ -156,8 +156,8 @@ func NewSelector(
 	}
 
 	if len(minorVersion) > 0 {
-		if strings.ToLower(minorVersion)[0] == SelectorWildcardChar {
-			if semver.Prefix == SelectorPrefixNone {
+		if strings.ToLower(minorVersion)[0] == SemverSelectorWildcardChar {
+			if semver.Prefix == SemverSelectorPrefixNone {
 				if !semver.IsFlexible {
 					semver.IsFlexible = true
 				}
@@ -183,8 +183,8 @@ func NewSelector(
 
 	if len(patchVersion) > 0 {
 		if !versionCompleted {
-			if strings.ToLower(patchVersion)[0] == SelectorWildcardChar {
-				if semver.Prefix == SelectorPrefixNone {
+			if strings.ToLower(patchVersion)[0] == SemverSelectorWildcardChar {
+				if semver.Prefix == SemverSelectorPrefixNone {
 					if !semver.IsFlexible {
 						semver.IsFlexible = true
 					}
@@ -232,8 +232,8 @@ func NewSelector(
 
 	if len(prereleaseVersion) > 0 {
 		if !versionCompleted {
-			if strings.ToLower(prereleaseVersion)[0] == SelectorWildcardChar {
-				if semver.Prefix == SelectorPrefixNone {
+			if strings.ToLower(prereleaseVersion)[0] == SemverSelectorWildcardChar {
+				if semver.Prefix == SemverSelectorPrefixNone {
 					if !semver.IsFlexible {
 						semver.IsFlexible = true
 					}
@@ -262,11 +262,11 @@ func NewSelector(
 
 	if len(suffix) > 0 {
 		if !semver.IsFlexible {
-			if suffix[0] == SelectorGreaterThanChar {
-				semver.Suffix = SelectorSuffixGreaterThan
+			if suffix[0] == SemverSelectorGreaterThanChar {
+				semver.Suffix = SemverSelectorSuffixGreaterThan
 				semver.IsFlexible = true
-			} else if suffix[0] == SelectorLessThanChar {
-				semver.Suffix = SelectorSuffixLessThan
+			} else if suffix[0] == SemverSelectorLessThanChar {
+				semver.Suffix = SemverSelectorSuffixLessThan
 				semver.IsFlexible = true
 			} else {
 				return semver, fmt.Errorf(
@@ -279,7 +279,7 @@ func NewSelector(
 				errorSemverParseFailureSuffixMixedWithPrefixOrWildcard)
 		}
 	} else {
-		semver.Suffix = SelectorSuffixNone
+		semver.Suffix = SemverSelectorSuffixNone
 	}
 
 	return semver, nil
@@ -287,9 +287,9 @@ func NewSelector(
 
 // Matches simply determines whether the given candidate fits within the range
 // defined by this version selector.
-func (s Selector) Matches(candidate Candidate) bool {
+func (s SemverSelector) Matches(candidate SemverCandidate) bool {
 	if s.IsFlexible {
-		if s.Suffix == SelectorSuffixGreaterThan {
+		if s.Suffix == SemverSelectorSuffixGreaterThan {
 			if s.MajorVersion.Number > candidate.MajorVersion {
 				return false
 			} else if s.MajorVersion.Number < candidate.MajorVersion {
@@ -323,7 +323,7 @@ func (s Selector) Matches(candidate Candidate) bool {
 				// to true
 				return true
 			}
-		} else if s.Suffix == SelectorSuffixLessThan {
+		} else if s.Suffix == SemverSelectorSuffixLessThan {
 			if s.MajorVersion.Number > candidate.MajorVersion {
 				return true
 			} else if s.MajorVersion.Number < candidate.MajorVersion {
@@ -359,7 +359,7 @@ func (s Selector) Matches(candidate Candidate) bool {
 				// make it the return condition.
 				return candidate.PrereleaseVersion == 0
 			}
-		} else if s.Prefix == SelectorPrefixCarat {
+		} else if s.Prefix == SemverSelectorPrefixCarat {
 			if s.MajorVersion.Number != candidate.MajorVersion {
 				return false
 			} else if s.MinorVersion.Number > candidate.MinorVersion {
@@ -369,7 +369,7 @@ func (s Selector) Matches(candidate Candidate) bool {
 			}
 
 			return len(candidate.PrereleaseLabel) == 0
-		} else if s.Prefix == SelectorPrefixTilde {
+		} else if s.Prefix == SemverSelectorPrefixTilde {
 			if s.MajorVersion.Number != candidate.MajorVersion {
 				return false
 			} else if s.MinorVersion.Number != candidate.MinorVersion {
@@ -419,16 +419,16 @@ func (s Selector) Matches(candidate Candidate) bool {
 	}
 }
 
-func (s Selector) String() string {
+func (s SemverSelector) String() string {
 	var (
 		buffer                 bytes.Buffer
 		versionStringCompleted = false
 	)
 
-	if s.Prefix == SelectorPrefixTilde {
-		buffer.WriteByte(SelectorTildeChar)
-	} else if s.Prefix == SelectorPrefixCarat {
-		buffer.WriteByte(SelectorCaratChar)
+	if s.Prefix == SemverSelectorPrefixTilde {
+		buffer.WriteByte(SemverSelectorTildeChar)
+	} else if s.Prefix == SemverSelectorPrefixCarat {
+		buffer.WriteByte(SemverSelectorCaratChar)
 	}
 
 	if s.MajorVersion.Type == SemverSegmentTypeNumber {
@@ -447,22 +447,22 @@ func (s Selector) String() string {
 	}
 
 	if s.MinorVersion.Type == SemverSegmentTypeNumber {
-		buffer.WriteByte(SelectorSeparatorChar)
+		buffer.WriteByte(SemverSelectorSeparatorChar)
 		buffer.WriteString(strconv.Itoa(s.MinorVersion.Number))
 	} else if s.MinorVersion.Type == SemverSegmentTypeWildcard {
-		buffer.WriteByte(SelectorSeparatorChar)
-		buffer.WriteByte(SelectorWildcardChar)
+		buffer.WriteByte(SemverSelectorSeparatorChar)
+		buffer.WriteByte(SemverSelectorWildcardChar)
 	} else {
 		versionStringCompleted = true
 	}
 
 	if !versionStringCompleted {
 		if s.PatchVersion.Type == SemverSegmentTypeNumber {
-			buffer.WriteByte(SelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorSeparatorChar)
 			buffer.WriteString(strconv.Itoa(s.PatchVersion.Number))
 		} else if s.PatchVersion.Type == SemverSegmentTypeWildcard {
-			buffer.WriteByte(SelectorSeparatorChar)
-			buffer.WriteByte(SelectorWildcardChar)
+			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorWildcardChar)
 		} else {
 			versionStringCompleted = true
 		}
@@ -470,7 +470,7 @@ func (s Selector) String() string {
 
 	if !versionStringCompleted {
 		if len(s.PrereleaseLabel) > 0 {
-			buffer.WriteByte(SelectorPrereleaseLabelPrefixChar)
+			buffer.WriteByte(SemverSelectorPrereleaseLabelPrefixChar)
 			buffer.WriteString(s.PrereleaseLabel)
 		} else {
 			versionStringCompleted = true
@@ -479,18 +479,18 @@ func (s Selector) String() string {
 
 	if !versionStringCompleted {
 		if s.PrereleaseVersion.Type == SemverSegmentTypeNumber {
-			buffer.WriteByte(SelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorSeparatorChar)
 			buffer.WriteString(strconv.Itoa(s.PrereleaseVersion.Number))
 		} else if s.PrereleaseVersion.Type == SemverSegmentTypeWildcard {
-			buffer.WriteByte(SelectorSeparatorChar)
-			buffer.WriteByte(SelectorWildcardChar)
+			buffer.WriteByte(SemverSelectorSeparatorChar)
+			buffer.WriteByte(SemverSelectorWildcardChar)
 		}
 	}
 
-	if s.Suffix == SelectorSuffixLessThan {
-		buffer.WriteByte(SelectorLessThanChar)
-	} else if s.Suffix == SelectorSuffixGreaterThan {
-		buffer.WriteByte(SelectorGreaterThanChar)
+	if s.Suffix == SemverSelectorSuffixLessThan {
+		buffer.WriteByte(SemverSelectorLessThanChar)
+	} else if s.Suffix == SemverSelectorSuffixGreaterThan {
+		buffer.WriteByte(SemverSelectorGreaterThanChar)
 	}
 
 	return buffer.String()
