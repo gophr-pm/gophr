@@ -20,5 +20,5 @@ ReactDOM.render(
       </Route>
     </Router>
   </Provider>,
-  document.getElementById('root')
-)
+  document.getElementById('root'),
+  () => setTimeout(() => document.getElementById('root').style.opacity = '1', 200))

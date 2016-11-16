@@ -4,12 +4,12 @@ import { Link } from 'react-router'
 import React, { Component } from 'react'
 
 import style from './style.css'
-import NavLinks from '../NavLinks'
-import SearchBox from '../SearchBox'
+// import NavLinks from '../NavLinks'
+// import SearchBox from '../SearchBox'
 
 class HomePage extends Component {
   state = {
-    searchQuery:                  '',
+    // searchQuery:                  '',
     heroMessageHighlightsVisible: false
   }
 
@@ -19,12 +19,12 @@ class HomePage extends Component {
     }), 500)
   }
 
-  onSearchQueryChanged(searchQuery) {
-    this.setState({ searchQuery })
-  }
+  // onSearchQueryChanged(searchQuery) {
+  //   this.setState({ searchQuery })
+  // }
 
   render() {
-    const { searchQuery, heroMessageHighlightsVisible } = this.state
+    const { /* searchQuery, */ heroMessageHighlightsVisible } = this.state
 
     const heroMessageHighlightClasses = classNames(style.heroMessageHighlight, {
       [style.heroMessageHighlight__visible]: heroMessageHighlightsVisible
@@ -32,18 +32,11 @@ class HomePage extends Component {
 
     return (
       <div className={style.main}>
-        <div className={style.header}>
-          <div className={style.left}>
-            <Link to="/" className={style.logo}></Link>
-            <SearchBox
-              query={searchQuery}
-              onQueryChanged={::this.onSearchQueryChanged} />
-          </div>
-          <div className={style.right}>
-            <NavLinks />
-          </div>
-        </div>
+        <div className={style.siteComingSoon}>Site Coming Soon</div>
         <div className={style.splash}>
+          <div className={style.logo}>
+            <div className={style.logoLabel}>alpha</div>
+          </div>
           <div className={style.hero}>
             <div className={style.heroMessage}>
               <a
@@ -58,17 +51,16 @@ class HomePage extends Component {
               <span>&nbsp;deserves.</span>
             </div>
             <div className={style.heroButtons}>
-              <div
+              <a
+                href="https://docs.gophr.pm"
                 style={{ backgroundColor: '#5bbb8d' }}
-                className={style.heroButton}>Learn More</div>
-              <div
+                className={style.heroButton}>Docs</a>
+              <a
+                href="https://github.com/gophr-pm/gophr"
                 style={{ backgroundColor: '#4b7a7b' }}
-                className={style.heroButton}>Find Packages</div>
+                className={style.heroButton}>Repo</a>
             </div>
           </div>
-        </div>
-        <div className={style.section}>
-          section
         </div>
       </div>
     )
