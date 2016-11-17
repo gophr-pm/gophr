@@ -1,8 +1,11 @@
 package awesome
 
 import (
+	"log"
 	"net/http"
 
+	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
@@ -15,6 +18,15 @@ func IndexHandler(
 	q db.BatchingQueryable,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Initialize datadog client.
+		dataDogClient, err := datadog.NewClient(
+			&config.Config{IsDev: false},
+			"scheduler-worker.",
+		)
+		if err != nil {
+			log.Println(err)
+		}
+
 		// Read job params so we can build a logger.
 		jobParams, err := common.ReadJobParams(r)
 		if err != nil {
@@ -38,6 +50,7 @@ func IndexHandler(
 			batchExecutor:   execBatch,
 			packageFetcher:  fetchAwesomeGoList,
 			persistPackages: persistAwesomePackages,
+			dataDogClient:   dataDogClient,
 		})
 	}
 }

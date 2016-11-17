@@ -1,6 +1,10 @@
 package awesome
 
 import (
+	"time"
+
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
@@ -23,16 +27,35 @@ type indexArgs struct {
 	batchExecutor   batchExecutor
 	packageFetcher  packageFetcher
 	persistPackages persistPackages
+	dataDogClient   datadog.Client
 }
 
 // index is responsible for finding all go awesome packages and persisting them
 // in `awesome_packages` table for later look up.
 func index(args indexArgs) {
+	trackingArgs := datadog.TrackTransactionArgs{
+		Tags: []string{
+			"awesome-indexer",
+			"external",
+		},
+		Client:          args.dataDogClient,
+		StartTime:       time.Now(),
+		EventInfo:       []string{},
+		MetricName:      "request.duration",
+		CreateEvent:     statsd.NewEvent,
+		CustomEventName: "api.get.trending.packages",
+		AlertType:       datadog.Success,
+	}
+
+	defer datadog.TrackTransaction(trackingArgs)
+
 	args.logger.Info("Fetching awesome go list.")
 	packageTuples, err := args.packageFetcher(fetchAwesomeGoListArgs{
 		doHTTPGet: args.doHTTPGet,
 	})
 	if err != nil {
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 		args.logger.Errorf("Failed to fetch awesome packages: %v.", err)
 		return
 	}
@@ -43,6 +66,8 @@ func index(args indexArgs) {
 		packageTuples: packageTuples,
 		batchExecutor: args.batchExecutor,
 	}); err != nil {
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 		args.logger.Errorf("Failed to persist packages: %v.", err)
 	}
 }
