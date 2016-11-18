@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
-	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
+	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gorilla/mux"
 )
 
@@ -18,6 +22,8 @@ const (
 	maxTopPackagesLimit = 200
 )
 
+const ddEventGetTopPackages = "api.get.top.packages"
+
 // getTopPackagesRequestArgs is the args struct for get top packages requests.
 type getTopPackagesRequestArgs struct {
 	limit     int
@@ -28,6 +34,7 @@ type getTopPackagesRequestArgs struct {
 // packages get requests.
 func GetTopPackagesHandler(
 	q db.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
@@ -37,22 +44,52 @@ func GetTopPackagesHandler(
 			results pkg.Summaries
 		)
 
+		trackingArgs := datadog.TrackTransactionArgs{
+			Tags: []string{
+				"api-get-top-packages",
+				"external",
+			},
+			Client:          dataDogClient,
+			StartTime:       time.Now(),
+			EventInfo:       []string{},
+			MetricName:      "request.duration",
+			CreateEvent:     statsd.NewEvent,
+			CustomEventName: ddEventGetTopPackages,
+		}
+
+		defer datadog.TrackTransaction(trackingArgs)
+
 		// Parse out the args.
 		if args, err = extractGetTopPackagesRequestArgs(r); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
+
+		// Track request metadata.
+		trackingArgs.EventInfo = append(
+			trackingArgs.EventInfo,
+			fmt.Sprintf("%v", args),
+		)
+
 		// Get from the database.
 		if results, err = pkg.GetTopX(q, args.limit, args.timeSplit); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 
+		trackingArgs.AlertType = datadog.Success
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, string(json))
 		respondWithJSON(w, json)
 	}
 }

@@ -2,15 +2,16 @@ package main
 
 import (
 	"net/http"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/errors"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
-	"github.com/gophr-pm/gophr/lib/newrelic"
-	"github.com/newrelic/go-agent"
 )
 
 const (
@@ -19,7 +20,8 @@ const (
 )
 
 var (
-	statusCheckResponse = []byte("ok")
+	statusCheckResponse    = []byte("ok")
+	ddEventPackageDownload = "router.package.download"
 )
 
 // RequestHandler creates an HTTP request handler that responds to all incoming
@@ -27,18 +29,29 @@ var (
 func RequestHandler(
 	io io.IO,
 	conf *config.Config,
-	client db.Client,
 	creds *config.Credentials,
 	ghSvc github.RequestService,
-	newRelicApp newrelic.Application,
+	client db.Client,
+	dataDogClient datadog.Client,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Log this transaction in new relic if in production.
-		var nrTxn newrelic.Transaction
-		if !conf.IsDev {
-			nrTxn = nr.CreateNewRelicTxn(newRelicApp, &w, r)
-			defer nrTxn.End()
+		trackingArgs := datadog.TrackTransactionArgs{
+			Tags: []string{
+				"package-download",
+				"external",
+			},
+			Client:    dataDogClient,
+			StartTime: time.Now(),
+			AlertType: datadog.Success,
+			EventInfo: []string{
+				r.URL.Path, r.UserAgent(),
+			},
+			MetricName:      "request.duration",
+			CreateEvent:     statsd.NewEvent,
+			CustomEventName: ddEventPackageDownload,
 		}
+
+		defer datadog.TrackTransaction(trackingArgs)
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.
@@ -60,10 +73,8 @@ func RequestHandler(
 			downloadRefs:  lib.FetchRefs,
 			DoHTTPHeadReq: github.DoHTTPHeadReq,
 		}); err != nil {
-			if nrTxn != nil {
-				nr.ReportNewRelicError(nrTxn, err)
-			}
-
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
@@ -81,10 +92,8 @@ func RequestHandler(
 			recordPackageDownload: recordPackageDownload,
 			recordPackageArchival: recordPackageArchival,
 		}); err != nil {
-			if nrTxn != nil {
-				nr.ReportNewRelicError(nrTxn, err)
-			}
-
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}

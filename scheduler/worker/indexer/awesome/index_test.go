@@ -4,9 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gophr-pm/gophr/scheduler/worker/common"
 	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestAwesomeIndex(t *testing.T) {
@@ -14,30 +12,25 @@ func TestAwesomeIndex(t *testing.T) {
 
 		Convey("if we fail to fetch packages from awesome go, we should return an error", func() {
 			err := errors.New("Failed to retrieve awesome-go markdown")
-			logger := common.NewMockJobLogger()
-			// Should communicate that the job has started.
-			logger.On("Info", mock.AnythingOfType("string"))
-			// Should try to log the error.
-			logger.On("Errorf", mock.AnythingOfType("string"), err)
+			errs := make(chan error, 1)
 
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					return nil, err
 				},
 			})
+
+			So((<-errs).Error(), ShouldContainSubstring, err.Error())
+			close(errs)
 		})
 
 		Convey("if we fail to persist packages, we should return an error", func() {
 			err := errors.New("Failed to persist packages")
-			logger := common.NewMockJobLogger()
-			// Should communicate that the job has started.
-			logger.On("Info", mock.AnythingOfType("string"))
-			// Should try to log the error.
-			logger.On("Errorf", mock.AnythingOfType("string"), err)
+			errs := make(chan error, 1)
 
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					return generateRandomAwesomePackages(201), nil
 				},
@@ -45,22 +38,22 @@ func TestAwesomeIndex(t *testing.T) {
 					return err
 				},
 			})
+
+			So((<-errs).Error(), ShouldContainSubstring, err.Error())
+			close(errs)
 		})
 
 		Convey("if we successfully retrieve 10 packages, we should persist every package and return nil", func() {
 			var (
 				c       = make(chan packageTuple)
+				errs    = make(chan error, 1)
 				pkgs    = generateRandomAwesomePackages(10)
-				logger  = common.NewMockJobLogger()
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
 			)
 
-			// Should communicate that the job has started and then ended.
-			logger.On("Info", mock.AnythingOfType("string"))
-
 			// Run the main awsome index code.
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					// Return the list of random packages generate before the index call.
 					return pkgs, nil
@@ -89,24 +82,25 @@ func TestAwesomeIndex(t *testing.T) {
 				pkgCount++
 			}
 
-			// Verify number of packages
+			// Verify number of packages.
 			So(len(pkgs), ShouldEqual, 10)
+			// Verify that there were no errors.
+			So(len(errs), ShouldEqual, 0)
+
+			close(errs)
 		})
 
 		Convey("if we successfully retrieve 50 packages, we should persist every package and return nil", func() {
 			var (
 				c       = make(chan packageTuple)
+				errs    = make(chan error, 1)
 				pkgs    = generateRandomAwesomePackages(50)
-				logger  = common.NewMockJobLogger()
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
 			)
 
-			// Should communicate that the job has started and then ended.
-			logger.On("Info", mock.AnythingOfType("string"))
-
 			// Run the main awsome index code.
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					// Return the list of random packages generate before the index call.
 					return pkgs, nil
@@ -135,24 +129,25 @@ func TestAwesomeIndex(t *testing.T) {
 				pkgCount++
 			}
 
-			// Verify number of packages
+			// Verify number of packages.
 			So(len(pkgs), ShouldEqual, 50)
+			// Verify that there were no errors.
+			So(len(errs), ShouldEqual, 0)
+
+			close(errs)
 		})
 
 		Convey("if we successfully retrieve 51 packages, we should persist every package and return nil", func() {
 			var (
 				c       = make(chan packageTuple)
+				errs    = make(chan error, 1)
 				pkgs    = generateRandomAwesomePackages(51)
-				logger  = common.NewMockJobLogger()
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
 			)
 
-			// Should communicate that the job has started and then ended.
-			logger.On("Info", mock.AnythingOfType("string"))
-
 			// Run the main awsome index code.
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					// Return the list of random packages generate before the index call.
 					return pkgs, nil
@@ -181,24 +176,25 @@ func TestAwesomeIndex(t *testing.T) {
 				pkgCount++
 			}
 
-			// Verify number of packages
+			// Verify number of packages.
 			So(len(pkgs), ShouldEqual, 51)
+			// Verify that there were no errors.
+			So(len(errs), ShouldEqual, 0)
+
+			close(errs)
 		})
 
 		Convey("if we successfully retrieve 107 packages, we should persist every package and return nil", func() {
 			var (
 				c       = make(chan packageTuple)
+				errs    = make(chan error, 1)
 				pkgs    = generateRandomAwesomePackages(107)
-				logger  = common.NewMockJobLogger()
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
 			)
 
-			// Should communicate that the job has started and then ended.
-			logger.On("Info", mock.AnythingOfType("string"))
-
 			// Run the main awsome index code.
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					// Return the list of random packages generate before the index call.
 					return pkgs, nil
@@ -227,24 +223,25 @@ func TestAwesomeIndex(t *testing.T) {
 				pkgCount++
 			}
 
-			// Verify number of packages
+			// Verify number of packages.
 			So(len(pkgs), ShouldEqual, 107)
+			// Verify that there were no errors.
+			So(len(errs), ShouldEqual, 0)
+
+			close(errs)
 		})
 
 		Convey("if we succeed retrieve 201 packages, we should persist every package and return nil", func() {
 			var (
 				c       = make(chan packageTuple)
+				errs    = make(chan error, 1)
 				pkgs    = generateRandomAwesomePackages(201)
-				logger  = common.NewMockJobLogger()
 				pkgsMap = generateMapOfAwesomePackages(pkgs)
 			)
 
-			// Should communicate that the job has started and then ended.
-			logger.On("Info", mock.AnythingOfType("string"))
-
 			// Run the main awsome index code.
 			index(indexArgs{
-				logger: logger,
+				errs: errs,
 				packageFetcher: func(fetchAwesomeGoListArgs) ([]packageTuple, error) {
 					// Return the list of random packages generate before the index call.
 					return pkgs, nil
@@ -275,6 +272,10 @@ func TestAwesomeIndex(t *testing.T) {
 
 			// Verify number of packages
 			So(len(pkgs), ShouldEqual, 201)
+			// Verify that there were no errors.
+			So(len(errs), ShouldEqual, 0)
+
+			close(errs)
 		})
 	})
 }

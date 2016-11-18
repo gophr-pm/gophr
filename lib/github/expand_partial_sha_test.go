@@ -5,11 +5,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExpandPartialSHA(t *testing.T) {
-	fakeRequestService := &requestServiceImpl{}
+	fakeRequestService := &requestServiceImpl{
+		ddClient: datadog.NewFakeDataDogClient(),
+	}
 
 	fullSHA, err := fakeRequestService.ExpandPartialSHA(ExpandPartialSHAArgs{
 		Author:   "test",

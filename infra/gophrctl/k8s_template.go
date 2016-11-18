@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -15,6 +18,8 @@ const (
 	templateK8SFileSuffix           = ".template.yml"
 	templateVarGCEProjectID         = "{{GCE_PROJECT_ID}}"
 	templateVarDepotVolumeServiceIP = "{{DEPOT_VOL_SVC_IP}}"
+	templateVarDataDogAPIKey        = "{{DATADOG_API_KEY}}"
+	ddAPIKeySecretFileName          = "datadog-api-key.json"
 )
 
 var (
@@ -35,6 +40,7 @@ var (
 		templateVarDepotVolumeServiceIP: func(c *cli.Context) ([]byte, error) {
 			// Get the cluster IP from kubectl. If its empty, then that means the
 			// cluster IP has not been assigned.
+
 			output, err := exec.Command(
 				kubectl,
 				k8sNamespaceFlag,
@@ -54,6 +60,48 @@ var (
 			}
 
 			return ip, nil
+		},
+		templateVarDataDogAPIKey: func(c *cli.Context) ([]byte, error) {
+			var (
+				err            error
+				gophrRoot      string
+				keyFilePath    string
+				secretFilePath string
+			)
+
+			type datadogKey struct {
+				DatadogAPIKey string `json:"datadog_api_key"`
+			}
+
+			if gophrRoot, err = readGophrRoot(c); err != nil {
+				exit(exitCodeCycleSecretsFailed, nil, "", err)
+			}
+			keyFilePath = c.String(flagNameKeyPath)
+			if len(keyFilePath) < 1 {
+				return nil, fmt.Errorf("Invalid key file path: \"%s\".", keyFilePath)
+			}
+			keyFilePath, err = filepath.Abs(keyFilePath)
+			if err != nil {
+				return nil, err
+			}
+			secretFilePath, err = filepath.Abs(filepath.Join(gophrRoot, secretsDir, ddAPIKeySecretFileName))
+			log.Println(secretFilePath)
+			if err != nil {
+				return nil, err
+			}
+			decryptedSecret, err := decryptSecret(secretFilePath, keyFilePath)
+			if err != nil {
+				return nil, err
+			}
+
+			var secret = datadogKey{}
+			if err = json.Unmarshal(decryptedSecret, &secret); err != nil {
+				return nil, err
+			} else if len(secret.DatadogAPIKey) < 1 {
+				return nil, fmt.Errorf("There were no keys in the secret!")
+			}
+
+			return []byte(secret.DatadogAPIKey), nil
 		},
 	}
 )

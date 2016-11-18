@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/dtos"
 )
@@ -48,12 +49,14 @@ type RequestService interface {
 // requestServiceImpl is the implementation of the RequestService.
 type requestServiceImpl struct {
 	keyChain *apiKeyChain
+	ddClient datadog.Client
 }
 
 // RequestServiceArgs passes import Kubernetes configuration and secrets.
 // Also can dictate whether request service is being used by indexer.
 type RequestServiceArgs struct {
 	Conf             *config.Config
+	DDClient         datadog.Client
 	Queryable        db.BatchingQueryable
 	ForScheduledJobs bool
 }
@@ -67,6 +70,6 @@ func NewRequestService(args RequestServiceArgs) (RequestService, error) {
 			err)
 	}
 
-	svc := &requestServiceImpl{keyChain: keyChain}
+	svc := &requestServiceImpl{keyChain: keyChain, ddClient: args.DDClient}
 	return svc, nil
 }

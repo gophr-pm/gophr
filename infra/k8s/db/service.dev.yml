@@ -8,6 +8,9 @@ metadata:
 spec:
   type: NodePort
   ports:
+    - name: jmx
+      port: 7199
+      nodePort: 30941
     - name: cql
       port: 9042
       nodePort: 30942

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gorilla/mux"
 )
 
@@ -16,6 +17,12 @@ func main() {
 	// Ensure that the client is closed eventually.
 	defer client.Close()
 
+	// Initialize datadog client.
+	dataDogClient, err := datadog.NewClient(config, "api.")
+	if err != nil {
+		log.Println(err)
+	}
+
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
@@ -25,26 +32,26 @@ func main() {
 		urlVarRepo,
 		urlVarSHA,
 		urlVarPath),
-		BlobHandler()).Methods("GET")
+		BlobHandler(dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/new",
-		GetNewPackagesHandler(client)).Methods("GET")
+		GetNewPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/search",
-		SearchPackagesHandler(client)).Methods("GET")
+		SearchPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(
 		"/packages/trending",
-		GetTrendingPackagesHandler(client)).Methods("GET")
+		GetTrendingPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/top/{%s}/{%s}",
 		urlVarLimit,
 		urlVarTimeSplit),
-		GetTopPackagesHandler(client)).Methods("GET")
+		GetTopPackagesHandler(client, dataDogClient)).Methods("GET")
 	r.HandleFunc(fmt.Sprintf(
 		"/packages/{%s}/{%s}",
 		urlVarAuthor,
 		urlVarRepo),
-		GetPackageHandler(client)).Methods("GET")
+		GetPackageHandler(client, dataDogClient)).Methods("GET")
 
 	// Start serving.
 	log.Printf("Servicing HTTP requests on port %d.\n", config.Port)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/github/apikey"
 )
@@ -28,6 +29,7 @@ type apiKeyChain struct {
 	keys             []*apiKey
 	conf             *config.Config
 	cursor           int
+	ddClient         datadog.Client
 	forScheduledJobs bool
 }
 
@@ -37,6 +39,7 @@ func newAPIKeyChain(args RequestServiceArgs) (*apiKeyChain, error) {
 	keyChain := apiKeyChain{
 		q:                args.Queryable,
 		conf:             args.Conf,
+		ddClient:         args.DDClient,
 		forScheduledJobs: args.ForScheduledJobs,
 	}
 
@@ -122,7 +125,7 @@ func (chain *apiKeyChain) refreshKeys() error {
 		if !oldKeysSet[keyString] {
 			// TODO(skeswa): make this parallel instead of blocking on each
 			// "newAPIKey".
-			newKey, err := newAPIKey(keyString)
+			newKey, err := newAPIKey(keyString, chain.ddClient)
 			if err != nil {
 				return err
 			}

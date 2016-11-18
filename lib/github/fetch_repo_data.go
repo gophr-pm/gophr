@@ -7,9 +7,16 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/dtos"
 )
+
+// ddEventFetchRepoData is the name of the custom datadog event for this
+// function.
+const ddEventFetchRepoData = "github.fetch-repo-data"
 
 // FetchRepoData fetches the Github repository metadata for the specified
 // package.
@@ -17,6 +24,20 @@ func (svc *requestServiceImpl) FetchRepoData(
 	author string,
 	repo string,
 ) (dtos.GithubRepo, error) {
+	// Specify monitoring parameters.
+	trackingArgs := datadog.TrackTransactionArgs{
+		Tags:            []string{"github", datadog.TagInternal},
+		Client:          svc.ddClient,
+		AlertType:       datadog.Success,
+		StartTime:       time.Now(),
+		MetricName:      datadog.MetricJobDuration,
+		CreateEvent:     statsd.NewEvent,
+		CustomEventName: ddEventFetchRepoData,
+	}
+
+	// Ensure that the transaction is tracked after the job finishes.
+	defer datadog.TrackTransaction(trackingArgs)
+
 	log.Printf(`Fetching Github repository data for "%s/%s".
 `, author, repo)
 
@@ -29,34 +50,58 @@ func (svc *requestServiceImpl) FetchRepoData(
 	defer resp.Body.Close()
 
 	if err != nil {
-		return dtos.GithubRepo{}, fmt.Errorf(
+		err = fmt.Errorf(
 			`Failed to get repo data for "%s/%s": %v.`,
 			author,
 			repo,
 			err)
+
+		// Make sure that the error is recorded in the datadog transaction.
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+		return dtos.GithubRepo{}, err
 	}
 
 	// Handle all kinds of failures.
 	if resp.StatusCode == 404 {
-		return dtos.GithubRepo{}, fmt.Errorf(
+		err = fmt.Errorf(
 			`Failed to get repo data for "%s/%s": package not found.`,
 			author,
 			repo)
+
+		// Make sure that the error is recorded in the datadog transaction.
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+		return dtos.GithubRepo{}, err
 	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
-		return dtos.GithubRepo{}, fmt.Errorf(
+		err = fmt.Errorf(
 			`Failed to get repo data for "%s/%s": bumped into a status code %d.`,
 			author,
 			repo,
 			resp.StatusCode)
+
+		// Make sure that the error is recorded in the datadog transaction.
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+		return dtos.GithubRepo{}, err
 	}
 
 	repoData, err := parseGitHubRepoDataResponseBody(resp)
 	if err != nil {
-		return dtos.GithubRepo{}, fmt.Errorf(
+		err = fmt.Errorf(
 			`Failed to parse repo data for "%s/%s": %v.`,
 			author,
 			repo,
 			err)
+
+		// Make sure that the error is recorded in the datadog transaction.
+		trackingArgs.AlertType = datadog.Error
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+		return dtos.GithubRepo{}, err
 	}
 
 	return repoData, nil

@@ -47,9 +47,14 @@ spec:
           volumeMounts:
             - mountPath: /cassandra_data
               name: cassandra-data
+            - mountPath: /secrets
+              name: secrets
       volumes:
         - name: cassandra-data
           emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: gophr-secrets
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -100,6 +105,11 @@ spec:
           volumeMounts:
             - mountPath: /cassandra_data
               name: cassandra-data
+            - mountPath: /secrets
+              name: secrets
       volumes:
         - name: cassandra-data
           emptyDir: {}
+        - name: secrets
+          secret:
+            secretName: gophr-secrets

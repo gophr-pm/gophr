@@ -7,9 +7,9 @@ import (
 
 	"github.com/gophr-pm/gophr/lib"
 	"github.com/gophr-pm/gophr/lib/config"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/lib/io"
-	"github.com/gophr-pm/gophr/lib/newrelic"
 )
 
 func main() {
@@ -19,21 +19,23 @@ func main() {
 	// Ensure that the client is closed eventually.
 	defer client.Close()
 
+	// Read the user/pass secrets.
 	creds, err := config.ReadCredentials(conf)
 	if err != nil {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
-	// Create new relic app for monitoring.
-	newRelicApp, err := nr.CreateNewRelicApp(conf)
+	// Initialize datadog client.
+	ddClient, err := datadog.NewClient(conf, "router.")
 	if err != nil {
-		log.Fatalln("Failed to create new relic app:", err)
+		log.Println(err)
 	}
 
 	// Instantiate the the github request service to pass into new
 	// package requests.
 	ghSvc, err := github.NewRequestService(github.RequestServiceArgs{
 		Conf:             conf,
+		DDClient:         ddClient,
 		Queryable:        client,
 		ForScheduledJobs: false,
 	})
@@ -48,10 +50,10 @@ func main() {
 	http.HandleFunc(wildcardHandlerPattern, RequestHandler(
 		io,
 		conf,
-		client,
 		creds,
 		ghSvc,
-		newRelicApp))
+		client,
+		ddClient))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

@@ -166,6 +166,11 @@ func main() {
 					Usage:  flagUsageGPI,
 					EnvVar: envVarGPI,
 				},
+				cli.StringFlag{
+					Name:   flagNameKeyPath + "," + flagAliasKeyPath,
+					Usage:  flagUsageKeyPath,
+					EnvVar: envVarKeyPath,
+				},
 			},
 		},
 

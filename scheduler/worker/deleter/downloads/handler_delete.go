@@ -3,30 +3,47 @@ package downloads
 import (
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
-// The name of this job.
-const jobName = "delete-downloads"
+const (
+	// The name of this job.
+	jobName = "delete-downloads"
+	// ddEventName is the name of the custom datadog event for this handler.
+	ddEventName = "scheduler.worker.indexer.awesome"
+)
 
 // DeleteHandler exposes an endpoint that deletes all of the hourly downloads
 // older than one month.
 func DeleteHandler(
 	q db.Queryable,
+	ddClient datadog.Client,
 	numWorkers int,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			err       error
-			errs      = make(chan error)
-			logger    common.JobLogger
-			loggerWG  sync.WaitGroup
-			deleterWG sync.WaitGroup
-			jobParams common.JobParams
-			summaries = make(chan pkg.Summary)
+			err          error
+			errs         = make(chan error)
+			logger       common.JobLogger
+			deleterWG    sync.WaitGroup
+			jobParams    common.JobParams
+			summaries    = make(chan pkg.Summary)
+			trackingArgs = datadog.TrackTransactionArgs{
+				Tags:            []string{jobName, datadog.TagInternal},
+				Client:          ddClient,
+				AlertType:       datadog.Success,
+				StartTime:       time.Now(),
+				MetricName:      datadog.MetricJobDuration,
+				CreateEvent:     statsd.NewEvent,
+				CustomEventName: ddEventName,
+			}
+			errLogResults = make(chan common.ErrorLoggingResult)
 		)
 
 		// Read job params so we can build a logger.
@@ -36,6 +53,9 @@ func DeleteHandler(
 			return
 		}
 
+		// Ensure that the transaction is tracked after the job finishes.
+		defer datadog.TrackTransaction(trackingArgs)
+
 		// Build a logger for use in the sub-routines.
 		logger = common.NewJobLogger(jobName, jobParams)
 
@@ -44,8 +64,7 @@ func DeleteHandler(
 		defer logger.Finish()
 
 		// Spin up the error logger.
-		loggerWG.Add(1)
-		go common.LogErrors(logger, &loggerWG, errs)
+		go common.LogErrors(logger, errLogResults, errs)
 
 		// Start reading packages.
 		logger.Info("Reading all packages from the database.")
@@ -68,7 +87,12 @@ func DeleteHandler(
 		// Close the errors channel since nothing else will ever go through.
 		close(errs)
 
-		// Wait for the logger to exit.
-		loggerWG.Wait()
+		// If there were errors, be sure to alter the tracking metadata.
+		if errLogResult := <-errLogResults; len(errLogResult.Errors) > 0 {
+			trackingArgs.AlertType = datadog.Error
+			for _, err = range errLogResult.Errors {
+				trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			}
+		}
 	}
 }
