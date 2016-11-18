@@ -12,7 +12,6 @@ RUN  echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true
 ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
 
 COPY ./infra/docker/dd-agent/files/conf.d/cassandra.yaml /etc/dd-agent/conf.d/cassandra.yaml
-COPY ./infra/docker/dd-agent/files/conf.d/nginx.yaml /etc/dd-agent/conf.d/nginx.yaml
 COPY ./infra/docker/dd-agent/files/status.sh /status.sh
 COPY ./infra/docker/dd-agent/files/start.sh /start.sh
 
