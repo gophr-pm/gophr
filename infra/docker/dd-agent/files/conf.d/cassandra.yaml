@@ -1,9 +1,9 @@
 instances:
-   -    host: db-svc
-        port: 7199
-        user: {{USER}}
-        password: {{PASSWORD}}
-        cassandra_aliasing: true
+  - host: db-svc
+    port: 7199
+    user: {{USER}}
+    password: {{PASSWORD}}
+    cassandra_aliasing: true
 
 # List of metrics to be collected by the integration
 # Visit http://docs.datadoghq.com/integrations/java/ to customize it

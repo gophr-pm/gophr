@@ -197,9 +197,14 @@ var modules = map[string]*module{
 	},
 	"dd-agent": &module{
 		name: "dd-agent",
+		deps: []string{"db"},
 		devK8SFiles: []string{
 			"./infra/k8s/dd-agent/daemon-set.dev.template.yml",
 			"./infra/k8s/dd-agent/service.dev.yml",
+		},
+		prodK8SFiles: []string{
+			"./infra/k8s/dd-agent/daemon-set.prod.template.yml",
+			"./infra/k8s/dd-agent/service.prod.yml",
 		},
 		dockerfile:  "./infra/docker/dd-agent/Dockerfile",
 		versionfile: "./infra/docker/dd-agent/Versionfile.prod",
