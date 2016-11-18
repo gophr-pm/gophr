@@ -47,11 +47,16 @@ spec:
           volumeMounts:
             - mountPath: /cassandra_data
               name: cassandra-data
+            - mountPath: /secrets
+              name: secrets
       volumes:
         - name: cassandra-data
           gcePersistentDisk:
             pdName: gophr-volume-db-a
             fsType: ext4
+        - name: secrets
+          secret:
+            secretName: gophr-secrets
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -102,11 +107,16 @@ spec:
           volumeMounts:
             - mountPath: /cassandra_data
               name: cassandra-data
+            - mountPath: /secrets
+              name: secrets
       volumes:
         - name: cassandra-data
           gcePersistentDisk:
             pdName: gophr-volume-db-b
             fsType: ext4
+        - name: secrets
+          secret:
+            secretName: gophr-secrets
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -157,8 +167,13 @@ spec:
           volumeMounts:
             - mountPath: /cassandra_data
               name: cassandra-data
+            - mountPath: /secrets
+              name: secrets
       volumes:
         - name: cassandra-data
           gcePersistentDisk:
             pdName: gophr-volume-db-c
             fsType: ext4
+        - name: secrets
+          secret:
+            secretName: gophr-secrets
