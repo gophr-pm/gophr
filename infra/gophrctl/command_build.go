@@ -83,7 +83,7 @@ func buildModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 		)
 
 		// Bump the version in the versionfile.
-		if version, err = promptImageVersionBump(filepath.Join(gophrRoot, m.versionfile)); err != nil {
+		if version, err = promptImageVersionBump(imageName, filepath.Join(gophrRoot, m.versionfile)); err != nil {
 			return err
 		}
 
