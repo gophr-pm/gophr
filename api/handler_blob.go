@@ -13,15 +13,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// blobRequestArgs is the arguments struct for the blob handler.
 type blobRequestArgs struct {
-	author string
-	repo   string
 	sha    string
 	path   string
+	repo   string
+	author string
 }
 
-// BlobHandler creates an HTTP request handler that responds to filepath lookups.
-func BlobHandler(dataDogClient datadog.Client) func(http.ResponseWriter, *http.Request) {
+// BlobHandler creates an HTTP request handler that responds to filepath
+// lookups.
+func BlobHandler(
+	dataDogClient datadog.Client,
+) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		trackingArgs := datadog.TrackTransactionArgs{
 			Tags: []string{
@@ -53,7 +57,10 @@ func BlobHandler(dataDogClient datadog.Client) func(http.ResponseWriter, *http.R
 		}
 
 		// Request the filepath from depot gitweb.
-		hashedRepoName := depot.BuildHashedRepoName(args.author, args.repo, args.sha)
+		hashedRepoName := depot.BuildHashedRepoName(
+			args.author,
+			args.repo,
+			args.sha)
 		depotBlobURL := fmt.Sprintf(
 			"http://%s/?p=%s.git;a=blob_plain;f=%s;hb=refs/heads/master",
 			depot.DepotInternalServiceAddress,

@@ -1,7 +1,6 @@
 package datadog
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/DataDog/datadog-go/statsd"
@@ -19,27 +18,40 @@ func NewFakeDataDogClient() Client {
 }
 
 // Gauge mocks FakeClient.Gauge.
-func (fc *FakeClient) Gauge(name string, value float64, tags []string, rate float64) error {
-	log.Print(fmt.Sprintf(
-		"Sending Gauge Metric to DataDog \n Name: %s,\n Value: %b,\n Tags: %s,\n Rate: %b \n",
-		name, value, tags, rate,
-	))
+func (fc *FakeClient) Gauge(
+	name string,
+	value float64,
+	tags []string,
+	rate float64,
+) error {
+	log.Printf(
+		"Sending Gauge Metric to DataDog "+
+			"(name: %s, value: %b, tags: %s, rate: %b).\n",
+		name,
+		value,
+		tags,
+		rate)
+
 	return nil
 }
 
 // Event mocks FakeClient.Event.
 func (fc *FakeClient) Event(e *statsd.Event) error {
-	log.Print(fmt.Sprintf(
-		"Sending Custom Event to DataDog\n Event: %+v \n", e,
-	))
+	log.Printf(
+		"Sending Custom Event to DataDog (event: %+v).\n",
+		e)
+
 	return nil
 }
 
 // Incr mocks FakeClient.Incr.
 func (fc *FakeClient) Incr(name string, tags []string, rate float64) error {
-	log.Print(fmt.Sprintf(
-		"Sending Increment Metric to DataDog \n Name: %s,\n Tags: %s,\n Rate: %b \n",
-		name, tags, rate,
-	))
+	log.Printf(
+		"Sending Increment Metric to DataDog "+
+			"(name: %s, tags: %s, rate: %b).\n",
+		name,
+		tags,
+		rate)
+
 	return nil
 }

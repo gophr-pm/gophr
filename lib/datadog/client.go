@@ -12,6 +12,13 @@ const (
 	datadogServiceName = "dd-agent-svc"
 )
 
+// Client is used to interface with the DataDog API.
+type Client interface {
+	Incr(name string, tags []string, rate float64) error
+	Event(e *statsd.Event) error
+	Gauge(name string, value float64, tags []string, rate float64) error
+}
+
 // NewClient returns a new statsd DataDog client for sending metrics to the
 // DataDog agent.
 func NewClient(conf *config.Config, nameSpace string) (Client, error) {

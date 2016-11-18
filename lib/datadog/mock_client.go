@@ -16,7 +16,12 @@ func NewMockDataDogClient() *MockDataDogClient {
 }
 
 // Gauge mocks MockDataDogClient.Gauge.
-func (m *MockDataDogClient) Gauge(name string, value float64, tags []string, rate float64) error {
+func (m *MockDataDogClient) Gauge(
+	name string,
+	value float64,
+	tags []string,
+	rate float64,
+) error {
 	args := m.Called(name, value, tags, rate)
 	return args.Error(1)
 }
@@ -28,7 +33,11 @@ func (m *MockDataDogClient) Event(e *statsd.Event) error {
 }
 
 // Incr mocks MockDataDogClient.Incr.
-func (m *MockDataDogClient) Incr(name string, tags []string, rate float64) error {
+func (m *MockDataDogClient) Incr(
+	name string,
+	tags []string,
+	rate float64,
+) error {
 	args := m.Called(name, tags, rate)
 	return args.Error(0)
 }
