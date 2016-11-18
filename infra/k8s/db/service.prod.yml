@@ -9,5 +9,7 @@ spec:
   ports:
     - name: cql
       port: 9042
+    - name: jmx
+      port: 7199
   selector:
     module: db
