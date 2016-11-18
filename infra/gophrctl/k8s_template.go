@@ -19,8 +19,7 @@ const (
 	templateVarGCEProjectID         = "{{GCE_PROJECT_ID}}"
 	templateVarDepotVolumeServiceIP = "{{DEPOT_VOL_SVC_IP}}"
 	templateVarDataDogAPIKey        = "{{DATADOG_API_KEY}}"
-	devAPIKeySecretFileName         = "datadog-api-key.dev.json"
-	prodAPIKeySecretFileName        = "datadog-api-key.prod.json"
+	ddAPIKeySecretFileName          = "datadog-api-key.json"
 )
 
 var (
@@ -85,7 +84,7 @@ var (
 			if err != nil {
 				return nil, err
 			}
-			secretFilePath, err = filepath.Abs(filepath.Join(gophrRoot, secretsDir, devAPIKeySecretFileName))
+			secretFilePath, err = filepath.Abs(filepath.Join(gophrRoot, secretsDir, ddAPIKeySecretFileName))
 			log.Println(secretFilePath)
 			if err != nil {
 				return nil, err
