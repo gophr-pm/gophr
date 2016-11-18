@@ -10,6 +10,8 @@ import (
 	"github.com/gophr-pm/gophr/lib/datadog"
 )
 
+const ddEventDeleteRepo = "depot.repo.delete"
+
 // DeleteRepoHandler creates a new repository in the depot.
 func DeleteRepoHandler(
 	conf *config.Config,
@@ -26,7 +28,7 @@ func DeleteRepoHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "repo.delete",
+			CustomEventName: ddEventCreateRepo,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

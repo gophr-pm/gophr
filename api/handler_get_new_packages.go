@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	maxNewPackagesLimit = 200
+	ddEventGetNewPackage = "api.get.new.packages"
+	maxNewPackagesLimit  = 200
 )
 
 // getNewPackagesRequestArgs is the args struct for new packages requests.
@@ -46,7 +47,7 @@ func GetNewPackagesHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "api.get.new.packages",
+			CustomEventName: ddEventGetNewPackage,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

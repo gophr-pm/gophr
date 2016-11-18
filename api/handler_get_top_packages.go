@@ -22,6 +22,8 @@ const (
 	maxTopPackagesLimit = 200
 )
 
+const ddEventGetTopPackages = "api.get.top.packages"
+
 // getTopPackagesRequestArgs is the args struct for get top packages requests.
 type getTopPackagesRequestArgs struct {
 	limit     int
@@ -52,7 +54,7 @@ func GetTopPackagesHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "api.get.top.packages",
+			CustomEventName: ddEventGetTopPackages,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

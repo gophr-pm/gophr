@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const ddEventGetPackage = "api.get.package"
+
 // getPackageRequestArgs is the args struct for get package requests.
 type getPackageRequestArgs struct {
 	repo   string
@@ -43,7 +45,7 @@ func GetPackageHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "api.get.package",
+			CustomEventName: ddEventGetPackage,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const ddEventRepoBlob = "api.repo.blob"
+
 // blobRequestArgs is the arguments struct for the blob handler.
 type blobRequestArgs struct {
 	sha    string
@@ -37,7 +39,7 @@ func BlobHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "repo.blob",
+			CustomEventName: ddEventRepoBlob,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

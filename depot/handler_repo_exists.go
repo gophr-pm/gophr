@@ -10,6 +10,8 @@ import (
 	"github.com/gophr-pm/gophr/lib/datadog"
 )
 
+const ddEventRepoExists = "depot.repo.exists"
+
 // RepoExistsHandler returns a 200 if the repo exists, or 404 if it doesn't.
 func RepoExistsHandler(
 	conf *config.Config,
@@ -26,7 +28,7 @@ func RepoExistsHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "repo.exists",
+			CustomEventName: ddEventRepoExists,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

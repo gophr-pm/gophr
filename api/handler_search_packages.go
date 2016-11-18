@@ -15,6 +15,7 @@ import (
 
 const (
 	maxSearchQueryLength   = 50
+	ddEventSearchPackages  = "api.search.packages"
 	maxSearchPackagesLimit = 20
 )
 
@@ -48,7 +49,7 @@ func SearchPackagesHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "api.get.trending.packages",
+			CustomEventName: ddEventSearchPackages,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	maxTrendingPackagesLimit = 200
+	maxTrendingPackagesLimit   = 200
+	ddEventGetTrendingPackages = "api.get.trending.packages"
 )
 
 // getTrendingPackagesRequestArgs is the args struct for get trending packages
@@ -47,7 +48,7 @@ func GetTrendingPackagesHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "api.get.trending.packages",
+			CustomEventName: ddEventGetTrendingPackages,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

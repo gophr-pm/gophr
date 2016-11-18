@@ -10,6 +10,8 @@ import (
 	"github.com/gophr-pm/gophr/lib/datadog"
 )
 
+const ddEventCreateRepo = "depot.create.repo"
+
 // CreateRepoHandler creates a new repository in the depot.
 func CreateRepoHandler(
 	conf *config.Config,
@@ -26,7 +28,7 @@ func CreateRepoHandler(
 			EventInfo:       []string{},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "create.repo",
+			CustomEventName: ddEventCreateRepo,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)

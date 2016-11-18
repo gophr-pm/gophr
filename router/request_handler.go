@@ -20,7 +20,8 @@ const (
 )
 
 var (
-	statusCheckResponse = []byte("ok")
+	statusCheckResponse    = []byte("ok")
+	ddEventPackageDownload = "router.package.download"
 )
 
 // RequestHandler creates an HTTP request handler that responds to all incoming
@@ -41,13 +42,13 @@ func RequestHandler(
 			},
 			Client:    dataDogClient,
 			StartTime: time.Now(),
+			AlertType: datadog.Success,
 			EventInfo: []string{
 				r.URL.Path, r.UserAgent(),
 			},
 			MetricName:      "request.duration",
 			CreateEvent:     statsd.NewEvent,
-			CustomEventName: "package.download",
-			AlertType:       datadog.Success,
+			CustomEventName: ddEventPackageDownload,
 		}
 
 		defer datadog.TrackTransaction(trackingArgs)
