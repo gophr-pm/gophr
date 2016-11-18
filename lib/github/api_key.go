@@ -8,9 +8,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gophr-pm/gophr/lib/datadog"
 )
 
 const (
+	ddEventKeyExhausted            = "github.keys.exhausted"
 	httpHeaderResetTime            = "X-RateLimit-Reset"
 	httpHeaderRequestsRemaining    = "X-RateLimit-Remaining"
 	githubAPIUsageEndpointTemplate = "https://api.github.com/repos/a/b?access_token=%s"
@@ -20,6 +23,7 @@ const (
 // it's responsible for keeping track of API usage via that key
 type apiKey struct {
 	token              string
+	ddClient           datadog.Client
 	dataLock           sync.RWMutex
 	requestLock        sync.Mutex
 	remainingUses      int
@@ -27,8 +31,8 @@ type apiKey struct {
 }
 
 // newAPIKey creates a new Github API key.
-func newAPIKey(token string) (*apiKey, error) {
-	newKey := &apiKey{token: token}
+func newAPIKey(token string, ddClient datadog.Client) (*apiKey, error) {
+	newKey := &apiKey{token: token, ddClient: ddClient}
 	if err := newKey.updateByRequest(); err != nil {
 		return nil, err
 	}
@@ -80,6 +84,14 @@ func (key *apiKey) update(header http.Header) *apiKey {
 	key.remainingUses = remainingRequests
 	key.rateLimitResetTime = rateLimitResetTimeStamp
 	key.dataLock.Unlock()
+
+	// Notify datadog if this key runs out of juice.
+	if remainingRequests == 0 {
+		go key.ddClient.Incr(
+			ddEventKeyExhausted,
+			[]string{"github", datadog.TagInternal},
+			1)
+	}
 
 	log.Printf(
 		"Recently used Github API key now has %d remaining requests.\n",

@@ -19,12 +19,14 @@ func main() {
 	// Ensure that the client is closed eventually.
 	defer client.Close()
 
+	// Read the user/pass secrets.
 	creds, err := config.ReadCredentials(conf)
 	if err != nil {
 		log.Fatalln("Failed to read credentials secret:", err)
 	}
 
-	dataDogClient, err := datadog.NewClient(conf, "router.")
+	// Initialize datadog client.
+	ddClient, err := datadog.NewClient(conf, "router.")
 	if err != nil {
 		log.Println(err)
 	}
@@ -33,6 +35,7 @@ func main() {
 	// package requests.
 	ghSvc, err := github.NewRequestService(github.RequestServiceArgs{
 		Conf:             conf,
+		DDClient:         ddClient,
 		Queryable:        client,
 		ForScheduledJobs: false,
 	})
@@ -50,7 +53,7 @@ func main() {
 		creds,
 		ghSvc,
 		client,
-		dataDogClient))
+		ddClient))
 	log.Printf("Servicing HTTP requests on port %d.\n", conf.Port)
 	http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }

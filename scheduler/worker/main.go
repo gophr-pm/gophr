@@ -35,20 +35,21 @@ func main() {
 	// Ensure that the client is closed eventually.
 	defer client.Close()
 
+	// Initialize datadog client.
+	ddClient, err := datadog.NewClient(config, "scheduler-worker.")
+	if err != nil {
+		log.Fatalln("Failed to create the DataDog client:", err)
+	}
+
 	// Create an instance of the github request service.
 	ghSvc, err := github.NewRequestService(github.RequestServiceArgs{
 		Conf:             config,
+		DDClient:         ddClient,
 		Queryable:        client,
 		ForScheduledJobs: true,
 	})
 	if err != nil {
 		log.Fatalln("Failed to create the Github request service:", err)
-	}
-
-	// Initialize datadog client.
-	ddClient, err := datadog.NewClient(config, "scheduler-worker.")
-	if err != nil {
-		log.Fatalln("Failed to create the DataDog client:", err)
 	}
 
 	// Register all of the routes.
