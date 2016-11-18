@@ -3,29 +3,46 @@ package metrics
 import (
 	"net/http"
 	"sync"
+	"time"
 
+	"github.com/DataDog/datadog-go/statsd"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
-// The name of this job.
-const jobName = "update-metrics"
+const (
+	// The name of this job.
+	jobName = "update-metrics"
+	// ddEventName is the name of the custom datadog event for this handler.
+	ddEventName = "scheduler.worker.updater.metrics"
+)
 
 // UpdateHandler exposes an endpoint that reads every package from the database
 // and updates the metrics of each.
 func UpdateHandler(
 	q db.Queryable,
 	ghSvc github.RequestService,
+	ddClient datadog.Client,
 	numWorkers int,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			errs      = make(chan error)
-			loggerWG  sync.WaitGroup
-			updaterWG sync.WaitGroup
-			summaries = make(chan pkg.Summary)
+			errs         = make(chan error)
+			updaterWG    sync.WaitGroup
+			summaries    = make(chan pkg.Summary)
+			trackingArgs = datadog.TrackTransactionArgs{
+				Tags:            []string{jobName, datadog.TagInternal},
+				Client:          ddClient,
+				AlertType:       datadog.Success,
+				StartTime:       time.Now(),
+				MetricName:      datadog.MetricJobDuration,
+				CreateEvent:     statsd.NewEvent,
+				CustomEventName: ddEventName,
+			}
+			errLogResults = make(chan common.ErrorLoggingResult)
 		)
 
 		// Read job params so we can build a logger.
@@ -36,6 +53,9 @@ func UpdateHandler(
 			return
 		}
 
+		// Ensure that the transaction is tracked after the job finishes.
+		defer datadog.TrackTransaction(trackingArgs)
+
 		// Build a logger for use in the sub-routines.
 		logger := common.NewJobLogger(jobName, jobParams)
 
@@ -44,8 +64,7 @@ func UpdateHandler(
 		defer logger.Finish()
 
 		// Spin up the error logger.
-		loggerWG.Add(1)
-		go common.LogErrors(logger, &loggerWG, errs)
+		go common.LogErrors(logger, errLogResults, errs)
 
 		// Start reading packages.
 		logger.Info("Reading all packages from the database.")
@@ -69,7 +88,12 @@ func UpdateHandler(
 		// Close the errors channel since nothing else will ever go through.
 		close(errs)
 
-		// Wait for the logger to exit.
-		loggerWG.Wait()
+		// If there were errors, be sure to alter the tracking metadata.
+		if errLogResult := <-errLogResults; len(errLogResult.Errors) > 0 {
+			trackingArgs.AlertType = datadog.Error
+			for _, err = range errLogResult.Errors {
+				trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			}
+		}
 	}
 }

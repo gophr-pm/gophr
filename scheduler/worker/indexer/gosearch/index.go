@@ -15,6 +15,7 @@ import (
 // indexArgs is the arguments struct for index.
 type indexArgs struct {
 	q                            db.Queryable
+	errs                         chan error
 	conf                         *config.Config
 	ghSvc                        github.RequestService
 	logger                       common.JobLogger
@@ -26,7 +27,6 @@ type indexArgs struct {
 func index(args indexArgs) {
 	var (
 		err                  error
-		errs                 = make(chan error)
 		newPackages          = make(chan packageSetEntry)
 		insertPackagesWG     sync.WaitGroup
 		goSearchPackages     *packageSet
@@ -51,7 +51,7 @@ func index(args indexArgs) {
 	}
 
 	args.logger.Info("Started reading existing packages from the database.")
-	go pkg.ReadAll(args.q, existingPackages, errs)
+	go pkg.ReadAll(args.q, existingPackages, args.errs)
 
 	args.logger.Info("Removing existing packages from the package set.")
 	for existingPackage := range existingPackages {
@@ -74,7 +74,7 @@ func index(args indexArgs) {
 			go packageInsertionFactory(packageInsertionFactoryArgs{
 				q:                 args.q,
 				wg:                &insertionFactoryWG,
-				errs:              errs,
+				errs:              args.errs,
 				ghSvc:             args.ghSvc,
 				isAwesome:         awesome.IncludesPackage,
 				newPackages:       newPackages,
@@ -87,7 +87,7 @@ func index(args indexArgs) {
 		go insertPackages(insertPackagesArgs{
 			q:                 args.q,
 			wg:                &insertPackagesWG,
-			errs:              errs,
+			errs:              args.errs,
 			packageInsertions: packageInsertions,
 		})
 

@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/gophr-pm/gophr/lib"
+	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/deleter/downloads"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/awesome"
@@ -44,6 +45,12 @@ func main() {
 		log.Fatalln("Failed to create the Github request service:", err)
 	}
 
+	// Initialize datadog client.
+	ddClient, err := datadog.NewClient(config, "scheduler-worker.")
+	if err != nil {
+		log.Fatalln("Failed to create the DataDog client:", err)
+	}
+
 	// Register all of the routes.
 	r := mux.NewRouter()
 	r.HandleFunc("/status", StatusHandler()).Methods("GET")
@@ -52,21 +59,24 @@ func main() {
 		metrics.UpdateHandler(
 			client,
 			ghSvc,
+			ddClient,
 			updateMetricsWorkerThreads)).Methods("GET")
 	r.HandleFunc(
 		"/index/awesome",
-		awesome.IndexHandler(client)).Methods("GET")
+		awesome.IndexHandler(client, ddClient)).Methods("GET")
 	r.HandleFunc(
 		"/index/go-search",
 		gosearch.IndexHandler(
 			client,
 			config,
 			ghSvc,
+			ddClient,
 			indexGoSearchWorkerThreads)).Methods("GET")
 	r.HandleFunc(
 		"/delete/old-downloads",
 		downloads.DeleteHandler(
 			client,
+			ddClient,
 			deleteOldDownloadsWorkerThreads)).Methods("GET")
 
 	// Start serving.
