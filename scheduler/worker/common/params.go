@@ -18,6 +18,14 @@ type JobParams struct {
 	StartTime time.Time
 }
 
+// String serialized job params into a string.
+func (j JobParams) String() string {
+	return fmt.Sprintf(
+		`{ jobId: "%s", jobStartTime: %s }`,
+		j.ID,
+		j.StartTime.Format(time.RFC3339))
+}
+
 // ReadJobParams reads JobParams from the query string of an http request.
 func ReadJobParams(r *http.Request) (JobParams, error) {
 	var (

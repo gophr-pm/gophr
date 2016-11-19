@@ -13,7 +13,7 @@ spec:
       name: dd-agent
     spec:
       containers:
-      - image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-dd-agent:1.0.2"
+      - image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-dd-agent:1.0.4"
         name: dd-agent
         ports:
           - containerPort: 8125

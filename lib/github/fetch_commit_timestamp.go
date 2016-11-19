@@ -26,10 +26,16 @@ func (svc *requestServiceImpl) FetchCommitTimestamp(
 ) (time.Time, error) {
 	// Specify monitoring parameters.
 	trackingArgs := datadog.TrackTransactionArgs{
-		Tags:            []string{"github", datadog.TagInternal},
-		Client:          svc.ddClient,
-		AlertType:       datadog.Success,
-		StartTime:       time.Now(),
+		Tags:      []string{"github", datadog.TagInternal},
+		Client:    svc.ddClient,
+		AlertType: datadog.Success,
+		StartTime: time.Now(),
+		EventInfo: []string{fmt.Sprintf(
+			`{ author: "%s", repo: "%s", sha: "%s" }`,
+			author,
+			repo,
+			sha,
+		)},
 		MetricName:      datadog.MetricJobDuration,
 		CreateEvent:     statsd.NewEvent,
 		CustomEventName: ddEventFetchCommitTimestamp,

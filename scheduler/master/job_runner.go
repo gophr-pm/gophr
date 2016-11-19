@@ -29,12 +29,12 @@ func newJobRunner(j job, request httpGetter) func() {
 		)
 
 		log.Printf(
-			`Scheduler fired off a job request to start "%s" with id "%s".\n`,
+			`Scheduler fired off a job request to start "%s" with id "%s".`+"\n",
 			j.name,
 			jobID)
 		if resp, err := request(jobRequestURL); err != nil {
 			log.Printf(
-				`Job "%s" with id "%s" started at %s failed to execute: %v.\n`,
+				`Job "%s" with id "%s" started at %s failed to execute: %v.`+"\n",
 				j.name,
 				jobID,
 				startTimeStr,
@@ -45,7 +45,7 @@ func newJobRunner(j job, request httpGetter) func() {
 
 			log.Printf(
 				`Job "%s" with id "%s" started at %s failed to execute: received `+
-					`status code %d: %s.\n`,
+					"status code %d: %s.\n",
 				j.name,
 				jobID,
 				startTimeStr,

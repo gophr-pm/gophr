@@ -1,5 +1,10 @@
 FROM golang:1.7
 
+# Set the default timezone to EST.
+ENV TZ=America/New_York
+RUN echo $TZ | tee /etc/timezone \
+	&& dpkg-reconfigure --frontend noninteractive tzdata
+
 RUN apt-get update && apt-get -q -y install \
 	git openssl apt-transport-https ca-certificates curl g++ gcc libc6-dev make pkg-config \
 	libssl-dev cmake

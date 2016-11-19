@@ -26,10 +26,15 @@ func (svc *requestServiceImpl) FetchRepoData(
 ) (dtos.GithubRepo, error) {
 	// Specify monitoring parameters.
 	trackingArgs := datadog.TrackTransactionArgs{
-		Tags:            []string{"github", datadog.TagInternal},
-		Client:          svc.ddClient,
-		AlertType:       datadog.Success,
-		StartTime:       time.Now(),
+		Tags:      []string{"github", datadog.TagInternal},
+		Client:    svc.ddClient,
+		AlertType: datadog.Success,
+		StartTime: time.Now(),
+		EventInfo: []string{fmt.Sprintf(
+			`{ author: "%s", repo: "%s" }`,
+			author,
+			repo,
+		)},
 		MetricName:      datadog.MetricJobDuration,
 		CreateEvent:     statsd.NewEvent,
 		CustomEventName: ddEventFetchRepoData,

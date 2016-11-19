@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: depot-ext
-        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-depot-ext:1.0.3"
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-depot-ext:1.0.4"
         ports:
         - containerPort: 80
         volumeMounts:

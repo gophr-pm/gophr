@@ -3,6 +3,11 @@ FROM golang:1.7
 # We need git for pulling dependencies and bash for debugging.
 # git2go ref 241aa34d83b210ceaab7029c46e05794f2ea9797
 
+# Set the default timezone to EST.
+ENV TZ=America/New_York
+RUN echo $TZ | tee /etc/timezone \
+	&& dpkg-reconfigure --frontend noninteractive tzdata
+
 RUN apt-get update && apt-get -q -y install \
 	git openssl apt-transport-https ca-certificates curl g++ gcc libc6-dev make pkg-config \
 	libssl-dev cmake
