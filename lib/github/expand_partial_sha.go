@@ -3,6 +3,7 @@ package github
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -55,6 +56,9 @@ func (svc *requestServiceImpl) ExpandPartialSHA(
 
 	// Ensure that the transaction is tracked after the job finishes.
 	defer datadog.TrackTransaction(trackingArgs)
+
+	log.Printf(`Expanding partial SHA "%s" of "%s/%s".
+`, args.ShortSHA, args.Author, args.Repo)
 
 	archiveURL := fmt.Sprintf(
 		baseGithubArchiveURL,
