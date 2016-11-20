@@ -35,7 +35,7 @@ func main() {
 		c.AddFunc("0 0 5 * * *", newJobRunner(updateGithubMetadata, http.Get))
 		// Update package metrics three times a day.
 		c.AddFunc(
-			"0 0 7,14,21 * * * *",
+			"0 0 7,14,21 * * *",
 			newJobRunner(updatePackageMetrics, http.Get))
 
 		// Start the cron process.

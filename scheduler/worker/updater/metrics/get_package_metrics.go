@@ -26,7 +26,7 @@ func getPackageMetrics(
 		getVersionDownloadsResult getVersionDownloadsWrapperResult
 	)
 
-	wg.Add(4)
+	wg.Add(3)
 	go getSplitsWrapper(getSplitsWrapperArgs{
 		q:         q,
 		wg:        &wg,

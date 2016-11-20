@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: scheduler-master
-        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-scheduler-master:1.2.0"
+        image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-scheduler-master:1.2.1"
         ports:
         - containerPort: 3000
         volumeMounts:
