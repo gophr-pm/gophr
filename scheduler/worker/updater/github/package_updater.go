@@ -1,10 +1,11 @@
-package metrics
+package github
 
 import (
 	"sync"
 
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
+	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
@@ -13,6 +14,7 @@ type packageUpdaterArgs struct {
 	q         db.Queryable
 	wg        *sync.WaitGroup
 	errs      chan error
+	ghSvc     github.RequestService
 	logger    common.JobLogger
 	summaries chan pkg.Summary
 }
@@ -32,13 +34,19 @@ func packageUpdater(args packageUpdaterArgs) {
 			summary.Author,
 			summary.Repo)
 
-		metrics, err := getPackageMetrics(args.q, summary)
+		repoData, err := args.ghSvc.FetchRepoData(summary.Author, summary.Repo)
 		if err != nil {
 			args.errs <- err
 			continue
 		}
 
-		err = pkg.UpdateMetrics(metrics)
+		err = pkg.UpdateGithubMetadata(pkg.UpdateGithubMetadataArgs{
+			Repo:        summary.Repo,
+			Stars:       repoData.Stars,
+			Author:      summary.Author,
+			Queryable:   args.q,
+			Description: repoData.Description,
+		})
 		if err != nil {
 			args.errs <- err
 		}

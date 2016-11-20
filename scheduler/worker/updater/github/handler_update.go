@@ -1,4 +1,4 @@
-package metrics
+package github
 
 import (
 	"net/http"
@@ -9,20 +9,22 @@ import (
 	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
+	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
 const (
 	// The name of this job.
-	jobName = "update-metrics"
+	jobName = "update-github-metadata"
 	// ddEventName is the name of the custom datadog event for this handler.
-	ddEventName = "scheduler.worker.updater.metrics"
+	ddEventName = "scheduler.worker.updater.github-metadata"
 )
 
 // UpdateHandler exposes an endpoint that reads every package from the database
-// and updates the metrics of each.
+// and updates the github metadata of each.
 func UpdateHandler(
 	q db.Queryable,
+	ghSvc github.RequestService,
 	ddClient datadog.Client,
 	numWorkers int,
 ) func(http.ResponseWriter, *http.Request) {
@@ -77,6 +79,7 @@ func UpdateHandler(
 				q:         q,
 				wg:        &updaterWG,
 				errs:      errs,
+				ghSvc:     ghSvc,
 				logger:    logger,
 				summaries: summaries,
 			})

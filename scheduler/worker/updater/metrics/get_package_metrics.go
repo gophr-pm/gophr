@@ -9,14 +9,12 @@ import (
 	"github.com/gophr-pm/gophr/lib/db/model/package"
 	"github.com/gophr-pm/gophr/lib/db/model/package/awesome"
 	"github.com/gophr-pm/gophr/lib/db/model/package/download"
-	"github.com/gophr-pm/gophr/lib/github"
 )
 
 // getPackageMetrics calculates and organizes the metrics for a specific package
 // from the database. The result is an args struct for pkg.UpdateMetrics.
 func getPackageMetrics(
 	q db.Queryable,
-	ghSvc github.RequestService,
 	summary pkg.Summary,
 ) (pkg.UpdateMetricsArgs, error) {
 	var (
@@ -25,7 +23,6 @@ func getPackageMetrics(
 		searchScore               float32
 		getSplitsResult           getSplitsWrapperResult
 		awesomeCheckResult        awesomeCheckWrapperResult
-		fetchRepoDataResult       fetchRepoDataWrapperResult
 		getVersionDownloadsResult getVersionDownloadsWrapperResult
 	)
 
@@ -45,13 +42,6 @@ func getPackageMetrics(
 		author:    summary.Author,
 		result:    &awesomeCheckResult,
 		isAwesome: awesome.IncludesPackage,
-	})
-	go fetchRepoDataWrapper(fetchRepoDataWrapperArgs{
-		wg:            &wg,
-		repo:          summary.Repo,
-		author:        summary.Author,
-		result:        &fetchRepoDataResult,
-		fetchRepoData: ghSvc.FetchRepoData,
 	})
 	go getVersionDownloadsWrapper(getVersionDownloadsWrapperArgs{
 		q:                   q,
@@ -79,13 +69,6 @@ func getPackageMetrics(
 			summary.Author,
 			awesomeCheckResult.err)
 	}
-	if fetchRepoDataResult.err != nil {
-		return pkg.UpdateMetricsArgs{}, fmt.Errorf(
-			`Failed to get downloads for package "%s/%s": Failed to get splits: %v`,
-			summary.Repo,
-			summary.Author,
-			fetchRepoDataResult.err)
-	}
 	if getVersionDownloadsResult.err != nil {
 		return pkg.UpdateMetricsArgs{}, fmt.Errorf(
 			`Failed to get downloads for package "%s/%s": `+
@@ -101,20 +84,18 @@ func getPackageMetrics(
 		getSplitsResult.splits.Weekly,
 		getSplitsResult.splits.Monthly)
 	searchScore = pkg.CalcSearchScore(
-		fetchRepoDataResult.repoData.Stars,
+		summary.Stars,
 		getSplitsResult.splits.AllTime,
 		summary.Awesome,
 		trendScore)
 
 	return pkg.UpdateMetricsArgs{
 		Repo:                    summary.Repo,
-		Stars:                   fetchRepoDataResult.repoData.Stars,
 		Author:                  summary.Author,
 		Awesome:                 awesomeCheckResult.awesome,
 		Queryable:               q,
 		TrendScore:              trendScore,
 		SearchScore:             searchScore,
-		Description:             fetchRepoDataResult.repoData.Description,
 		DailyDownloads:          getSplitsResult.splits.Daily,
 		WeeklyDownloads:         getSplitsResult.splits.Weekly,
 		MonthlyDownloads:        getSplitsResult.splits.Monthly,
