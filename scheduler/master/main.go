@@ -31,6 +31,8 @@ func main() {
 		c.AddFunc("0 0 3 1 * *", newJobRunner(indexGoSearchPackages, http.Get))
 		// Delete old hourly downloads everyday at midnight.
 		c.AddFunc("0 0 0 * * *", newJobRunner(deleteOldDownloadsPackages, http.Get))
+		// Update Github metadata once a day at 5am.
+		c.AddFunc("0 0 5 * * *", newJobRunner(updateGithubMetadata, http.Get))
 		// Update package metrics three times a day.
 		c.AddFunc(
 			"0 0 7,14,21 * * * *",

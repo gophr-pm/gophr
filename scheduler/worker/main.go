@@ -63,7 +63,7 @@ func main() {
 			ddClient,
 			updateMetricsWorkerThreads)).Methods("GET")
 	r.HandleFunc(
-		"/update/github",
+		"/update/github-metadata",
 		ghUpdater.UpdateHandler(
 			client,
 			ghSvc,
