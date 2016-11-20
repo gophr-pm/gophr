@@ -46,70 +46,82 @@ func (svc *requestServiceImpl) FetchRepoData(
 	log.Printf(`Fetching Github repository data for "%s/%s".
 `, author, repo)
 
-	resp, err := svc.keyChain.acquireKey().getFromGithub(
-		buildGitHubRepoDataAPIURL(
-			author,
-			repo))
+	for attempts := 0; attempts < githubAPIAttemptsLimit; attempts++ {
+		resp, err := svc.keyChain.acquireKey().getFromGithub(
+			buildGitHubRepoDataAPIURL(
+				author,
+				repo))
 
-	// Make sure that the response body gets closed eventually.
-	defer resp.Body.Close()
+		// Make sure that the response body gets closed eventually.
+		defer resp.Body.Close()
 
-	if err != nil {
-		err = fmt.Errorf(
-			`Failed to get repo data for "%s/%s": %v.`,
-			author,
-			repo,
-			err)
+		if err != nil {
+			err = fmt.Errorf(
+				`Failed to get repo data for "%s/%s": %v.`,
+				author,
+				repo,
+				err)
 
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 
-		return dtos.GithubRepo{}, err
+			return dtos.GithubRepo{}, err
+		}
+
+		// Handle all kinds of failures.
+		if resp.StatusCode == 404 {
+			err = fmt.Errorf(
+				`Failed to get repo data for "%s/%s": package not found.`,
+				author,
+				repo)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return dtos.GithubRepo{}, err
+		} else if resp.StatusCode == 403 {
+			// If there was a forbidden status code, try the request again.
+			continue
+		} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
+			err = fmt.Errorf(
+				`Failed to get repo data for "%s/%s": bumped into a status code %d.`,
+				author,
+				repo,
+				resp.StatusCode)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return dtos.GithubRepo{}, err
+		}
+
+		repoData, err := parseGitHubRepoDataResponseBody(resp)
+		if err != nil {
+			err = fmt.Errorf(
+				`Failed to parse repo data for "%s/%s": %v.`,
+				author,
+				repo,
+				err)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return dtos.GithubRepo{}, err
+		}
+
+		return repoData, nil
 	}
 
-	// Handle all kinds of failures.
-	if resp.StatusCode == 404 {
-		err = fmt.Errorf(
-			`Failed to get repo data for "%s/%s": package not found.`,
-			author,
-			repo)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return dtos.GithubRepo{}, err
-	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
-		err = fmt.Errorf(
-			`Failed to get repo data for "%s/%s": bumped into a status code %d.`,
-			author,
-			repo,
-			resp.StatusCode)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return dtos.GithubRepo{}, err
-	}
-
-	repoData, err := parseGitHubRepoDataResponseBody(resp)
-	if err != nil {
-		err = fmt.Errorf(
-			`Failed to parse repo data for "%s/%s": %v.`,
-			author,
-			repo,
-			err)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return dtos.GithubRepo{}, err
-	}
-
-	return repoData, nil
+	return dtos.GithubRepo{}, fmt.Errorf(
+		`Failed to get repo data for "%s/%s": `+
+			`all %d attempts failed.`,
+		author,
+		repo,
+		githubAPIAttemptsLimit)
 }
 
 func buildGitHubRepoDataAPIURL(
