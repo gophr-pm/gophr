@@ -16,7 +16,7 @@ import (
 const (
 	maxSearchQueryLength = 50
 	// ddEventName is the name of the custom datadog event for this handler.
-	ddEventSearchPackages  = "api.search.packages"
+	ddEventSearchPackages  = "api.search-packages"
 	maxSearchPackagesLimit = 20
 )
 

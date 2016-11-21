@@ -14,7 +14,7 @@ import (
 )
 
 // ddEventName is the name of the custom datadog event for this handler.
-const ddEventGetPackage = "api.get.package"
+const ddEventGetPackage = "api.get-package"
 
 // getPackageRequestArgs is the args struct for get package requests.
 type getPackageRequestArgs struct {

@@ -16,7 +16,7 @@ import (
 const (
 	maxNewPackagesLimit = 200
 	// ddEventName is the name of the custom datadog event for this handler.
-	ddEventGetNewPackage = "api.get.new.packages"
+	ddEventGetNewPackage = "api.get-new-packages"
 )
 
 // getNewPackagesRequestArgs is the args struct for new packages requests.

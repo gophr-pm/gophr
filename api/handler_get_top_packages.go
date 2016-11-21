@@ -23,7 +23,7 @@ const (
 )
 
 // ddEventName is the name of the custom datadog event for this handler.
-const ddEventGetTopPackages = "api.get.top.packages"
+const ddEventGetTopPackages = "api.get-top-packages"
 
 // getTopPackagesRequestArgs is the args struct for get top packages requests.
 type getTopPackagesRequestArgs struct {

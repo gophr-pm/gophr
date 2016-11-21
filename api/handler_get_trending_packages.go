@@ -16,7 +16,7 @@ import (
 const (
 	maxTrendingPackagesLimit = 200
 	// ddEventName is the name of the custom datadog event for this handler.
-	ddEventGetTrendingPackages = "api.get.trending.packages"
+	ddEventGetTrendingPackages = "api.get-trending-packages"
 )
 
 // getTrendingPackagesRequestArgs is the args struct for get trending packages
