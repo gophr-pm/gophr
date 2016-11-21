@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/gophr-pm/gophr/lib/config"
@@ -22,13 +23,24 @@ type Client interface {
 
 // NewClient creates a new database client.
 func NewClient(c *config.Config) (Client, error) {
-	// Create the database cluster struct.
 	cluster := gocql.NewCluster(c.DbAddress)
+
+	// Some queries can be very expensive. Need more time to respond.
+	cluster.Timeout = 2 * time.Second
+	// Makes for better performance on contrained memory.
+	cluster.PageSize = 2000
+	// Use latest versions of Cassandra.
 	cluster.ProtoVersion = DBProtoVersion
+
 	if c.IsDev {
-		cluster.Consistency = gocql.One
+		// In development, keep the load light.
+		cluster.Consistency = gocql.Two
 	} else {
 		cluster.Consistency = gocql.Quorum
+
+		// In production, it is important that queries are tried multiple times
+		// since the requests against the database are generally more important.
+		cluster.RetryPolicy = &gocql.SimpleRetryPolicy{NumRetries: 2}
 	}
 
 	// Use the cluster to start a session.
