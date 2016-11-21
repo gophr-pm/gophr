@@ -41,7 +41,7 @@ func (svc *requestServiceImpl) FetchRepoData(
 	}
 
 	// Ensure that the transaction is tracked after the job finishes.
-	defer datadog.TrackTransaction(trackingArgs)
+	defer datadog.TrackTransaction(&trackingArgs)
 
 	log.Printf(`Fetching Github repository data for "%s/%s".
 `, author, repo)

@@ -51,7 +51,7 @@ func RequestHandler(
 			CustomEventName: ddEventPackageDownload,
 		}
 
-		defer datadog.TrackTransaction(trackingArgs)
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Make sure that this isn't a simple health check before getting more
 		// complicated.

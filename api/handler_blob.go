@@ -42,7 +42,7 @@ func BlobHandler(
 			CustomEventName: ddEventRepoBlob,
 		}
 
-		defer datadog.TrackTransaction(trackingArgs)
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Get request metadata.
 		args, err := extractBlobRequestArgs(r)

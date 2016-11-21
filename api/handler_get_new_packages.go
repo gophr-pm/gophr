@@ -54,7 +54,7 @@ func GetNewPackagesHandler(
 		)
 
 		// Track the request with DataDog.
-		defer datadog.TrackTransaction(trackingArgs)
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Parse out the args.
 		if args, err = extractGetNewPackagesRequestArgs(r); err != nil {

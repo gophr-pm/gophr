@@ -45,7 +45,7 @@ func (svc *requestServiceImpl) FetchCommitSHA(
 	}
 
 	// Ensure that the transaction is tracked after the job finishes.
-	defer datadog.TrackTransaction(trackingArgs)
+	defer datadog.TrackTransaction(&trackingArgs)
 
 	log.Printf(`Fetching Github commit SHA of "%s/%s" for timestamp %s.
 `, author, repo, timestamp.String())

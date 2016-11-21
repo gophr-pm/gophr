@@ -48,7 +48,6 @@ func GetTrendingPackagesHandler(
 				Client:          dataDogClient,
 				AlertType:       datadog.Success,
 				StartTime:       time.Now(),
-				EventInfo:       []string{},
 				MetricName:      datadog.MetricRequestDuration,
 				CreateEvent:     statsd.NewEvent,
 				CustomEventName: ddEventGetTrendingPackages,
@@ -56,7 +55,7 @@ func GetTrendingPackagesHandler(
 		)
 
 		// Track the request with DataDog.
-		defer datadog.TrackTransaction(trackingArgs)
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Parse out the args.
 		if args, err = extractGetTrendingPackagesRequestArgs(r); err != nil {
