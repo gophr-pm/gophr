@@ -32,7 +32,7 @@ func UpdateHandler(
 			updaterWG    sync.WaitGroup
 			summaries    = make(chan pkg.Summary)
 			trackingArgs = datadog.TrackTransactionArgs{
-				Tags:            []string{jobName, datadog.TagInternal},
+				Tags:            []string{common.SchedulerDDTag, datadog.TagInternal},
 				Client:          ddClient,
 				AlertType:       datadog.Success,
 				StartTime:       time.Now(),

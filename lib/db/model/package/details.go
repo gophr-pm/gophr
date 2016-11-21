@@ -21,10 +21,12 @@ func (d Details) toDTO() dtos.PackageDetails {
 	versions := make([]dtos.PackageVersion, len(d.AllTimeVersionDownloads))
 
 	for name, downloads := range d.AllTimeVersionDownloads {
-		versions = append(versions, dtos.PackageVersion{
-			Name:             name,
-			AllTimeDownloads: downloads,
-		})
+		if len(name) > 0 {
+			versions = append(versions, dtos.PackageVersion{
+				Name:             name,
+				AllTimeDownloads: downloads,
+			})
+		}
 	}
 
 	return dtos.PackageDetails{

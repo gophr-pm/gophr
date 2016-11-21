@@ -35,7 +35,7 @@ func IndexHandler(
 			logger       common.JobLogger
 			jobParams    common.JobParams
 			trackingArgs = datadog.TrackTransactionArgs{
-				Tags:            []string{jobName, datadog.TagInternal},
+				Tags:            []string{common.SchedulerDDTag, datadog.TagInternal},
 				Client:          ddClient,
 				AlertType:       datadog.Success,
 				StartTime:       time.Now(),
