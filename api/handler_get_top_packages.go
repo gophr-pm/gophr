@@ -22,12 +22,22 @@ const (
 	maxTopPackagesLimit = 200
 )
 
+// ddEventName is the name of the custom datadog event for this handler.
 const ddEventGetTopPackages = "api.get.top.packages"
 
 // getTopPackagesRequestArgs is the args struct for get top packages requests.
 type getTopPackagesRequestArgs struct {
 	limit     int
 	timeSplit pkg.TimeSplit
+}
+
+// String serializes the arguments of the get top packages handler into a
+// representative string.
+func (args getTopPackagesRequestArgs) String() string {
+	return fmt.Sprintf(
+		`{ limit: %d, timeSplit: "%v" }`,
+		args.limit,
+		args.timeSplit)
 }
 
 // GetTopPackagesHandler creates an HTTP request handler that responds to top
@@ -38,40 +48,37 @@ func GetTopPackagesHandler(
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			err     error
-			args    getTopPackagesRequestArgs
-			json    []byte
-			results pkg.Summaries
+			err          error
+			args         getTopPackagesRequestArgs
+			json         []byte
+			results      pkg.Summaries
+			trackingArgs = datadog.TrackTransactionArgs{
+				Tags:            []string{apiDDTag, datadog.TagExternal},
+				Client:          dataDogClient,
+				AlertType:       datadog.Success,
+				StartTime:       time.Now(),
+				MetricName:      datadog.MetricRequestDuration,
+				CreateEvent:     statsd.NewEvent,
+				CustomEventName: ddEventGetTopPackages,
+			}
 		)
 
-		trackingArgs := datadog.TrackTransactionArgs{
-			Tags: []string{
-				"api-get-top-packages",
-				"external",
-			},
-			Client:          dataDogClient,
-			StartTime:       time.Now(),
-			EventInfo:       []string{},
-			MetricName:      "request.duration",
-			CreateEvent:     statsd.NewEvent,
-			CustomEventName: ddEventGetTopPackages,
-		}
-
+		// Track the request with DataDog.
 		defer datadog.TrackTransaction(trackingArgs)
 
 		// Parse out the args.
 		if args, err = extractGetTopPackagesRequestArgs(r); err != nil {
 			trackingArgs.AlertType = datadog.Error
-			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			trackingArgs.EventInfo = append(
+				trackingArgs.EventInfo,
+				args.String(),
+				err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 
 		// Track request metadata.
-		trackingArgs.EventInfo = append(
-			trackingArgs.EventInfo,
-			fmt.Sprintf("%v", args),
-		)
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, args.String())
 
 		// Get from the database.
 		if results, err = pkg.GetTopX(q, args.limit, args.timeSplit); err != nil {
@@ -80,6 +87,7 @@ func GetTopPackagesHandler(
 			errors.RespondWithError(w, err)
 			return
 		}
+
 		// Turn the result into JSON.
 		if json, err = results.ToJSON(); err != nil {
 			trackingArgs.AlertType = datadog.Error
@@ -88,8 +96,6 @@ func GetTopPackagesHandler(
 			return
 		}
 
-		trackingArgs.AlertType = datadog.Success
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, string(json))
 		respondWithJSON(w, json)
 	}
 }

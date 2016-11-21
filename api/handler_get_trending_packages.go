@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	maxTrendingPackagesLimit   = 200
+	maxTrendingPackagesLimit = 200
+	// ddEventName is the name of the custom datadog event for this handler.
 	ddEventGetTrendingPackages = "api.get.trending.packages"
 )
 
@@ -22,6 +23,12 @@ const (
 // requests.
 type getTrendingPackagesRequestArgs struct {
 	limit int
+}
+
+// String serializes the arguments of the get trending packages handler into a
+// representative string.
+func (args getTrendingPackagesRequestArgs) String() string {
+	return fmt.Sprintf(`{ limit: %d }`, args.limit)
 }
 
 // GetTrendingPackagesHandler creates an HTTP request handler that responds to
@@ -32,40 +39,38 @@ func GetTrendingPackagesHandler(
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
-			err     error
-			args    getTrendingPackagesRequestArgs
-			json    []byte
-			results pkg.Summaries
+			err          error
+			args         getTrendingPackagesRequestArgs
+			json         []byte
+			results      pkg.Summaries
+			trackingArgs = datadog.TrackTransactionArgs{
+				Tags:            []string{apiDDTag, datadog.TagExternal},
+				Client:          dataDogClient,
+				AlertType:       datadog.Success,
+				StartTime:       time.Now(),
+				EventInfo:       []string{},
+				MetricName:      datadog.MetricRequestDuration,
+				CreateEvent:     statsd.NewEvent,
+				CustomEventName: ddEventGetTrendingPackages,
+			}
 		)
 
-		trackingArgs := datadog.TrackTransactionArgs{
-			Tags: []string{
-				"api-get-trending-packages",
-				"external",
-			},
-			Client:          dataDogClient,
-			StartTime:       time.Now(),
-			EventInfo:       []string{},
-			MetricName:      "request.duration",
-			CreateEvent:     statsd.NewEvent,
-			CustomEventName: ddEventGetTrendingPackages,
-		}
-
+		// Track the request with DataDog.
 		defer datadog.TrackTransaction(trackingArgs)
 
 		// Parse out the args.
 		if args, err = extractGetTrendingPackagesRequestArgs(r); err != nil {
 			trackingArgs.AlertType = datadog.Error
-			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			trackingArgs.EventInfo = append(
+				trackingArgs.EventInfo,
+				args.String(),
+				err.Error())
 			errors.RespondWithError(w, err)
 			return
 		}
 
 		// Track request metadata.
-		trackingArgs.EventInfo = append(
-			trackingArgs.EventInfo,
-			fmt.Sprintf("%v", args),
-		)
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, args.String())
 
 		// Get from the database.
 		if results, err = pkg.GetTrending(q, args.limit); err != nil {
@@ -83,8 +88,6 @@ func GetTrendingPackagesHandler(
 			return
 		}
 
-		trackingArgs.AlertType = datadog.Success
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, string(json))
 		respondWithJSON(w, json)
 	}
 }
