@@ -20,19 +20,19 @@ A boilerplate of things that mostly shouldn't exist.
 ## Setup
 
 ```
-$ npm install
+$ yarn
 ```
 
 ## Running
 
 ```
-$ npm start
+$ yarn start
 ```
 
 ## Build
 
 ```
-$ npm run build
+$ yarn run build
 ```
 
 ## Note
