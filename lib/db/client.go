@@ -23,8 +23,14 @@ type Client interface {
 
 // NewClient creates a new database client.
 func NewClient(c *config.Config) (Client, error) {
-	cluster := gocql.NewCluster(c.DbAddress)
+	// Get the database nodes from k8s.
+	dbNodeIPs, err := getDBNodes()
+	if err != nil {
+		return nil, fmt.Errorf(`Failed to create a new database client: %v.`, err)
+	}
 
+	// Create the cluster from the IPs.
+	cluster := gocql.NewCluster(dbNodeIPs...)
 	// Some queries can be very expensive. Need more time to respond.
 	cluster.Timeout = 2 * time.Second
 	// Makes for better performance on contrained memory.

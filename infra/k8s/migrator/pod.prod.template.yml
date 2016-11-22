@@ -8,5 +8,5 @@ metadata:
 spec:
   containers:
   - name: api
-    image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-migrator:1.2.2"
+    image: "gcr.io/{{GCE_PROJECT_ID}}/gophr-migrator:1.2.3"
   restartPolicy: Never
