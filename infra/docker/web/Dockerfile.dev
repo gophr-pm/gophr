@@ -35,7 +35,7 @@ RUN cd /web \
 	&& yarn \
 	&& yarn run build \
 	&& mkdir -p /usr/share/nginx/html \
-	&& mv ./static/* /usr/share/nginx/html \
+	&& mv ./build/* /usr/share/nginx/html \
 	&& cd /etc/nginx/ \
 	&& rm -rf /web
 

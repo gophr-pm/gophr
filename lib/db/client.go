@@ -40,7 +40,7 @@ func NewClient(c *config.Config) (Client, error) {
 
 	if c.IsDev {
 		// In development, keep the load light.
-		cluster.Consistency = gocql.Two
+		cluster.Consistency = gocql.One
 	} else {
 		cluster.Consistency = gocql.Quorum
 

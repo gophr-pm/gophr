@@ -4,12 +4,9 @@ import { Link } from 'react-router'
 import React, { Component } from 'react'
 
 import style from './style.css'
-// import NavLinks from '../NavLinks'
-// import SearchBox from '../SearchBox'
 
 class HomePage extends Component {
   state = {
-    // searchQuery:                  '',
     heroMessageHighlightsVisible: false
   }
 
@@ -19,12 +16,8 @@ class HomePage extends Component {
     }), 500)
   }
 
-  // onSearchQueryChanged(searchQuery) {
-  //   this.setState({ searchQuery })
-  // }
-
   render() {
-    const { /* searchQuery, */ heroMessageHighlightsVisible } = this.state
+    const { heroMessageHighlightsVisible } = this.state
 
     const heroMessageHighlightClasses = classNames(style.heroMessageHighlight, {
       [style.heroMessageHighlight__visible]: heroMessageHighlightsVisible
@@ -43,12 +36,12 @@ class HomePage extends Component {
                 href="https://github.com/gophr-pm/gophr"
                 target="_blank"
                 className={heroMessageHighlightClasses}>gophr</a>
-              <span>&nbsp;is the package manager that&nbsp;</span>
+              <span> is the package manager that </span>
               <a
                 href="https://golang.org"
                 target="_blank"
                 className={heroMessageHighlightClasses}>Go</a>
-              <span>&nbsp;deserves.</span>
+              <span> deserves.</span>
             </div>
             <div className={style.heroButtons}>
               <a

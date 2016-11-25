@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server -d --history-api-fallback --hot --inline --progress --colors --port 3000 --host 0.0.0.0",
-    "build": "NODE_ENV=production node ./node_modules/webpack/bin/webpack --progress --colors"
+    "build": "NODE_ENV=production node ./node_modules/webpack/bin/webpack --progress --colors --optimize-minimize --optimize-dedupe"
   },
   "license": "MIT",
   "devDependencies": {
@@ -38,5 +38,9 @@
     "webpack-dev-server": "^1.14.1",
     "webpack-hot-middleware": "^2.7.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "copy-webpack-plugin": "^4.0.1",
+    "favicons-webpack-plugin": "^0.0.7",
+    "html-webpack-plugin": "^2.24.1"
+  }
 }

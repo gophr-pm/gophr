@@ -1,9 +1,14 @@
-var rucksack = require('rucksack-css')
-var webpack = require('webpack')
-var path = require('path')
-var execSync = require('child_process').execSync
+'use strict'
 
-var minikubeIP = '127.0.0.1', gophrWebPort = 30443
+const path                  = require('path')
+const webpack               = require('webpack')
+const rucksack              = require('rucksack-css')
+const execSync              = require('child_process').execSync
+const CopyWebpackPlugin     = require('copy-webpack-plugin')
+const HtmlWebpackPlugin     = require('html-webpack-plugin')
+const FaviconsWebpackPlugin = require('favicons-webpack-plugin')
+
+let minikubeIP = '127.0.0.1', gophrWebPort = 30443
 
 // First, grab the minikube ip if not in production.
 if (process.env.NODE_ENV !== 'production') {
@@ -23,7 +28,6 @@ module.exports = {
   context: path.join(__dirname, './client'),
   entry: {
     jsx: './index.js',
-    html: './index.html',
     vendor: [
       'react',
       'react-dom',
@@ -34,7 +38,7 @@ module.exports = {
     ]
   },
   output: {
-    path: path.join(__dirname, './static'),
+    path: path.join(__dirname, './build'),
     publicPath: '/static/',
     filename: 'bundle.js',
   },
@@ -83,13 +87,38 @@ module.exports = {
   plugins: [
     new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js'),
     new webpack.DefinePlugin({
-      'process.env': { NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development') }
-    })
+      'process.env': {
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
+      }
+    }),
+    new HtmlWebpackPlugin({
+      title: 'gophr - Go Package Manager',
+      minify: { collapseWhitespace: true },
+      template: path.join(__dirname, 'client', 'index.ejs'),
+      description: 'gophr is the package manager for the Go programming ' +
+        'language. With gophr, managing and vendoring dependencies ' +
+        'has never been easier.'
+    }),
+    new FaviconsWebpackPlugin(path.join(
+      __dirname,
+      'client',
+      'resources',
+      'images',
+      'favicon.png')),
+    new CopyWebpackPlugin([{
+      from: path.join(
+        __dirname,
+        'client',
+        'resources',
+        'images',
+        'og-splash.png'),
+    }])
   ],
   devServer: {
     contentBase: './client',
     hot: true,
     proxy: {
+      '/': 'http://localhost:3000/static/',
       '/api/*': {
         target: `https://${minikubeIP}:${gophrWebPort}`,
         secure: false
