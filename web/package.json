@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./node_modules/webpack-dev-server/bin/webpack-dev-server -d --history-api-fallback --hot --inline --progress --colors --port 3000 --host 0.0.0.0",
-    "build": "NODE_ENV=production node ./node_modules/webpack/bin/webpack --progress --colors"
+    "build": "NODE_ENV=production node ./node_modules/webpack/bin/webpack --progress --colors --optimize-minimize --optimize-dedupe"
   },
   "license": "MIT",
   "devDependencies": {
