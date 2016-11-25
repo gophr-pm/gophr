@@ -39,6 +39,7 @@
     "webpack-hot-middleware": "^2.7.1"
   },
   "dependencies": {
+    "copy-webpack-plugin": "^4.0.1",
     "favicons-webpack-plugin": "^0.0.7",
     "html-webpack-plugin": "^2.24.1"
   }
