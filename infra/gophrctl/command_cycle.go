@@ -59,10 +59,14 @@ func cycleCommand(c *cli.Context) error {
 }
 
 func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) error {
-	// Check to see if the image should be built first.
-	shouldBuildImageFirst := c.Bool(flagNameBuild)
-	// Memorize whether services should be deleted.
-	shouldDeletePersistent := c.Bool(flagNameDeletePersistent)
+	var (
+		// Check to see if the image should be built first.
+		shouldBuildImageFirst = c.Bool(flagNameBuild)
+		// Memorize whether services should be deleted.
+		shouldDeletePersistent = c.Bool(flagNameDeletePersistent)
+		// Do the node ordinals need an update?
+		shouldUpdateNodeOrdinals = m.requiresNodeOrdinals
+	)
 
 	// Make sure that the image is built (if forced).
 	if shouldBuildImageFirst {
@@ -74,6 +78,13 @@ func cycleModule(c *cli.Context, m *module, gophrRoot string, env environment) e
 	// Make sure that volumes exist first.
 	if env == environmentProd && len(m.prodVolumes) > 0 {
 		if err := createGCloudVolumesIfNotExist(m.prodVolumes...); err != nil {
+			return err
+		}
+	}
+
+	// Then make sure the ordinals are set up.
+	if shouldUpdateNodeOrdinals {
+		if err := updateK8SNodeOrdinals(); err != nil {
 			return err
 		}
 	}
