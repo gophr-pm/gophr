@@ -105,14 +105,24 @@ module.exports = {
       'resources',
       'images',
       'favicon.png')),
-    new CopyWebpackPlugin([{
-      from: path.join(
+    new CopyWebpackPlugin([
+      {
+        from: path.join(
         __dirname,
         'client',
         'resources',
         'images',
         'og-splash.png'),
-    }])
+      },
+      {
+        from: path.join(
+        __dirname,
+        'client',
+        'resources',
+        'images',
+        'favicon.ico'),
+      }
+    ])
   ],
   devServer: {
     contentBase: './client',
