@@ -21,6 +21,7 @@ const (
 	exitCodePodsFailed         = 110
 	exitCodeUpFailed           = 111
 	exitCodeRevealSecretFailed = 112
+	exitCodeCMD                = 113
 )
 
 func exit(
