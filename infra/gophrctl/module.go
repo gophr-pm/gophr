@@ -10,15 +10,16 @@ const (
 )
 
 type module struct {
-	name         string
-	deps         []string
-	transient    bool
-	dockerfile   string
-	prodVolumes  []gCloudVolume
-	versionfile  string
-	devK8SFiles  []string
-	prodK8SFiles []string
-	buildContext string
+	name                 string
+	deps                 []string
+	transient            bool
+	dockerfile           string
+	prodVolumes          []gCloudVolume
+	versionfile          string
+	devK8SFiles          []string
+	prodK8SFiles         []string
+	buildContext         string
+	requiresNodeOrdinals bool
 }
 
 var modules = map[string]*module{
@@ -50,8 +51,9 @@ var modules = map[string]*module{
 				ssd:  true,
 			},
 		},
-		versionfile:  "./infra/docker/db/Versionfile.prod",
-		buildContext: ".",
+		versionfile:          "./infra/docker/db/Versionfile.prod",
+		buildContext:         ".",
+		requiresNodeOrdinals: true,
 	},
 	"migrator": &module{
 		name:      "migrator",
