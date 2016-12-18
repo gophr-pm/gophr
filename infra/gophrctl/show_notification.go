@@ -4,7 +4,7 @@ import (
 	"strings"
 	"time"
 
-	gosxnotifier "github.com/gosx-notifier"
+	gosxnotifier "github.com/deckarep/gosx-notifier"
 )
 
 const (
