@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -17,11 +19,12 @@ import (
 )
 
 const (
-	kubectl          = "kubectl"
-	k8sNamespace     = "gophr"
-	k8sDevContext    = "minikube"
-	k8sSecretsName   = "gophr-secrets"
-	k8sNamespaceFlag = "--namespace=gophr"
+	kubectl             = "kubectl"
+	k8sNamespace        = "gophr"
+	k8sDevContext       = "minikube"
+	k8sSecretsName      = "gophr-secrets"
+	k8sNamespaceFlag    = "--namespace=gophr"
+	k8sNodeLabelOrdinal = "ordinal"
 )
 
 // K8SPod is a kubernetes pod.
@@ -43,6 +46,29 @@ type K8SPodStatus struct {
 // K8SPodMetadata is the metadata of a kubernetes pod.
 type K8SPodMetadata struct {
 	Name string `json:"name"`
+}
+
+// K8SNode is a kubernetes node.
+type K8SNode struct {
+	Metadata struct {
+		Name        string            `json:"name"`
+		Labels      map[string]string `json:"labels"`
+		DateCreated time.Time         `json:"creationTimestamp"`
+	} `json:"metadata"`
+}
+
+// K8SNodeList is a list of kubernetes nodes.
+type K8SNodeList struct {
+	Items []K8SNode `json:"items"`
+}
+
+// byDateCreated is used to sort a slice of K8SNode by date.
+type byDateCreated []K8SNode
+
+func (bdc byDateCreated) Len() int      { return len(bdc) }
+func (bdc byDateCreated) Swap(i, j int) { bdc[i], bdc[j] = bdc[j], bdc[i] }
+func (bdc byDateCreated) Less(i, j int) bool {
+	return bdc[i].Metadata.DateCreated.Before(bdc[j].Metadata.DateCreated)
 }
 
 var (
@@ -478,5 +504,47 @@ func updateProdK8SFileImage(newImageURL, k8sfilePath string) error {
 		return err
 	}
 
+	return nil
+}
+
+func updateK8SNodeOrdinals() error {
+	startSpinner("Updating node ordinals")
+	output, err := exec.Command(kubectl, k8sNamespaceFlag, "get", "nodes", "--output=json").CombinedOutput()
+	if err != nil {
+		stopSpinner(false)
+		return newExecError(output, err)
+	}
+
+	nodeList := K8SNodeList{}
+	if err = json.Unmarshal(output, &nodeList); err != nil {
+		stopSpinner(false)
+		return newExecError(output, errors.New("Could not read node metadata"))
+	}
+
+	// Make sure that the node list is sorted first and foremost.
+	sort.Sort(byDateCreated(nodeList.Items))
+
+	// Then curate the nodes to be relabelled.
+	nodeOrdinalLabels := make(map[string]string)
+	for i := 0; i < len(nodeList.Items); i++ {
+		node := nodeList.Items[i]
+		ordinalLabel := strconv.Itoa(i + 1)
+		existingOrdinalLabel := node.Metadata.Labels[k8sNodeLabelOrdinal]
+
+		if existingOrdinalLabel != ordinalLabel {
+			nodeOrdinalLabels[node.Metadata.Name] = ordinalLabel
+		}
+	}
+
+	// Apply all of the updated ordinal labels.
+	for nodeName, ordinalLabel := range nodeOrdinalLabels {
+		output, err := exec.Command(kubectl, k8sNamespaceFlag, "label", "nodes", nodeName, "--overwrite", k8sNodeLabelOrdinal+"="+ordinalLabel).CombinedOutput()
+		if err != nil {
+			stopSpinner(false)
+			return newExecError(output, err)
+		}
+	}
+
+	stopSpinner(true)
 	return nil
 }

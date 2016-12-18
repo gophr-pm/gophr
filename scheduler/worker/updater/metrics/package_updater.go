@@ -5,7 +5,6 @@ import (
 
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
-	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
@@ -14,7 +13,6 @@ type packageUpdaterArgs struct {
 	q         db.Queryable
 	wg        *sync.WaitGroup
 	errs      chan error
-	ghSvc     github.RequestService
 	logger    common.JobLogger
 	summaries chan pkg.Summary
 }
@@ -34,7 +32,7 @@ func packageUpdater(args packageUpdaterArgs) {
 			summary.Author,
 			summary.Repo)
 
-		metrics, err := getPackageMetrics(args.q, args.ghSvc, summary)
+		metrics, err := getPackageMetrics(args.q, summary)
 		if err != nil {
 			args.errs <- err
 			continue

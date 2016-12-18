@@ -26,91 +26,110 @@ func (svc *requestServiceImpl) FetchCommitTimestamp(
 ) (time.Time, error) {
 	// Specify monitoring parameters.
 	trackingArgs := datadog.TrackTransactionArgs{
-		Tags:            []string{"github", datadog.TagInternal},
-		Client:          svc.ddClient,
-		AlertType:       datadog.Success,
-		StartTime:       time.Now(),
+		Tags:      []string{"github", datadog.TagInternal},
+		Client:    svc.ddClient,
+		AlertType: datadog.Success,
+		StartTime: time.Now(),
+		EventInfo: []string{fmt.Sprintf(
+			`{ author: "%s", repo: "%s", sha: "%s" }`,
+			author,
+			repo,
+			sha,
+		)},
 		MetricName:      datadog.MetricJobDuration,
 		CreateEvent:     statsd.NewEvent,
 		CustomEventName: ddEventFetchCommitTimestamp,
 	}
 
 	// Ensure that the transaction is tracked after the job finishes.
-	defer datadog.TrackTransaction(trackingArgs)
+	defer datadog.TrackTransaction(&trackingArgs)
 
 	log.Printf(`Fetching Github commit timestamp for "%s/%s@%s".
 `, author, repo, sha)
 
-	resp, err := svc.keyChain.acquireKey().getFromGithub(
-		buildGitHubCommitTimestampAPIURL(
-			author,
-			repo,
-			sha))
+	for attempts := 0; attempts < githubAPIAttemptsLimit; attempts++ {
+		resp, err := svc.keyChain.acquireKey().getFromGithub(
+			buildGitHubCommitTimestampAPIURL(
+				author,
+				repo,
+				sha))
 
-	// Make sure that the response body gets closed eventually.
-	defer resp.Body.Close()
+		// Make sure that the response body gets closed eventually.
+		defer resp.Body.Close()
 
-	if err != nil {
-		err = fmt.Errorf(
-			`Failed to get timestamp for commit "%s/%s%s": %v.`,
-			author,
-			repo,
-			sha,
-			err)
+		if err != nil {
+			err = fmt.Errorf(
+				`Failed to get timestamp for commit "%s/%s%s": %v.`,
+				author,
+				repo,
+				sha,
+				err)
 
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
 
-		return time.Time{}, err
+			return time.Time{}, err
+		}
+
+		// Handle all kinds of failures.
+		if resp.StatusCode == 404 {
+			err = fmt.Errorf(
+				`Failed to get timestamp for commit "%s/%s%s": package not found.`,
+				author,
+				repo,
+				sha)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return time.Time{}, err
+		} else if resp.StatusCode == 403 {
+			// If there was a forbidden status code, try the request again.
+			continue
+		} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
+			err = fmt.Errorf(
+				`Failed to get timestamp for commit "%s/%s%s": `+
+					`bumped into a status code %d.`,
+				author,
+				repo,
+				sha,
+				resp.StatusCode)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return time.Time{}, err
+		}
+
+		timeStamp, err := parseGitHubCommitLookUpResponseBody(resp)
+		if err != nil {
+			err = fmt.Errorf(
+				`Failed to parse timestamp for commit "%s/%s%s": %v.`,
+				author,
+				repo,
+				sha,
+				err)
+
+			// Make sure that the error is recorded in the datadog transaction.
+			trackingArgs.AlertType = datadog.Error
+			trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
+
+			return time.Time{}, err
+		}
+
+		return timeStamp, nil
 	}
 
-	// Handle all kinds of failures.
-	if resp.StatusCode == 404 {
-		err = fmt.Errorf(
-			`Failed to get timestamp for commit "%s/%s%s": package not found.`,
-			author,
-			repo,
-			sha)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return time.Time{}, err
-	} else if resp.StatusCode != 200 && resp.StatusCode != 304 {
-		err = fmt.Errorf(
-			`Failed to get timestamp for commit "%s/%s%s": `+
-				`bumped into a status code %d.`,
-			author,
-			repo,
-			sha,
-			resp.StatusCode)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return time.Time{}, err
-	}
-
-	timeStamp, err := parseGitHubCommitLookUpResponseBody(resp)
-	if err != nil {
-		err = fmt.Errorf(
-			`Failed to parse timestamp for commit "%s/%s%s": %v.`,
-			author,
-			repo,
-			sha,
-			err)
-
-		// Make sure that the error is recorded in the datadog transaction.
-		trackingArgs.AlertType = datadog.Error
-		trackingArgs.EventInfo = append(trackingArgs.EventInfo, err.Error())
-
-		return time.Time{}, err
-	}
-
-	return timeStamp, nil
+	return time.Time{}, fmt.Errorf(
+		`Failed to fetch timestamp for commit "%s/%s%s": `+
+			`all %d attempts failed.`,
+		author,
+		repo,
+		sha,
+		githubAPIAttemptsLimit)
 }
 
 func buildGitHubCommitTimestampAPIURL(

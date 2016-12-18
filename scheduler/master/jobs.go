@@ -6,6 +6,10 @@ type job struct {
 }
 
 var (
+	updateGithubMetadata = job{
+		name: "updateGithubMetadata",
+		path: "update/github-metadata",
+	}
 	updatePackageMetrics = job{
 		name: "updatePackageMetrics",
 		path: "update/metrics",

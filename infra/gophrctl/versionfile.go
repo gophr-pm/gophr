@@ -101,13 +101,15 @@ func writeToVersionFile(versionFilePath string, version imageVersion) error {
 	return ioutil.WriteFile(versionFilePath, version.Bytes(), 0644)
 }
 
-func promptImageVersionBump(versionFilePath string) (imageVersion, error) {
+func promptImageVersionBump(imageName, versionFilePath string) (imageVersion, error) {
 	version, err := readImageVersion(versionFilePath)
 	if err != nil {
 		return version, err
 	}
 
-	fmt.Print("The current image version is ")
+	fmt.Print("The current image version of ")
+	blue.Print(imageName)
+	fmt.Print(" is ")
 	blue.Print(version.String())
 	fmt.Println(".\nWhat level of this version should be bumped?")
 	yellow.Print("(0) ")

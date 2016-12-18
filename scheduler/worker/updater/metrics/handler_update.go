@@ -9,7 +9,6 @@ import (
 	"github.com/gophr-pm/gophr/lib/datadog"
 	"github.com/gophr-pm/gophr/lib/db"
 	"github.com/gophr-pm/gophr/lib/db/model/package"
-	"github.com/gophr-pm/gophr/lib/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/common"
 )
 
@@ -24,7 +23,6 @@ const (
 // and updates the metrics of each.
 func UpdateHandler(
 	q db.Queryable,
-	ghSvc github.RequestService,
 	ddClient datadog.Client,
 	numWorkers int,
 ) func(http.ResponseWriter, *http.Request) {
@@ -34,7 +32,7 @@ func UpdateHandler(
 			updaterWG    sync.WaitGroup
 			summaries    = make(chan pkg.Summary)
 			trackingArgs = datadog.TrackTransactionArgs{
-				Tags:            []string{jobName, datadog.TagInternal},
+				Tags:            []string{common.SchedulerDDTag, datadog.TagInternal},
 				Client:          ddClient,
 				AlertType:       datadog.Success,
 				StartTime:       time.Now(),
@@ -54,7 +52,8 @@ func UpdateHandler(
 		}
 
 		// Ensure that the transaction is tracked after the job finishes.
-		defer datadog.TrackTransaction(trackingArgs)
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, jobParams.String())
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Build a logger for use in the sub-routines.
 		logger := common.NewJobLogger(jobName, jobParams)
@@ -78,7 +77,6 @@ func UpdateHandler(
 				q:         q,
 				wg:        &updaterWG,
 				errs:      errs,
-				ghSvc:     ghSvc,
 				logger:    logger,
 				summaries: summaries,
 			})

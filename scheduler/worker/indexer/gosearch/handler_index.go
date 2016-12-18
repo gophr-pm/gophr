@@ -35,7 +35,7 @@ func IndexHandler(
 			logger       common.JobLogger
 			jobParams    common.JobParams
 			trackingArgs = datadog.TrackTransactionArgs{
-				Tags:            []string{jobName, datadog.TagInternal},
+				Tags:            []string{common.SchedulerDDTag, datadog.TagInternal},
 				Client:          ddClient,
 				AlertType:       datadog.Success,
 				StartTime:       time.Now(),
@@ -54,7 +54,8 @@ func IndexHandler(
 		}
 
 		// Ensure that the transaction is tracked after the job finishes.
-		defer datadog.TrackTransaction(trackingArgs)
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, jobParams.String())
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Build a logger for use in the sub-routines.
 		logger = common.NewJobLogger(jobName, jobParams)

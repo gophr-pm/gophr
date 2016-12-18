@@ -54,7 +54,8 @@ func DeleteHandler(
 		}
 
 		// Ensure that the transaction is tracked after the job finishes.
-		defer datadog.TrackTransaction(trackingArgs)
+		trackingArgs.EventInfo = append(trackingArgs.EventInfo, jobParams.String())
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Build a logger for use in the sub-routines.
 		logger = common.NewJobLogger(jobName, jobParams)

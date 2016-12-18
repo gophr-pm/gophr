@@ -26,7 +26,7 @@ func (fc *FakeClient) Gauge(
 ) error {
 	log.Printf(
 		"Sending Gauge Metric to DataDog "+
-			"(name: %s, value: %b, tags: %s, rate: %b).\n",
+			"(name: %s, value: %g, tags: %v, rate: %g).\n",
 		name,
 		value,
 		tags,

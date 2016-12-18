@@ -10,13 +10,11 @@ import (
 // UpdateMetricsArgs is the arguments struct for UpdateMetrics.
 type UpdateMetricsArgs struct {
 	Repo                    string
-	Stars                   int
 	Author                  string
 	Awesome                 bool
 	Queryable               db.Queryable
 	TrendScore              float32
 	SearchScore             float32
-	Description             string
 	DailyDownloads          int
 	WeeklyDownloads         int
 	MonthlyDownloads        int
@@ -28,11 +26,9 @@ type UpdateMetricsArgs struct {
 func UpdateMetrics(args UpdateMetricsArgs) error {
 	return query.
 		Update(packagesTableName).
-		Set(packagesColumnNameStars, args.Stars).
 		Set(packagesColumnNameAwesome, args.Awesome).
 		Set(packagesColumnNameTrendScore, args.TrendScore).
 		Set(packagesColumnNameSearchScore, args.SearchScore).
-		Set(packagesColumnNameDescription, args.Description).
 		Set(packagesColumnNameDailyDownloads, args.DailyDownloads).
 		Set(packagesColumnNameDateLastIndexed, time.Now()).
 		Set(packagesColumnNameWeeklyDownloads, args.WeeklyDownloads).

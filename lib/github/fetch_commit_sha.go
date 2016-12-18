@@ -29,17 +29,23 @@ func (svc *requestServiceImpl) FetchCommitSHA(
 ) (string, error) {
 	// Specify monitoring parameters.
 	trackingArgs := datadog.TrackTransactionArgs{
-		Tags:            []string{"github", datadog.TagInternal},
-		Client:          svc.ddClient,
-		AlertType:       datadog.Success,
-		StartTime:       time.Now(),
+		Tags:      []string{"github", datadog.TagInternal},
+		Client:    svc.ddClient,
+		AlertType: datadog.Success,
+		StartTime: time.Now(),
+		EventInfo: []string{fmt.Sprintf(
+			`{ author: "%s", repo: "%s", timestamp: "%s" }`,
+			author,
+			repo,
+			timestamp.Format(time.RFC3339),
+		)},
 		MetricName:      datadog.MetricJobDuration,
 		CreateEvent:     statsd.NewEvent,
 		CustomEventName: ddEventFetchCommitSHA,
 	}
 
 	// Ensure that the transaction is tracked after the job finishes.
-	defer datadog.TrackTransaction(trackingArgs)
+	defer datadog.TrackTransaction(&trackingArgs)
 
 	log.Printf(`Fetching Github commit SHA of "%s/%s" for timestamp %s.
 `, author, repo, timestamp.String())

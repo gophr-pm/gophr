@@ -7,6 +7,7 @@ package dtos
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	fflib "github.com/pquerna/ffjson/fflib/v1"
@@ -44,36 +45,28 @@ func (mj *PackageDetails) MarshalJSONBuf(buf fflib.EncodingBuffer) error {
 	} else {
 		buf.WriteString(`,"awesome":false`)
 	}
-	buf.WriteString(`,"version":`)
+	buf.WriteString(`,"versions":`)
 	if mj.Versions != nil {
 		buf.WriteString(`[`)
 		for i, v := range mj.Versions {
 			if i != 0 {
 				buf.WriteString(`,`)
 			}
-
-			{
-
-				err = v.MarshalJSONBuf(buf)
-				if err != nil {
-					return err
-				}
-
+			/* Struct fall back. type=dtos.PackageVersion kind=struct */
+			err = buf.Encode(&v)
+			if err != nil {
+				return err
 			}
 		}
 		buf.WriteString(`]`)
 	} else {
 		buf.WriteString(`null`)
 	}
+	/* Struct fall back. type=dtos.PackageDownloads kind=struct */
 	buf.WriteString(`,"downloads":`)
-
-	{
-
-		err = mj.Downloads.MarshalJSONBuf(buf)
-		if err != nil {
-			return err
-		}
-
+	err = buf.Encode(&mj.Downloads)
+	if err != nil {
+		return err
 	}
 	buf.WriteString(`,"trendScore":`)
 	fflib.AppendFloat(buf, float64(mj.TrendScore), 'g', -1, 32)
@@ -138,7 +131,7 @@ var ffj_key_PackageDetails_Author = []byte("author")
 
 var ffj_key_PackageDetails_Awesome = []byte("awesome")
 
-var ffj_key_PackageDetails_Versions = []byte("version")
+var ffj_key_PackageDetails_Versions = []byte("versions")
 
 var ffj_key_PackageDetails_Downloads = []byte("downloads")
 
@@ -563,17 +556,16 @@ handle_Versions:
 				/* handler: tmp_uj__Versions type=dtos.PackageVersion kind=struct quoted=false*/
 
 				{
-					if tok == fflib.FFTok_null {
-
-						state = fflib.FFParse_after_value
-						goto mainparse
-					}
-
-					err = tmp_uj__Versions.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+					/* Falling back. type=dtos.PackageVersion kind=struct */
+					tbuf, err := fs.CaptureField(tok)
 					if err != nil {
-						return err
+						return fs.WrapErr(err)
 					}
-					state = fflib.FFParse_after_value
+
+					err = json.Unmarshal(tbuf, &tmp_uj__Versions)
+					if err != nil {
+						return fs.WrapErr(err)
+					}
 				}
 
 				uj.Versions = append(uj.Versions, tmp_uj__Versions)
@@ -591,17 +583,16 @@ handle_Downloads:
 	/* handler: uj.Downloads type=dtos.PackageDownloads kind=struct quoted=false*/
 
 	{
-		if tok == fflib.FFTok_null {
-
-			state = fflib.FFParse_after_value
-			goto mainparse
-		}
-
-		err = uj.Downloads.UnmarshalJSONFFLexer(fs, fflib.FFParse_want_key)
+		/* Falling back. type=dtos.PackageDownloads kind=struct */
+		tbuf, err := fs.CaptureField(tok)
 		if err != nil {
-			return err
+			return fs.WrapErr(err)
 		}
-		state = fflib.FFParse_after_value
+
+		err = json.Unmarshal(tbuf, &uj.Downloads)
+		if err != nil {
+			return fs.WrapErr(err)
+		}
 	}
 
 	state = fflib.FFParse_after_value

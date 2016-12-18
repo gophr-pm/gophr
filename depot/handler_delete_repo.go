@@ -31,7 +31,7 @@ func DeleteRepoHandler(
 			CustomEventName: ddEventCreateRepo,
 		}
 
-		defer datadog.TrackTransaction(trackingArgs)
+		defer datadog.TrackTransaction(&trackingArgs)
 
 		// Get request metadata.
 		vars, err := readURLVars(r)

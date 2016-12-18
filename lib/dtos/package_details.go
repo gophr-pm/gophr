@@ -10,7 +10,7 @@ type PackageDetails struct {
 	Stars           int              `json:"stars"`
 	Author          string           `json:"author"`
 	Awesome         bool             `json:"awesome"`
-	Versions        []PackageVersion `json:"version"`
+	Versions        []PackageVersion `json:"versions"`
 	Downloads       PackageDownloads `json:"downloads"`
 	TrendScore      float32          `json:"trendScore"`
 	Description     string           `json:"description"`

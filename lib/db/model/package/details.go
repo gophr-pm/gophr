@@ -18,13 +18,19 @@ type Details struct {
 
 // toDTO turns a summary into its most appropriate DTO.
 func (d Details) toDTO() dtos.PackageDetails {
-	versions := make([]dtos.PackageVersion, len(d.AllTimeVersionDownloads))
+	var (
+		cursor   = 0
+		versions = make([]dtos.PackageVersion, len(d.AllTimeVersionDownloads))
+	)
 
 	for name, downloads := range d.AllTimeVersionDownloads {
-		versions = append(versions, dtos.PackageVersion{
+		versions[cursor] = dtos.PackageVersion{
 			Name:             name,
 			AllTimeDownloads: downloads,
-		})
+		}
+
+		// Advance to the next slot in the slice.
+		cursor++
 	}
 
 	return dtos.PackageDetails{

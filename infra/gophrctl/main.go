@@ -48,6 +48,8 @@ const (
 	commandDescBuild              = "Updates module images"
 	commandNameCycle              = "cycle"
 	commandDescCycle              = "Re-creates a module in kubernetes"
+	commandNameCMD                = "cmd"
+	commandDescCMD                = "Executes a manually specified kubectl command"
 	commandNameLog                = "log"
 	commandDescLog                = "Logs module's container output to stdout"
 	commandNamePods               = "pods"
@@ -77,6 +79,7 @@ const (
 )
 
 var (
+	cmdCommandArgsUsage    = "[kubectl command] [kubectl command arguments...]"
 	moduleCommandArgsUsage = fmt.Sprintf("[%s] [arguments...]", modulesToString())
 )
 
@@ -140,6 +143,15 @@ func main() {
 					EnvVar: envVarGPI,
 				},
 			},
+		},
+
+		// CMD command.
+		{
+			Name:            commandNameCMD,
+			Usage:           commandDescCMD,
+			Action:          cmdCommand,
+			ArgsUsage:       cmdCommandArgsUsage,
+			SkipFlagParsing: true,
 		},
 
 		// Cycle command.

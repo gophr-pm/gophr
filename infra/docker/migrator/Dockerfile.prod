@@ -1,5 +1,12 @@
 FROM golang:alpine
 
+# Set the default timezone to EST.
+ENV TZ=America/New_York
+RUN set -ex \
+  && apk add --update tzdata \
+  && cp "/usr/share/zoneinfo/$TZ" /etc/localtime \
+  && echo $TZ > /etc/timezone
+
 # We need git for pulling dependencies and bash for debugging.
 RUN set -ex && apk add --update 'git' && apk add 'bash'
 

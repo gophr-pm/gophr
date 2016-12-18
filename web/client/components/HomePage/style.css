@@ -1,22 +1,4 @@
 
-/*
-.header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  left: 0;
-  right: 0;
-  padding: 3rem;
-  position: fixed;
-  top: 0;
-}
-
-.left, .right {
-  align-items: center;
-  display: flex;
-}
-*/
-
 .logo {
   background: url(../../resources/images/logo.svg) no-repeat;
   background-position-y: 0rem;
@@ -50,10 +32,15 @@
   width: auto;
 }
 
+.hero {
+  max-width: 100%;
+}
+
 .heroMessage {
   color: #4b7a7b;
   font-family: 'Bitter', serif;
   font-size: 6rem;
+  max-width: 85rem;
   margin-top: 2rem;
   text-align: center;
 }
@@ -100,29 +87,19 @@
   text-transform: uppercase;
   width: 14rem;
 }
-/*
-.aboutSection {
-  background: #def8f9;
-  height: 20rem;
-}
 
-.findSection {
-  background: #294546;
-  padding: 7rem;
-}
+@media (max-width: 500px) {
+  .heroMessage {
+    font-size: 5rem;
+  }
 
-.findSectionSplitTitle {
-  color: #ffffff;
-  font-family: 'Bitter', serif;
-  font-size: 3rem;
-}
+  .heroButtons {
+    flex-direction: column;
+  }
 
-.findSectionSplitPackages {
-  padding-top: 2rem;
+  .heroButton {
+    margin-bottom: 2rem;
+    margin-right: 0;
+    width: auto;
+  }
 }
-
-.footer {
-  background: #222222;
-  padding: 1rem 0;
-}
-*/

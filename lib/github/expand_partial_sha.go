@@ -3,6 +3,7 @@ package github
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -38,17 +39,26 @@ func (svc *requestServiceImpl) ExpandPartialSHA(
 ) (string, error) {
 	// Specify monitoring parameters.
 	trackingArgs := datadog.TrackTransactionArgs{
-		Tags:            []string{"github", datadog.TagInternal},
-		Client:          svc.ddClient,
-		AlertType:       datadog.Success,
-		StartTime:       time.Now(),
+		Tags:      []string{"github", datadog.TagInternal},
+		Client:    svc.ddClient,
+		AlertType: datadog.Success,
+		StartTime: time.Now(),
+		EventInfo: []string{fmt.Sprintf(
+			`{ author: "%s", repo: "%s", sha: "%s" }`,
+			args.Author,
+			args.Repo,
+			args.ShortSHA,
+		)},
 		MetricName:      datadog.MetricJobDuration,
 		CreateEvent:     statsd.NewEvent,
 		CustomEventName: ddEventExpandPartialSHA,
 	}
 
 	// Ensure that the transaction is tracked after the job finishes.
-	defer datadog.TrackTransaction(trackingArgs)
+	defer datadog.TrackTransaction(&trackingArgs)
+
+	log.Printf(`Expanding partial SHA "%s" of "%s/%s".
+`, args.ShortSHA, args.Author, args.Repo)
 
 	archiveURL := fmt.Sprintf(
 		baseGithubArchiveURL,

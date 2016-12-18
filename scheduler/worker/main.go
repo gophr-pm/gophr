@@ -12,6 +12,7 @@ import (
 	"github.com/gophr-pm/gophr/scheduler/worker/deleter/downloads"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/awesome"
 	"github.com/gophr-pm/gophr/scheduler/worker/indexer/gosearch"
+	ghUpdater "github.com/gophr-pm/gophr/scheduler/worker/updater/github"
 	"github.com/gophr-pm/gophr/scheduler/worker/updater/metrics"
 	"github.com/gorilla/mux"
 )
@@ -58,6 +59,12 @@ func main() {
 	r.HandleFunc(
 		"/update/metrics",
 		metrics.UpdateHandler(
+			client,
+			ddClient,
+			updateMetricsWorkerThreads)).Methods("GET")
+	r.HandleFunc(
+		"/update/github-metadata",
+		ghUpdater.UpdateHandler(
 			client,
 			ghSvc,
 			ddClient,
