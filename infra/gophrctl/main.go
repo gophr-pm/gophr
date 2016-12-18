@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/urfave/cli.v1"
 )
@@ -281,6 +282,9 @@ func main() {
 			},
 		},
 	}
+
+	// Before we finish defer a terminal alert for when our command is done.
+	defer showNotification(time.Now(), os.Args)
 
 	// Lastly, execute the command line application.
 	app.Run(os.Args)
